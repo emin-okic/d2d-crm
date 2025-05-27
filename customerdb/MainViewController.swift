@@ -80,16 +80,11 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
         if let vc = self.selectedViewController as? CustomerTableViewController {
             vc.mMainViewControllerRef = self
         }
-        else if let vc = self.selectedViewController as? VoucherTableViewController {
-            vc.mMainViewControllerRef = self
-        }
     }
     
     func initColor() {
         if let cvc = selectedViewController as? CustomerTableViewController {
             cvc.initColor()
-        } else if let vvc = selectedViewController as? VoucherTableViewController {
-            vvc.initColor()
         }
     }
     
@@ -147,9 +142,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
     func reloadData() {
         if let vc = self.selectedViewController as? CustomerTableViewController {
             vc.reloadCustomers(search: nil, refreshTable: true)
-        }
-        else if let vc = self.selectedViewController as? VoucherTableViewController {
-            vc.reloadVouchers(search: nil, refreshTable: true)
         }
         else if let vc = self.selectedViewController as? AppointmentViewController {
             vc.drawEvents()
@@ -216,9 +208,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
             if let vc = self.selectedViewController as? CustomerTableViewController {
                 vc.reloadCustomers(search: searchString, refreshTable: true)
             }
-            else if let vc = self.selectedViewController as? VoucherTableViewController {
-                vc.reloadVouchers(search: searchString, refreshTable: true)
-            }
         }
     }
     
@@ -275,9 +264,7 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
     @IBAction func onClickMenu(_ sender: UIBarButtonItem) {
         let db = CustomerDatabase()
         let customers = db.getCustomers(search: nil, showDeleted: false, withFiles: false)
-        let vouchers = db.getVouchers(showDeleted: false)
         let infoString = String(customers.count) + " " + NSLocalizedString("customers", comment: "")
-            + "\n" + String(vouchers.count) + " " + NSLocalizedString("vouchers", comment: "")
         
         var infoString2:String? = NSLocalizedString("backup_note_menu", comment: "")
         let apiType = UserDefaults.standard.integer(forKey: "sync-mode")
@@ -423,8 +410,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
             style: .default) { (action) in
                 if let _ = self.selectedViewController as? CustomerTableViewController {
                     self.menuImportExportCustomer(sender)
-                } else if let _ = self.selectedViewController as? VoucherTableViewController {
-                    self.menuImportExportVoucher(sender)
                 } else if let _ = self.selectedViewController as? AppointmentViewController {
                     self.menuImportExportAppointments(sender)
                 }
@@ -435,9 +420,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
             title: NSLocalizedString("delete_selected", comment: ""),
             style: .destructive) { (action) in
                 if let vc = self.selectedViewController as? CustomerTableViewController {
-                    vc.tableView.setEditing(!vc.tableView.isEditing, animated: true)
-                }
-                else if let vc = self.selectedViewController as? VoucherTableViewController {
                     vc.tableView.setEditing(!vc.tableView.isEditing, animated: true)
                 }
         }
@@ -577,54 +559,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
         self.present(alert, animated: true)
     }
     
-    func menuImportExportVoucher(_ sender: UIBarButtonItem) {
-        let importCsvAction = UIAlertAction(
-            title: NSLocalizedString("import_csv", comment: ""),
-            style: .default) { (action) in
-                if #available(iOS 11, *) {
-                    let alert = UIAlertController(
-                        title: "", message: NSLocalizedString("import_csv_note_voucher", comment: ""),
-                        preferredStyle: .alert
-                    )
-                    alert.addAction(UIAlertAction(
-                        title: NSLocalizedString("ok", comment: ""),
-                        style: .default) { (action) in
-                            let documentPicker: UIDocumentPickerViewController
-                            if #available(iOS 14.0, *) {
-                                documentPicker = VoucherDocumentPickerViewController(forOpeningContentTypes: [UTType.commaSeparatedText], asCopy: false)
-                            } else {
-                                documentPicker = VoucherDocumentPickerViewController(documentTypes: ["public.comma-separated-values-text"], in: .import)
-                            }
-                            documentPicker.delegate = self
-                            self.present(documentPicker, animated: true, completion: nil)
-                    })
-                    self.present(alert, animated: true, completion: nil)
-                } else {
-                    self.dialog(
-                        title: NSLocalizedString("not_supported", comment: ""),
-                        text: NSLocalizedString("file_selection_not_supported", comment: "")
-                    )
-                }
-        }
-        let exportCsvAction = UIAlertAction(
-            title: NSLocalizedString("export_csv", comment: ""),
-            style: .default) { (action) in
-                self.exportCsvVoucher(barButtonItem: sender)
-        }
-        let cancelAction = UIAlertAction(
-            title: NSLocalizedString("close", comment: ""),
-            style: .cancel) { (action) in
-        }
-        
-        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        alert.addAction(importCsvAction)
-        alert.addAction(exportCsvAction)
-        alert.addAction(cancelAction)
-        
-        alert.popoverPresentationController?.barButtonItem = sender
-        self.present(alert, animated: true)
-    }
-    
     func menuImportExportAppointments(_ sender: UIBarButtonItem) {
         let importIcsAction = UIAlertAction(
             title: NSLocalizedString("import_ics", comment: ""),
@@ -692,25 +626,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
     
     func exportCsvCustomer(barButtonItem:UIBarButtonItem) {
         let csv = CustomerCsvWriter(customers: self.mDb.getCustomers(search: nil, showDeleted: false, withFiles: false), customFields: self.mDb.getCustomFields())
-        
-        let fileurl = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathComponent("export.csv")
-
-        do {
-            try csv.buildCsvContent().write(to: fileurl, atomically: true, encoding: .utf8)
-
-            let activityController = UIActivityViewController(
-                activityItems: [fileurl], applicationActivities: nil
-            )
-            activityController.popoverPresentationController?.barButtonItem = barButtonItem
-            self.present(activityController, animated: true, completion: nil)
-
-        } catch let error {
-            print(error.localizedDescription)
-        }
-    }
-    
-    func exportCsvVoucher(barButtonItem:UIBarButtonItem) {
-        let csv = VoucherCsvWriter(vouchers: self.mDb.getVouchers(showDeleted: false))
         
         let fileurl = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathComponent("export.csv")
 
@@ -943,35 +858,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
                     }))
                     self.present(calendarSelectionAlert, animated: true)
                 }
-                
-            } else if let _ = controller as? VoucherDocumentPickerViewController {
-                
-                _ = url.startAccessingSecurityScopedResource()
-                if(url.pathExtension.lowercased() == "csv") {
-                    do {
-                        var inserted = 0
-                        let csv: CSV = try CSV(url: url)
-                        for row in csv.namedRows {
-                            let newVoucher = Voucher()
-                            for field in row {
-                                newVoucher.putAttribute(key: field.key, value: field.value)
-                            }
-                            if(newVoucher.mId < 0 || mDb.getVoucher(id: newVoucher.mId, showDeleted: true) != nil) {
-                                // generate new ID if exists in db or not set in csv file
-                                newVoucher.mId = Voucher.generateID(suffix: inserted)
-                            }
-                            if(mDb.insertVoucher(v: newVoucher)) {
-                                inserted += 1
-                            }
-                        }
-                        handleImportSuccess(imported: inserted)
-                    } catch let error {
-                        handleImportError(message: error.localizedDescription)
-                    }
-                } else {
-                    handleImportError(message: NSLocalizedString("unknown_file_format", comment: ""))
-                }
-                url.stopAccessingSecurityScopedResource()
                 
             }
             

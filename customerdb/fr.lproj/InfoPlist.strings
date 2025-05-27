@@ -1,8 +1,6 @@
 /* 
-  InfoPlist.strings
-  Copyright © 2018 Georg Sieber. All rights reserved.
+  InfoPlist.strings french one
 */
 "CFBundleDisplayName" = "Les clients";
 "NewCustomer" = "Nouveau client";
 "NewAppointment" = "Nouveau rendez-vous";
-"NewVoucher" = "Nouveau bon";

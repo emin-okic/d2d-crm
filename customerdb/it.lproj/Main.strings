@@ -11,9 +11,6 @@
 /* Class = "UITextField"; placeholder = "Password"; ObjectID = "1W5-81-mIk"; */
 "1W5-81-mIk.placeholder" = "Parola d'ordine";
 
-/* Class = "UILabel"; text = "Please make sure that all devices are synchronized in order to not issue duplicate voucher numbers."; ObjectID = "1kX-R6-aJ4"; */
-"1kX-R6-aJ4.text" = "Assicurati che tutti i dispositivi siano sincronizzati per non emettere duplicati di voucher.";
-
 /* Class = "UILabel"; text = "Address"; ObjectID = "1rv-JJ-pDw"; */
 "1rv-JJ-pDw.text" = "Indirizzo";
 
@@ -137,9 +134,6 @@
 /* Class = "UILabel"; text = "Phone Home"; ObjectID = "Ern-Et-EpP"; */
 "Ern-Et-EpP.text" = "Telefono casa";
 
-/* Class = "UILabel"; text = "Not licensed for commercial use."; ObjectID = "G1n-du-41I"; */
-"G1n-du-41I.text" = "Non concesso in licenza per uso commerciale.";
-
 /* Class = "UILabel"; text = "Person"; ObjectID = "G2H-g6-ik8"; */
 "G2H-g6-ik8.text" = "Persona";
 
@@ -169,9 +163,6 @@
 
 /* Class = "UILabel"; text = "Input-Only Mode and App Lock"; ObjectID = "KT3-ri-LEI"; */
 "KT3-ri-LEI.text" = "Modalità Solo input e Blocco app";
-
-/* Class = "UILabel"; text = "Voucher"; ObjectID = "KrQ-8n-l8z"; */
-"KrQ-8n-l8z.text" = "Voucher; tagliando";
 
 /* Class = "UILabel"; text = "Cloud Service"; ObjectID = "LLl-au-ZIx"; */
 "LLl-au-ZIx.text" = "Servizio cloud";
@@ -226,12 +217,6 @@
 
 /* Class = "UITextField"; placeholder = "Phone Work"; ObjectID = "QZo-z6-nBD"; */
 "QZo-z6-nBD.placeholder" = "Telefono";
-
-/* Class = "UITextField"; placeholder = "Voucher Number"; ObjectID = "RCG-IE-piD"; */
-"RCG-IE-piD.placeholder" = "Numero del buono";
-
-/* Class = "UITabBarItem"; title = "Vouchers"; ObjectID = "Rde-ds-wAi"; */
-"Rde-ds-wAi.title" = "Buoni";
 
 /* Class = "UILabel"; text = "Commercial Usage"; ObjectID = "Ru1-yi-LkT"; */
 "Ru1-yi-LkT.text" = "Uso commerciale";
@@ -310,12 +295,6 @@
 
 /* Class = "UILabel"; text = "Optonal activatable mode that allows only data entry. For example, the device can be handed to showroom visitors. Furthermore you can lock the app completely."; ObjectID = "a3w-jB-j03"; */
 "a3w-jB-j03.text" = "Modalità attivabile opzionale che consente solo l'immissione di dati. Ad esempio, il dispositivo può essere consegnato ai visitatori dello showroom. Inoltre puoi bloccare completamente l'app. Pagamento unico.";
-
-/* Class = "UINavigationItem"; title = "Edit Voucher"; ObjectID = "aQN-x7-NUJ"; */
-"aQN-x7-NUJ.title" = "Modifica voucher";
-
-/* Class = "UILabel"; text = "Voucher Number"; ObjectID = "aeU-PV-vYP"; */
-"aeU-PV-vYP.text" = "Numero del buono";
 
 /* Class = "UITextField"; placeholder = "Zipcode"; ObjectID = "ayr-WM-678"; */
 "ayr-WM-678.placeholder" = "Cap";

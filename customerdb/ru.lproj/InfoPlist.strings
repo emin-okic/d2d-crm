@@ -1,8 +1,7 @@
-/* 
-  InfoPlist.strings
-  Copyright © 2018 Georg Sieber. All rights reserved.
-*/
+//
+// InfoPlist Strings Class In Random Language
+//
+// TODO Remove the random languages and focus on just english for now
 "CFBundleDisplayName" = "Клиенты";
 "NewCustomer" = "Новый покупатель";
 "NewAppointment" = "Новая встреча";
-"NewVoucher" = "Новый ваучер";

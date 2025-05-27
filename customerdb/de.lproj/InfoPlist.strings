@@ -1,8 +1,6 @@
 /* 
-  InfoPlist.strings
-  Copyright © 2018 Georg Sieber. All rights reserved.
+  InfoPlist Strings Class Again
 */
 "CFBundleDisplayName" = "Kundendatenbank";
 "NewCustomer" = "Neuer Kunde";
 "NewAppointment" = "Neuer Termin";
-"NewVoucher" = "Neuer Gutschein";

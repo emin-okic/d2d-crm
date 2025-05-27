@@ -57,8 +57,6 @@ class MasterNavigationController: UINavigationController {
             mvc.tabBar.tintColor = color
             if let cvc = mvc.selectedViewController as? CustomerTableViewController {
                 cvc.initColor()
-            } else if let vvc = mvc.selectedViewController as? VoucherTableViewController {
-                vvc.initColor()
             }
         }
     }

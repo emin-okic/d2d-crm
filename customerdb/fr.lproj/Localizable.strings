@@ -1,7 +1,6 @@
-/* 
-  Strings.strings - FR
-  Copyright © 2019 Georg Sieber. All rights reserved.
-*/
+//
+// Strings Class For Translating French
+//
 
 // Main
 "customer_database" = "Base de données clients";
@@ -27,7 +26,6 @@
 "ok" = "D'accord";
 "invalid_response" = "Réponse invalide";
 "customers" = "Les clients";
-"vouchers" = "Pièces justificatives";
 "sync_not_configured" = "Sync non configuré";
 "please_setup_sync" = "Veuillez configurer la synchronisation dans les paramètres.";
 "import_ics" = "Importer un fichier ICS";
@@ -40,7 +38,6 @@
 "invalid_code" = "Code invalide";
 "could_not_find_valid_entries_in_this_code" = "Impossible de trouver des entrées valides dans ce code.";
 "import_csv_note" = "Veuillez noter les informations importantes suivantes pour l\'importation CSV. \n \nLa première ligne est interprétée comme le titre de la colonne. Votre fichier CSV doit contenir les colonnes suivantes: id, title, first_name, last_name, phone_home, phone_mobile, phone_work, email, street, zipcode, city, country, customer_group, newsletter, birthday, last_modified, notes\n\nLes autres colonnes sont importées en tant que champs personnalisés.\n\nImportant: veuillez utiliser une virgule (,) comme séparateur de champ. L\'ID client est généré lorsque le champ est vide ou que l\'ID existe déjà. Le champ \"newsletter\" ne peut contenir que 0 ou 1. Le format de date doit être \"AAAA-MM-JJ HH:MM:SS\".\n\nVous pouvez éditer votre fichier CSV par exemple avec un logiciel comme LibreOffice Calc avant de démarrer l\'importation.";
-"import_csv_note_voucher" = "Veuillez noter les informations importantes suivantes pour l\'importation CSV.\n\nLa première ligne est interprétée comme le titre de la colonne. Votre fichier CSV doit contenir les colonnes suivantes: id, number, original_value, current_value, from_customer, for_customer, issued, valid_until, redeemed, last_modified, notes\n\nImportant: veuillez utiliser une virgule (,) comme séparateur de champ. L\'ID client est généré lorsque le champ est vide ou que l\'ID existe déjà. Le format de la date doit être \"YYYY-MM-JJ HH:MM:SS\".\n\nVous pouvez éditer votre fichier CSV par exemple avec un logiciel comme LibreOffice Calc avant de démarrer l\'importation.";
 "export_ics" = "Exporter un fichier ICS";
 "export_vcf" = "Exporter un fichier VCF";
 "export_csv" = "Exporter un fichier CSV";
@@ -126,8 +123,6 @@
 "image" = "Image";
 "print_customer" = "Imprimer le client";
 "delete_customer" = "Supprimer le client";
-"print_voucher" = "Bon d'impression";
-"delete_voucher" = "Supprimer le bon";
 "redeem" = "Racheter";
 "value" = "Valeur";
 "notes" = "Remarques";
@@ -151,7 +146,6 @@
 "data_processing_consent" = "Consentement au traitement des données";
 "please_accept_data_processing" = "Veuillez accepter le traitement des données.";
 "new_customer" = "Nouveau client";
-"new_voucher" = "Nouveau bon";
 "new_appointment" = "Nouveau rendez-vous";
 "remove" = "Retirer";
 "end_date_before_start_date" = "La date de fin est antérieure à la date de début!";
