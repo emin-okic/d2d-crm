@@ -9,8 +9,6 @@
 /* Begin PBXBuildFile section */
 		561B7C5C25B4D114005ABB43 /* CallDirectoryNumber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561B7C5B25B4D114005ABB43 /* CallDirectoryNumber.swift */; };
 		562A8BB1249BA20A003CB9C4 /* DocumentPickers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 562A8BB0249BA20A003CB9C4 /* DocumentPickers.swift */; };
-		562A8BB324A66DA6003CB9C4 /* CustomerAppointment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 562A8BB224A66DA6003CB9C4 /* CustomerAppointment.swift */; };
-		562A8BB524A66FEB003CB9C4 /* CustomerCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 562A8BB424A66FEB003CB9C4 /* CustomerCalendar.swift */; };
 		562A8BB724A67DF5003CB9C4 /* CustomerFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 562A8BB624A67DF5003CB9C4 /* CustomerFile.swift */; };
 		563903C92374C75D00753D93 /* CustomerTableController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 563903C82374C75D00753D93 /* CustomerTableController.swift */; };
 		563FEE8420FFD6C500DFD7B7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 563FEE8320FFD6C500DFD7B7 /* AppDelegate.swift */; };
@@ -31,8 +29,6 @@
 		569E145323748DFF007BFAF0 /* KeyValueItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 569E145223748DFF007BFAF0 /* KeyValueItem.swift */; };
 		56B2B7CF23E5EAFF00295569 /* MasterNavigationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56B2B7CE23E5EAFF00295569 /* MasterNavigationViewController.swift */; };
 		56B34E7724802FF600DEDEA4 /* QuotedPrintable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56B34E7624802FF600DEDEA4 /* QuotedPrintable.swift */; };
-		56B8725424E07F0900E5F32D /* CalendarCsvWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56B8725324E07F0900E5F32D /* CalendarCsvWriter.swift */; };
-		56B8725624E080A500E5F32D /* CalendarIcsWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56B8725524E080A500E5F32D /* CalendarIcsWriter.swift */; };
 		56C089D3244A32D9005F8A1B /* PickerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56C089D2244A32D9005F8A1B /* PickerController.swift */; };
 		56D51FC02376D97E0097DBDE /* CustomerDetailsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D51FBF2376D97E0097DBDE /* CustomerDetailsViewController.swift */; };
 		56D51FC2237898E70097DBDE /* CustomerEditViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D51FC1237898E70097DBDE /* CustomerEditViewController.swift */; };
@@ -53,8 +49,6 @@
 		56E9C01824F5271500CD15DA /* GuiHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E9C01724F5271500CD15DA /* GuiHelper.swift */; };
 		56E9C02D246C64CA00DBB9DA /* MainSplitViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E9C02C246C64CA00DBB9DA /* MainSplitViewController.swift */; };
 		56E9C02F246C6E6E00DBB9DA /* NavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E9C02E246C6E6E00DBB9DA /* NavigationController.swift */; };
-		56F4E60D24B1D64C002F5569 /* AppointmentViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56F4E60C24B1D64C002F5569 /* AppointmentViewController.swift */; };
-		56F4E60F24B1D660002F5569 /* AppointmentEditViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56F4E60E24B1D660002F5569 /* AppointmentEditViewController.swift */; };
 		56F4E61124B2208D002F5569 /* UIColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56F4E61024B2208D002F5569 /* UIColor.swift */; };
 		56FDB94323FDC54A0018004C /* CustomerVcfWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FDB94223FDC54A0018004C /* CustomerVcfWriter.swift */; };
 		56FDB94524083CB60018004C /* InputOnlyModeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FDB94424083CB60018004C /* InputOnlyModeViewController.swift */; };
@@ -91,8 +85,6 @@
 /* Begin PBXFileReference section */
 		561B7C5B25B4D114005ABB43 /* CallDirectoryNumber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallDirectoryNumber.swift; sourceTree = "<group>"; };
 		562A8BB0249BA20A003CB9C4 /* DocumentPickers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPickers.swift; sourceTree = "<group>"; };
-		562A8BB224A66DA6003CB9C4 /* CustomerAppointment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerAppointment.swift; sourceTree = "<group>"; };
-		562A8BB424A66FEB003CB9C4 /* CustomerCalendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCalendar.swift; sourceTree = "<group>"; };
 		562A8BB624A67DF5003CB9C4 /* CustomerFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerFile.swift; sourceTree = "<group>"; };
 		56386B4E23F74CFE007D32DC /* customerdb.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = customerdb.entitlements; sourceTree = "<group>"; };
 		563903C82374C75D00753D93 /* CustomerTableController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerTableController.swift; sourceTree = "<group>"; };
@@ -123,8 +115,6 @@
 		569E145223748DFF007BFAF0 /* KeyValueItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyValueItem.swift; sourceTree = "<group>"; };
 		56B2B7CE23E5EAFF00295569 /* MasterNavigationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterNavigationViewController.swift; sourceTree = "<group>"; };
 		56B34E7624802FF600DEDEA4 /* QuotedPrintable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotedPrintable.swift; sourceTree = "<group>"; };
-		56B8725324E07F0900E5F32D /* CalendarCsvWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarCsvWriter.swift; sourceTree = "<group>"; };
-		56B8725524E080A500E5F32D /* CalendarIcsWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarIcsWriter.swift; sourceTree = "<group>"; };
 		56BF995F24745AEE00EBFDA5 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/LaunchScreen.strings; sourceTree = "<group>"; };
 		56BF996024745AEE00EBFDA5 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Main.strings; sourceTree = "<group>"; };
 		56BF996124745AEE00EBFDA5 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -158,8 +148,6 @@
 		56E9C01724F5271500CD15DA /* GuiHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuiHelper.swift; sourceTree = "<group>"; };
 		56E9C02C246C64CA00DBB9DA /* MainSplitViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainSplitViewController.swift; sourceTree = "<group>"; };
 		56E9C02E246C6E6E00DBB9DA /* NavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationController.swift; sourceTree = "<group>"; };
-		56F4E60C24B1D64C002F5569 /* AppointmentViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppointmentViewController.swift; sourceTree = "<group>"; };
-		56F4E60E24B1D660002F5569 /* AppointmentEditViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppointmentEditViewController.swift; sourceTree = "<group>"; };
 		56F4E61024B2208D002F5569 /* UIColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIColor.swift; sourceTree = "<group>"; };
 		56FDB94223FDC54A0018004C /* CustomerVcfWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerVcfWriter.swift; sourceTree = "<group>"; };
 		56FDB94424083CB60018004C /* InputOnlyModeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputOnlyModeViewController.swift; sourceTree = "<group>"; };
@@ -236,8 +224,6 @@
 				563903C82374C75D00753D93 /* CustomerTableController.swift */,
 				56D51FBF2376D97E0097DBDE /* CustomerDetailsViewController.swift */,
 				56D51FC1237898E70097DBDE /* CustomerEditViewController.swift */,
-				56F4E60C24B1D64C002F5569 /* AppointmentViewController.swift */,
-				56F4E60E24B1D660002F5569 /* AppointmentEditViewController.swift */,
 				568DFAB0255200F900546F6B /* CallDirectoryDatabase.swift */,
 				569E144D23745792007BFAF0 /* CustomerDatabase.swift */,
 				56D51FCD239C4A5C0097DBDE /* CustomerDatabaseApi.swift */,
@@ -260,8 +246,6 @@
 		569E144F23745950007BFAF0 /* Model */ = {
 			isa = PBXGroup;
 			children = (
-				562A8BB424A66FEB003CB9C4 /* CustomerCalendar.swift */,
-				562A8BB224A66DA6003CB9C4 /* CustomerAppointment.swift */,
 				569E145223748DFF007BFAF0 /* KeyValueItem.swift */,
 				569E14502374595F007BFAF0 /* Customer.swift */,
 				562A8BB624A67DF5003CB9C4 /* CustomerFile.swift */,
@@ -278,8 +262,6 @@
 				56DDADB923E780BF00879CBD /* SwiftCSV */,
 				56D55EC023EC407100FA8B7F /* CustomerCsvWriter.swift */,
 				56FDB94223FDC54A0018004C /* CustomerVcfWriter.swift */,
-				56B8725324E07F0900E5F32D /* CalendarCsvWriter.swift */,
-				56B8725524E080A500E5F32D /* CalendarIcsWriter.swift */,
 				56B34E7624802FF600DEDEA4 /* QuotedPrintable.swift */,
 			);
 			path = ImportExport;
@@ -410,7 +392,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				56D51FC2237898E70097DBDE /* CustomerEditViewController.swift in Sources */,
-				56B8725624E080A500E5F32D /* CalendarIcsWriter.swift in Sources */,
 				56D51FCE239C4A5C0097DBDE /* CustomerDatabaseApi.swift in Sources */,
 				56E9C02D246C64CA00DBB9DA /* MainSplitViewController.swift in Sources */,
 				56DDADC923E8AF5000879CBD /* SyncInfoViewController.swift in Sources */,
@@ -431,15 +412,12 @@
 				563FEE8420FFD6C500DFD7B7 /* AppDelegate.swift in Sources */,
 				56DDADC223E780DC00879CBD /* Parser.swift in Sources */,
 				569E145323748DFF007BFAF0 /* KeyValueItem.swift in Sources */,
-				56F4E60D24B1D64C002F5569 /* AppointmentViewController.swift in Sources */,
 				56B34E7724802FF600DEDEA4 /* QuotedPrintable.swift in Sources */,
 				56DDADC523E780DC00879CBD /* EnumeratedView.swift in Sources */,
 				568DFA85254F190C00546F6B /* ScannerViewController.swift in Sources */,
-				562A8BB324A66DA6003CB9C4 /* CustomerAppointment.swift in Sources */,
 				563903C92374C75D00753D93 /* CustomerTableController.swift in Sources */,
 				56DDADC623E780DC00879CBD /* CSV.swift in Sources */,
 				564EC39E27BEEDDA00C7BE81 /* TextViewViewController.swift in Sources */,
-				56F4E60F24B1D660002F5569 /* AppointmentEditViewController.swift in Sources */,
 				56FDB94524083CB60018004C /* InputOnlyModeViewController.swift in Sources */,
 				56DDADC323E780DC00879CBD /* ParsingState.swift in Sources */,
 				56DDADC423E780DC00879CBD /* NamedView.swift in Sources */,
@@ -447,13 +425,11 @@
 				568DFAB1255200F900546F6B /* CallDirectoryDatabase.swift in Sources */,
 				562A8BB724A67DF5003CB9C4 /* CustomerFile.swift in Sources */,
 				56D51FCA2392C7810097DBDE /* InfoViewController.swift in Sources */,
-				562A8BB524A66FEB003CB9C4 /* CustomerCalendar.swift in Sources */,
 				56FDB947240840620018004C /* LockViewController.swift in Sources */,
 				56FDB94323FDC54A0018004C /* CustomerVcfWriter.swift in Sources */,
 				56D55EC123EC407100FA8B7F /* CustomerCsvWriter.swift in Sources */,
 				569E14512374595F007BFAF0 /* Customer.swift in Sources */,
 				56DDADC123E780DC00879CBD /* String+Lines.swift in Sources */,
-				56B8725424E07F0900E5F32D /* CalendarCsvWriter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -85,7 +85,6 @@
 "design_options" = "Design-Optionen";
 "custom_fields" = "Benutzerdefinierte Felder";
 "files" = "Dateien";
-"calendar" = "Kalender";
 "backup" = "Backup";
 "backup_info_text" = "Standardmäßig werden die Daten nur lokal auf Ihrem Gerät gespeichert. Bitte sichern Sie Ihre Datenbank regelmäßig, um Ihre Daten im Falle einer Fehlfunktion oder eines Verlusts Ihres Mobilgeräts nicht zu verlieren. Dazu kopieren Sie einfach die Datenbankdateien (im Verzeichnis 'Kundendatenbank') auf Ihren Computer oder einen anderen externen Speicher.\n\nDie Sicherung ist noch einfacher, wenn Sie die Synchronisierungsfunktion verwenden. Die Daten werden dann mit einem (eigenen) MySQL-Server synchronisiert. Weitere Informationen zu dieser Sicherungsoption finden Sie in den Einstellungen.";
 "carddav_api" = "CardDAV-API";
