@@ -15,9 +15,7 @@ class CustomerDatabase {
     static var CREATE_DB_STATEMENTS = [
         "CREATE TABLE IF NOT EXISTS customer (id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR NOT NULL, first_name VARCHAR NOT NULL, last_name VARCHAR NOT NULL, phone_home VARCHAR NOT NULL, phone_mobile VARCHAR NOT NULL, phone_work VARCHAR NOT NULL, email VARCHAR NOT NULL, street VARCHAR NOT NULL, zipcode VARCHAR NOT NULL, city VARCHAR NOT NULL, country VARCHAR NOT NULL, birthday DATETIME, notes VARCHAR NOT NULL, newsletter INTEGER DEFAULT 0 NOT NULL, customer_group VARCHAR NOT NULL, custom_fields VARCHAR NOT NULL, image BLOB, consent BLOB, last_modified DATETIME NOT NULL, removed INTEGER DEFAULT 0 NOT NULL);",
         "CREATE TABLE IF NOT EXISTS customer_extra_fields (id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR UNIQUE NOT NULL, type INTEGER NOT NULL, last_modified DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL, removed INTEGER DEFAULT 0 NOT NULL);",
-        "CREATE TABLE IF NOT EXISTS customer_extra_presets (id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR NOT NULL, extra_field_id INTEGER NOT NULL);",
-        
-        "CREATE TABLE IF NOT EXISTS voucher (id INTEGER PRIMARY KEY AUTOINCREMENT, current_value REAL NOT NULL, original_value REAL NOT NULL, voucher_no VARCHAR NOT NULL, from_customer VARCHAR NOT NULL, for_customer VARCHAR NOT NULL, issued DATETIME NOT NULL, valid_until DATETIME DEFAULT NULL, redeemed DATETIME DEFAULT NULL, last_modified DATETIME NOT NULL, notes VARCHAR NOT NULL, removed INTEGER DEFAULT 0 NOT NULL);"
+        "CREATE TABLE IF NOT EXISTS customer_extra_presets (id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR NOT NULL, extra_field_id INTEGER NOT NULL);"
     ]
     
     var db: OpaquePointer?
@@ -61,7 +59,7 @@ class CustomerDatabase {
             sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS calendar (id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR NOT NULL, color VARCHAR NOT NULL, notes VARCHAR NOT NULL, last_modified DATETIME DEFAULT CURRENT_TIMESTAMP, removed INTEGER DEFAULT 0);", nil,nil,nil)
             sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS appointment (id INTEGER PRIMARY KEY AUTOINCREMENT, calendar_id INTEGER NOT NULL, title VARCHAR NOT NULL, notes VARCHAR NOT NULL, time_start DATETIME, time_end DATETIME, fullday INTEGER DEFAULT 0, customer VARCHAR NOT NULL, location VARCHAR NOT NULL, last_modified DATETIME DEFAULT CURRENT_TIMESTAMP, removed INTEGER DEFAULT 0);", nil,nil,nil)
             sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS customer_file (id INTEGER PRIMARY KEY AUTOINCREMENT, customer_id INTEGER NOT NULL, name VARCHAR NOT NULL, content BLOB NOT NULL);", nil,nil,nil)
-
+            
             var stmt:OpaquePointer?
             if(sqlite3_prepare(self.db, "SELECT id, consent FROM customer", -1, &stmt, nil) == SQLITE_OK) {
                 while sqlite3_step(stmt) == SQLITE_ROW {
@@ -103,8 +101,6 @@ class CustomerDatabase {
         if(columnNotExists(table: "appointment", column: "customer_id")) {
             beginTransaction()
             sqlite3_exec(db, "ALTER TABLE appointment ADD COLUMN customer_id INTEGER;", nil,nil,nil)
-            sqlite3_exec(db, "ALTER TABLE voucher ADD COLUMN from_customer_id INTEGER;", nil,nil,nil)
-            sqlite3_exec(db, "ALTER TABLE voucher ADD COLUMN for_customer_id INTEGER;", nil,nil,nil)
             
             // convert timestamps to UTC
             var stmt:OpaquePointer?
@@ -125,50 +121,6 @@ class CustomerDatabase {
                     let oldDate = CustomerDatabase.parseDateRaw(strDate: String(cString: sqlite3_column_text(stmt, 1)))
                     let newDateString = CustomerDatabase.dateToString(date: oldDate!) as NSString
                     var stmt2:OpaquePointer?
-                    if sqlite3_prepare(self.db, "UPDATE voucher SET last_modified = ? WHERE id = ?", -1, &stmt2, nil) == SQLITE_OK {
-                        sqlite3_bind_text(stmt2, 1, newDateString.utf8String, -1, nil)
-                        sqlite3_bind_int64(stmt2, 2, sqlite3_column_int64(stmt, 0))
-                        if sqlite3_step(stmt2) == SQLITE_DONE { sqlite3_finalize(stmt2) }
-                    }
-                }
-            }
-            if(sqlite3_prepare(self.db, "SELECT id, issued, redeemed, valid_until, last_modified FROM voucher", -1, &stmt, nil) == SQLITE_OK) {
-                while sqlite3_step(stmt) == SQLITE_ROW {
-                    let oldDate1 = CustomerDatabase.parseDateRaw(strDate: String(cString: sqlite3_column_text(stmt, 1)))
-                    let newDateString1 = CustomerDatabase.dateToString(date: oldDate1!) as NSString
-
-                    var newDateString2:NSString? = nil
-                    if let value = sqlite3_column_text(stmt, 2) {
-                        let oldDate2 = CustomerDatabase.parseDateRaw(strDate: String(cString: value))
-                        newDateString2 = CustomerDatabase.dateToString(date: oldDate2!) as NSString
-                    }
-                    
-                    var newDateString3:NSString? = nil
-                    if let value = sqlite3_column_text(stmt, 3) {
-                        let oldDate3 = CustomerDatabase.parseDateRaw(strDate: String(cString: value))
-                        newDateString3 = CustomerDatabase.dateToString(date: oldDate3!) as NSString
-                    }
-                    
-                    let oldDate4 = CustomerDatabase.parseDateRaw(strDate: String(cString: sqlite3_column_text(stmt, 4)))
-                    let newDateString4 = CustomerDatabase.dateToString(date: oldDate4!) as NSString
-                    
-                    var stmt2:OpaquePointer?
-                    if sqlite3_prepare(self.db, "UPDATE voucher SET issued = ?, redeemed = ?, valid_until = ?, last_modified = ? WHERE id = ?", -1, &stmt2, nil) == SQLITE_OK {
-                        sqlite3_bind_text(stmt2, 1, newDateString1.utf8String, -1, nil)
-                        if(newDateString2 == nil) {
-                            sqlite3_bind_null(stmt2, 2)
-                        } else {
-                            sqlite3_bind_text(stmt2, 2, newDateString2!.utf8String, -1, nil)
-                        }
-                        if(newDateString3 == nil) {
-                            sqlite3_bind_null(stmt2, 3)
-                        } else {
-                            sqlite3_bind_text(stmt2, 3, newDateString3!.utf8String, -1, nil)
-                        }
-                        sqlite3_bind_text(stmt2, 4, newDateString4.utf8String, -1, nil)
-                        sqlite3_bind_int64(stmt2, 5, sqlite3_column_int64(stmt, 0))
-                        if sqlite3_step(stmt2) == SQLITE_DONE { sqlite3_finalize(stmt2) }
-                    }
                 }
             }
             commitTransaction()
@@ -669,18 +621,18 @@ class CustomerDatabase {
                 if(search != nil && search != "") {
                     let normalizedSearch = search!.uppercased()
                     if(!c.mTitle.uppercased().contains(normalizedSearch)
-                        && !c.mFirstName.uppercased().contains(normalizedSearch)
-                        && !c.mLastName.uppercased().contains(normalizedSearch)
-                        && !c.mPhoneHome.uppercased().contains(normalizedSearch)
-                        && !c.mPhoneMobile.uppercased().contains(normalizedSearch)
-                        && !c.mPhoneWork.uppercased().contains(normalizedSearch)
-                        && !c.mEmail.uppercased().contains(normalizedSearch)
-                        && !c.mStreet.uppercased().contains(normalizedSearch)
-                        && !c.mZipcode.uppercased().contains(normalizedSearch)
-                        && !c.mCity.uppercased().contains(normalizedSearch)
-                        && !c.mGroup.uppercased().contains(normalizedSearch)
-                        && !c.mNotes.uppercased().contains(normalizedSearch)
-                        && !findInCustomFields(searchUpperCase: normalizedSearch, fields: c.getCustomFields())) {
+                       && !c.mFirstName.uppercased().contains(normalizedSearch)
+                       && !c.mLastName.uppercased().contains(normalizedSearch)
+                       && !c.mPhoneHome.uppercased().contains(normalizedSearch)
+                       && !c.mPhoneMobile.uppercased().contains(normalizedSearch)
+                       && !c.mPhoneWork.uppercased().contains(normalizedSearch)
+                       && !c.mEmail.uppercased().contains(normalizedSearch)
+                       && !c.mStreet.uppercased().contains(normalizedSearch)
+                       && !c.mZipcode.uppercased().contains(normalizedSearch)
+                       && !c.mCity.uppercased().contains(normalizedSearch)
+                       && !c.mGroup.uppercased().contains(normalizedSearch)
+                       && !c.mNotes.uppercased().contains(normalizedSearch)
+                       && !findInCustomFields(searchUpperCase: normalizedSearch, fields: c.getCustomFields())) {
                         continue
                     }
                 }
@@ -1078,270 +1030,6 @@ class CustomerDatabase {
         var stmt:OpaquePointer?
         if sqlite3_prepare(self.db, "DELETE FROM customer_extra_presets WHERE id = ?", -1, &stmt, nil) == SQLITE_OK {
             sqlite3_bind_int64(stmt, 1, id)
-            if sqlite3_step(stmt) == SQLITE_DONE {
-                sqlite3_finalize(stmt)
-            }
-        }
-    }
-    
-    // Voucher Operations
-    func getVouchers(showDeleted:Bool, modifiedSince:Date?=nil) -> [Voucher] {
-        var vouchers:[Voucher] = []
-        var stmt:OpaquePointer?
-        var sql = "SELECT id, original_value, current_value, voucher_no, from_customer, from_customer_id, for_customer, for_customer_id, issued, valid_until, redeemed, notes, last_modified, removed FROM voucher WHERE removed = 0 ORDER BY issued DESC"
-        if(showDeleted) {
-            sql = "SELECT id, original_value, current_value, voucher_no, from_customer, from_customer_id, for_customer, for_customer_id, issued, valid_until, redeemed, notes, last_modified, removed FROM voucher ORDER BY issued DESC"
-        }
-        if sqlite3_prepare(self.db, sql, -1, &stmt, nil) == SQLITE_OK {
-            while sqlite3_step(stmt) == SQLITE_ROW {
-                var validUntil:Date? = nil
-                if(sqlite3_column_text(stmt, 9) != nil) {
-                    validUntil = CustomerDatabase.parseDate(strDate: String(cString: sqlite3_column_text(stmt, 9)))
-                }
-                var redeemed:Date? = nil
-                if(sqlite3_column_text(stmt, 10) != nil) {
-                    redeemed = CustomerDatabase.parseDate(strDate: String(cString: sqlite3_column_text(stmt, 10)))
-                }
-                var fromCustomerId:Int64? = nil
-                if(sqlite3_column_text(stmt, 5) != nil) { // what a hacky workaround
-                    fromCustomerId = Int64(sqlite3_column_int64(stmt, 5))
-                }
-                var forCustomerId:Int64? = nil
-                if(sqlite3_column_text(stmt, 7) != nil) { // what a hacky workaround
-                    forCustomerId = Int64(sqlite3_column_int64(stmt, 7))
-                }
-                var lastModified:Date = Date()
-                if let date = CustomerDatabase.parseDate(strDate: String(cString: sqlite3_column_text(stmt, 12))) {
-                    lastModified = date
-                }
-                if(modifiedSince == nil || lastModified > modifiedSince!) {
-                    vouchers.append(
-                        Voucher(
-                            id: Int64(sqlite3_column_int64(stmt, 0)),
-                            originalValue: Double(sqlite3_column_double(stmt, 1)),
-                            currentValue: Double(sqlite3_column_double(stmt, 2)),
-                            voucherNo: String(cString: sqlite3_column_text(stmt, 3)),
-                            fromCustomer: String(cString: sqlite3_column_text(stmt, 4)),
-                            fromCustomerId: fromCustomerId,
-                            forCustomer: String(cString: sqlite3_column_text(stmt, 6)),
-                            forCustomerId: forCustomerId,
-                            issued: CustomerDatabase.parseDate(strDate: String(cString: sqlite3_column_text(stmt, 8))) ?? Date(),
-                            validUntil: validUntil,
-                            redeemed: redeemed,
-                            notes: String(cString: sqlite3_column_text(stmt, 11)),
-                            lastModified: lastModified,
-                            removed: Int(sqlite3_column_int(stmt, 13))
-                        )
-                    )
-                }
-            }
-        }
-        return vouchers
-    }
-    func getVouchersByCustomer(customerId:Int64) -> [Voucher] {
-        var vouchers:[Voucher] = []
-        var stmt:OpaquePointer?
-        let sql = "SELECT id, original_value, current_value, voucher_no, from_customer, from_customer_id, for_customer, for_customer_id, issued, valid_until, redeemed, notes, last_modified, removed FROM voucher WHERE (from_customer_id = ? OR for_customer_id = ?) AND removed = 0 ORDER BY issued DESC"
-        if sqlite3_prepare(self.db, sql, -1, &stmt, nil) == SQLITE_OK {
-            sqlite3_bind_int64(stmt, 1, customerId)
-            sqlite3_bind_int64(stmt, 2, customerId)
-            while sqlite3_step(stmt) == SQLITE_ROW {
-                var validUntil:Date? = nil
-                if(sqlite3_column_text(stmt, 9) != nil) {
-                    validUntil = CustomerDatabase.parseDate(strDate: String(cString: sqlite3_column_text(stmt, 9)))
-                }
-                var redeemed:Date? = nil
-                if(sqlite3_column_text(stmt, 10) != nil) {
-                    redeemed = CustomerDatabase.parseDate(strDate: String(cString: sqlite3_column_text(stmt, 10)))
-                }
-                var fromCustomerId:Int64? = nil
-                if(sqlite3_column_text(stmt, 5) != nil) { // what a hacky workaround
-                    fromCustomerId = Int64(sqlite3_column_int64(stmt, 5))
-                }
-                var forCustomerId:Int64? = nil
-                if(sqlite3_column_text(stmt, 7) != nil) { // what a hacky workaround
-                    forCustomerId = Int64(sqlite3_column_int64(stmt, 7))
-                }
-                vouchers.append(
-                    Voucher(
-                        id: Int64(sqlite3_column_int64(stmt, 0)),
-                        originalValue: Double(sqlite3_column_double(stmt, 1)),
-                        currentValue: Double(sqlite3_column_double(stmt, 2)),
-                        voucherNo: String(cString: sqlite3_column_text(stmt, 3)),
-                        fromCustomer: String(cString: sqlite3_column_text(stmt, 4)),
-                        fromCustomerId: fromCustomerId,
-                        forCustomer: String(cString: sqlite3_column_text(stmt, 6)),
-                        forCustomerId: forCustomerId,
-                        issued: CustomerDatabase.parseDate(strDate: String(cString: sqlite3_column_text(stmt, 8))) ?? Date(),
-                        validUntil: validUntil,
-                        redeemed: redeemed,
-                        notes: String(cString: sqlite3_column_text(stmt, 11)),
-                        lastModified: CustomerDatabase.parseDate(strDate: String(cString: sqlite3_column_text(stmt, 12))) ?? Date(),
-                        removed: Int(sqlite3_column_int(stmt, 13))
-                    )
-                )
-            }
-        }
-        return vouchers
-    }
-    func getVoucher(id:Int64, showDeleted:Bool=false) -> Voucher? {
-        var voucher:Voucher? = nil
-        var stmt:OpaquePointer?
-        var sql = "SELECT id, original_value, current_value, voucher_no, from_customer, from_customer_id, for_customer, for_customer_id, issued, valid_until, redeemed, notes, last_modified, removed FROM voucher WHERE id = ?"
-        if(!showDeleted) {
-            sql = sql + " AND removed = 0"
-        }
-        if sqlite3_prepare(self.db, sql, -1, &stmt, nil) == SQLITE_OK {
-            sqlite3_bind_int64(stmt, 1, id)
-            while sqlite3_step(stmt) == SQLITE_ROW {
-                var validUntil:Date? = nil
-                if(sqlite3_column_text(stmt, 9) != nil) {
-                    validUntil = CustomerDatabase.parseDate(strDate: String(cString: sqlite3_column_text(stmt, 9)))
-                }
-                var redeemed:Date? = nil
-                if(sqlite3_column_text(stmt, 10) != nil) {
-                    redeemed = CustomerDatabase.parseDate(strDate: String(cString: sqlite3_column_text(stmt, 10)))
-                }
-                var fromCustomerId:Int64? = nil
-                if(sqlite3_column_text(stmt, 5) != nil) { // what a hacky workaround
-                    fromCustomerId = sqlite3_column_int64(stmt, 5)
-                }
-                var forCustomerId:Int64? = nil
-                if(sqlite3_column_text(stmt, 7) != nil) { // what a hacky workaround
-                    forCustomerId = Int64(sqlite3_column_int64(stmt, 7))
-                }
-                voucher = (
-                    Voucher(
-                        id: Int64(sqlite3_column_int64(stmt, 0)),
-                        originalValue: Double(sqlite3_column_double(stmt, 1)),
-                        currentValue: Double(sqlite3_column_double(stmt, 2)),
-                        voucherNo: String(cString: sqlite3_column_text(stmt, 3)),
-                        fromCustomer: String(cString: sqlite3_column_text(stmt, 4)),
-                        fromCustomerId: fromCustomerId,
-                        forCustomer: String(cString: sqlite3_column_text(stmt, 6)),
-                        forCustomerId: forCustomerId,
-                        issued: CustomerDatabase.parseDate(strDate: String(cString: sqlite3_column_text(stmt, 8))) ?? Date(),
-                        validUntil: validUntil,
-                        redeemed: redeemed,
-                        notes: String(cString: sqlite3_column_text(stmt, 11)),
-                        lastModified: CustomerDatabase.parseDate(strDate: String(cString: sqlite3_column_text(stmt, 12))) ?? Date(),
-                        removed: Int(sqlite3_column_int(stmt, 13))
-                    )
-                )
-            }
-        }
-        return voucher
-    }
-    func updateVoucher(v: Voucher) -> Bool {
-        var stmt:OpaquePointer?
-        if sqlite3_prepare(self.db, "UPDATE voucher SET original_value = ?, current_value = ?, voucher_no = ?, from_customer = ?, from_customer_id = ?, for_customer = ?, for_customer_id = ?, issued = ?, valid_until = ?, redeemed = ?, notes = ?, last_modified = ? WHERE id = ?", -1, &stmt, nil) == SQLITE_OK {
-            let voucherNo = v.mVoucherNo as NSString
-            let fromCustomer = v.mFromCustomer as NSString
-            let forCustomer = v.mForCustomer as NSString
-            let issued:NSString = CustomerDatabase.dateToString(date: v.mIssued) as NSString
-            let validUntil:NSString? = (v.mValidUntil==nil) ? nil : CustomerDatabase.dateToString(date: v.mValidUntil!) as NSString
-            let redeemed:NSString? = (v.mRedeemed==nil) ? nil : CustomerDatabase.dateToString(date: v.mRedeemed!) as NSString
-            let notes = v.mNotes as NSString
-            let lastModified = CustomerDatabase.dateToString(date: v.mLastModified) as NSString
-            sqlite3_bind_double(stmt, 1, v.mOriginalValue)
-            sqlite3_bind_double(stmt, 2, v.mCurrentValue)
-            sqlite3_bind_text(stmt, 3, voucherNo.utf8String, -1, nil)
-            sqlite3_bind_text(stmt, 4, fromCustomer.utf8String, -1, nil)
-            if(v.mFromCustomerId == nil) {
-                sqlite3_bind_null(stmt, 5)
-            } else {
-                sqlite3_bind_int64(stmt, 5, v.mFromCustomerId!)
-            }
-            sqlite3_bind_text(stmt, 6, forCustomer.utf8String, -1, nil)
-            if(v.mForCustomerId == nil) {
-                sqlite3_bind_null(stmt, 7)
-            } else {
-                sqlite3_bind_int64(stmt, 7, v.mForCustomerId!)
-            }
-            sqlite3_bind_text(stmt, 8, issued.utf8String, -1, nil)
-            if(validUntil == nil) {
-                sqlite3_bind_null(stmt, 9)
-            } else {
-                sqlite3_bind_text(stmt, 9, validUntil!.utf8String, -1, nil)
-            }
-            if(redeemed == nil) {
-                sqlite3_bind_null(stmt, 10)
-            } else {
-                sqlite3_bind_text(stmt, 10, redeemed!.utf8String, -1, nil)
-            }
-            sqlite3_bind_text(stmt, 11, notes.utf8String, -1, nil)
-            sqlite3_bind_text(stmt, 12, lastModified.utf8String, -1, nil)
-            sqlite3_bind_int64(stmt, 13, v.mId)
-            if sqlite3_step(stmt) == SQLITE_DONE {
-                sqlite3_finalize(stmt)
-            }
-        }
-        return true
-    }
-    func insertVoucher(v: Voucher) -> Bool {
-        if(v.mId == -1) {
-            v.mId = Voucher.generateID()
-        }
-        var stmt:OpaquePointer?
-        if sqlite3_prepare(self.db, "INSERT INTO voucher (id, original_value, current_value, voucher_no, from_customer, from_customer_id, for_customer, for_customer_id, issued, valid_until, redeemed, notes, last_modified, removed) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", -1, &stmt, nil) == SQLITE_OK {
-            let voucherNo = v.mVoucherNo as NSString
-            let fromCustomer = v.mFromCustomer as NSString
-            let forCustomer = v.mForCustomer as NSString
-            let issued:NSString = CustomerDatabase.dateToString(date: v.mIssued) as NSString
-            let validUntil:NSString? = (v.mValidUntil==nil) ? nil : CustomerDatabase.dateToString(date: v.mValidUntil!) as NSString
-            let redeemed:NSString? = (v.mRedeemed==nil) ? nil : CustomerDatabase.dateToString(date: v.mRedeemed!) as NSString
-            let notes = v.mNotes as NSString
-            let lastModified = CustomerDatabase.dateToString(date: v.mLastModified) as NSString
-            sqlite3_bind_int64(stmt, 1, v.mId)
-            sqlite3_bind_double(stmt, 2, v.mOriginalValue)
-            sqlite3_bind_double(stmt, 3, v.mCurrentValue)
-            sqlite3_bind_text(stmt, 4, voucherNo.utf8String, -1, nil)
-            sqlite3_bind_text(stmt, 5, fromCustomer.utf8String, -1, nil)
-            if(v.mFromCustomerId == nil) {
-                sqlite3_bind_null(stmt, 6)
-            } else {
-                sqlite3_bind_int64(stmt, 6, v.mFromCustomerId!)
-            }
-            sqlite3_bind_text(stmt, 7, forCustomer.utf8String, -1, nil)
-            if(v.mForCustomerId == nil) {
-                sqlite3_bind_null(stmt, 8)
-            } else {
-                sqlite3_bind_int64(stmt, 8, v.mForCustomerId!)
-            }
-            sqlite3_bind_text(stmt, 9, issued.utf8String, -1, nil)
-            if(validUntil == nil) {
-                sqlite3_bind_null(stmt, 10)
-            } else {
-                sqlite3_bind_text(stmt, 10, validUntil!.utf8String, -1, nil)
-            }
-            if(redeemed == nil) {
-                sqlite3_bind_null(stmt, 11)
-            } else {
-                sqlite3_bind_text(stmt, 11, redeemed!.utf8String, -1, nil)
-            }
-            sqlite3_bind_text(stmt, 12, notes.utf8String, -1, nil)
-            sqlite3_bind_text(stmt, 13, lastModified.utf8String, -1, nil)
-            sqlite3_bind_int(stmt, 14, Int32(v.mRemoved))
-            if sqlite3_step(stmt) == SQLITE_DONE {
-                sqlite3_finalize(stmt)
-            }
-        }
-        return true
-    }
-    func removeVoucher(id: Int64) {
-        var stmt:OpaquePointer?
-        if sqlite3_prepare(self.db, "UPDATE voucher SET original_value = -1, current_value = -1, from_customer = '', from_customer_id = null, for_customer = '', for_customer_id = null, issued = 0, valid_until = 0, redeemed = 0, notes = '', last_modified = ?, removed = 1 WHERE id = ?", -1, &stmt, nil) == SQLITE_OK {
-            let lastModified = CustomerDatabase.dateToString(date: Date()) as NSString
-            sqlite3_bind_text(stmt, 1, lastModified.utf8String, -1, nil)
-            sqlite3_bind_int64(stmt, 2, id)
-            if sqlite3_step(stmt) == SQLITE_DONE {
-                sqlite3_finalize(stmt)
-            }
-        }
-    }
-    func deleteAllVouchers() {
-        var stmt:OpaquePointer?
-        if sqlite3_prepare(self.db, "DELETE FROM voucher WHERE 1=1", -1, &stmt, nil) == SQLITE_OK {
             if sqlite3_step(stmt) == SQLITE_DONE {
                 sqlite3_finalize(stmt)
             }

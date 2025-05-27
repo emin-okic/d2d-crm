@@ -1,6 +1,5 @@
 //
-//  SettingsViewController.swift
-//  Copyright © 2019 Georg Sieber. All rights reserved.
+//  Settings View Controller Class
 //
 
 import Foundation
@@ -296,7 +295,6 @@ class SettingsViewController: UIViewController, UITextFieldDelegate, UINavigatio
                     if(self.saveSettings()) {
                         self.mDefaults.set(0, forKey: "last-successful-sync")
                         self.mDb.deleteAllCustomers()
-                        self.mDb.deleteAllVouchers()
                         self.mDb.deleteAllCalendars()
                         self.mDb.deleteAllAppointments()
                         if(self.mMainViewControllerRef != nil) {

@@ -11,9 +11,6 @@
 /* Class = "UITextField"; placeholder = "Password"; ObjectID = "1W5-81-mIk"; */
 "1W5-81-mIk.placeholder" = "пароль";
 
-/* Class = "UILabel"; text = "Please make sure that all devices are synchronized in order to not issue duplicate voucher numbers."; ObjectID = "1kX-R6-aJ4"; */
-"1kX-R6-aJ4.text" = "Пожалуйста, убедитесь, что все устройства синхронизированы, чтобы не выдавать дубликаты номеров ваучеров.";
-
 /* Class = "UILabel"; text = "Address"; ObjectID = "1rv-JJ-pDw"; */
 "1rv-JJ-pDw.text" = "Адрес";
 
@@ -137,9 +134,6 @@
 /* Class = "UILabel"; text = "Phone Home"; ObjectID = "Ern-Et-EpP"; */
 "Ern-Et-EpP.text" = "Домашний телефон";
 
-/* Class = "UILabel"; text = "Not licensed for commercial use."; ObjectID = "G1n-du-41I"; */
-"G1n-du-41I.text" = "Не лицензирован для коммерческого использования.";
-
 /* Class = "UILabel"; text = "Person"; ObjectID = "G2H-g6-ik8"; */
 "G2H-g6-ik8.text" = "Человек";
 
@@ -169,9 +163,6 @@
 
 /* Class = "UILabel"; text = "Input-Only Mode and App Lock"; ObjectID = "KT3-ri-LEI"; */
 "KT3-ri-LEI.text" = "Режим только ввода и блокировка приложения";
-
-/* Class = "UILabel"; text = "Voucher"; ObjectID = "KrQ-8n-l8z"; */
-"KrQ-8n-l8z.text" = "Ваучер";
 
 /* Class = "UILabel"; text = "Cloud Service"; ObjectID = "LLl-au-ZIx"; */
 "LLl-au-ZIx.text" = "Облачный сервис";
@@ -226,12 +217,6 @@
 
 /* Class = "UITextField"; placeholder = "Phone Work"; ObjectID = "QZo-z6-nBD"; */
 "QZo-z6-nBD.placeholder" = "Работа по телефону";
-
-/* Class = "UITextField"; placeholder = "Voucher Number"; ObjectID = "RCG-IE-piD"; */
-"RCG-IE-piD.placeholder" = "Номер ваучера";
-
-/* Class = "UITabBarItem"; title = "Vouchers"; ObjectID = "Rde-ds-wAi"; */
-"Rde-ds-wAi.title" = "Ваучеры";
 
 /* Class = "UILabel"; text = "Commercial Usage"; ObjectID = "Ru1-yi-LkT"; */
 "Ru1-yi-LkT.text" = "Коммерческое использование";
@@ -310,12 +295,6 @@
 
 /* Class = "UILabel"; text = "Optonal activatable mode that allows only data entry. For example, the device can be handed to showroom visitors. Furthermore you can lock the app completely."; ObjectID = "a3w-jB-j03"; */
 "a3w-jB-j03.text" = "Дополнительный активируемый режим, который позволяет только ввод данных. Например, устройство может быть передано посетителям выставочного зала. Кроме того, вы можете полностью заблокировать приложение. Одноразовый платеж.";
-
-/* Class = "UINavigationItem"; title = "Edit Voucher"; ObjectID = "aQN-x7-NUJ"; */
-"aQN-x7-NUJ.title" = "Редактировать ваучер";
-
-/* Class = "UILabel"; text = "Voucher Number"; ObjectID = "aeU-PV-vYP"; */
-"aeU-PV-vYP.text" = "Номер ваучера";
 
 /* Class = "UITextField"; placeholder = "Zipcode"; ObjectID = "ayr-WM-678"; */
 "ayr-WM-678.placeholder" = "Почтовый индекс";

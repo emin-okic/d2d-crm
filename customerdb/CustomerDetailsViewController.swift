@@ -1,6 +1,5 @@
 //
-//  CustomerDetailsViewController.swift
-//  Copyright © 2019 Georg Sieber. All rights reserved.
+//  The Customer Details View Controller Class
 //
 
 import Foundation
@@ -27,7 +26,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
     @IBOutlet weak var stackViewBirthday: UIStackView!
     @IBOutlet weak var stackViewFilesContainer: UIStackView!
     @IBOutlet weak var stackViewFiles: UIStackView!
-    @IBOutlet weak var stackViewVouchers: UIStackView!
     @IBOutlet weak var stackViewAppointments: UIStackView!
     
     @IBOutlet weak var labelPhoneHome: UILabel!
@@ -190,14 +188,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
         for file in files {
             if file.mContent == nil { continue }
             insertFile(file: file)
-        }
-        
-        let vouchers = mDb.getVouchersByCustomer(customerId: mCurrentCustomer!.mId)
-        for view in stackViewVouchers.arrangedSubviews {
-            view.removeFromSuperview()
-        }
-        for voucher in vouchers {
-            insertVoucher(voucher: voucher)
         }
         
         let appointments = mDb.getAppointmentsByCustomer(customerId: mCurrentCustomer!.mId)
@@ -531,12 +521,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
         stackViewFiles.addArrangedSubview(stackView)
     }
     
-    func insertVoucher(voucher:Voucher) {
-        let button = VoucherButton(voucher: voucher)
-        button.addTarget(self, action: #selector(onClickVoucherButton), for: .touchUpInside)
-        stackViewVouchers.addArrangedSubview(button)
-    }
-    
     func insertAppointment(appointment:CustomerAppointment) {
         let button = AppointmentButton(appointment: appointment)
         button.addTarget(self, action: #selector(onClickAppointmentButton), for: .touchUpInside)
@@ -569,14 +553,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
     }
     func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
         return mCurrentFileUrl! as QLPreviewItem
-    }
-    
-    @objc func onClickVoucherButton(sender: VoucherButton!) {
-        let detailViewController = storyboard?.instantiateViewController(withIdentifier:"VoucherDetailsNavigationViewController") as! UINavigationController
-        if let vdvc = detailViewController.viewControllers.first as? VoucherDetailsViewController {
-            vdvc.mCurrentVoucherId = sender.mVoucher!.mId
-        }
-        splitViewController?.showDetailViewController(detailViewController, sender: nil)
     }
     
     @objc func onClickAppointmentButton(sender: AppointmentButton!) {
@@ -628,32 +604,7 @@ class FileButton: UIButton {
         super.init(coder: aDecoder)
     }
 }
-class VoucherButton: UIButton {
-    var mVoucher: Voucher?
-    required init(voucher:Voucher) {
-        super.init(frame: .zero)
-        mVoucher = voucher
-        let currency:String = UserDefaults.standard.string(forKey: "currency") ?? ""
-        if(voucher.mVoucherNo != "") {
-            setTitle("#"+voucher.mVoucherNo+" ("+Voucher.format(value: voucher.mCurrentValue)+" "+currency+")", for: .normal)
-        } else {
-            setTitle("#"+String(voucher.mId)+" ("+Voucher.format(value: voucher.mCurrentValue)+" "+currency+")", for: .normal)
-        }
-        if #available(iOS 13.0, *) {
-            setTitleColor(.link, for: .normal)
-        } else {
-            setTitleColor(UIColor.init(hex: "#0f7c9d"), for: .normal)
-        }
-        if #available(iOS 11.0, *) {
-            contentHorizontalAlignment = .leading
-        } else {
-            contentHorizontalAlignment = .left
-        }
-    }
-    required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-    }
-}
+
 class AppointmentButton: UIButton {
     var mAppointment: CustomerAppointment?
     required init(appointment:CustomerAppointment) {

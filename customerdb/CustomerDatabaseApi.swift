@@ -134,25 +134,6 @@ class CustomerDatabaseApi {
             ])
         }
         
-        var vouchersDataArray:[[String:Any?]] = []
-        for voucher in mDb.getVouchers(showDeleted: true, modifiedSince: diffSince) {
-            vouchersDataArray.append([
-                "id": voucher.mId,
-                "original_value": voucher.mOriginalValue,
-                "current_value": voucher.mCurrentValue,
-                "voucher_no": voucher.mVoucherNo,
-                "from_customer": voucher.mFromCustomer,
-                "from_customer_id": voucher.mFromCustomerId,
-                "for_customer": voucher.mForCustomer,
-                "for_customer_id": voucher.mForCustomerId,
-                "issued": CustomerDatabase.dateToString(date: voucher.mIssued),
-                "valid_until": ((voucher.mValidUntil == nil) ? nil : CustomerDatabase.dateToString(date: voucher.mValidUntil!)),
-                "redeemed": ((voucher.mRedeemed == nil) ? nil : CustomerDatabase.dateToString(date: voucher.mRedeemed!)),
-                "notes": voucher.mNotes,
-                "last_modified": CustomerDatabase.dateToString(date: voucher.mLastModified),
-                "removed": voucher.mRemoved
-            ])
-        }
         
         let json: [String:Any?] = [
             "jsonrpc": "2.0",
@@ -163,7 +144,6 @@ class CustomerDatabaseApi {
                 "password": mPassword,
                 "appstore_receipt": mReceipt,
                 "customers": customersDataArray,
-                "vouchers": vouchersDataArray,
                 "calendars": calendarsDataArray,
                 "appointments": appointmentsDataArray
             ] as [String:Any?]
@@ -319,28 +299,6 @@ class CustomerDatabaseApi {
                                 _ = mDb.insertAppointment(a: a)
                             } else {
                                 _ = mDb.updateAppointment(a: a)
-                            }
-                        }
-                    }
-                    
-                    if let vouchers = result["vouchers"] as? [[String:Any]] {
-                        for voucher in vouchers {
-                            let v = Voucher()
-                            for (key, value) in voucher {
-                                var parsedValue = ""
-                                if let int64Value = value as? Int64 {
-                                    parsedValue = String(int64Value)
-                                } else if let doubleValue = value as? Double {
-                                    parsedValue = String(doubleValue)
-                                } else if let strValue = value as? String {
-                                    parsedValue = strValue
-                                }
-                                v.putAttribute(key: key, value: parsedValue)
-                            }
-                            if(mDb.getVoucher(id: v.mId, showDeleted: true) == nil) {
-                                _ = mDb.insertVoucher(v: v)
-                            } else {
-                                _ = mDb.updateVoucher(v: v)
                             }
                         }
                     }

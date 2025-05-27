@@ -29,8 +29,5 @@ The max files a customer can have right now is 20 files, but this is easy to mod
 // TODO Delete this in the near future. 
 This is to give users the option to add a custom field to a customer.
 
-### The Voucher Object Model
-You can use this feature to track what promotions you are handing out.
-
 ### The Call Directory Number Object Model
 TODO

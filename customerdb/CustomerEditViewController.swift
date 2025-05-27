@@ -1,6 +1,5 @@
 //
-//  CustomerEditViewController.swift
-//  Copyright © 2019 Georg Sieber. All rights reserved.
+//  Customer Edit View Controller Class
 //
 
 import Foundation
@@ -385,7 +384,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
     func exitViewController() {
         triggerListUpdate()
         if(mIsNewCustomer) {
-            // new voucher
             if(!splitViewController!.isCollapsed) {
                 // hide detail view controller on the right side
                 if let svc = splitViewController as? MainSplitViewController {

@@ -1,15 +1,11 @@
 //
-//  DocumentPickers.swift
-//  Copyright © 2020 Georg Sieber. All rights reserved.
+//  Document Types Class
 //
 
 import Foundation
 import UIKit
 
 class CustomerDocumentPickerViewController : UIDocumentPickerViewController {
-    
-}
-class VoucherDocumentPickerViewController : UIDocumentPickerViewController {
     
 }
 class AppointmentDocumentPickerViewController : UIDocumentPickerViewController {
