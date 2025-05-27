@@ -187,14 +187,10 @@
         <!--Navigation Controller-->
         <scene sceneID="Azz-Ve-p7N">
             <objects>
-                <navigationController storyboardIdentifier="AppointmentEditNavigationViewController" id="Dgz-Ir-EcK" customClass="NavigationController" customModule="customerdb" customModuleProvider="target" sceneMemberID="viewController">
+                <navigationController storyboardIdentifier="AppointmentEditNavigationViewController" navigationBarHidden="YES" id="Dgz-Ir-EcK" customClass="NavigationController" customModule="customerdb" customModuleProvider="target" sceneMemberID="viewController">
                     <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="0Wu-FT-xDO">
-                        <rect key="frame" x="0.0" y="96" width="414" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
-                    <connections>
-                        <segue destination="Eui-Sc-9YZ" kind="relationship" relationship="rootViewController" id="4CY-eZ-SDq"/>
-                    </connections>
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="3g6-39-W1J" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
@@ -1995,7 +1991,7 @@
                             <constraint firstItem="yJe-I1-01j" firstAttribute="trailing" secondItem="c18-aj-7lQ" secondAttribute="trailing" id="vtO-Ug-Lk8"/>
                         </constraints>
                     </view>
-                    <tabBarItem key="tabBarItem" title="Customers" image="baseline_people_black_24pt" id="rL6-MY-BWb"/>
+                    <tabBarItem key="tabBarItem" enabled="NO" title="Customers" image="baseline_people_black_24pt" id="rL6-MY-BWb"/>
                     <connections>
                         <outlet property="buttonAdd" destination="hwC-1s-UWf" id="hxk-1c-GxR"/>
                         <outlet property="imageLogo" destination="MIt-dg-Zak" id="0eG-95-9wd"/>
@@ -2489,7 +2485,7 @@ City Country</string>
                             </barButtonItem>
                         </rightBarButtonItems>
                     </navigationItem>
-                    <tabBar key="tabBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="tqY-6F-MfV">
+                    <tabBar key="tabBar" hidden="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="tqY-6F-MfV">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="49"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -2990,232 +2986,10 @@ City Country</string>
             </objects>
             <point key="canvasLocation" x="554" y="2624"/>
         </scene>
-        <!--Edit Appointment-->
-        <scene sceneID="u47-uK-Ufj">
-            <objects>
-                <viewController id="Eui-Sc-9YZ" customClass="AppointmentEditViewController" customModule="customerdb" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="GGO-W2-HNg">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <subviews>
-                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="mDg-pd-KIe">
-                                <rect key="frame" x="0.0" y="140" width="414" height="639"/>
-                                <subviews>
-                                    <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="pqp-pb-FKp">
-                                        <rect key="frame" x="20" y="20" width="374" height="737.5"/>
-                                        <subviews>
-                                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="2" translatesAutoresizingMaskIntoConstraints="NO" id="n9e-nD-grr">
-                                                <rect key="frame" x="0.0" y="0.0" width="374" height="142.5"/>
-                                                <subviews>
-                                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Calendar" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="X1K-Ts-YxB">
-                                                        <rect key="frame" x="0.0" y="0.0" width="374" height="20.5"/>
-                                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                                        <color key="textColor" systemColor="secondaryLabelColor"/>
-                                                        <nil key="highlightedColor"/>
-                                                    </label>
-                                                    <pickerView contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="YWd-OW-xjM">
-                                                        <rect key="frame" x="0.0" y="22.5" width="374" height="120"/>
-                                                        <constraints>
-                                                            <constraint firstAttribute="height" constant="120" id="PaY-Rx-vKr"/>
-                                                        </constraints>
-                                                    </pickerView>
-                                                </subviews>
-                                            </stackView>
-                                            <stackView opaque="NO" contentMode="scaleToFill" spacing="11" translatesAutoresizingMaskIntoConstraints="NO" id="It3-CP-UB3">
-                                                <rect key="frame" x="0.0" y="162.5" width="374" height="170.5"/>
-                                                <subviews>
-                                                    <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="nO1-NS-gvm">
-                                                        <rect key="frame" x="0.0" y="0.0" width="194.5" height="170.5"/>
-                                                        <subviews>
-                                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Appointment" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="wzp-Sy-hzi">
-                                                                <rect key="frame" x="0.0" y="0.0" width="194.5" height="20.5"/>
-                                                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                                                <color key="textColor" systemColor="secondaryLabelColor"/>
-                                                                <nil key="highlightedColor"/>
-                                                            </label>
-                                                            <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Subject" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="fv6-4M-6rg">
-                                                                <rect key="frame" x="0.0" y="20.5" width="194.5" height="34"/>
-                                                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                                                <textInputTraits key="textInputTraits"/>
-                                                            </textField>
-                                                            <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Location" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="Nj1-VX-ETV">
-                                                                <rect key="frame" x="0.0" y="54.5" width="194.5" height="34"/>
-                                                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                                                <textInputTraits key="textInputTraits"/>
-                                                            </textField>
-                                                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" tag="12" contentMode="scaleToFill" verticalHuggingPriority="249" scrollEnabled="NO" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="swL-OG-B9g">
-                                                                <rect key="frame" x="0.0" y="88.5" width="194.5" height="82"/>
-                                                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                                                                <color key="textColor" systemColor="labelColor"/>
-                                                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
-                                                            </textView>
-                                                        </subviews>
-                                                    </stackView>
-                                                    <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="83S-An-Yac">
-                                                        <rect key="frame" x="205.5" y="0.0" width="168.5" height="170.5"/>
-                                                        <subviews>
-                                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="QR code for customer" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="bDo-xA-yx8">
-                                                                <rect key="frame" x="0.0" y="0.0" width="168.5" height="20.5"/>
-                                                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                                                <color key="textColor" systemColor="secondaryLabelColor"/>
-                                                                <nil key="highlightedColor"/>
-                                                            </label>
-                                                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="www-h7-Dnh">
-                                                                <rect key="frame" x="0.0" y="20.5" width="168.5" height="150"/>
-                                                            </imageView>
-                                                        </subviews>
-                                                    </stackView>
-                                                </subviews>
-                                            </stackView>
-                                            <stackView opaque="NO" contentMode="scaleToFill" spacing="5" translatesAutoresizingMaskIntoConstraints="NO" id="kmo-X6-ged">
-                                                <rect key="frame" x="0.0" y="353" width="374" height="34"/>
-                                                <subviews>
-                                                    <textField opaque="NO" contentMode="scaleToFill" ambiguous="YES" enabled="NO" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Customer" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="4hb-Wg-FbJ">
-                                                        <rect key="frame" x="0.0" y="0.0" width="287" height="34"/>
-                                                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                                        <textInputTraits key="textInputTraits"/>
-                                                    </textField>
-                                                    <button opaque="NO" contentMode="scaleToFill" ambiguous="YES" enabled="NO" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="9C4-1z-VYl">
-                                                        <rect key="frame" x="292" y="0.0" width="24" height="34"/>
-                                                        <state key="normal" image="baseline_person_black_24pt"/>
-                                                        <connections>
-                                                            <action selector="onClickShowCustomer:" destination="Eui-Sc-9YZ" eventType="touchUpInside" id="aTY-mn-41P"/>
-                                                        </connections>
-                                                    </button>
-                                                    <button opaque="NO" contentMode="scaleToFill" ambiguous="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="hcA-QC-L5R">
-                                                        <rect key="frame" x="321" y="0.0" width="24" height="34"/>
-                                                        <state key="normal" image="baseline_people_black_24pt"/>
-                                                        <connections>
-                                                            <action selector="onClickAddCustomer:" destination="Eui-Sc-9YZ" eventType="touchUpInside" id="wEb-VG-IUp"/>
-                                                        </connections>
-                                                    </button>
-                                                    <button opaque="NO" contentMode="scaleToFill" ambiguous="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="4bR-dE-qR3">
-                                                        <rect key="frame" x="350" y="0.0" width="24" height="34"/>
-                                                        <state key="normal" image="baseline_clear_black_24pt"/>
-                                                        <connections>
-                                                            <action selector="onClickRemoveCustomer:" destination="Eui-Sc-9YZ" eventType="touchUpInside" id="sWP-j8-GXm"/>
-                                                        </connections>
-                                                    </button>
-                                                </subviews>
-                                            </stackView>
-                                            <stackView opaque="NO" contentMode="scaleToFill" spacing="2" translatesAutoresizingMaskIntoConstraints="NO" id="yMf-4Z-1fg">
-                                                <rect key="frame" x="0.0" y="407" width="374" height="140"/>
-                                                <subviews>
-                                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Date" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Nl9-2i-B5p">
-                                                        <rect key="frame" x="0.0" y="0.0" width="0.0" height="140"/>
-                                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                                        <color key="textColor" systemColor="secondaryLabelColor"/>
-                                                        <nil key="highlightedColor"/>
-                                                    </label>
-                                                    <datePicker contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" datePickerMode="date" style="compact" translatesAutoresizingMaskIntoConstraints="NO" id="TZR-Lr-YKE">
-                                                        <rect key="frame" x="2" y="0.0" width="372" height="140"/>
-                                                    </datePicker>
-                                                </subviews>
-                                            </stackView>
-                                            <stackView opaque="NO" contentMode="scaleToFill" distribution="fillEqually" spacing="10" translatesAutoresizingMaskIntoConstraints="NO" id="M9t-mJ-3R6">
-                                                <rect key="frame" x="0.0" y="567" width="374" height="170.5"/>
-                                                <subviews>
-                                                    <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="po0-Fc-3LB">
-                                                        <rect key="frame" x="0.0" y="0.0" width="182" height="170.5"/>
-                                                        <subviews>
-                                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Start" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="wmk-d2-HKu">
-                                                                <rect key="frame" x="0.0" y="0.0" width="182" height="20.5"/>
-                                                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                                                <color key="textColor" systemColor="secondaryLabelColor"/>
-                                                                <nil key="highlightedColor"/>
-                                                            </label>
-                                                            <datePicker contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" datePickerMode="time" minuteInterval="1" style="wheels" translatesAutoresizingMaskIntoConstraints="NO" id="OQb-5m-TnM">
-                                                                <rect key="frame" x="0.0" y="20.5" width="182" height="150"/>
-                                                                <constraints>
-                                                                    <constraint firstAttribute="height" constant="150" id="I1Y-IT-L13"/>
-                                                                </constraints>
-                                                            </datePicker>
-                                                        </subviews>
-                                                    </stackView>
-                                                    <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="svY-Me-h4k">
-                                                        <rect key="frame" x="192" y="0.0" width="182" height="170.5"/>
-                                                        <subviews>
-                                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="End" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="0t1-v2-YRz">
-                                                                <rect key="frame" x="0.0" y="0.0" width="182" height="20.5"/>
-                                                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                                                <color key="textColor" systemColor="secondaryLabelColor"/>
-                                                                <nil key="highlightedColor"/>
-                                                            </label>
-                                                            <datePicker contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" datePickerMode="time" minuteInterval="1" style="wheels" translatesAutoresizingMaskIntoConstraints="NO" id="csI-1T-NOu">
-                                                                <rect key="frame" x="0.0" y="20.5" width="182" height="150"/>
-                                                                <constraints>
-                                                                    <constraint firstAttribute="height" constant="150" id="sYh-Rv-ozC"/>
-                                                                </constraints>
-                                                            </datePicker>
-                                                        </subviews>
-                                                    </stackView>
-                                                </subviews>
-                                            </stackView>
-                                        </subviews>
-                                    </stackView>
-                                </subviews>
-                                <constraints>
-                                    <constraint firstItem="pqp-pb-FKp" firstAttribute="leading" secondItem="mDg-pd-KIe" secondAttribute="leading" constant="20" id="G62-Dl-YcI"/>
-                                    <constraint firstAttribute="bottom" secondItem="pqp-pb-FKp" secondAttribute="bottom" constant="20" id="RJr-be-iBd"/>
-                                    <constraint firstAttribute="trailing" secondItem="pqp-pb-FKp" secondAttribute="trailing" constant="20" id="eeu-tr-S6d"/>
-                                    <constraint firstItem="pqp-pb-FKp" firstAttribute="top" secondItem="mDg-pd-KIe" secondAttribute="top" constant="20" id="mas-fN-f6Y"/>
-                                    <constraint firstItem="pqp-pb-FKp" firstAttribute="centerX" secondItem="mDg-pd-KIe" secondAttribute="centerX" id="szK-tJ-99d"/>
-                                </constraints>
-                            </scrollView>
-                        </subviews>
-                        <viewLayoutGuide key="safeArea" id="mQG-lj-cL4"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                        <constraints>
-                            <constraint firstItem="mDg-pd-KIe" firstAttribute="trailing" secondItem="mQG-lj-cL4" secondAttribute="trailing" id="1D0-vn-y0V"/>
-                            <constraint firstItem="mDg-pd-KIe" firstAttribute="bottom" secondItem="mQG-lj-cL4" secondAttribute="bottom" id="FlX-gt-4jo"/>
-                            <constraint firstItem="mDg-pd-KIe" firstAttribute="leading" secondItem="mQG-lj-cL4" secondAttribute="leading" id="hpW-Xv-8mb"/>
-                            <constraint firstItem="mDg-pd-KIe" firstAttribute="top" secondItem="mQG-lj-cL4" secondAttribute="top" id="rPl-ev-9PT"/>
-                        </constraints>
-                    </view>
-                    <toolbarItems/>
-                    <navigationItem key="navigationItem" title="Edit Appointment" largeTitleDisplayMode="never" id="lSe-e9-KDQ">
-                        <barButtonItem key="leftBarButtonItem" image="baseline_clear_black_24pt" id="TA9-VN-pLB">
-                            <connections>
-                                <action selector="onClickClose:" destination="Eui-Sc-9YZ" id="NH7-DS-ARC"/>
-                            </connections>
-                        </barButtonItem>
-                        <rightBarButtonItems>
-                            <barButtonItem image="baseline_done_black_24pt" id="MAT-9j-vWI">
-                                <connections>
-                                    <action selector="onClickDone:" destination="Eui-Sc-9YZ" id="zLw-Jg-Hgm"/>
-                                </connections>
-                            </barButtonItem>
-                            <barButtonItem image="baseline_more_vert_black_24pt" id="sXi-3F-7wc">
-                                <connections>
-                                    <action selector="onClickMore:" destination="Eui-Sc-9YZ" id="YWP-MR-mFi"/>
-                                </connections>
-                            </barButtonItem>
-                        </rightBarButtonItems>
-                    </navigationItem>
-                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
-                    <connections>
-                        <outlet property="buttonShowCustomer" destination="9C4-1z-VYl" id="VHQ-Bl-95X"/>
-                        <outlet property="datePicker" destination="TZR-Lr-YKE" id="ONI-UY-8hu"/>
-                        <outlet property="datePickerEnd" destination="csI-1T-NOu" id="R01-6t-1bp"/>
-                        <outlet property="datePickerStart" destination="OQb-5m-TnM" id="G7G-di-yDD"/>
-                        <outlet property="imageQrCode" destination="www-h7-Dnh" id="kKN-e3-ojZ"/>
-                        <outlet property="pickerCalendar" destination="YWd-OW-xjM" id="qgr-7P-bHp"/>
-                        <outlet property="scrollView" destination="mDg-pd-KIe" id="9y0-Gw-MMc"/>
-                        <outlet property="textFieldCustomer" destination="4hb-Wg-FbJ" id="4Bb-0e-vQS"/>
-                        <outlet property="textFieldLocation" destination="Nj1-VX-ETV" id="V3h-O8-OHj"/>
-                        <outlet property="textFieldNotes" destination="swL-OG-B9g" id="b6p-bS-567"/>
-                        <outlet property="textFieldSubject" destination="fv6-4M-6rg" id="A8O-A2-0E0"/>
-                    </connections>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="RUE-7C-LSO" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="3461" y="1813"/>
-        </scene>
     </scenes>
     <inferredMetricsTieBreakers>
         <segue reference="b4I-Iy-NtL"/>
-        <segue reference="mve-0J-uBD"/>
+        <segue reference="VYG-mX-XiC"/>
     </inferredMetricsTieBreakers>
     <resources>
         <image name="baseline_add_white_36pt" width="36" height="36"/>
@@ -3228,7 +3002,6 @@ City Country</string>
         <image name="baseline_menu_black_24pt" width="24" height="24"/>
         <image name="baseline_more_vert_black_24pt" width="24" height="24"/>
         <image name="baseline_people_black_24pt" width="24" height="24"/>
-        <image name="baseline_person_black_24pt" width="24" height="24"/>
         <image name="baseline_search_black_24pt" width="24" height="24"/>
         <image name="border" width="700" height="1000"/>
         <image name="icon_gray" width="1024" height="1024"/>
