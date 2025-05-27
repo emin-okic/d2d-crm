@@ -143,9 +143,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
         if let vc = self.selectedViewController as? CustomerTableViewController {
             vc.reloadCustomers(search: nil, refreshTable: true)
         }
-        else if let vc = self.selectedViewController as? AppointmentViewController {
-            vc.drawEvents()
-        }
     }
     var syncInProgressAlert: UIAlertController? = nil
     func setupStatusIndicator(visible: Bool, message: String?, completion: (()->Void)?) {
@@ -410,8 +407,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
             style: .default) { (action) in
                 if let _ = self.selectedViewController as? CustomerTableViewController {
                     self.menuImportExportCustomer(sender)
-                } else if let _ = self.selectedViewController as? AppointmentViewController {
-                    self.menuImportExportAppointments(sender)
                 }
         }
         importExportAction.setValue(UIImage(named:"baseline_import_export_black_24pt"), forKey: "image")
@@ -601,12 +596,10 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
         let exportIcsAction = UIAlertAction(
             title: NSLocalizedString("export_ics", comment: ""),
             style: .default) { (action) in
-                self.exportIcs(barButtonItem: sender)
         }
         let exportCsvAction = UIAlertAction(
             title: NSLocalizedString("export_csv", comment: ""),
             style: .default) { (action) in
-                self.exportCsvAppointment(barButtonItem: sender)
         }
         let cancelAction = UIAlertAction(
             title: NSLocalizedString("close", comment: ""),
@@ -643,35 +636,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
         }
     }
     
-    func exportCsvAppointment(barButtonItem:UIBarButtonItem) {
-        if let calendarSelectionAlert = createCalendarSelectAlert() {
-            calendarSelectionAlert.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: { (action: UIAlertAction!) in
-                let csv = CalendarCsvWriter(
-                    appointments: self.mDb.getAppointments(
-                        calendarId: Int64(self.mCalendars[self.mCalendarPicker!.selectedRow(inComponent: 0)].key),
-                        day: nil, showDeleted: false
-                    )
-                )
-                
-                let fileurl = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathComponent("export.csv")
-
-                do {
-                    try csv.buildCsvContent().write(to: fileurl, atomically: true, encoding: .utf8)
-
-                    let activityController = UIActivityViewController(
-                        activityItems: [fileurl], applicationActivities: nil
-                    )
-                    activityController.popoverPresentationController?.barButtonItem = barButtonItem
-                    self.present(activityController, animated: true, completion: nil)
-
-                } catch let error {
-                    print(error.localizedDescription)
-                }
-            }))
-            self.present(calendarSelectionAlert, animated: true)
-        }
-    }
-    
     func exportVcf(barButtonItem:UIBarButtonItem) {
         let vcf = CustomerVcfWriter(customers: self.mDb.getCustomers(search: nil, showDeleted: false, withFiles: true))
         
@@ -688,65 +652,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
 
         } catch let error {
             print(error.localizedDescription)
-        }
-    }
-    
-    var mCalendarPickerController:PickerDataController? = nil
-    var mCalendarPicker:UIPickerView? = nil
-    var mCalendars:[KeyValueItem] = []
-    func createCalendarSelectAlert() -> UIAlertController? {
-        mCalendars = []
-        mCalendars.removeAll()
-        for c in mDb.getCalendars(showDeleted: false) {
-            mCalendars.append(KeyValueItem(String(c.mId), c.mTitle))
-        }
-        if(mCalendars.count == 0) {
-            self.dialog(
-                title: nil,
-                text: NSLocalizedString("no_calendar_selected", comment: "")
-            )
-            return nil
-        }
-        
-        let vc = UIViewController()
-        vc.preferredContentSize = CGSize(width: 250, height: 300)
-        mCalendarPicker = UIPickerView(frame: CGRect(x: 0, y: 0, width: 250, height: 300))
-        mCalendarPickerController = PickerDataController(data: mCalendars)
-        mCalendarPicker!.dataSource = mCalendarPickerController
-        mCalendarPicker!.delegate = mCalendarPickerController
-        vc.view.addSubview(mCalendarPicker!)
-        let calendarSelectionAlert = UIAlertController(title: "", message: "", preferredStyle: .alert)
-        calendarSelectionAlert.setValue(vc, forKey: "contentViewController")
-        calendarSelectionAlert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
-        return calendarSelectionAlert
-    }
-    
-    func exportIcs(barButtonItem:UIBarButtonItem) {
-        if let calendarSelectionAlert = createCalendarSelectAlert() {
-            calendarSelectionAlert.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: { (action: UIAlertAction!) in
-                let ics = CalendarIcsWriter(
-                    appointments: self.mDb.getAppointments(
-                        calendarId: Int64(self.mCalendars[self.mCalendarPicker!.selectedRow(inComponent: 0)].key),
-                        day: nil, showDeleted: false
-                    )
-                )
-                
-                let fileurl = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathComponent("export.ics")
-
-                do {
-                    try ics.buildIcsContent().write(to: fileurl, atomically: true, encoding: .utf8)
-
-                    let activityController = UIActivityViewController(
-                        activityItems: [fileurl], applicationActivities: nil
-                    )
-                    activityController.popoverPresentationController?.barButtonItem = barButtonItem
-                    self.present(activityController, animated: true, completion: nil)
-
-                } catch let error {
-                    print(error.localizedDescription)
-                }
-            }))
-            self.present(calendarSelectionAlert, animated: true)
         }
     }
     
@@ -801,63 +706,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
                     handleImportError(message: NSLocalizedString("unknown_file_format", comment: ""))
                 }
                 url.stopAccessingSecurityScopedResource()
-                
-            } else if let _ = controller as? AppointmentDocumentPickerViewController {
-                
-                if let calendarSelectionAlert = createCalendarSelectAlert() {
-                    calendarSelectionAlert.addAction(UIAlertAction(title: NSLocalizedString("ok", comment: ""), style: .default, handler: { (action: UIAlertAction!) in
-                        let calendarId = Int64(self.mCalendars[self.mCalendarPicker!.selectedRow(inComponent: 0)].key)
-                        
-                        // startAccessingSecurityScopedResource must be done inside alert action delegate
-                        _ = url.startAccessingSecurityScopedResource()
-                        if(url.pathExtension.lowercased() == "csv") {
-                            do {
-                                var inserted = 0
-                                let csv: CSV = try CSV(url: url)
-                                for row in csv.namedRows {
-                                    let newAppointment = CustomerAppointment()
-                                    newAppointment.mCalendarId = calendarId!
-                                    for field in row {
-                                        newAppointment.putAttribute(key: field.key, value: field.value)
-                                    }
-                                    if(newAppointment.mTitle != "" && newAppointment.mTimeStart != nil && newAppointment.mTimeEnd != nil) {
-                                        if(newAppointment.mId < 0 || self.mDb.getAppointment(id: newAppointment.mId, showDeleted: true) != nil) {
-                                            // generate new ID if exists in db or not set in csv file
-                                            newAppointment.mId = CustomerAppointment.generateID(suffix: inserted)
-                                        }
-                                        if(self.mDb.insertAppointment(a: newAppointment)) {
-                                            inserted += 1
-                                        }
-                                    }
-                                }
-                                self.handleImportSuccess(imported: inserted)
-                            } catch let error {
-                                self.handleImportError(message: error.localizedDescription)
-                            }
-                        } else if(url.pathExtension.lowercased() == "ics") {
-                            var inserted = 0
-                            for newAppointment in CalendarIcsWriter.readIcsFile(url: url) {
-                                if(newAppointment.mTitle != "" && newAppointment.mTimeStart != nil && newAppointment.mTimeEnd != nil) {
-                                    // generate new ID because ID is not present in ics file
-                                    newAppointment.mId = CustomerAppointment.generateID(suffix: inserted)
-                                    newAppointment.mCalendarId = calendarId!
-                                    if(self.mDb.insertAppointment(a: newAppointment)) {
-                                        inserted += 1
-                                    }
-                                }
-                            }
-                            if(inserted > 0) {
-                                self.handleImportSuccess(imported: inserted)
-                            } else {
-                                self.handleImportError(message: NSLocalizedString("file_does_not_contain_valid_records", comment: ""))
-                            }
-                        } else {
-                            self.handleImportError(message: NSLocalizedString("unknown_file_format", comment: ""))
-                        }
-                        url.stopAccessingSecurityScopedResource()
-                    }))
-                    self.present(calendarSelectionAlert, animated: true)
-                }
                 
             }
             

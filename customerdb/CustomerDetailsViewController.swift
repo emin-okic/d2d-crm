@@ -169,7 +169,7 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
         }
         for field in customFields {
             var finalText = mCurrentCustomer?.getCustomFieldString(key: field.mTitle) ?? ""
-                
+            
             // convert date to display format
             if(field.mType == CustomField.TYPE.DATE) {
                 let date = CustomerDatabase.parseDateRaw(strDate: finalText)
@@ -177,10 +177,10 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
                     finalText = CustomerDatabase.dateToDisplayStringWithoutTime(date: date!)
                 }
             }
-                
+            
             insertDetail(title: field.mTitle, text: finalText)
         }
-
+        
         let files = mCurrentCustomer!.getFiles()
         for view in stackViewFiles.arrangedSubviews {
             view.removeFromSuperview()
@@ -190,13 +190,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
             insertFile(file: file)
         }
         
-        let appointments = mDb.getAppointmentsByCustomer(customerId: mCurrentCustomer!.mId)
-        for view in stackViewAppointments.arrangedSubviews {
-            view.removeFromSuperview()
-        }
-        for appointment in appointments {
-            insertAppointment(appointment: appointment)
-        }
     }
     
     @IBAction func onClickMore(_ sender: UIBarButtonItem) {
@@ -204,7 +197,7 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
             title: NSLocalizedString("print_customer", comment: ""),
             style: .default) { (action) in
                 
-        }
+            }
         printAction.setValue(UIImage(named:"baseline_print_black_24pt"), forKey: "image")
         let deleteAction = UIAlertAction(
             title: NSLocalizedString("delete_customer", comment: ""),
@@ -213,13 +206,13 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
                 self.mDb.updateCallDirectoryDatabase()
                 self.setUnsyncedChanges()
                 self.exitViewController()
-        }
+            }
         deleteAction.setValue(UIImage(named:"baseline_delete_forever_black_24pt"), forKey: "image")
         let cancelAction = UIAlertAction(
             title: NSLocalizedString("close", comment: ""),
             style: .cancel) { (action) in
                 
-        }
+            }
         
         let alert = UIAlertController(
             title: nil,
@@ -239,16 +232,16 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
             title: NSLocalizedString("export_vcf", comment: ""),
             style: .default) { (action) in
                 self.exportVcf(sender)
-        }
+            }
         let exportCsvAction = UIAlertAction(
             title: NSLocalizedString("export_csv", comment: ""),
             style: .default) { (action) in
                 self.exportCsv(sender)
-        }
+            }
         let cancelAction = UIAlertAction(
             title: NSLocalizedString("close", comment: ""),
             style: .cancel) { (action) in
-        }
+            }
         
         let alert = UIAlertController(
             title: NSLocalizedString("export_single_customer_record", comment: ""),
@@ -268,16 +261,16 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
         let csv = CustomerCsvWriter(customers: [mCurrentCustomer!], customFields: self.mDb.getCustomFields())
         
         let fileurl = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathComponent("export."+String(mCurrentCustomer!.mId)+".csv")
-
+        
         do {
             try csv.buildCsvContent().write(to: fileurl, atomically: true, encoding: .utf8)
-
+            
             let activityController = UIActivityViewController(
                 activityItems: [fileurl], applicationActivities: nil
             )
             activityController.popoverPresentationController?.barButtonItem = sender
             self.present(activityController, animated: true, completion: nil)
-
+            
         } catch let error {
             print(error.localizedDescription)
         }
@@ -287,16 +280,16 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
         let vcf = CustomerVcfWriter(customers: [mCurrentCustomer!])
         
         let fileurl = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathComponent("export."+String(mCurrentCustomer!.mId)+".vcf")
-
+        
         do {
             try vcf.buildVcfContent().write(to: fileurl, atomically: true, encoding: .utf8)
-
+            
             let activityController = UIActivityViewController(
                 activityItems: [fileurl], applicationActivities: nil
             )
             activityController.popoverPresentationController?.barButtonItem = sender
             self.present(activityController, animated: true, completion: nil)
-
+            
         } catch let error {
             print(error.localizedDescription)
         }
@@ -336,7 +329,7 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
                     // This line remove the arrow of the popover to show in iPad
                     activityViewController.popoverPresentationController?.permittedArrowDirections = UIPopoverArrowDirection()
                     activityViewController.popoverPresentationController?.sourceView = self.view
-
+                    
                     // Anything you want to exclude
                     activityViewController.excludedActivityTypes = [
                         UIActivity.ActivityType.postToWeibo,
@@ -348,19 +341,19 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
                         UIActivity.ActivityType.postToVimeo,
                         UIActivity.ActivityType.postToTencentWeibo
                     ]
-
+                    
                     self.present(activityViewController, animated: true, completion: nil)
                 }
-        }
+            }
         let copyAction = UIAlertAction(
             title: NSLocalizedString("copy_to_clipboard", comment: ""),
             style: .default) { (action) in
                 UIPasteboard.general.string = self.mCurrentCustomer!.mEmail
-        }
+            }
         let cancelAction = UIAlertAction(
             title: NSLocalizedString("close", comment: ""),
             style: .cancel) { (action) in
-        }
+            }
         let alert = UIAlertController(
             title: mCurrentCustomer!.mEmail, message: nil, preferredStyle: .alert
         )
@@ -387,21 +380,21 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
                         }
                     }
                 }
-        }
+            }
         let copyAction = UIAlertAction(
             title: NSLocalizedString("copy_to_clipboard", comment: ""),
             style: .default) { (action) in
                 UIPasteboard.general.string = self.mCurrentCustomer!.getAddressString()
-        }
+            }
         let copyPostalAddressAction = UIAlertAction(
             title: NSLocalizedString("copy_postal_address", comment: ""),
             style: .default) { (action) in
                 UIPasteboard.general.string = self.mCurrentCustomer!.getFullName(lastNameFirst: false) + "\n" + self.mCurrentCustomer!.getAddressString()
-        }
+            }
         let cancelAction = UIAlertAction(
             title: NSLocalizedString("close", comment: ""),
             style: .cancel) { (action) in
-        }
+            }
         let alert = UIAlertController(
             title: mCurrentCustomer!.getAddressString(), message: nil, preferredStyle: .alert
         )
@@ -419,7 +412,7 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
                 if let url = URL(string: "tel://\(number)"), UIApplication.shared.canOpenURL(url) {
                     UIApplication.shared.open(url, options: [:], completionHandler: nil)
                 }
-        }
+            }
         let textAction = UIAlertAction(
             title: NSLocalizedString("send_message", comment: ""),
             style: .default) { (action) in
@@ -430,16 +423,16 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
                     controller.messageComposeDelegate = self
                     self.present(controller, animated: true, completion: nil)
                 }
-        }
+            }
         let copyAction = UIAlertAction(
             title: NSLocalizedString("copy_to_clipboard", comment: ""),
             style: .default) { (action) in
                 UIPasteboard.general.string = number
-        }
+            }
         let cancelAction = UIAlertAction(
             title: NSLocalizedString("close", comment: ""),
             style: .cancel) { (action) in
-        }
+            }
         let alert = UIAlertController(
             title: number, message: nil, preferredStyle: .alert
         )
@@ -462,7 +455,7 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
     func openMapForPlace(lat:Double = 0, long:Double = 0, placeName:String = "") {
         let latitude: CLLocationDegrees = lat
         let longitude: CLLocationDegrees = long
-
+        
         let regionDistance:CLLocationDistance = 100
         let coordinates = CLLocationCoordinate2DMake(latitude, longitude)
         let regionSpan = MKCoordinateRegion(center: coordinates, latitudinalMeters: regionDistance, longitudinalMeters: regionDistance)
@@ -521,12 +514,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
         stackViewFiles.addArrangedSubview(stackView)
     }
     
-    func insertAppointment(appointment:CustomerAppointment) {
-        let button = AppointmentButton(appointment: appointment)
-        button.addTarget(self, action: #selector(onClickAppointmentButton), for: .touchUpInside)
-        stackViewAppointments.addArrangedSubview(button)
-    }
-    
     var mCurrentFileUrl:URL?
     @objc func onClickFileButton(sender: FileButton!) {
         do {
@@ -555,81 +542,44 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
         return mCurrentFileUrl! as QLPreviewItem
     }
     
-    @objc func onClickAppointmentButton(sender: AppointmentButton!) {
-        let detailViewController = storyboard?.instantiateViewController(withIdentifier:"AppointmentEditNavigationViewController") as! UINavigationController
-        if let vdvc = detailViewController.viewControllers.first as? AppointmentEditViewController {
-            vdvc.mCurrentAppointment = sender.mAppointment
+    class SecondaryLabel: UILabel {
+        required init(coder aDecoder: NSCoder) {
+            super.init(coder: aDecoder)!
+            self.commonInit()
+            
         }
-        splitViewController?.showDetailViewController(detailViewController, sender: nil)
-    }
-}
-
-class SecondaryLabel: UILabel {
-    required init(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)!
-        self.commonInit()
-
-    }
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        self.commonInit()
-    }
-    func commonInit() {
-        if #available(iOS 13.0, *) {
-            textColor = UIColor.secondaryLabel
-        } else {
-            textColor = UIColor.gray
+        override init(frame: CGRect) {
+            super.init(frame: frame)
+            self.commonInit()
+        }
+        func commonInit() {
+            if #available(iOS 13.0, *) {
+                textColor = UIColor.secondaryLabel
+            } else {
+                textColor = UIColor.gray
+            }
         }
     }
-}
-
-class FileButton: UIButton {
-    var mFile: CustomerFile?
-    required init(file:CustomerFile) {
-        super.init(frame: .zero)
-        mFile = file
-        setTitle(file.mName, for: .normal)
-        if #available(iOS 13.0, *) {
-            setTitleColor(.link, for: .normal)
-        } else {
-            setTitleColor(UIColor.init(hex: "#0f7c9d"), for: .normal)
+    
+    class FileButton: UIButton {
+        var mFile: CustomerFile?
+        required init(file:CustomerFile) {
+            super.init(frame: .zero)
+            mFile = file
+            setTitle(file.mName, for: .normal)
+            if #available(iOS 13.0, *) {
+                setTitleColor(.link, for: .normal)
+            } else {
+                setTitleColor(UIColor.init(hex: "#0f7c9d"), for: .normal)
+            }
+            if #available(iOS 11.0, *) {
+                contentHorizontalAlignment = .leading
+            } else {
+                contentHorizontalAlignment = .left
+            }
         }
-        if #available(iOS 11.0, *) {
-            contentHorizontalAlignment = .leading
-        } else {
-            contentHorizontalAlignment = .left
+        required init?(coder aDecoder: NSCoder) {
+            super.init(coder: aDecoder)
         }
-    }
-    required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-    }
-}
-
-class AppointmentButton: UIButton {
-    var mAppointment: CustomerAppointment?
-    required init(appointment:CustomerAppointment) {
-        super.init(frame: .zero)
-        mAppointment = appointment
-        setTitle(CustomerDatabase.dateToDisplayString(date: appointment.mTimeStart ?? Date())+" - "+appointment.mTitle, for: .normal)
-        if #available(iOS 13.0, *) {
-            setTitleColor(.link, for: .normal)
-        } else {
-            setTitleColor(UIColor.init(hex: "#0f7c9d"), for: .normal)
-        }
-        if #available(iOS 11.0, *) {
-            contentHorizontalAlignment = .leading
-        } else {
-            contentHorizontalAlignment = .left
-        }
-    }
-    required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-    }
-}
-extension String {
-    func safeAddingPercentEncoding(withAllowedCharacters allowedCharacters: CharacterSet) -> String? {
-        // using a copy to workaround magic: https://stackoverflow.com/q/44754996/1033581
-        let allowedCharacters = CharacterSet(bitmapRepresentation: allowedCharacters.bitmapRepresentation)
-        return addingPercentEncoding(withAllowedCharacters: allowedCharacters)
     }
 }

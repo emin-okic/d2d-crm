@@ -104,36 +104,6 @@ class CustomerDatabaseApi {
             ])
         }
         
-        var calendarsDataArray:[[String:Any?]] = []
-        for calendar in mDb.getCalendars(showDeleted: true) {
-            calendarsDataArray.append([
-                "id": calendar.mId,
-                "title": calendar.mTitle,
-                "color": calendar.mColor,
-                "notes": calendar.mNotes,
-                "last_modified": CustomerDatabase.dateToString(date: calendar.mLastModified),
-                "removed": calendar.mRemoved,
-            ])
-        }
-        
-        var appointmentsDataArray:[[String:Any?]] = []
-        for appointment in mDb.getAppointments(calendarId: nil, day: nil, showDeleted: true, modifiedSince: diffSince) {
-            appointmentsDataArray.append([
-                "id": appointment.mId,
-                "calendar_id": appointment.mCalendarId,
-                "title": appointment.mTitle,
-                "notes": appointment.mNotes,
-                "time_start": ((appointment.mTimeStart == nil) ? nil : CustomerDatabase.dateToStringRaw(date: appointment.mTimeStart!)),
-                "time_end": ((appointment.mTimeEnd == nil) ? nil : CustomerDatabase.dateToStringRaw(date: appointment.mTimeEnd!)),
-                "fullday": appointment.mFullday,
-                "customer": appointment.mCustomer,
-                "customer_id": appointment.mCustomerId,
-                "location": appointment.mLocation,
-                "last_modified": CustomerDatabase.dateToString(date: appointment.mLastModified),
-                "removed": appointment.mRemoved,
-            ])
-        }
-        
         
         let json: [String:Any?] = [
             "jsonrpc": "2.0",
@@ -143,9 +113,7 @@ class CustomerDatabaseApi {
                 "username": mUsername,
                 "password": mPassword,
                 "appstore_receipt": mReceipt,
-                "customers": customersDataArray,
-                "calendars": calendarsDataArray,
-                "appointments": appointmentsDataArray
+                "customers": customersDataArray
             ] as [String:Any?]
         ]
         let jsonData = try? JSONSerialization.data(withJSONObject: json)
@@ -262,46 +230,7 @@ class CustomerDatabaseApi {
                             }
                         }
                     }
-                    
-                    if let calendars = result["calendars"] as? [[String:Any]] {
-                        for calendar in calendars {
-                            let c = CustomerCalendar()
-                            for (key, value) in calendar {
-                                var parsedValue = ""
-                                if let int64Value = value as? Int64 {
-                                    parsedValue = String(int64Value)
-                                } else if let strValue = value as? String {
-                                    parsedValue = strValue
-                                }
-                                c.putAttribute(key: key, value: parsedValue)
-                            }
-                            if(mDb.getCalendar(id: c.mId, showDeleted: true) == nil) {
-                                _ = mDb.insertCalendar(c: c)
-                            } else {
-                                _ = mDb.updateCalendar(c: c)
-                            }
-                        }
-                    }
-                    
-                    if let appointments = result["appointments"] as? [[String:Any]] {
-                        for appointment in appointments {
-                            let a = CustomerAppointment()
-                            for (key, value) in appointment {
-                                var parsedValue = ""
-                                if let int64Value = value as? Int64 {
-                                    parsedValue = String(int64Value)
-                                } else if let strValue = value as? String {
-                                    parsedValue = strValue
-                                }
-                                a.putAttribute(key: key, value: parsedValue)
-                            }
-                            if(mDb.getAppointment(id: a.mId, showDeleted: true) == nil) {
-                                _ = mDb.insertAppointment(a: a)
-                            } else {
-                                _ = mDb.updateAppointment(a: a)
-                            }
-                        }
-                    }
+
                     
                     mDb.commitTransaction()
                     
