@@ -84,7 +84,6 @@
 "design_options" = "Design Options";
 "custom_fields" = "Custom Fields";
 "files" = "Files";
-"calendar" = "Calendar";
 "backup" = "Backup";
 "backup_info_text" = "By default, the data is stored only locally on your device. Please back up your database regularly to not lose your data in case of malfunction or loss of your mobile device. This is done by simply copying the database files (in directory 'Customer Database') to your computer or another external storage.\n\nThe backup is even easier if you use the sync feature. The data will then be synchronized with an (own) MySQL server. For more information about this backup option, please visit the settings.";
 "carddav_api" = "CardDAV API";

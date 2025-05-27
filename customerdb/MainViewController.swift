@@ -554,69 +554,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
         self.present(alert, animated: true)
     }
     
-    func menuImportExportAppointments(_ sender: UIBarButtonItem) {
-        let importIcsAction = UIAlertAction(
-            title: NSLocalizedString("import_ics", comment: ""),
-            style: .default) { (action) in
-                if #available(iOS 11, *) {
-                    let documentPicker: UIDocumentPickerViewController
-                    if #available(iOS 14.0, *) {
-                        documentPicker = AppointmentDocumentPickerViewController(forOpeningContentTypes: [UTType.calendarEvent], asCopy: false)
-                    } else {
-                        documentPicker = AppointmentDocumentPickerViewController(documentTypes: ["public.calendar-event"], in: .import)
-                    }
-                    documentPicker.delegate = self
-                    self.present(documentPicker, animated: true, completion: nil)
-                } else {
-                    self.dialog(
-                        title: NSLocalizedString("not_supported", comment: ""),
-                        text: NSLocalizedString("file_selection_not_supported", comment: "")
-                    )
-                }
-        }
-        let importCsvAction = UIAlertAction(
-            title: NSLocalizedString("import_csv", comment: ""),
-            style: .default) { (action) in
-                if #available(iOS 11, *) {
-                    let documentPicker: UIDocumentPickerViewController
-                    if #available(iOS 14.0, *) {
-                        documentPicker = AppointmentDocumentPickerViewController(forOpeningContentTypes: [UTType.commaSeparatedText], asCopy: false)
-                    } else {
-                        documentPicker = AppointmentDocumentPickerViewController(documentTypes: ["public.comma-separated-values-text"], in: .import)
-                    }
-                    documentPicker.delegate = self
-                    self.present(documentPicker, animated: true, completion: nil)
-                } else {
-                    self.dialog(
-                        title: NSLocalizedString("not_supported", comment: ""),
-                        text: NSLocalizedString("file_selection_not_supported", comment: "")
-                    )
-                }
-        }
-        let exportIcsAction = UIAlertAction(
-            title: NSLocalizedString("export_ics", comment: ""),
-            style: .default) { (action) in
-        }
-        let exportCsvAction = UIAlertAction(
-            title: NSLocalizedString("export_csv", comment: ""),
-            style: .default) { (action) in
-        }
-        let cancelAction = UIAlertAction(
-            title: NSLocalizedString("close", comment: ""),
-            style: .cancel) { (action) in
-        }
-        
-        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        alert.addAction(importIcsAction)
-        alert.addAction(importCsvAction)
-        alert.addAction(exportIcsAction)
-        alert.addAction(exportCsvAction)
-        alert.addAction(cancelAction)
-        
-        alert.popoverPresentationController?.barButtonItem = sender
-        self.present(alert, animated: true)
-    }
-    
     func exportCsvCustomer(barButtonItem:UIBarButtonItem) {
         let csv = CustomerCsvWriter(customers: self.mDb.getCustomers(search: nil, showDeleted: false, withFiles: false), customFields: self.mDb.getCustomFields())
         

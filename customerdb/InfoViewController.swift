@@ -459,9 +459,6 @@ class InfoViewController : UIViewController, MFMailComposeViewControllerDelegate
         alert.addAction(UIAlertAction(title: NSLocalizedString("files", comment: ""), style: .default, handler: { (_) in
             self.openUnlockInputBox(productId: InfoViewController.inappFilesId)
         }))
-        alert.addAction(UIAlertAction(title: NSLocalizedString("calendar", comment: ""), style: .default, handler: { (_) in
-            self.openUnlockInputBox(productId: InfoViewController.inappCalendarId)
-        }))
         alert.addAction(UIAlertAction(title: NSLocalizedString("cancel", comment: ""), style: .cancel, handler: nil))
         alert.popoverPresentationController?.sourceView = sender.view
         self.present(alert, animated: true, completion: nil)
