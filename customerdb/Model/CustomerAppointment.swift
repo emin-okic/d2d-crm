@@ -1,12 +1,15 @@
 //
-//  CustomerAppointment.swift
-//  Copyright © 2020 Georg Sieber. All rights reserved.
+//  CustomerAppointment Class
 //
 
+// Import the foundation object
 import Foundation
 
 class CustomerAppointment {
 
+    //
+    // These are all the variables defining a customer appointment object
+    //
     var mId:Int64 = -1
     var mCalendarId:Int64 = -1
     var mTitle = ""
@@ -19,12 +22,14 @@ class CustomerAppointment {
     var mLocation = ""
     var mLastModified = Date()
     var mRemoved = 0
-
     var mColor = ""
-
+    
+    // This is one way to construct the customer appointment object
     init() {
         mId = Int64(Customer.generateID())
     }
+    
+    // This is another way to construct the customer appointment object
     init(id:Int64, calendarId:Int64, title:String, notes:String, timeStart:Date?, timeEnd:Date?, fullday:Bool, customer:String, customerId:Int64?, location:String, lastModified:Date, removed:Int) {
         mId = id
         mCalendarId = calendarId
@@ -40,12 +45,15 @@ class CustomerAppointment {
         mRemoved = removed
     }
 
+    // This function generates a unique id for the object
     static func generateID() -> Int64 {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyyMMddkkmmss"
         let strId = dateFormatter.string(from: Date()) + String(Int.random(in: 1..<100))
         return Int64(strId) ?? -1
     }
+    
+    // This function also generates a unique id using the suffix as an input parameter
     static func generateID(suffix: Int) -> Int64 {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyyMMddkkmmss"
@@ -53,6 +61,7 @@ class CustomerAppointment {
         return Int64(strId) ?? -1
     }
 
+    // This function manages the attributes for a project
     func putAttribute(key:String, value:String) {
         switch(key) {
             case "id":
@@ -93,11 +102,16 @@ class CustomerAppointment {
         }
     }
 
+    // This function gets the starting time of the calendar event object
+    // This function returns an int which is equal to (hour x 60 minutes) + minutes from starting time
     func getStartTimeInMinutes() -> Int {
         let hour = Calendar.current.component(.hour, from: mTimeStart!)
         let min = Calendar.current.component(.minute, from: mTimeStart!)
         return (hour * 60) + min
     }
+    
+    // This function gets an ending time for the calendar event object
+    // This function returns an int
     func getEndTimeInMinutes() -> Int {
         let hour = Calendar.current.component(.hour, from: mTimeEnd!)
         let min = Calendar.current.component(.minute, from: mTimeEnd!)

@@ -66,6 +66,7 @@
 		56FDB947240840620018004C /* LockViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FDB946240840620018004C /* LockViewController.swift */; };
 		56FDB949240947E70018004C /* BirthdayViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FDB948240947E70018004C /* BirthdayViewController.swift */; };
 		56FFD28F25B4F4A300F1611A /* CallDirectoryNumber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561B7C5B25B4D114005ABB43 /* CallDirectoryNumber.swift */; };
+		C5818D742DE643FF002B9E4D /* Models-README.md in Resources */ = {isa = PBXBuildFile; fileRef = C5818D732DE643FF002B9E4D /* Models-README.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -175,6 +176,7 @@
 		56FDB946240840620018004C /* LockViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockViewController.swift; sourceTree = "<group>"; };
 		56FDB948240947E70018004C /* BirthdayViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BirthdayViewController.swift; sourceTree = "<group>"; };
 		56FFD29425B6179C00F1611A /* CustomerDatabaseDirectory.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CustomerDatabaseDirectory.entitlements; sourceTree = "<group>"; };
+		C5818D732DE643FF002B9E4D /* Models-README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Models-README.md"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -279,6 +281,7 @@
 				56D51FC3237DEA080097DBDE /* CustomField.swift */,
 				569E145423748EFA007BFAF0 /* Voucher.swift */,
 				561B7C5B25B4D114005ABB43 /* CallDirectoryNumber.swift */,
+				C5818D732DE643FF002B9E4D /* Models-README.md */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -402,6 +405,7 @@
 				563FEE9B20FFDB5300DFD7B7 /* InfoPlist.strings in Resources */,
 				563FEE8B20FFD6C600DFD7B7 /* Assets.xcassets in Resources */,
 				569E1446237310C2007BFAF0 /* Localizable.strings in Resources */,
+				C5818D742DE643FF002B9E4D /* Models-README.md in Resources */,
 				563FEE8920FFD6C500DFD7B7 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
