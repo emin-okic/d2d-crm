@@ -10,6 +10,7 @@ class CustomerCalendar {
     // A customer calendar should have an unique id.
     var mId:Int64 = -1
     var mTitle = ""
+    // A customer calendar should have a color
     var mColor = ""
     var mNotes = ""
     var mLastModified = Date()
