@@ -1,11 +1,14 @@
 //
-//  Voucher.swift
-//  Copyright © 2019 Georg Sieber. All rights reserved.
+//  Voucher Class
 //
 
 import Foundation
 
 class Voucher {
+    
+    //
+    // These are all the properties a voucher should have
+    //
     var mId:Int64 = -1
     var mOriginalValue = 0.0
     var mCurrentValue = 0.0

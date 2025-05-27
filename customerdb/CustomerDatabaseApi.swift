@@ -1,6 +1,5 @@
 //
-//  CustomerDatabaseApi.swift
-//  Copyright © 2019 Georg Sieber. All rights reserved.
+//  Customer Database Api Class
 //
 
 import Foundation
@@ -11,8 +10,12 @@ protocol RequestFinishedListener {
 
 class CustomerDatabaseApi {
     
-    static var MANAGED_API = "https://customerdb.sieber.systems/api.php"
+    // This defines our crm api based url
+    static var MANAGED_API = "https://localhost:3000/api.php"
     
+    //
+    // These are the main properties of a customer database
+    //
     var mUrl = ""
     var mUsername = ""
     var mPassword = ""

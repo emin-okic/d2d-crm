@@ -1,6 +1,5 @@
 //
-//  InsertNumber.swift
-//  Copyright © 2021 Georg Sieber. All rights reserved.
+//  Insert Number Class
 //
 
 import Foundation

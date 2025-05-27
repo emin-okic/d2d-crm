@@ -1,12 +1,15 @@
 //
-//  Customer.swift
-//  Copyright © 2019 Georg Sieber. All rights reserved.
+//  Customer Model
 //
 
 import Foundation
 import UIKit
 
 class Customer {
+    
+    //
+    // These variables define the attributes of the Customer model object
+    //
     var mId:Int64 = -1
     var mTitle = ""
     var mFirstName = ""
@@ -24,7 +27,7 @@ class Customer {
     var mNewsletter = false
     var mNotes = ""
     var mCustomFields = ""
-    
+
     var mImage:Data? = nil
     var mConsentImage:Data? = nil
     var mFiles:[CustomerFile]? = nil
@@ -32,9 +35,13 @@ class Customer {
     var mLastModified:Date = Date()
     var mRemoved = 0
     
+    // This is one way to construct the Customer Model object
+    // With one attribute -- a unique ID
     init() {
         mId = Int64(Customer.generateID())
     }
+    
+    // This is another way to construct a customer model object
     init(id:Int64, title:String, firstName:String, lastName:String, phoneHome:String, phoneMobile:String, phoneWork:String, email:String, street:String, zipcode:String, city:String, country:String, birthday:Date?, group:String, newsletter:Bool, notes:String, customFields:String, lastModified:Date, removed:Int) {
         mId = id
         mTitle = title
@@ -56,6 +63,8 @@ class Customer {
         mLastModified = lastModified
         mRemoved = removed
     }
+    
+    // Damn there is a third way to construct the customer model object
     init(id:Int64, title:String, firstName:String, lastName:String, phoneHome:String, phoneMobile:String, phoneWork:String, email:String, street:String, zipcode:String, city:String, country:String, birthday:Date?, group:String, newsletter:Bool, notes:String, customFields:String, image:Data?, consentImage:Data?, lastModified:Date, removed:Int) {
         mId = id
         mTitle = title
@@ -80,6 +89,9 @@ class Customer {
         mRemoved = removed
     }
     
+    //
+    // This function pretty much modifies all the properties that can be used in a Customer Model object
+    //
     func putAttribute(key:String, value:String) {
         switch(key) {
         case "id":
@@ -152,29 +164,79 @@ class Customer {
         case fileTooBig
         case fileLimitReached
     }
+    
+    //
+    // This function gets the files of a customer object
+    //
     func getFiles() -> [CustomerFile] {
-        if(mFiles == nil) { mFiles = [] }
+        
+        // If the files object is null, set the mFiles variable as an empty array
+        if(mFiles == nil) {
+            mFiles = []
+        }
+        
+        // Return the array of files as a result
         return mFiles!
     }
+    
+    //
+    // This function adds a file to a customer's file array
+    //
     func addFile(file:CustomerFile) throws {
-        if(mFiles == nil) { mFiles = [] }
+        
+        // If the mFiles array is null, then set the mFiles array to an empty array
+        if(mFiles == nil) {
+            mFiles = []
+        }
+        
+        // If the size of a file is more than 1024^2, return a file too damn big error
         if(file.mContent!.count > 1024 * 1024) {
             throw FileErrors.fileTooBig
         }
+        
+        // If the customer has 20 files associated to their record,
+        // throw a too many damn files error to stop them from adding more.
         if(mFiles!.count >= 20) {
             throw FileErrors.fileLimitReached
         }
+        
+        // Append the file object to the mFiles array for the customer if no errors get thrown
         mFiles?.append(file)
     }
+    
+    //
+    // This function renames a file in a file array associated with a customer record
+    //
     func renameFile(index:Int, newName: String) {
-        if(mFiles == nil || newName == "") { return }
+        
+        // If there are no files for a customer, return nothing
+        if(mFiles == nil || newName == "") {
+            return
+        }
+        
+        // Otherwise set the name of the given file to the new name defined in the input as required.
         mFiles![index].mName = newName
     }
+    
+    //
+    // This function removes a file from the list of files associated with a customer
+    //
     func removeFile(index:Int) {
-        if(mFiles == nil) { return }
+        
+        // If there are no files associated with a customer, return nothing
+        // TODO figure out what return with nothing does
+        if(mFiles == nil) {
+            return
+        }
+        
+        // Otherwise remove the file from the list of files associated with a customer
         mFiles?.remove(at: index)
+        
     }
     
+    //
+    // This function generates a unique ID for the customer object
+    //
     static func generateID() -> Int64 {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyyMMddkkmmss"
@@ -188,6 +250,9 @@ class Customer {
         return Int64(strId) ?? -1
     }
     
+    //
+    // This function gets the full name of a customer
+    //
     func getFullName(lastNameFirst:Bool) -> String {
         var final_title = ""
         if(mTitle != "") {

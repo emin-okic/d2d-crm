@@ -1,6 +1,5 @@
 //
-//  CustomerDatabase.swift - sqlite interface
-//  Copyright © 2019 Georg Sieber. All rights reserved.
+//  Customer Database Controller
 //
 
 import Foundation
@@ -8,7 +7,11 @@ import SQLite3
 
 class CustomerDatabase {
     
+    // This defines the location to find the file to load
     static var DB_FILE = "customerdb.sqlite"
+    
+    // These essentially automates the process of creating my database.
+    // Only if a connection exists but not database tables too
     static var CREATE_DB_STATEMENTS = [
         "CREATE TABLE IF NOT EXISTS customer (id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR NOT NULL, first_name VARCHAR NOT NULL, last_name VARCHAR NOT NULL, phone_home VARCHAR NOT NULL, phone_mobile VARCHAR NOT NULL, phone_work VARCHAR NOT NULL, email VARCHAR NOT NULL, street VARCHAR NOT NULL, zipcode VARCHAR NOT NULL, city VARCHAR NOT NULL, country VARCHAR NOT NULL, birthday DATETIME, notes VARCHAR NOT NULL, newsletter INTEGER DEFAULT 0 NOT NULL, customer_group VARCHAR NOT NULL, custom_fields VARCHAR NOT NULL, image BLOB, consent BLOB, last_modified DATETIME NOT NULL, removed INTEGER DEFAULT 0 NOT NULL);",
         "CREATE TABLE IF NOT EXISTS customer_extra_fields (id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR UNIQUE NOT NULL, type INTEGER NOT NULL, last_modified DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL, removed INTEGER DEFAULT 0 NOT NULL);",
