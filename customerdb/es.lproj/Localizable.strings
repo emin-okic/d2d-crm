@@ -1,0 +1,191 @@
+/* 
+  Strings.strings - ES
+  Copyright © 2019 Georg Sieber. All rights reserved.
+*/
+
+// Main
+"customer_database" = "Base de datos de cliente";
+"search" = "Buscar";
+"information" = "Información";
+"tips" = "Consejos";
+"settings" = "Configuraciones";
+"close" = "Cerca";
+"input_only_mode" = "Modo de solo entrada";
+"lock_app" = "Aplicación de bloqueo";
+"filter" = "Filtrar";
+"all" = "<Todos>";
+"empty" = "<Vacío>";
+"order" = "Orden";
+"newsletter" = "Boletin informativo";
+"birthdays" = "Cumpleaños";
+"import_export" = "Importación y exportación";
+"close_database" = "Cerrar base de datos";
+"delete_selected" = "Seleccionar y eliminar";
+"syncing" = "Sincronizando ...";
+"sync_succeeded" = "Sincronización exitosa";
+"sync_failed" = "Sincronización fallida";
+"ok" = "Okay";
+"invalid_response" = "Respuesta invalida";
+"customers" = "Clientes";
+"vouchers" = "Vales";
+"sync_not_configured" = "Sincronización no configurada";
+"please_setup_sync" = "Configura la sincronización en la configuración.";
+"import_ics" = "Importar archivo ICS";
+"import_vcf" = "Importar archivo VCF";
+"import_csv" = "Importar archivo CSV";
+"import_qr_code" = "Importar código QR";
+"scanning_not_supported" = "Escaneo no compatible";
+"scanning_not_supported_description" = "Su dispositivo no admite escanear un código de un artículo. Utilice un dispositivo con cámara.";
+"do_you_want_to_import_this_customer" = "¿Quieres importar este cliente?";
+"invalid_code" = "Codigo invalido";
+"could_not_find_valid_entries_in_this_code" = "No se pudieron encontrar entradas válidas en este código.";
+"import_csv_note" = "Tenga en cuenta la siguiente información importante para la importación CSV.\n\nLa primera línea se interpreta como el título de la columna. Su archivo CSV debe contener las siguientes columnas: id, title, first_name, last_name, phone_home, phone_mobile, phone_work, email, street, zipcode, city, country, customer_group, newsletter, birthday, last_modified, notes\n\nOtras columnas se importan como campos personalizados.\n\nImportante: utilice una coma (,) como separador de campo. La ID del cliente se genera cuando el campo está vacío o la ID ya existe. El campo \"newsletter\" solo puede contener 0 o 1. El formato de fecha debe ser \"AAAA-MM-DD HH:MM:SS\".\n\nPuede editar su archivo CSV, por ejemplo, con un software como LibreOffice Calc antes de comenzar la importación.";
+"import_csv_note_voucher" = "Tenga en cuenta la siguiente información importante para la importación CSV.\n\nLa primera línea se interpreta como título de columna. Su archivo CSV debe contener las siguientes columnas: id, number, original_value, current_value, from_customer, for_customer, issued, valid_until, redeemed, last_modified, notes\n\nImportante: utilice una coma (,) como separador de campo. La ID del cliente se genera cuando el campo está vacío o la ID ya existe. El formato de fecha debe ser \"YYYY-MM-DD HH:MM:SS\".\n\nPuede editar su archivo CSV, por ejemplo, con un software como LibreOffice Calc antes de comenzar la importación.";
+"export_ics" = "Exportar archivo ICS";
+"export_vcf" = "Exportar archivo VCF";
+"export_csv" = "Exportar archivo CSV";
+"import_failed" = "Importación fallida";
+"import_succeeded" = "Importación exitosa";
+"imported_records" = "Registros importados:";
+"export_failed" = "Exportación fallida";
+"export_succeeded" = "Exportación exitosa";
+"unknown_file_format" = "Formato de archivo desconocido";
+"yes" = "si";
+"no" = "No";
+"no_newsletter_customers" = "No hay boletines disponibles para clientes";
+"no_newsletter_customers_text" = "No puede escribir un boletín porque no hay clientes con una dirección de correo electrónico válida que hayan aceptado el boletín.";
+"no_email_account" = "Sin cuenta de correo electrónico";
+"please_set_up_email" = "Configure una cuenta en la configuración del sistema.";
+"backup_note_menu" = "Haga una copia de seguridad de sus datos regularmente (consulte 'Información' para más detalles)";
+"file_does_not_contain_valid_records" = "El archivo no contiene ningún registro válido.";
+"not_supported" = "No es compatible con este dispositivo";
+"file_selection_not_supported" = "Su versión de iOS no admite la selección de archivos.";
+"no_birthdays_in_the_next_days" = "No hay cumpleaños en los próximos %d días.";
+"please_set_password_first" = "Primero establezca una contraseña en la configuración.";
+"input_only_mode_instructions" = "En este modo, puede dar una tableta a los clientes para que puedan registrarse sin poder ver o eliminar otros datos del cliente.\n\nPuede usar el acceso guiado para evitar que otras aplicaciones usen o eliminen la aplicación de base de datos de clientes. Abra la configuración de iOS 'Facilidad de acceso' - 'Acceso guiado' para habilitar esta función.";
+"eula_title" = "Acuerdo de licencia de usuario final";
+"eula" = "No hay garantía para este software, en la medida permitida por la ley aplicable. Los titulares de los derechos de autor proporcionan el programa »tal cual«, sin ninguna garantía, ni expresa ni implícitamente, incluidas, entre otras, las garantías implícitas de comerciabilidad e idoneidad para un propósito particular. Todo el riesgo en cuanto a la calidad y el rendimiento del programa está con usted. Si el programa resultara defectuoso, usted asume el costo de todos los servicios, reparaciones o correcciones necesarias. En ningún caso, a menos que lo exija la ley aplicable o se acuerde por escrito, cualquier titular de derechos de autor, o cualquier otra parte que modifique y / o transmita el programa, será responsable ante usted por los daños.\n\nSe aplican términos adicionales si usa la suscripción de sincronización en la nube. Estos términos se pueden encontrar en la página de registro de la cuenta en la nube.\n\nAsegúrese de informar a sus clientes sobre el procesamiento digital de datos personales de acuerdo con el Reglamento General de Protección de Datos (EU GDPR).";
+
+// About
+"success" = "Éxito";
+"error" = "Error";
+"feature_now_available" = "La función ya está disponible";
+"x_activations_remaining" = "%d activaciones restantes";
+"more" = "Más...";
+"not_unlocked" = "Característica bloqueada";
+"unlock_feature_via_inapp" = "Puede desbloquear esta función mediante una compra en la aplicación.";
+"unlock_500_via_inapp" = "Puede desbloquear más de 500 clientes a través de una compra en la aplicación.";
+"purchased" = "Comprada";
+"buy" = "Comprar";
+"only_german_and_english_messages" = "Tenga en cuenta que solo se pueden considerar los mensajes en alemán e inglés.";
+"feedback_title" = "Feedback Customer Database iOS";
+"backup" = "Respaldo";
+"backup_info_text" = "De forma predeterminada, los datos se almacenan solo localmente en su dispositivo. Haga una copia de seguridad de su base de datos con regularidad para no perder sus datos en caso de mal funcionamiento o pérdida de su dispositivo móvil. Esto se hace simplemente copiando los archivos de la base de datos (en el directorio 'Base de datos del cliente') a su computadora u otro almacenamiento externo.\n\nLa copia de seguridad es aún más fácil si usa la función de sincronización. A continuación, los datos se sincronizarán con un servidor MySQL (propio). Para obtener más información sobre esta opción de copia de seguridad, visite la configuración.";
+"carddav_api" = "CardDAV API";
+"carddav_api_info_text" = "La nube de la base de datos de clientes y el servidor autohospedado ofrecen una API CardDAV de solo lectura para sincronizar a sus clientes con AVM FRITZ!Box, Thunderbird (con el complemento CardBook), Evolution o la aplicación de contactos macOS/iOS (los clientes solo pueden ser leídos en estos programas , ¡pero no editado!).\n\nServidores CardDAV:\nhttps://customerdb.sieber.systems/carddav.php\n\nNombre de usuario:\n<la dirección de correo electrónico de su cuenta de la base de datos de clientes>\n\nContraseña:\n<la contraseña de su cuenta de la base de datos de clientes>";
+
+// Settings
+"set_password" = "Configurar la clave";
+"choose_a_password" = "Elije una contraseña";
+"confirm_password" = "Confirmar contraseña";
+"new_custom_field" = "Nuevo campo personalizado";
+"edit_custom_field" = "Editar campo personalizado";
+"delete" = "Eliminar";
+"field_description" = "campo Descripción";
+"are_you_sure" = "Estas segura";
+"done" = "Hecho";
+"field_alphanumeric" = "Texto";
+"field_alphanumeric_multiline" = "Texto (Multilínea)";
+"field_numeric" = "Numérica";
+"field_drop_down" = "Desplegable";
+"field_date" = "Fecha";
+"logo_deleted" = "Imagen eliminada";
+"new_calendar" = "Nuevo calendario";
+"edit_calendar" = "Editar calendario";
+"red" = "Rojo";
+"green" = "Verde";
+"blue" = "Azul";
+"change_text_template" = "Cambiar plantilla de texto";
+"name" = "Designacion";
+"name_cannot_be_empty" = "La etiqueta no puede estar vacía";
+
+// Details
+"first_name" = "Nombre de pila";
+"last_name" = "Apellido";
+"ascending" = "Ascendente";
+"descending" = "Descendente";
+"ID:" = "CARNÉ DE IDENTIDAD:";
+"export_single_customer_record" = "Exportar registro de cliente único";
+"export_single_customer_record_description" = "Elija en qué formato se deben exportar los datos.";
+"save_csv" = "Guardar archivo CSV";
+"save_vcf" = "Guardar archivo VCF";
+"email_csv" = "Email CSV File";
+"email_vcf" = "Correo electrónico archivo VCF";
+"consent" = "Consentimiento";
+"image" = "Imagen";
+"print_customer" = "Cliente impresa";
+"delete_customer" = "Eliminar cliente";
+"print_voucher" = "Imprimir cupón";
+"delete_voucher" = "Eliminar comprobante";
+"redeem" = "Redimir";
+"value" = "Valor";
+"notes" = "Notas";
+"cancel" = "Cancelar";
+"number_parse_error" = "Entrada de número inválido";
+"enter_valid_number" = "Por favor ingrese un número valido.";
+"start_call" = "Iniciar llamada";
+"send_message" = "Enviar mensaje";
+"copy_to_clipboard" = "Copiar al portapapeles";
+"open_map" = "Mapa abierto";
+"delete_appointment" = "Eliminar cita";
+"copy_postal_address" = "Copiar dirección postal";
+"last_modified" = "Última modificación";
+"removed_placeholder" = "*REMOTO*";
+"add_drop_down_value" = "Nuevo valor desplegable";
+
+// Edit
+"name_empty" = "Nombre vacía";
+"please_fill_name" = "Por favor ingrese un nombre";
+"email_empty" = "Correo electrónico vacía";
+"please_fill_email" = "El cambio del boletín se activó pero no se ingresó ninguna dirección de correo electrónico. Ingrese una dirección de correo electrónico o desactive el cambio del boletín informativo.";
+"data_processing_consent" = "Consentimiento de procesamiento de datos";
+"please_accept_data_processing" = "Por favor, acepte el procesamiento de datos.";
+"new_customer" = "Nueva cliente";
+"new_voucher" = "Vale nuevo";
+"new_appointment" = "Nueva cita";
+"remove" = "Eliminar";
+"end_date_before_start_date" = "¡La fecha de finalización es anterior a la fecha de inicio!";
+"appointment_too_short" = "¡Cita demasiado corta! Cree una cita con una duración de al menos 5 minutos.";
+"no_calendar_selected" = "¡Ningún calendario seleccionado! Crea un calendario en la configuración.";
+"file_too_big" = "¡Archivo demasiado grande! Solo puede adjuntar archivos con un tamaño máximo de 1 MB.";
+"file_limit_reached" = "¡Se alcanzó el límite de archivos!";
+"image" = "Imagen";
+"image_from_camera" = "Imagen de la cámara";
+"choose_from_gallery" = "Elegir de la galería";
+"choose_from_files" = "Elija entre archivos";
+"file_name" = "Nombre del archivo";
+"customer" = "Cliente";
+
+// Sync
+"reset_password" = "Restablecer la contraseña";
+"delete_account" = "Borrar cuenta";
+"email_address" = "Dirección de correo electrónico";
+"please_check_inbox" = "Por favor revise su bandeja de entrada";
+"passwords_do_not_match" = "Las contraseñas no coinciden";
+"please_wait" = "Por favor espera...";
+"registration_failed" = "Registro fallido";
+"registration_succeeded" = "Registro exitoso";
+"registration_succeeded_text" = "Haga clic en el enlace del correo electrónico que le enviamos a su dirección para activar su cuenta. (Compruebe también su carpeta de correo no deseado).";
+"register_now" = "Regístrate ahora";
+"sync_account_changed" = "¿Eliminar todos los datos de su dispositivo?";
+"sync_account_changed_text" = "Se cambió la cuenta de sincronización.\n\nSi elige 'Sí', todos los datos se eliminarán de su dispositivo. Con la próxima sincronización, puede descargar todos los datos de la cuenta recién ingresada del servidor.\n\nSi elige 'No', todos los datos permanecerán en su dispositivo. Con la próxima sincronización, los datos de su dispositivo se fusionarán con los de la cuenta recién ingresada desde el servidor.";
+"please_accept_privacy_policy" = "Acepte los términos del servicio y la política de privacidad.";
+
+// Input Only Mode
+"unlock" = "desbloquear";
+"please_enter_password_to_exit" = "Por favor, introduzca la contraseña para desbloquear.";
+"password" = "Contraseña";
+"incorrect_password" = "Contraseña incorrecta";
+
+// Birthday View
+"today_note" = "(hoy)";

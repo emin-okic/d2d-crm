@@ -1,0 +1,8 @@
+/* 
+  InfoPlist.strings
+  Copyright © 2018 Georg Sieber. All rights reserved.
+*/
+"CFBundleDisplayName" = "Kundendatenbank";
+"NewCustomer" = "Neuer Kunde";
+"NewAppointment" = "Neuer Termin";
+"NewVoucher" = "Neuer Gutschein";
