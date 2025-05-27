@@ -1,12 +1,13 @@
 //
-//  CustomerCalendar.swift
-//  Copyright © 2020 Georg Sieber. All rights reserved.
+//  Customer Calendar Model
 //
 
 import Foundation
 
+// This class defines what a customer calendar object looks like.
 class CustomerCalendar {
-
+    
+    // A customer calendar should have an unique id.
     var mId:Int64 = -1
     var mTitle = ""
     var mColor = ""
