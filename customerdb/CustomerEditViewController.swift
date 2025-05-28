@@ -85,9 +85,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
         if(!UserDefaults.standard.bool(forKey: "show-birthday-field")) {
             stackViewBirthday.isHidden = true
         }
-        if(!UserDefaults.standard.bool(forKey: "show-files")) {
-            stackViewFilesContainer.isHidden = true
-        }
         
         // load default values
         textFieldTitle.text = UserDefaults.standard.string(forKey: "default-customer-title") ?? ""

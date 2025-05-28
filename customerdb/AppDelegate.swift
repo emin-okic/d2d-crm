@@ -35,7 +35,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, SKPaymentTransactionObser
             "show-group-field" : true,
             "show-note-field" : true,
             "show-birthday-field" : true,
-            "show-files" : true,
             "currency" : "$"
         ])
         defaults.synchronize()

@@ -67,9 +67,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
         if(!UserDefaults.standard.bool(forKey: "show-birthday-field")) {
             stackViewBirthday.isHidden = true
         }
-        if(!UserDefaults.standard.bool(forKey: "show-files")) {
-            stackViewFilesContainer.isHidden = true
-        }
         
         loadCustomer()
     }
