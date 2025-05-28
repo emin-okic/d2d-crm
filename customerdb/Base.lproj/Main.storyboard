@@ -139,55 +139,6 @@
             </objects>
             <point key="canvasLocation" x="2638" y="1813"/>
         </scene>
-        <!--Text View View Controller-->
-        <scene sceneID="gIz-xc-MNo">
-            <objects>
-                <viewController storyboardIdentifier="TextViewViewController" id="iBb-Ar-uVN" customClass="TextViewViewController" customModule="customerdb" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="eu3-e7-IYH">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <subviews>
-                            <navigationBar contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="PjP-K9-Aph">
-                                <rect key="frame" x="0.0" y="96" width="414" height="44"/>
-                                <items>
-                                    <navigationItem title="Information" id="PpC-7r-3Ln">
-                                        <barButtonItem key="rightBarButtonItem" systemItem="done" id="7UI-7r-PPc">
-                                            <connections>
-                                                <action selector="onClickDone:" destination="iBb-Ar-uVN" id="lPv-5T-MwQ"/>
-                                            </connections>
-                                        </barButtonItem>
-                                    </navigationItem>
-                                </items>
-                            </navigationBar>
-                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" editable="NO" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="hKf-b1-YlJ">
-                                <rect key="frame" x="20" y="150" width="374" height="658"/>
-                                <string key="text">Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda.</string>
-                                <color key="textColor" systemColor="labelColor"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
-                            </textView>
-                        </subviews>
-                        <viewLayoutGuide key="safeArea" id="waa-JL-foC"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                        <constraints>
-                            <constraint firstItem="hKf-b1-YlJ" firstAttribute="leading" secondItem="waa-JL-foC" secondAttribute="leading" constant="20" id="GSy-St-EAO"/>
-                            <constraint firstItem="hKf-b1-YlJ" firstAttribute="top" secondItem="PjP-K9-Aph" secondAttribute="bottom" constant="10" id="Jb3-tP-1YG"/>
-                            <constraint firstItem="PjP-K9-Aph" firstAttribute="top" secondItem="waa-JL-foC" secondAttribute="top" id="LZN-og-ogz"/>
-                            <constraint firstItem="waa-JL-foC" firstAttribute="trailing" secondItem="PjP-K9-Aph" secondAttribute="trailing" id="cMT-kb-9de"/>
-                            <constraint firstItem="PjP-K9-Aph" firstAttribute="leading" secondItem="waa-JL-foC" secondAttribute="leading" id="cjZ-aq-Hrx"/>
-                            <constraint firstItem="waa-JL-foC" firstAttribute="bottom" secondItem="hKf-b1-YlJ" secondAttribute="bottom" constant="20" id="hDB-i8-fix"/>
-                            <constraint firstItem="waa-JL-foC" firstAttribute="trailing" secondItem="hKf-b1-YlJ" secondAttribute="trailing" constant="20" id="my8-bp-ouU"/>
-                        </constraints>
-                    </view>
-                    <connections>
-                        <outlet property="navigationBar" destination="PjP-K9-Aph" id="Mmd-bA-zhF"/>
-                        <outlet property="textViewText" destination="hKf-b1-YlJ" id="bgT-KX-F12"/>
-                    </connections>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="ujt-bJ-V9N" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="66.666666666666671" y="-12.053571428571429"/>
-        </scene>
         <!--Customers-->
         <scene sceneID="wIo-hx-ZpT">
             <objects>
