@@ -19,6 +19,7 @@ class CustomerTableViewController : UIViewController, UITableViewDelegate, UITab
     
     let mDb = CustomerDatabase()
     var mCustomers:[Customer] = []
+    // It seems that the customer table controller is dependent on the Picker Controller class
     var mFilterPickerController: FilterPickerController? = nil
     var mSortPickerController: SortPickerController? = nil
     
