@@ -429,31 +429,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
         self.present(alert, animated: true)
     }
     
-    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        for url in urls {
-            
-            _ = url.startAccessingSecurityScopedResource()
-            if(url.pathExtension.lowercased() == "csv") {
-                do {
-                    var inserted = 0
-                    mDb.updateCallDirectoryDatabase()
-                    handleImportSuccess(imported: inserted)
-                } catch let error {
-                    handleImportError(message: error.localizedDescription)
-                }
-            } else {
-                handleImportError(message: NSLocalizedString("unknown_file_format", comment: ""))
-            }
-            url.stopAccessingSecurityScopedResource()
-                
-            
-        }
-        
-        DispatchQueue.main.async {
-            self.reloadData()
-        }
-    }
-    
     func handleImportError(message:String) {
         self.dialog(
             title: NSLocalizedString("import_failed", comment: ""),
