@@ -522,9 +522,6 @@ City Country</string>
                                                         <color key="textColor" systemColor="secondaryLabelColor"/>
                                                         <nil key="highlightedColor"/>
                                                     </label>
-                                                    <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="F0g-bF-7Tn">
-                                                        <rect key="frame" x="0.0" y="0.0" width="374" height="0.0"/>
-                                                    </stackView>
                                                 </subviews>
                                             </stackView>
                                         </subviews>
@@ -596,7 +593,6 @@ City Country</string>
                         <outlet property="labelPhoneMobile" destination="c5c-2p-9F8" id="ShY-Lt-gTQ"/>
                         <outlet property="labelPhoneWork" destination="83c-Bs-KU9" id="p5j-cu-w2Y"/>
                         <outlet property="stackViewAddress" destination="geW-2l-acg" id="j6V-vG-e8O"/>
-                        <outlet property="stackViewAppointments" destination="F0g-bF-7Tn" id="IuW-NG-ZFi"/>
                         <outlet property="stackViewAttributes" destination="RqH-wG-7sX" id="YMK-bF-yjU"/>
                         <outlet property="stackViewBirthday" destination="gh0-cl-VR6" id="Tbn-bc-G6W"/>
                         <outlet property="stackViewEmail" destination="Ihc-HA-Cq0" id="KR3-mk-Duw"/>

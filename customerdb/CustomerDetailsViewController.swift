@@ -26,7 +26,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
     @IBOutlet weak var stackViewBirthday: UIStackView!
     @IBOutlet weak var stackViewFilesContainer: UIStackView!
     @IBOutlet weak var stackViewFiles: UIStackView!
-    @IBOutlet weak var stackViewAppointments: UIStackView!
     
     @IBOutlet weak var labelPhoneHome: UILabel!
     @IBOutlet weak var labelPhoneMobile: UILabel!
