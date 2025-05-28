@@ -6,7 +6,7 @@
 	<true/>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.sieber.systems.customerdb</string>
+		<string>group.okic.systems.customerdb</string>
 	</array>
 	<key>com.apple.security.network.client</key>
 	<true/>
