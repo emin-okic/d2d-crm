@@ -421,26 +421,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
     }
     
     var mCurrentFileUrl:URL?
-    @objc func onClickFileButton(sender: FileButton!) {
-        do {
-            let tmpurl = try! FileManager.default.url(
-                for: .documentDirectory, in: .userDomainMask,
-                appropriateFor: nil, create: true
-            ).appendingPathComponent("tmp")
-            try FileManager.default.createDirectory(
-                atPath: tmpurl.path, withIntermediateDirectories: true, attributes: nil
-            )
-            let fileurl = tmpurl.appendingPathComponent(sender.mFile!.mName)
-            try sender.mFile?.mContent?.write(to: fileurl)
-            mCurrentFileUrl = fileurl
-            
-            let previewController = QLPreviewController()
-            previewController.dataSource = self
-            present(previewController, animated: true)
-        } catch {
-            print(error)
-        }
-    }
     func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
         return 1
     }
@@ -464,28 +444,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
             } else {
                 textColor = UIColor.gray
             }
-        }
-    }
-    
-    class FileButton: UIButton {
-        var mFile: CustomerFile?
-        required init(file:CustomerFile) {
-            super.init(frame: .zero)
-            mFile = file
-            setTitle(file.mName, for: .normal)
-            if #available(iOS 13.0, *) {
-                setTitleColor(.link, for: .normal)
-            } else {
-                setTitleColor(UIColor.init(hex: "#0f7c9d"), for: .normal)
-            }
-            if #available(iOS 11.0, *) {
-                contentHorizontalAlignment = .leading
-            } else {
-                contentHorizontalAlignment = .left
-            }
-        }
-        required init?(coder aDecoder: NSCoder) {
-            super.init(coder: aDecoder)
         }
     }
 }
