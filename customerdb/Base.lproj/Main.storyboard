@@ -11,7 +11,6 @@
         <!--Master Navigation Controller-->
         <scene sceneID="X2J-9I-EBE">
             <objects>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="pY9-9F-5DA" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
                 <navigationController id="Hfs-VI-2zW" customClass="MasterNavigationController" customModule="d2d_crm" customModuleProvider="target" sceneMemberID="viewController">
                     <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" largeTitles="YES" id="26P-1Q-VZg">
                         <rect key="frame" x="0.0" y="96" width="414" height="96"/>
@@ -21,6 +20,7 @@
                         <segue destination="8xm-T7-4QM" kind="relationship" relationship="rootViewController" id="6JP-pB-aVP"/>
                     </connections>
                 </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="pY9-9F-5DA" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-32" y="826"/>
         </scene>
@@ -889,19 +889,11 @@ City Country</string>
                                                         <rect key="frame" x="0.0" y="0.0" width="374" height="0.0"/>
                                                         <subviews>
                                                             <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Files" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5QI-kN-hwV">
-                                                                <rect key="frame" x="0.0" y="0.0" width="0.0" height="29"/>
+                                                                <rect key="frame" x="0.0" y="0.0" width="0.0" height="20.5"/>
                                                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                                 <color key="textColor" systemColor="secondaryLabelColor"/>
                                                                 <nil key="highlightedColor"/>
                                                             </label>
-                                                            <button hidden="YES" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="QUK-XO-amn">
-                                                                <rect key="frame" x="0.0" y="0.0" width="0.0" height="29"/>
-                                                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                                                <state key="normal" title="Add File"/>
-                                                                <connections>
-                                                                    <action selector="onClickAddFile:" destination="zPY-ZJ-7WK" eventType="touchUpInside" id="plR-Oy-oi4"/>
-                                                                </connections>
-                                                            </button>
                                                         </subviews>
                                                     </stackView>
                                                     <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="y7e-E5-2Wz">
@@ -980,7 +972,6 @@ City Country</string>
                         </barButtonItem>
                     </navigationItem>
                     <connections>
-                        <outlet property="buttonAddFile" destination="QUK-XO-amn" id="KDN-oS-H6e"/>
                         <outlet property="imageViewImage" destination="H9s-4G-Uox" id="yGA-69-x1s"/>
                         <outlet property="scrollView" destination="sJG-32-Jlv" id="Alr-bp-hiY"/>
                         <outlet property="stackViewAddress" destination="qM6-0c-Esu" id="GPc-c5-wP5"/>
