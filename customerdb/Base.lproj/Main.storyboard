@@ -880,14 +880,7 @@ City Country</string>
                                                 <rect key="frame" x="0.0" y="585.5" width="374" height="0.0"/>
                                                 <subviews>
                                                     <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="NLt-00-6kg">
-                                                        <subviews>
-                                                            <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Files" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5QI-kN-hwV">
-                                                                <rect key="frame" x="0.0" y="0.0" width="0.0" height="20.5"/>
-                                                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                                                <color key="textColor" systemColor="secondaryLabelColor"/>
-                                                                <nil key="highlightedColor"/>
-                                                            </label>
-                                                        </subviews>
+                                                        <rect key="frame" x="0.0" y="0.0" width="50" height="0.0"/>
                                                     </stackView>
                                                 </subviews>
                                             </stackView>
