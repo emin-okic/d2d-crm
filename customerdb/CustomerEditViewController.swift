@@ -702,23 +702,11 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
         buttonFile.setTitle(file.mName, for: .normal)
         buttonFile.addTarget(self, action: #selector(onClickFile), for: .touchUpInside)
         
-        let buttonRemove = FileIndexButton(file: file, index: index)
-        buttonRemove.setImage(UIImage(named: "baseline_clear_black_24pt"), for: .normal)
-        buttonRemove.addTarget(self, action: #selector(onClickFileRemove), for: .touchUpInside)
-        buttonRemove.setContentHuggingPriority(.required, for: .horizontal)
-        buttonRemove.setContentCompressionResistancePriority(.required, for: .horizontal)
-        
         let imageClip = UIImageView(image: UIImage(named: "baseline_attach_file_black_24pt"))
         imageClip.tintColor = UIColor.init(hex: "#828282")
         imageClip.contentMode = .scaleAspectFill
         imageClip.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         imageClip.widthAnchor.constraint(equalToConstant: 10).isActive = true
-        
-        let stackView = UIStackView(arrangedSubviews: [imageClip, buttonFile, buttonRemove])
-        stackView.axis = .horizontal
-        stackView.spacing = 10
-        
-        stackViewFiles.addArrangedSubview(stackView)
     }
     @objc func onClickFile(sender: FileIndexButton!) {
         inputBox(title: NSLocalizedString("file_name", comment: ""), defaultText: sender.mFile!.mName, callback: { newText in
@@ -727,10 +715,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
                 self.refreshFiles()
             }
         })
-    }
-    @objc func onClickFileRemove(sender: FileIndexButton!) {
-        mCurrentCustomer?.removeFile(index: sender.mIndex)
-        refreshFiles()
     }
     
     func handleError(text: String) {

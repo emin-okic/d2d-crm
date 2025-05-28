@@ -219,22 +219,6 @@ class Customer {
     }
     
     //
-    // This function removes a file from the list of files associated with a customer
-    //
-    func removeFile(index:Int) {
-        
-        // If there are no files associated with a customer, return nothing
-        // TODO figure out what return with nothing does
-        if(mFiles == nil) {
-            return
-        }
-        
-        // Otherwise remove the file from the list of files associated with a customer
-        mFiles?.remove(at: index)
-        
-    }
-    
-    //
     // This function generates a unique ID for the customer object
     //
     static func generateID() -> Int64 {
