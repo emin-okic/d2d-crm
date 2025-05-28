@@ -485,12 +485,6 @@ City Country</string>
                                             <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="KVq-zh-nlw">
                                                 <rect key="frame" x="0.0" y="427.5" width="374" height="0.0"/>
                                                 <subviews>
-                                                    <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Files" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3B8-Gq-pus">
-                                                        <rect key="frame" x="0.0" y="0.0" width="374" height="0.0"/>
-                                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                                        <color key="textColor" systemColor="secondaryLabelColor"/>
-                                                        <nil key="highlightedColor"/>
-                                                    </label>
                                                     <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="qa7-zS-IC0">
                                                         <rect key="frame" x="0.0" y="0.0" width="374" height="0.0"/>
                                                     </stackView>
@@ -886,7 +880,6 @@ City Country</string>
                                                 <rect key="frame" x="0.0" y="585.5" width="374" height="0.0"/>
                                                 <subviews>
                                                     <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="NLt-00-6kg">
-                                                        <rect key="frame" x="0.0" y="0.0" width="374" height="0.0"/>
                                                         <subviews>
                                                             <label hidden="YES" opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Files" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5QI-kN-hwV">
                                                                 <rect key="frame" x="0.0" y="0.0" width="0.0" height="20.5"/>
@@ -895,9 +888,6 @@ City Country</string>
                                                                 <nil key="highlightedColor"/>
                                                             </label>
                                                         </subviews>
-                                                    </stackView>
-                                                    <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="y7e-E5-2Wz">
-                                                        <rect key="frame" x="0.0" y="0.0" width="374" height="0.0"/>
                                                     </stackView>
                                                 </subviews>
                                             </stackView>
@@ -979,7 +969,6 @@ City Country</string>
                         <outlet property="stackViewBirthday" destination="Lul-FU-ZoQ" id="mp8-QB-04R"/>
                         <outlet property="stackViewConsent" destination="wnf-z5-f4E" id="nbz-Hn-ft5"/>
                         <outlet property="stackViewContact" destination="cZK-g2-sLz" id="VSV-LA-BV8"/>
-                        <outlet property="stackViewFiles" destination="y7e-E5-2Wz" id="mx0-Ck-aaR"/>
                         <outlet property="stackViewFilesContainer" destination="oy5-We-cP8" id="q85-Oi-61t"/>
                         <outlet property="stackViewGroup" destination="cbE-qs-0lP" id="EHq-K2-nae"/>
                         <outlet property="stackViewImage" destination="HZh-wa-MD0" id="QWk-DR-r1P"/>

@@ -139,18 +139,6 @@ class Customer {
             mImage = Data(base64Encoded: value, options: .ignoreUnknownCharacters); break
         case "custom_fields":
             mCustomFields = value; break
-        case "files":
-            do {
-                if let filesData = value.data(using: .utf8, allowLossyConversion: false) {
-                    if let jsonFiles = try JSONSerialization.jsonObject(with: filesData, options: []) as? [[String : Any]] {
-                        for file in jsonFiles {
-                            if let strName = file["name"] as? String, let strContent = file["content"] as? String {
-                            }
-                        }
-                    }
-                }
-            } catch {}
-            break
         default:
             setCustomField(title: key, value: value)
         }
