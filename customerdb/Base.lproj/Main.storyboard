@@ -11,6 +11,7 @@
         <!--Master Navigation Controller-->
         <scene sceneID="X2J-9I-EBE">
             <objects>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="pY9-9F-5DA" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
                 <navigationController id="Hfs-VI-2zW" customClass="MasterNavigationController" customModule="d2d_crm" customModuleProvider="target" sceneMemberID="viewController">
                     <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" largeTitles="YES" id="26P-1Q-VZg">
                         <rect key="frame" x="0.0" y="96" width="414" height="96"/>
@@ -20,7 +21,6 @@
                         <segue destination="8xm-T7-4QM" kind="relationship" relationship="rootViewController" id="6JP-pB-aVP"/>
                     </connections>
                 </navigationController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="pY9-9F-5DA" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-32" y="826"/>
         </scene>

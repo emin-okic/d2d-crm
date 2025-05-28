@@ -16,7 +16,7 @@ class CallDirectoryDatabase {
     var db: OpaquePointer?
     
     init() {
-        if let fileurl = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.sieber.systems.customerdb")?
+        if let fileurl = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.okic.systems.customerdb")?
             .appendingPathComponent(CallDirectoryDatabase.DB_FILE) {
             if(sqlite3_open(fileurl.path, &db) != SQLITE_OK) {
                 print("error opening database "+fileurl.path)
