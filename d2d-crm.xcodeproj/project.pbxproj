@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		561B7C5C25B4D114005ABB43 /* CallDirectoryNumber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561B7C5B25B4D114005ABB43 /* CallDirectoryNumber.swift */; };
-		562A8BB1249BA20A003CB9C4 /* DocumentPickers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 562A8BB0249BA20A003CB9C4 /* DocumentPickers.swift */; };
 		562A8BB724A67DF5003CB9C4 /* CustomerFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 562A8BB624A67DF5003CB9C4 /* CustomerFile.swift */; };
 		563903C92374C75D00753D93 /* CustomerTableController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 563903C82374C75D00753D93 /* CustomerTableController.swift */; };
 		563FEE8420FFD6C500DFD7B7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 563FEE8320FFD6C500DFD7B7 /* AppDelegate.swift */; };
@@ -66,7 +65,6 @@
 
 /* Begin PBXFileReference section */
 		561B7C5B25B4D114005ABB43 /* CallDirectoryNumber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallDirectoryNumber.swift; sourceTree = "<group>"; };
-		562A8BB0249BA20A003CB9C4 /* DocumentPickers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPickers.swift; sourceTree = "<group>"; };
 		562A8BB624A67DF5003CB9C4 /* CustomerFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerFile.swift; sourceTree = "<group>"; };
 		56386B4E23F74CFE007D32DC /* customerdb.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = customerdb.entitlements; sourceTree = "<group>"; };
 		563903C82374C75D00753D93 /* CustomerTableController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerTableController.swift; sourceTree = "<group>"; };
@@ -155,7 +153,6 @@
 				56B2B7CE23E5EAFF00295569 /* MasterNavigationViewController.swift */,
 				56E9C02E246C6E6E00DBB9DA /* NavigationController.swift */,
 				569E14422371EA9E007BFAF0 /* MainViewController.swift */,
-				562A8BB0249BA20A003CB9C4 /* DocumentPickers.swift */,
 				56C089D2244A32D9005F8A1B /* PickerController.swift */,
 				564EC39D27BEEDDA00C7BE81 /* TextViewViewController.swift */,
 				563903C82374C75D00753D93 /* CustomerTableController.swift */,
@@ -303,7 +300,6 @@
 				56D51FCE239C4A5C0097DBDE /* CustomerDatabaseApi.swift in Sources */,
 				56E9C02D246C64CA00DBB9DA /* MainSplitViewController.swift in Sources */,
 				569E14432371EA9E007BFAF0 /* MainViewController.swift in Sources */,
-				562A8BB1249BA20A003CB9C4 /* DocumentPickers.swift in Sources */,
 				569E144E23745792007BFAF0 /* CustomerDatabase.swift in Sources */,
 				56F4E61124B2208D002F5569 /* UIColor.swift in Sources */,
 				56C089D3244A32D9005F8A1B /* PickerController.swift in Sources */,
