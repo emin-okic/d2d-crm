@@ -366,7 +366,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
             title: NSLocalizedString("import_export", comment: ""),
             style: .default) { (action) in
                 if let _ = self.selectedViewController as? CustomerTableViewController {
-                    self.menuImportExportCustomer(sender)
                 }
         }
         importExportAction.setValue(UIImage(named:"baseline_import_export_black_24pt"), forKey: "image")
@@ -427,68 +426,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
             title: NSLocalizedString("close", comment: ""),
             style: .cancel) { (action) in
         })
-        self.present(alert, animated: true)
-    }
-    
-    func menuImportExportCustomer(_ sender: UIBarButtonItem) {
-        let importVcfAction = UIAlertAction(
-            title: NSLocalizedString("import_vcf", comment: ""),
-            style: .default) { (action) in
-                if #available(iOS 11, *) {
-                    let documentPicker: UIDocumentPickerViewController
-                    if #available(iOS 14.0, *) {
-                        documentPicker = CustomerDocumentPickerViewController(forOpeningContentTypes: [UTType.vCard], asCopy: false)
-                    } else {
-                        documentPicker = CustomerDocumentPickerViewController(documentTypes: ["public.vcard"], in: .import)
-                    }
-                    documentPicker.delegate = self
-                    self.present(documentPicker, animated: true, completion: nil)
-                } else {
-                    self.dialog(
-                        title: NSLocalizedString("not_supported", comment: ""),
-                        text: NSLocalizedString("file_selection_not_supported", comment: "")
-                    )
-                }
-        }
-        let importCsvAction = UIAlertAction(
-            title: NSLocalizedString("import_csv", comment: ""),
-            style: .default) { (action) in
-                if #available(iOS 11, *) {
-                    let alert = UIAlertController(
-                        title: "", message: NSLocalizedString("import_csv_note", comment: ""),
-                        preferredStyle: .alert
-                    )
-                    alert.addAction(UIAlertAction(
-                        title: NSLocalizedString("ok", comment: ""),
-                        style: .default) { (action) in
-                            let documentPicker: UIDocumentPickerViewController
-                            if #available(iOS 14.0, *) {
-                                documentPicker = CustomerDocumentPickerViewController(forOpeningContentTypes: [UTType.commaSeparatedText], asCopy: false)
-                            } else {
-                                documentPicker = CustomerDocumentPickerViewController(documentTypes: ["public.comma-separated-values-text"], in: .import)
-                            }
-                            documentPicker.delegate = self
-                            self.present(documentPicker, animated: true, completion: nil)
-                    })
-                    self.present(alert, animated: true, completion: nil)
-                } else {
-                    self.dialog(
-                        title: NSLocalizedString("not_supported", comment: ""),
-                        text: NSLocalizedString("file_selection_not_supported", comment: "")
-                    )
-                }
-        }
-        let cancelAction = UIAlertAction(
-            title: NSLocalizedString("close", comment: ""),
-            style: .cancel) { (action) in
-        }
-        
-        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        alert.addAction(importVcfAction)
-        alert.addAction(importCsvAction)
-        alert.addAction(cancelAction)
-        
-        alert.popoverPresentationController?.barButtonItem = sender
         self.present(alert, animated: true)
     }
     
