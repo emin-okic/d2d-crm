@@ -156,11 +156,6 @@ class Customer {
         }
     }
     
-    enum FileErrors: Error {
-        case fileTooBig
-        case fileLimitReached
-    }
-    
     //
     // This function generates a unique ID for the customer object
     //
