@@ -37,7 +37,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
     @IBOutlet weak var stackViewNewsletter: UIStackView!
     @IBOutlet weak var stackViewBirthday: UIStackView!
     @IBOutlet weak var stackViewFilesContainer: UIStackView!
-    @IBOutlet weak var buttonAddFile: UIButton!
     
     let mDb = CustomerDatabase()
     
@@ -327,7 +326,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
                 else if picker is ImagePickerCustomerFile {
                     if let jpeg = compressedImage.jpegData(compressionQuality: 0.60) {
                         DispatchQueue.main.async { // use DispatchQueue for potential alert dialog
-                            self.addFile(name: NSLocalizedString("image", comment: "")+".jpg", content: jpeg)
                         }
                     }
                 }
@@ -421,31 +419,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
                     }
                 }
             }
-        }
-    }
-    
-    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        do {
-            for url in urls {
-                if(url.startAccessingSecurityScopedResource()) {
-                    try addFile(name: url.lastPathComponent, content: Data(contentsOf: url))
-                    url.stopAccessingSecurityScopedResource()
-                }
-            }
-        } catch let error {
-            handleError(text: error.localizedDescription)
-        }
-    }
-    func addFile(name: String, content: Data) {
-        do {
-            try mCurrentCustomer?.addFile(file: CustomerFile(name: name, content: content))
-            refreshFiles()
-        } catch Customer.FileErrors.fileTooBig {
-            dialog(title: NSLocalizedString("error", comment: ""), text: NSLocalizedString("file_too_big", comment: ""))
-        } catch Customer.FileErrors.fileLimitReached {
-            dialog(title: NSLocalizedString("error", comment: ""), text: NSLocalizedString("file_limit_reached", comment: ""))
-        } catch let error {
-            dialog(title: NSLocalizedString("error", comment: ""), text: error.localizedDescription)
         }
     }
     

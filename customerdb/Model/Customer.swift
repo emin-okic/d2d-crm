@@ -146,9 +146,6 @@ class Customer {
                     if let jsonFiles = try JSONSerialization.jsonObject(with: filesData, options: []) as? [[String : Any]] {
                         for file in jsonFiles {
                             if let strName = file["name"] as? String, let strContent = file["content"] as? String {
-                                if let content = Data(base64Encoded: strContent, options: .ignoreUnknownCharacters) {
-                                    try addFile(file: CustomerFile(name: strName, content: content))
-                                }
                             }
                         }
                     }
@@ -177,31 +174,6 @@ class Customer {
         
         // Return the array of files as a result
         return mFiles!
-    }
-    
-    //
-    // This function adds a file to a customer's file array
-    //
-    func addFile(file:CustomerFile) throws {
-        
-        // If the mFiles array is null, then set the mFiles array to an empty array
-        if(mFiles == nil) {
-            mFiles = []
-        }
-        
-        // If the size of a file is more than 1024^2, return a file too damn big error
-        if(file.mContent!.count > 1024 * 1024) {
-            throw FileErrors.fileTooBig
-        }
-        
-        // If the customer has 20 files associated to their record,
-        // throw a too many damn files error to stop them from adding more.
-        if(mFiles!.count >= 20) {
-            throw FileErrors.fileLimitReached
-        }
-        
-        // Append the file object to the mFiles array for the customer if no errors get thrown
-        mFiles?.append(file)
     }
     
     //
