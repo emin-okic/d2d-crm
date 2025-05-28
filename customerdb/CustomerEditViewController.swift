@@ -14,7 +14,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
     @IBOutlet weak var textFieldTitle: UITextField!
     @IBOutlet weak var textFieldFirstName: UITextField!
     @IBOutlet weak var textFieldLastName: UITextField!
-    @IBOutlet weak var textFieldPhoneHome: UITextField!
     @IBOutlet weak var textFieldPhoneMobile: UITextField!
     @IBOutlet weak var textFieldPhoneWork: UITextField!
     @IBOutlet weak var textFieldEmail: UITextField!
@@ -55,7 +54,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name:UIResponder.keyboardWillHideNotification, object: nil)
         
         if(UserDefaults.standard.bool(forKey: "phone-allow-chars")) {
-            textFieldPhoneHome.keyboardType = .default
             textFieldPhoneMobile.keyboardType = .default
             textFieldPhoneWork.keyboardType = .default
         }
@@ -67,7 +65,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
             stackViewImage.isHidden = true
         }
         if(!UserDefaults.standard.bool(forKey: "show-phone-field")) {
-            textFieldPhoneHome.isHidden = true
             textFieldPhoneMobile.isHidden = true
             textFieldPhoneWork.isHidden = true
         }
@@ -202,7 +199,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
             textFieldTitle.text = mCurrentCustomer?.mTitle
             textFieldFirstName.text = mCurrentCustomer?.mFirstName
             textFieldLastName.text = mCurrentCustomer?.mLastName
-            textFieldPhoneHome.text = mCurrentCustomer?.mPhoneHome
             textFieldPhoneMobile.text = mCurrentCustomer?.mPhoneMobile
             textFieldPhoneWork.text = mCurrentCustomer?.mPhoneWork
             textFieldEmail.text = mCurrentCustomer?.mEmail
@@ -423,7 +419,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
         mCurrentCustomer?.mTitle = textFieldTitle.text!
         mCurrentCustomer?.mFirstName = textFieldFirstName.text!
         mCurrentCustomer?.mLastName = textFieldLastName.text!
-        mCurrentCustomer?.mPhoneHome = textFieldPhoneHome.text!
         mCurrentCustomer?.mPhoneMobile = textFieldPhoneMobile.text!
         mCurrentCustomer?.mPhoneWork = textFieldPhoneWork.text!
         mCurrentCustomer?.mEmail = textFieldEmail.text!.trimmingCharacters(in: .whitespacesAndNewlines)

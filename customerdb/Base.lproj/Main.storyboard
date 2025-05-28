@@ -714,11 +714,6 @@ City Country</string>
                                                         <color key="textColor" systemColor="secondaryLabelColor"/>
                                                         <nil key="highlightedColor"/>
                                                     </label>
-                                                    <textField hidden="YES" opaque="NO" tag="3" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Phone Home" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="zzj-fc-m6j">
-                                                        <rect key="frame" x="0.0" y="21.5" width="374" height="0.0"/>
-                                                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                                        <textInputTraits key="textInputTraits" keyboardType="phonePad"/>
-                                                    </textField>
                                                     <textField opaque="NO" tag="4" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Phone Mobile" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="lsR-gi-5j5">
                                                         <rect key="frame" x="0.0" y="22.5" width="374" height="34"/>
                                                         <fontDescription key="fontDescription" type="system" pointSize="14"/>
@@ -941,7 +936,6 @@ City Country</string>
                         <outlet property="textFieldFirstName" destination="4na-ll-Zyt" id="8Kr-Cc-wFY"/>
                         <outlet property="textFieldGroup" destination="Xzs-ld-Zgk" id="vzG-0m-rag"/>
                         <outlet property="textFieldLastName" destination="kgS-oa-sxY" id="IfM-br-bKO"/>
-                        <outlet property="textFieldPhoneHome" destination="zzj-fc-m6j" id="m7n-JO-5sa"/>
                         <outlet property="textFieldPhoneMobile" destination="lsR-gi-5j5" id="bJ7-jW-rua"/>
                         <outlet property="textFieldPhoneWork" destination="QZo-z6-nBD" id="1gG-Ia-UDr"/>
                         <outlet property="textFieldTitle" destination="NFE-cV-6ga" id="2wN-HH-QaH"/>
