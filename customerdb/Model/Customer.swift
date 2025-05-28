@@ -25,7 +25,6 @@ class Customer {
     var mBirthday:Date? = nil
     var mGroup = ""
     var mNotes = ""
-    var mCustomFields = ""
 
     var mImage:Data? = nil
     var mConsentImage:Data? = nil
@@ -40,7 +39,7 @@ class Customer {
     }
     
     // This is another way to construct a customer model object
-    init(id:Int64, title:String, firstName:String, lastName:String, phoneHome:String, phoneMobile:String, phoneWork:String, email:String, street:String, zipcode:String, city:String, country:String, birthday:Date?, group:String, notes:String, customFields:String, lastModified:Date, removed:Int) {
+    init(id:Int64, title:String, firstName:String, lastName:String, phoneHome:String, phoneMobile:String, phoneWork:String, email:String, street:String, zipcode:String, city:String, country:String, birthday:Date?, group:String, notes:String, lastModified:Date, removed:Int) {
         mId = id
         mTitle = title
         mFirstName = firstName
@@ -56,13 +55,12 @@ class Customer {
         mBirthday = birthday
         mGroup = group
         mNotes = notes
-        mCustomFields = customFields
         mLastModified = lastModified
         mRemoved = removed
     }
     
     // Damn there is a third way to construct the customer model object
-    init(id:Int64, title:String, firstName:String, lastName:String, phoneHome:String, phoneMobile:String, phoneWork:String, email:String, street:String, zipcode:String, city:String, country:String, birthday:Date?, group:String, notes:String, customFields:String, image:Data?, consentImage:Data?, lastModified:Date, removed:Int) {
+    init(id:Int64, title:String, firstName:String, lastName:String, phoneHome:String, phoneMobile:String, phoneWork:String, email:String, street:String, zipcode:String, city:String, country:String, birthday:Date?, group:String, notes:String, image:Data?, consentImage:Data?, lastModified:Date, removed:Int) {
         mId = id
         mTitle = title
         mFirstName = firstName
@@ -78,7 +76,6 @@ class Customer {
         mBirthday = birthday
         mGroup = group
         mNotes = notes
-        mCustomFields = customFields
         mImage = image
         mConsentImage = consentImage
         mLastModified = lastModified
@@ -132,10 +129,8 @@ class Customer {
             mRemoved = (value=="1" ? 1 : 0); break
         case "image":
             mImage = Data(base64Encoded: value, options: .ignoreUnknownCharacters); break
-        case "custom_fields":
-            mCustomFields = value; break
         default:
-            mCustomFields = value; break
+           break
         }
     }
     

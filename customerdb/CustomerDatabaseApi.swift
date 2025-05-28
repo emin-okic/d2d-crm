@@ -83,7 +83,6 @@ class CustomerDatabaseApi {
                 "birthday": customer.mBirthday==nil ? nil : CustomerDatabase.dateToStringRaw(date: customer.mBirthday!),
                 "customer_group": customer.mGroup,
                 "notes": customer.mNotes,
-                "custom_fields": customer.mCustomFields,
                 "image": customer.mImage==nil ? nil : customer.mImage!.base64EncodedString(),
                 "consent": nil,
                 "last_modified": CustomerDatabase.dateToString(date: customer.mLastModified),

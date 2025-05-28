@@ -223,7 +223,6 @@ class CustomerDatabase {
                     birthday: birthday,
                     group: String(cString: sqlite3_column_text(stmt, 13)),
                     notes: String(cString: sqlite3_column_text(stmt, 15)),
-                    customFields: String(cString: sqlite3_column_text(stmt, 16)),
                     lastModified: lastModified,
                     removed: Int(sqlite3_column_int(stmt, 18))
                 )
@@ -251,14 +250,6 @@ class CustomerDatabase {
         }
         
         return customers
-    }
-    func findInCustomFields(searchUpperCase:String, fields:[CustomField]) -> Bool {
-        for cf in fields {
-            if(cf.mValue.uppercased().contains(searchUpperCase)) {
-                return true
-            }
-        }
-        return false
     }
     func getCustomerFiles(c: Customer) -> Customer {
         var stmt:OpaquePointer?
@@ -305,7 +296,6 @@ class CustomerDatabase {
                         birthday: birthday,
                         group: String(cString: sqlite3_column_text(stmt, 13)),
                         notes: String(cString: sqlite3_column_text(stmt, 15)),
-                        customFields: String(cString: sqlite3_column_text(stmt, 16)),
                         lastModified: CustomerDatabase.parseDate(strDate: String(cString: sqlite3_column_text(stmt, 19))) ?? Date(),
                         removed: Int(sqlite3_column_int(stmt, 20))
                     )
@@ -334,7 +324,6 @@ class CustomerDatabase {
             let birthday:NSString? = (c.mBirthday==nil) ? nil : CustomerDatabase.dateToStringRaw(date: c.mBirthday!) as NSString
             let notes = c.mNotes as NSString
             let group = c.mGroup as NSString
-            let customFields = c.mCustomFields as NSString
             let lastModified = CustomerDatabase.dateToString(date: c.mLastModified) as NSString
             sqlite3_bind_text(stmt, 1, title.utf8String, -1, nil)
             sqlite3_bind_text(stmt, 2, firstName.utf8String, -1, nil)
@@ -354,7 +343,6 @@ class CustomerDatabase {
             }
             sqlite3_bind_text(stmt, 13, notes.utf8String, -1, nil)
             sqlite3_bind_text(stmt, 15, group.utf8String, -1, nil)
-            sqlite3_bind_text(stmt, 16, customFields.utf8String, -1, nil)
             if(c.mImage == nil) {
                 sqlite3_bind_null(stmt, 17)
             } else {
@@ -400,7 +388,6 @@ class CustomerDatabase {
             let birthday:NSString? = (c.mBirthday==nil) ? nil : CustomerDatabase.dateToStringRaw(date: c.mBirthday!) as NSString
             let notes = c.mNotes as NSString
             let group = c.mGroup as NSString
-            let customFields = c.mCustomFields as NSString
             let lastModified = CustomerDatabase.dateToString(date: c.mLastModified) as NSString
             sqlite3_bind_int64(stmt, 1, c.mId)
             sqlite3_bind_text(stmt, 2, title.utf8String, -1, nil)
@@ -421,7 +408,6 @@ class CustomerDatabase {
             }
             sqlite3_bind_text(stmt, 14, notes.utf8String, -1, nil)
             sqlite3_bind_text(stmt, 16, group.utf8String, -1, nil)
-            sqlite3_bind_text(stmt, 17, customFields.utf8String, -1, nil)
             if(c.mImage == nil) {
                 sqlite3_bind_null(stmt, 18)
             } else {
@@ -475,62 +461,5 @@ class CustomerDatabase {
             }
         }
         if(transact) { commitTransaction() }
-    }
-    
-    func updateCustomField(cf: CustomField) -> Bool {
-        var stmt:OpaquePointer?
-        if sqlite3_prepare(self.db, "UPDATE customer_extra_fields SET title = ?, type = ? WHERE id = ?", -1, &stmt, nil) == SQLITE_OK {
-            let title = cf.mTitle as NSString
-            sqlite3_bind_text(stmt, 1, title.utf8String, -1, nil)
-            sqlite3_bind_int(stmt, 2, Int32(cf.mType))
-            sqlite3_bind_int64(stmt, 3, cf.mId)
-            if sqlite3_step(stmt) == SQLITE_DONE {
-                sqlite3_finalize(stmt)
-            }
-        }
-        return true
-    }
-    func insertCustomField(cf: CustomField) -> Bool {
-        var stmt:OpaquePointer?
-        if sqlite3_prepare(self.db, "INSERT INTO customer_extra_fields (title, type) VALUES (?,?)", -1, &stmt, nil) == SQLITE_OK {
-            let key = cf.mTitle as NSString
-            sqlite3_bind_text(stmt, 1, key.utf8String, -1, nil)
-            sqlite3_bind_int(stmt, 2, Int32(cf.mType))
-            if sqlite3_step(stmt) == SQLITE_DONE {
-                sqlite3_finalize(stmt)
-            }
-        }
-        return true
-    }
-    func removeCustomField(id: Int64) {
-        var stmt:OpaquePointer?
-        if sqlite3_prepare(self.db, "DELETE FROM customer_extra_fields WHERE id = ?", -1, &stmt, nil) == SQLITE_OK {
-            sqlite3_bind_int64(stmt, 1, id)
-            if sqlite3_step(stmt) == SQLITE_DONE {
-                sqlite3_finalize(stmt)
-            }
-        }
-    }
-    
-    func insertCustomFieldPreset(fieldId: Int64, preset: String) -> Bool {
-        var stmt:OpaquePointer?
-        if sqlite3_prepare(self.db, "INSERT INTO customer_extra_presets (title, extra_field_id) VALUES (?,?)", -1, &stmt, nil) == SQLITE_OK {
-            let title = preset as NSString
-            sqlite3_bind_text(stmt, 1, title.utf8String, -1, nil)
-            sqlite3_bind_int64(stmt, 2, fieldId)
-            if sqlite3_step(stmt) == SQLITE_DONE {
-                sqlite3_finalize(stmt)
-            }
-        }
-        return true
-    }
-    func removeCustomFieldPreset(id: Int64) {
-        var stmt:OpaquePointer?
-        if sqlite3_prepare(self.db, "DELETE FROM customer_extra_presets WHERE id = ?", -1, &stmt, nil) == SQLITE_OK {
-            sqlite3_bind_int64(stmt, 1, id)
-            if sqlite3_step(stmt) == SQLITE_DONE {
-                sqlite3_finalize(stmt)
-            }
-        }
     }
 }

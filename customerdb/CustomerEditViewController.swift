@@ -38,7 +38,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
     let mDb = CustomerDatabase()
     
     var mCurrentCustomer:Customer? = nil
-    var mDisplayAttributes:[CustomField] = []
     var mIsNewCustomer = true
     var mCurrentCustomerImage:Data? = nil
     var mCurrentCustomerBirthday:Date? = nil
@@ -217,8 +216,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
                 imageViewImage.image = UIImage(data: mCurrentCustomerImage!)
             }
         }
-        
-        mDisplayAttributes = []
         
     }
     
@@ -403,20 +400,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
         mCurrentCustomer?.mImage = mCurrentCustomerImage
         mCurrentCustomer?.mLastModified = Date()
         
-        // update attributes from text fields
-        for attribute in mDisplayAttributes {
-            if let textField = attribute.mTextFieldHandle as? UITextField {
-                // convert display date to storage format
-                var finalValue = textField.text!
-                if(attribute.mType == CustomField.TYPE.DATE) {
-                    let date = CustomerDatabase.parseDisplayDateWithoutTime(strDate: finalValue)
-                    if(date != nil) {
-                        finalValue = CustomerDatabase.dateToStringRaw(date: date!)
-                    }
-                }
-            }
-        }
-        
         var success = false
         if(mIsNewCustomer) {
             success = mDb.insertCustomer(c: mCurrentCustomer!)
@@ -430,88 +413,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
         }
         
         return success
-    }
-    
-    func insertDetail(customField:CustomField) -> UIView? {
-        let finalText = customField.mValue
-        let labelTitle = UILabel()
-        if #available(iOS 13.0, *) {
-            labelTitle.textColor = UIColor.secondaryLabel
-        } else {
-            labelTitle.textColor = UIColor.gray
-        }
-        labelTitle.text = customField.mTitle
-        
-        var inputView:UIView? = nil
-        if(customField.mType == CustomField.TYPE.TEXT_MULTILINE) {
-            let textView = UITextView()
-            textView.isScrollEnabled = false
-            textView.text = finalText
-            textView.font = textFieldTitle.font
-            GuiHelper.adjustTextviewStyle(control: textView, viewController: self)
-            inputView = textView
-        } else {
-            let textField = UITextField()
-            textField.text = finalText
-            textField.borderStyle = .roundedRect
-            textField.font = textFieldTitle.font
-            if(customField.mType == CustomField.TYPE.NUMBER) {
-                textField.keyboardType = .numbersAndPunctuation
-            }
-            else if(customField.mType == CustomField.TYPE.DATE) {
-                let toolBar = UIToolbar()
-                toolBar.sizeToFit()
-                let doneButton = UIBarButtonItem(title: NSLocalizedString("done", comment: ""), style: .plain, target: self, action: #selector(CustomerEditViewController.dismissKeyboard))
-                toolBar.setItems([doneButton], animated: false)
-                toolBar.isUserInteractionEnabled = true
-                let datePickerView = UITextFieldDatePicker()
-                datePickerView.textFieldReference = textField
-                datePickerView.datePickerMode = .date
-                if #available(iOS 13.4, *) {
-                    datePickerView.preferredDatePickerStyle = .wheels
-                }
-                textField.inputAccessoryView = toolBar
-                textField.inputView = datePickerView
-                if let date = CustomerDatabase.parseDisplayDateWithoutTime(strDate: finalText) {
-                    datePickerView.date = date
-                }
-                datePickerView.addTarget(self, action: #selector(handleCustomDatePicker(sender:)), for: .valueChanged)
-            }
-            else if(customField.mType == CustomField.TYPE.DROPDOWN) {
-                initDropDownStyle(textField: textField)
-                
-                let toolBar = UIToolbar()
-                toolBar.sizeToFit()
-                let doneButton = UIBarButtonItem(title: NSLocalizedString("done", comment: ""), style: .plain, target: self, action: #selector(CustomerEditViewController.dismissKeyboard))
-                toolBar.setItems([doneButton], animated: false)
-                toolBar.isUserInteractionEnabled = true
-                
-                customField.mPresetPickerController!.textField = textField
-                let uiPicker = UIPickerView()
-                uiPicker.delegate = customField.mPresetPickerController!
-                textField.inputView = uiPicker
-                textField.inputAccessoryView = toolBar
-                if(customField.mPresetPickerController!.data.count > 0) {
-                    // select first item
-                    uiPicker.selectRow(0, inComponent: 0, animated: false)
-                    // select given default if exists
-                    for i in 0...customField.mPresetPickerController!.data.count-1 {
-                        if(customField.mPresetPickerController!.data[i].value == finalText) {
-                            uiPicker.selectRow(i, inComponent: 0, animated: false)
-                            break
-                        }
-                    }
-                }
-            }
-            inputView = textField
-        }
-        
-        let stackView = UIStackView(arrangedSubviews: [labelTitle, inputView!])
-        stackView.axis = .vertical
-        
-        stackViewAttributes.addArrangedSubview(stackView)
-        
-        return inputView
     }
     
     func handleError(text: String) {
