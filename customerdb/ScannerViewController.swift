@@ -1,6 +1,5 @@
 //
-//  ScanViewController.swift
-//  Copyright © 2020 Georg Sieber. All rights reserved.
+//  Scan View Controller Class
 //
 
 import AVFoundation

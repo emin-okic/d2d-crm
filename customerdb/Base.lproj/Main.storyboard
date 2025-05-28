@@ -52,62 +52,6 @@
             </objects>
             <point key="canvasLocation" x="-957" y="1148"/>
         </scene>
-        <!--Registration-->
-        <scene sceneID="ceg-Qi-XoU">
-            <objects>
-                <viewController id="PgL-5M-hcZ" customClass="InputOnlyModeViewController" customModule="customerdb" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="vmT-zg-gCz">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <subviews>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="sS9-EG-fiU">
-                                <rect key="frame" x="0.0" y="212" width="414" height="41"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="24"/>
-                                <state key="normal" title="Register Now...">
-                                    <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                </state>
-                                <connections>
-                                    <action selector="onClickregister:" destination="PgL-5M-hcZ" eventType="touchUpInside" id="avO-PS-1nV"/>
-                                </connections>
-                            </button>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="OXK-xU-IFU">
-                                <rect key="frame" x="0.0" y="252" width="414" height="516"/>
-                            </imageView>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="6jx-Qi-WYe">
-                                <rect key="frame" x="0.0" y="798" width="414" height="30"/>
-                                <state key="normal" title="Unlock">
-                                    <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                </state>
-                                <connections>
-                                    <action selector="onClickUnlock:" destination="PgL-5M-hcZ" eventType="touchUpInside" id="ZFs-3a-08m"/>
-                                </connections>
-                            </button>
-                        </subviews>
-                        <viewLayoutGuide key="safeArea" id="wJE-1l-DqE"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                        <constraints>
-                            <constraint firstItem="wJE-1l-DqE" firstAttribute="trailing" secondItem="6jx-Qi-WYe" secondAttribute="trailing" id="6Yu-dF-iE2"/>
-                            <constraint firstItem="OXK-xU-IFU" firstAttribute="top" secondItem="wJE-1l-DqE" secondAttribute="top" constant="60" id="9Rl-T3-HQE"/>
-                            <constraint firstItem="OXK-xU-IFU" firstAttribute="bottom" secondItem="wJE-1l-DqE" secondAttribute="bottom" constant="-60" id="Bne-wm-aMV"/>
-                            <constraint firstItem="wJE-1l-DqE" firstAttribute="trailing" secondItem="OXK-xU-IFU" secondAttribute="trailing" id="Dlg-z7-ECD"/>
-                            <constraint firstItem="sS9-EG-fiU" firstAttribute="top" secondItem="wJE-1l-DqE" secondAttribute="top" constant="20" id="Dmc-nW-wzR"/>
-                            <constraint firstItem="OXK-xU-IFU" firstAttribute="centerX" secondItem="wJE-1l-DqE" secondAttribute="centerX" id="NZx-Lt-yd7"/>
-                            <constraint firstItem="6jx-Qi-WYe" firstAttribute="leading" secondItem="wJE-1l-DqE" secondAttribute="leading" id="ccU-94-yiW"/>
-                            <constraint firstItem="sS9-EG-fiU" firstAttribute="leading" secondItem="wJE-1l-DqE" secondAttribute="leading" id="f51-oV-kUa"/>
-                            <constraint firstItem="OXK-xU-IFU" firstAttribute="leading" secondItem="wJE-1l-DqE" secondAttribute="leading" id="rYW-kF-uWM"/>
-                            <constraint firstItem="wJE-1l-DqE" firstAttribute="trailing" secondItem="sS9-EG-fiU" secondAttribute="trailing" id="rmD-gY-JC5"/>
-                            <constraint firstItem="wJE-1l-DqE" firstAttribute="bottom" secondItem="6jx-Qi-WYe" secondAttribute="bottom" id="u8I-Wb-2bY"/>
-                        </constraints>
-                    </view>
-                    <navigationItem key="navigationItem" title="Registration" id="ke2-OY-2ln"/>
-                    <connections>
-                        <outlet property="imageViewLogo" destination="OXK-xU-IFU" id="fQP-S9-pXN"/>
-                    </connections>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="xEa-D6-qQ1" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="1316" y="2624"/>
-        </scene>
         <!--Birthdays-->
         <scene sceneID="biB-J8-YdD">
             <objects>
@@ -855,7 +799,6 @@ City Country</string>
                     </tabBar>
                     <connections>
                         <outlet property="buttonSearch" destination="B0e-41-Z5R" id="k9f-G9-Zkv"/>
-                        <segue destination="PgL-5M-hcZ" kind="show" identifier="segueInputOnlyMode" id="Q6X-SU-Jkd"/>
                         <segue destination="S5h-gi-I1r" kind="show" identifier="segueLock" id="M7k-Ph-edS"/>
                         <segue destination="SIb-RV-VgN" kind="show" identifier="segueBirthday" id="UFY-t5-qb5"/>
                         <segue destination="Xct-tD-FSc" kind="relationship" relationship="viewControllers" id="qs7-VQ-FnT"/>

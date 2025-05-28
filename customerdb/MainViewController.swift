@@ -1,6 +1,5 @@
 //
-//  MainViewController.swift
-//  Copyright © 2019 Georg Sieber. All rights reserved.
+//  Main View Controller Class
 //
 
 import Foundation
@@ -26,7 +25,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
         navigationController?.navigationBar.barStyle = .black
         initColor()
         initSearch()
-        refreshSyncIcon()
         initLock()
         
         if(UIDevice.current.userInterfaceIdiom == .pad) {

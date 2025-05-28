@@ -1,6 +1,5 @@
 //
-//  InfoViewController.swift
-//  Copyright © 2019 Georg Sieber. All rights reserved.
+//  Info View Controller Class
 //
 
 import Foundation
