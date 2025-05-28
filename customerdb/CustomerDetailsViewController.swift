@@ -22,7 +22,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
     @IBOutlet weak var stackViewAddress: UIStackView!
     @IBOutlet weak var stackViewGroup: UIStackView!
     @IBOutlet weak var stackViewNotes: UIStackView!
-    @IBOutlet weak var stackViewNewsletter: UIStackView!
     @IBOutlet weak var stackViewBirthday: UIStackView!
     @IBOutlet weak var stackViewFilesContainer: UIStackView!
     @IBOutlet weak var stackViewFiles: UIStackView!
@@ -34,7 +33,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
     @IBOutlet weak var labelAddress: UILabel!
     @IBOutlet weak var labelGroup: UILabel!
     @IBOutlet weak var labelNotes: UILabel!
-    @IBOutlet weak var labelNewsletter: UILabel!
     @IBOutlet weak var labelBirthday: UILabel!
     @IBOutlet weak var buttonEdit: UIButton!
     
@@ -65,9 +63,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
         }
         if(!UserDefaults.standard.bool(forKey: "show-note-field")) {
             stackViewNotes.isHidden = true
-        }
-        if(!UserDefaults.standard.bool(forKey: "show-newsletter-field")) {
-            stackViewNewsletter.isHidden = true
         }
         if(!UserDefaults.standard.bool(forKey: "show-birthday-field")) {
             stackViewBirthday.isHidden = true
@@ -151,7 +146,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
         labelAddress.text = mCurrentCustomer?.getAddressString()
         labelGroup.text = mCurrentCustomer?.mGroup
         labelNotes.text = mCurrentCustomer?.mNotes
-        labelNewsletter.text = mCurrentCustomer!.mNewsletter ? NSLocalizedString("Yes", comment: "") : NSLocalizedString("No", comment: "")
         if(mCurrentCustomer?.mBirthday == nil) {
             labelBirthday.text = ""
         } else {

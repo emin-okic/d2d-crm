@@ -24,7 +24,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
     @IBOutlet weak var textFieldCountry: UITextField!
     @IBOutlet weak var textFieldGroup: UITextField!
     @IBOutlet weak var textViewNotes: UITextView!
-    @IBOutlet weak var switchNewsletter: UISwitch!
     @IBOutlet weak var switchConsent: UISwitch!
     @IBOutlet weak var textFieldBirthday: UITextField!
     @IBOutlet weak var stackViewAttributes: UIStackView!
@@ -34,7 +33,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
     @IBOutlet weak var stackViewAddress: UIStackView!
     @IBOutlet weak var stackViewGroup: UIStackView!
     @IBOutlet weak var stackViewNotes: UIStackView!
-    @IBOutlet weak var stackViewNewsletter: UIStackView!
     @IBOutlet weak var stackViewBirthday: UIStackView!
     @IBOutlet weak var stackViewFilesContainer: UIStackView!
     
@@ -87,9 +85,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
         }
         if(!UserDefaults.standard.bool(forKey: "show-note-field")) {
             stackViewNotes.isHidden = true
-        }
-        if(!UserDefaults.standard.bool(forKey: "show-newsletter-field")) {
-            stackViewNewsletter.isHidden = true
         }
         if(!UserDefaults.standard.bool(forKey: "show-birthday-field")) {
             stackViewBirthday.isHidden = true
@@ -217,9 +212,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
             textFieldCountry.text = mCurrentCustomer?.mCountry
             textFieldGroup.text = mCurrentCustomer?.mGroup
             textViewNotes.text = mCurrentCustomer?.mNotes
-            if(mCurrentCustomer != nil) {
-                switchNewsletter.isOn = mCurrentCustomer!.mNewsletter
-            }
             mCurrentCustomerBirthday = mCurrentCustomer?.mBirthday
             if(mCurrentCustomer?.mBirthday != nil) {
                 textFieldBirthday.text = CustomerDatabase.dateToDisplayStringWithoutTime(date: mCurrentCustomer!.mBirthday!)
@@ -324,18 +316,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
             let alert = UIAlertController(
                 title: NSLocalizedString("name_empty", comment: ""),
                 message: NSLocalizedString("please_fill_name", comment: ""),
-                preferredStyle: .alert)
-            let okAction = UIAlertAction(
-                title: NSLocalizedString("ok", comment: ""),
-                style: .cancel)
-            alert.addAction(okAction)
-            self.present(alert, animated: true)
-            return
-        }
-        if(switchNewsletter.isOn && textFieldEmail.text! == "") {
-            let alert = UIAlertController(
-                title: NSLocalizedString("email_empty", comment: ""),
-                message: NSLocalizedString("please_fill_email", comment: ""),
                 preferredStyle: .alert)
             let okAction = UIAlertAction(
                 title: NSLocalizedString("ok", comment: ""),
@@ -453,7 +433,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
         mCurrentCustomer?.mCountry = textFieldCountry.text!
         mCurrentCustomer?.mGroup = textFieldGroup.text!
         mCurrentCustomer?.mNotes = textViewNotes.text!
-        mCurrentCustomer?.mNewsletter = switchNewsletter.isOn
         mCurrentCustomer?.mBirthday = mCurrentCustomerBirthday
         mCurrentCustomer?.mImage = mCurrentCustomerImage
         mCurrentCustomer?.mLastModified = Date()

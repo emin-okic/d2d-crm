@@ -445,23 +445,6 @@ City Country</string>
                                                     </label>
                                                 </subviews>
                                             </stackView>
-                                            <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="NFK-yU-mfR">
-                                                <rect key="frame" x="0.0" y="376.5" width="374" height="0.0"/>
-                                                <subviews>
-                                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Newsletter" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Ahn-xK-rIG">
-                                                        <rect key="frame" x="0.0" y="0.0" width="374" height="0.0"/>
-                                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                                        <color key="textColor" systemColor="secondaryLabelColor"/>
-                                                        <nil key="highlightedColor"/>
-                                                    </label>
-                                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="No" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="z6Z-Sh-bgI">
-                                                        <rect key="frame" x="0.0" y="0.0" width="374" height="0.0"/>
-                                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                                        <nil key="textColor"/>
-                                                        <nil key="highlightedColor"/>
-                                                    </label>
-                                                </subviews>
-                                            </stackView>
                                             <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="gh0-cl-VR6">
                                                 <rect key="frame" x="0.0" y="386.5" width="374" height="41"/>
                                                 <subviews>
@@ -570,7 +553,6 @@ City Country</string>
                         <outlet property="labelGroup" destination="zv9-Dt-CYR" id="nhr-Uw-Soc"/>
                         <outlet property="labelLastModified" destination="DDM-08-W7Z" id="dLz-ad-oov"/>
                         <outlet property="labelName" destination="YCt-ws-Aiq" id="6BF-la-uZT"/>
-                        <outlet property="labelNewsletter" destination="z6Z-Sh-bgI" id="e4d-bJ-5Tb"/>
                         <outlet property="labelNotes" destination="ngX-Be-zKQ" id="bkP-0l-EA1"/>
                         <outlet property="labelPhoneHome" destination="7OY-se-Wxf" id="bqx-Ls-mDf"/>
                         <outlet property="labelPhoneMobile" destination="c5c-2p-9F8" id="ShY-Lt-gTQ"/>
@@ -582,7 +564,6 @@ City Country</string>
                         <outlet property="stackViewFiles" destination="qa7-zS-IC0" id="z8g-tH-Lse"/>
                         <outlet property="stackViewFilesContainer" destination="KVq-zh-nlw" id="rta-mU-1kd"/>
                         <outlet property="stackViewGroup" destination="JjT-cc-eIg" id="wRR-dN-7JS"/>
-                        <outlet property="stackViewNewsletter" destination="NFK-yU-mfR" id="vRQ-MV-Pvp"/>
                         <outlet property="stackViewNotes" destination="Yam-Vm-r4O" id="RvV-c1-MOR"/>
                         <outlet property="stackViewPhoneHome" destination="VQg-8D-Y7k" id="MUj-MU-f86"/>
                         <outlet property="stackViewPhoneMobile" destination="zW8-Xo-cgV" id="e55-XP-d5P"/>
@@ -831,20 +812,6 @@ City Country</string>
                                                     </textView>
                                                 </subviews>
                                             </stackView>
-                                            <stackView hidden="YES" opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="2" translatesAutoresizingMaskIntoConstraints="NO" id="Hrg-0p-Ro2">
-                                                <rect key="frame" x="0.0" y="519" width="374" height="2"/>
-                                                <subviews>
-                                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Newsletter" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="PYa-eK-3CO">
-                                                        <rect key="frame" x="0.0" y="0.0" width="374" height="0.0"/>
-                                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                                        <color key="textColor" systemColor="secondaryLabelColor"/>
-                                                        <nil key="highlightedColor"/>
-                                                    </label>
-                                                    <switch opaque="NO" tag="13" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="d2C-6o-pl3">
-                                                        <rect key="frame" x="0.0" y="2" width="376" height="0.0"/>
-                                                    </switch>
-                                                </subviews>
-                                            </stackView>
                                             <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="2" translatesAutoresizingMaskIntoConstraints="NO" id="Lul-FU-ZoQ">
                                                 <rect key="frame" x="0.0" y="529" width="374" height="56.5"/>
                                                 <subviews>
@@ -965,10 +932,8 @@ City Country</string>
                         <outlet property="stackViewFilesContainer" destination="oy5-We-cP8" id="q85-Oi-61t"/>
                         <outlet property="stackViewGroup" destination="cbE-qs-0lP" id="EHq-K2-nae"/>
                         <outlet property="stackViewImage" destination="HZh-wa-MD0" id="QWk-DR-r1P"/>
-                        <outlet property="stackViewNewsletter" destination="Hrg-0p-Ro2" id="LNs-kd-RRy"/>
                         <outlet property="stackViewNotes" destination="kJF-AG-pVl" id="LPB-OL-tYN"/>
                         <outlet property="switchConsent" destination="gV6-8j-Qzq" id="74S-ix-HbB"/>
-                        <outlet property="switchNewsletter" destination="d2C-6o-pl3" id="RbX-iL-892"/>
                         <outlet property="textFieldBirthday" destination="krw-j4-Taf" id="SAn-9j-dLb"/>
                         <outlet property="textFieldCity" destination="ciZ-gE-ep7" id="4gF-ww-UO2"/>
                         <outlet property="textFieldCountry" destination="ZSG-fK-2T2" id="77z-Cu-Oaz"/>

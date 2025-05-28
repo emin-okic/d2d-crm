@@ -330,38 +330,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
         }
         sortAction.setValue(UIImage(named:"baseline_sort_by_alpha_black_24pt"), forKey: "image")
         
-        let newsletterAction = UIAlertAction(
-            title: NSLocalizedString("newsletter", comment: ""),
-            style: .default) { (action) in
-                if(MFMailComposeViewController.canSendMail()) {
-                    var recipients:[String] = []
-                    for c in self.mDb.getCustomers(search: nil, showDeleted: false, withFiles: false) {
-                        if(c.mNewsletter && self.isValidEmail(c.mEmail)) {
-                            recipients.append(c.mEmail)
-                        }
-                    }
-                    if(recipients.count == 0) {
-                        self.dialog(
-                            title: NSLocalizedString("no_newsletter_customers", comment: ""),
-                            text: NSLocalizedString("no_newsletter_customers_text", comment: "")
-                        )
-                        return
-                    }
-                    let composeVC = MFMailComposeViewController()
-                    composeVC.mailComposeDelegate = self
-                    composeVC.setBccRecipients(recipients)
-                    composeVC.setSubject("Newsletter")
-                    composeVC.setMessageBody(UserDefaults.standard.string(forKey: "email-newsletter-template") ?? "", isHTML: false)
-                    self.present(composeVC, animated: true, completion: nil)
-                } else {
-                    self.dialog(
-                        title: NSLocalizedString("no_email_account", comment: ""),
-                        text: NSLocalizedString("please_set_up_email", comment: "")
-                    )
-                }
-        }
-        newsletterAction.setValue(UIImage(named:"baseline_markunread_mailbox_black_24pt"), forKey: "image")
-        
         let importExportAction = UIAlertAction(
             title: NSLocalizedString("import_export", comment: ""),
             style: .default) { (action) in
@@ -390,7 +358,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
         
         alert.addAction(sortAction) // Todo
         alert.addAction(filterAction)
-        alert.addAction(newsletterAction)
         alert.addAction(importExportAction)
         alert.addAction(deleteAction)
         alert.addAction(cancelAction)
