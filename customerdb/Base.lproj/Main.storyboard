@@ -8,21 +8,6 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
-        <!--View Controller-->
-        <scene sceneID="o9o-uF-BK5">
-            <objects>
-                <viewController storyboardIdentifier="BlankDetailsViewController" id="wn3-B8-mWJ" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="lWp-QO-2RQ">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <viewLayoutGuide key="safeArea" id="lv3-q1-RgO"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                    </view>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="Q4f-kJ-fhz" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="-32" y="1471"/>
-        </scene>
         <!--Master Navigation Controller-->
         <scene sceneID="X2J-9I-EBE">
             <objects>
@@ -45,7 +30,6 @@
                 <splitViewController id="36O-zw-ABK" customClass="MainSplitViewController" customModule="d2d_crm" customModuleProvider="target" sceneMemberID="viewController">
                     <connections>
                         <segue destination="Hfs-VI-2zW" kind="relationship" relationship="masterViewController" id="cBK-kQ-uBw"/>
-                        <segue destination="wn3-B8-mWJ" kind="relationship" relationship="detailViewController" id="chP-kL-6Xz"/>
                     </connections>
                 </splitViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="DqL-Ge-uN4" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
