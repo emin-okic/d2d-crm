@@ -155,6 +155,7 @@
 		56FDB948240947E70018004C /* BirthdayViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BirthdayViewController.swift; sourceTree = "<group>"; };
 		56FFD29425B6179C00F1611A /* CustomerDatabaseDirectory.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CustomerDatabaseDirectory.entitlements; sourceTree = "<group>"; };
 		C5818D732DE643FF002B9E4D /* Models-README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Models-README.md"; sourceTree = "<group>"; };
+		C5B787D02DE74F5B00A6715E /* customerdbRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = customerdbRelease.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -196,6 +197,7 @@
 		563FEE8220FFD6C500DFD7B7 /* customerdb */ = {
 			isa = PBXGroup;
 			children = (
+				C5B787D02DE74F5B00A6715E /* customerdbRelease.entitlements */,
 				56386B4E23F74CFE007D32DC /* customerdb.entitlements */,
 				569E144F23745950007BFAF0 /* Model */,
 				56D55EBF23EC405C00FA8B7F /* ImportExport */,
@@ -656,10 +658,10 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = customerdb/customerdb.entitlements;
+				CODE_SIGN_ENTITLEMENTS = customerdb/customerdbRelease.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 44;
-				DEVELOPMENT_TEAM = 96G8V7UY3M;
+				DEVELOPMENT_TEAM = Y3JJD7DBP3;
 				INFOPLIST_FILE = customerdb/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -667,7 +669,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 3.7.2;
-				PRODUCT_BUNDLE_IDENTIFIER = systems.sieber.customerdb;
+				PRODUCT_BUNDLE_IDENTIFIER = systems.okic.customerdb;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_VERSION = 5.0;
