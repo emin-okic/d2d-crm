@@ -1,6 +1,5 @@
 //
-//  MainSplitViewController.swift
-//  Copyright © 2020 Georg Sieber. All rights reserved.
+//  Main Split View Controller Class
 //
 
 import Foundation

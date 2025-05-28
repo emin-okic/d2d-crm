@@ -1,6 +1,5 @@
 //
-//  CustomerTableController.swift
-//  Copyright © 2019 Georg Sieber. All rights reserved.
+//  Customer Table Controller Class
 //
 
 import Foundation
@@ -91,14 +90,8 @@ class CustomerTableViewController : UIViewController, UITableViewDelegate, UITab
         // todo: programatically assign background image
         //view.backgroundColor = UIColor(patternImage: imageScaledToFillSize(size: view.frame.size, image: UIImage(named: "icon_gray")!))
         if(UserDefaults.standard.bool(forKey: "unlocked-do")) {
-            if let image = GuiHelper.loadImage(file: SettingsViewController.getLogoFile()) {
-                imageLogo.contentMode = .scaleAspectFit
-                imageLogo.image = image
-                imageLogo.alpha = 0.2
-            } else {
-                imageLogo.image = UIImage(named: "icon_gray")
+            imageLogo.image = UIImage(named: "icon_gray")
                 imageLogo.alpha = 0.05
-            }
         }
     }
     /*func imageScaledToFillSize(size: CGSize, image: UIImage) -> UIImage

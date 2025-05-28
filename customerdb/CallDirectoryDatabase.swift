@@ -1,6 +1,5 @@
 //
-//  CallDirectoryDatabase.swift
-//  Copyright © 2020 Georg Sieber. All rights reserved.
+//  Call Directory Database Class
 //
 
 import Foundation

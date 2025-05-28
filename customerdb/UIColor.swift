@@ -1,6 +1,5 @@
 //
-//  UIColor.swift
-//  Copyright © 2020 Georg Sieber. All rights reserved.
+//  UI Color Styling Class
 //
 
 import Foundation
