@@ -105,8 +105,6 @@
 "field_drop_down" = "Drop Down Selection";
 "field_date" = "Date";
 "logo_deleted" = "Image deleted.";
-"new_calendar" = "New Calendar";
-"edit_calendar" = "Edit Calendar";
 "red" = "Red";
 "green" = "Green";
 "blue" = "Blue";
@@ -155,9 +153,6 @@
 "new_customer" = "New Customer";
 "remove" = "Remove";
 "end_date_before_start_date" = "The end date is before the start date!";
-"no_calendar_selected" = "No calendar selected! Please create a calendar in the settings.";
-"file_too_big" = "File too big! You can only attach files with a maximum size of 1MB.";
-"file_limit_reached" = "File limit reached!";
 "image" = "Image";
 "image_from_camera" = "Image from Camera";
 "choose_from_gallery" = "Choose from Gallery";
