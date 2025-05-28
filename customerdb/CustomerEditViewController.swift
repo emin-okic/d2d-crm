@@ -572,13 +572,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
         
         return inputView
     }
-    @objc func onClickFile(sender: FileIndexButton!) {
-        inputBox(title: NSLocalizedString("file_name", comment: ""), defaultText: sender.mFile!.mName, callback: { newText in
-            if(newText != nil) {
-                self.mCurrentCustomer?.renameFile(index: sender.mIndex, newName: newText!)
-            }
-        })
-    }
     
     func handleError(text: String) {
         DispatchQueue.main.async {
@@ -651,27 +644,5 @@ public extension String {
     }
 }
 
-class FileIndexButton: UIButton {
-    var mIndex:Int = -1
-    var mFile:CustomerFile? = nil
-    required init(file:CustomerFile, index:Int) {
-        super.init(frame: .zero)
-        mFile = file
-        mIndex = index
-        if #available(iOS 13.0, *) {
-            setTitleColor(.link, for: .normal)
-        } else {
-            setTitleColor(UIColor.init(hex: "#0f7c9d"), for: .normal)
-        }
-        if #available(iOS 11.0, *) {
-            contentHorizontalAlignment = .leading
-        } else {
-            contentHorizontalAlignment = .left
-        }
-    }
-    required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-    }
-}
 class ImagePickerCustomerPicture: UIImagePickerController {
 }
