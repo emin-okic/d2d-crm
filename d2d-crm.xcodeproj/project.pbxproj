@@ -27,7 +27,6 @@
 		56C089D3244A32D9005F8A1B /* PickerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56C089D2244A32D9005F8A1B /* PickerController.swift */; };
 		56D51FC02376D97E0097DBDE /* CustomerDetailsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D51FBF2376D97E0097DBDE /* CustomerDetailsViewController.swift */; };
 		56D51FC2237898E70097DBDE /* CustomerEditViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D51FC1237898E70097DBDE /* CustomerEditViewController.swift */; };
-		56D51FC4237DEA080097DBDE /* CustomField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D51FC3237DEA080097DBDE /* CustomField.swift */; };
 		56D51FCE239C4A5C0097DBDE /* CustomerDatabaseApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D51FCD239C4A5C0097DBDE /* CustomerDatabaseApi.swift */; };
 		56E9C01824F5271500CD15DA /* GuiHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E9C01724F5271500CD15DA /* GuiHelper.swift */; };
 		56E9C02D246C64CA00DBB9DA /* MainSplitViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E9C02C246C64CA00DBB9DA /* MainSplitViewController.swift */; };
@@ -85,7 +84,6 @@
 		56C089D2244A32D9005F8A1B /* PickerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerController.swift; sourceTree = "<group>"; };
 		56D51FBF2376D97E0097DBDE /* CustomerDetailsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerDetailsViewController.swift; sourceTree = "<group>"; };
 		56D51FC1237898E70097DBDE /* CustomerEditViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerEditViewController.swift; sourceTree = "<group>"; };
-		56D51FC3237DEA080097DBDE /* CustomField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomField.swift; sourceTree = "<group>"; };
 		56D51FCD239C4A5C0097DBDE /* CustomerDatabaseApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerDatabaseApi.swift; sourceTree = "<group>"; };
 		56E9C01724F5271500CD15DA /* GuiHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuiHelper.swift; sourceTree = "<group>"; };
 		56E9C02C246C64CA00DBB9DA /* MainSplitViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainSplitViewController.swift; sourceTree = "<group>"; };
@@ -177,7 +175,6 @@
 			children = (
 				569E145223748DFF007BFAF0 /* KeyValueItem.swift */,
 				569E14502374595F007BFAF0 /* Customer.swift */,
-				56D51FC3237DEA080097DBDE /* CustomField.swift */,
 				561B7C5B25B4D114005ABB43 /* CallDirectoryNumber.swift */,
 				C5818D732DE643FF002B9E4D /* Models-README.md */,
 			);
@@ -301,7 +298,6 @@
 				56B2B7CF23E5EAFF00295569 /* MasterNavigationViewController.swift in Sources */,
 				56E9C02F246C6E6E00DBB9DA /* NavigationController.swift in Sources */,
 				561B7C5C25B4D114005ABB43 /* CallDirectoryNumber.swift in Sources */,
-				56D51FC4237DEA080097DBDE /* CustomField.swift in Sources */,
 				56D51FC02376D97E0097DBDE /* CustomerDetailsViewController.swift in Sources */,
 				563FEE8420FFD6C500DFD7B7 /* AppDelegate.swift in Sources */,
 				569E145323748DFF007BFAF0 /* KeyValueItem.swift in Sources */,
