@@ -96,33 +96,6 @@ class CustomerDatabase {
             commitTransaction()
         }
         
-        if(columnNotExists(table: "appointment", column: "customer_id")) {
-            beginTransaction()
-            sqlite3_exec(db, "ALTER TABLE appointment ADD COLUMN customer_id INTEGER;", nil,nil,nil)
-            
-            // convert timestamps to UTC
-            var stmt:OpaquePointer?
-            if(sqlite3_prepare(self.db, "SELECT id, last_modified FROM customer", -1, &stmt, nil) == SQLITE_OK) {
-                while sqlite3_step(stmt) == SQLITE_ROW {
-                    let oldDate = CustomerDatabase.parseDateRaw(strDate: String(cString: sqlite3_column_text(stmt, 1)))
-                    let newDateString = CustomerDatabase.dateToString(date: oldDate!) as NSString
-                    var stmt2:OpaquePointer?
-                    if sqlite3_prepare(self.db, "UPDATE customer SET last_modified = ? WHERE id = ?", -1, &stmt2, nil) == SQLITE_OK {
-                        sqlite3_bind_text(stmt2, 1, newDateString.utf8String, -1, nil)
-                        sqlite3_bind_int64(stmt2, 2, sqlite3_column_int64(stmt, 0))
-                        if sqlite3_step(stmt2) == SQLITE_DONE { sqlite3_finalize(stmt2) }
-                    }
-                }
-            }
-            if(sqlite3_prepare(self.db, "SELECT id, last_modified FROM appointment", -1, &stmt, nil) == SQLITE_OK) {
-                while sqlite3_step(stmt) == SQLITE_ROW {
-                    let oldDate = CustomerDatabase.parseDateRaw(strDate: String(cString: sqlite3_column_text(stmt, 1)))
-                    let newDateString = CustomerDatabase.dateToString(date: oldDate!) as NSString
-                    var stmt2:OpaquePointer?
-                }
-            }
-            commitTransaction()
-        }
     }
     
     func updateCallDirectoryDatabase() {

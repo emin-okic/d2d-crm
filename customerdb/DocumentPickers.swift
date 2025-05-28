@@ -8,6 +8,3 @@ import UIKit
 class CustomerDocumentPickerViewController : UIDocumentPickerViewController {
     
 }
-class AppointmentDocumentPickerViewController : UIDocumentPickerViewController {
-    
-}

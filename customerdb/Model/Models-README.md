@@ -9,9 +9,6 @@ This object depends on having a customer who can own the calendar events.
 Every customer in the CRM could have calendar events associated with you.
 That would be nice to have because then you could see customer interaction history.
 
-### The Customer Appointment Object Model
-TODO
-
 ### Key Value Item Model
 The single item in a key value pair array. Gives more dimensions to an array which is nice sometimes.
 
