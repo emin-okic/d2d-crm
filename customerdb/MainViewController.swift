@@ -189,9 +189,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if(segue.identifier == "segueSettings") {
-            if let svc = segue.destination as? SettingsViewController {
-                svc.mMainViewControllerRef = self
-            }
         }
     }
     

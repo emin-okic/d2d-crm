@@ -31,15 +31,11 @@
 		56D51FC02376D97E0097DBDE /* CustomerDetailsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D51FBF2376D97E0097DBDE /* CustomerDetailsViewController.swift */; };
 		56D51FC2237898E70097DBDE /* CustomerEditViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D51FC1237898E70097DBDE /* CustomerEditViewController.swift */; };
 		56D51FC4237DEA080097DBDE /* CustomField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D51FC3237DEA080097DBDE /* CustomField.swift */; };
-		56D51FCA2392C7810097DBDE /* InfoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D51FC92392C7810097DBDE /* InfoViewController.swift */; };
-		56D51FCC2392C7A70097DBDE /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D51FCB2392C7A70097DBDE /* SettingsViewController.swift */; };
 		56D51FCE239C4A5C0097DBDE /* CustomerDatabaseApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D51FCD239C4A5C0097DBDE /* CustomerDatabaseApi.swift */; };
-		56DDADC923E8AF5000879CBD /* SyncInfoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DDADC823E8AF5000879CBD /* SyncInfoViewController.swift */; };
 		56E9C01824F5271500CD15DA /* GuiHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E9C01724F5271500CD15DA /* GuiHelper.swift */; };
 		56E9C02D246C64CA00DBB9DA /* MainSplitViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E9C02C246C64CA00DBB9DA /* MainSplitViewController.swift */; };
 		56E9C02F246C6E6E00DBB9DA /* NavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E9C02E246C6E6E00DBB9DA /* NavigationController.swift */; };
 		56F4E61124B2208D002F5569 /* UIColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56F4E61024B2208D002F5569 /* UIColor.swift */; };
-		56FDB94524083CB60018004C /* InputOnlyModeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FDB94424083CB60018004C /* InputOnlyModeViewController.swift */; };
 		56FFD28F25B4F4A300F1611A /* CallDirectoryNumber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561B7C5B25B4D114005ABB43 /* CallDirectoryNumber.swift */; };
 		C5818D742DE643FF002B9E4D /* Models-README.md in Resources */ = {isa = PBXBuildFile; fileRef = C5818D732DE643FF002B9E4D /* Models-README.md */; };
 /* End PBXBuildFile section */
@@ -96,15 +92,11 @@
 		56D51FBF2376D97E0097DBDE /* CustomerDetailsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerDetailsViewController.swift; sourceTree = "<group>"; };
 		56D51FC1237898E70097DBDE /* CustomerEditViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerEditViewController.swift; sourceTree = "<group>"; };
 		56D51FC3237DEA080097DBDE /* CustomField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomField.swift; sourceTree = "<group>"; };
-		56D51FC92392C7810097DBDE /* InfoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoViewController.swift; sourceTree = "<group>"; };
-		56D51FCB2392C7A70097DBDE /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 		56D51FCD239C4A5C0097DBDE /* CustomerDatabaseApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerDatabaseApi.swift; sourceTree = "<group>"; };
-		56DDADC823E8AF5000879CBD /* SyncInfoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncInfoViewController.swift; sourceTree = "<group>"; };
 		56E9C01724F5271500CD15DA /* GuiHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuiHelper.swift; sourceTree = "<group>"; };
 		56E9C02C246C64CA00DBB9DA /* MainSplitViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainSplitViewController.swift; sourceTree = "<group>"; };
 		56E9C02E246C6E6E00DBB9DA /* NavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationController.swift; sourceTree = "<group>"; };
 		56F4E61024B2208D002F5569 /* UIColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIColor.swift; sourceTree = "<group>"; };
-		56FDB94424083CB60018004C /* InputOnlyModeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputOnlyModeViewController.swift; sourceTree = "<group>"; };
 		56FFD29425B6179C00F1611A /* CustomerDatabaseDirectory.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CustomerDatabaseDirectory.entitlements; sourceTree = "<group>"; };
 		C5818D732DE643FF002B9E4D /* Models-README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Models-README.md"; sourceTree = "<group>"; };
 		C5B787D02DE74F5B00A6715E /* customerdbRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = customerdbRelease.entitlements; sourceTree = "<group>"; };
@@ -165,11 +157,7 @@
 				569E14422371EA9E007BFAF0 /* MainViewController.swift */,
 				562A8BB0249BA20A003CB9C4 /* DocumentPickers.swift */,
 				56C089D2244A32D9005F8A1B /* PickerController.swift */,
-				56FDB94424083CB60018004C /* InputOnlyModeViewController.swift */,
-				56D51FC92392C7810097DBDE /* InfoViewController.swift */,
 				564EC39D27BEEDDA00C7BE81 /* TextViewViewController.swift */,
-				56D51FCB2392C7A70097DBDE /* SettingsViewController.swift */,
-				56DDADC823E8AF5000879CBD /* SyncInfoViewController.swift */,
 				563903C82374C75D00753D93 /* CustomerTableController.swift */,
 				56D51FBF2376D97E0097DBDE /* CustomerDetailsViewController.swift */,
 				56D51FC1237898E70097DBDE /* CustomerEditViewController.swift */,
@@ -314,7 +302,6 @@
 				56D51FC2237898E70097DBDE /* CustomerEditViewController.swift in Sources */,
 				56D51FCE239C4A5C0097DBDE /* CustomerDatabaseApi.swift in Sources */,
 				56E9C02D246C64CA00DBB9DA /* MainSplitViewController.swift in Sources */,
-				56DDADC923E8AF5000879CBD /* SyncInfoViewController.swift in Sources */,
 				569E14432371EA9E007BFAF0 /* MainViewController.swift in Sources */,
 				562A8BB1249BA20A003CB9C4 /* DocumentPickers.swift in Sources */,
 				569E144E23745792007BFAF0 /* CustomerDatabase.swift in Sources */,
@@ -330,11 +317,8 @@
 				569E145323748DFF007BFAF0 /* KeyValueItem.swift in Sources */,
 				563903C92374C75D00753D93 /* CustomerTableController.swift in Sources */,
 				564EC39E27BEEDDA00C7BE81 /* TextViewViewController.swift in Sources */,
-				56FDB94524083CB60018004C /* InputOnlyModeViewController.swift in Sources */,
-				56D51FCC2392C7A70097DBDE /* SettingsViewController.swift in Sources */,
 				568DFAB1255200F900546F6B /* CallDirectoryDatabase.swift in Sources */,
 				562A8BB724A67DF5003CB9C4 /* CustomerFile.swift in Sources */,
-				56D51FCA2392C7810097DBDE /* InfoViewController.swift in Sources */,
 				569E14512374595F007BFAF0 /* Customer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

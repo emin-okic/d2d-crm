@@ -1,6 +1,5 @@
 //
-//  FilterViewPickerController.swift
-//  Copyright © 2020 Georg Sieber. All rights reserved.
+//  Filter View Picker Controller Class
 //
 
 import Foundation

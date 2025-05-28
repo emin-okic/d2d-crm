@@ -37,9 +37,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, SKPaymentTransactionObser
             "show-newsletter-field" : true,
             "show-birthday-field" : true,
             "show-files" : true,
-            "color-red" : SettingsViewController.DEFAULT_COLOR_R,
-            "color-green" : SettingsViewController.DEFAULT_COLOR_G,
-            "color-blue" : SettingsViewController.DEFAULT_COLOR_B,
             "currency" : "$"
         ])
         defaults.synchronize()
