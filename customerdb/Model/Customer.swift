@@ -163,20 +163,6 @@ class Customer {
     }
     
     //
-    // This function gets the files of a customer object
-    //
-    func getFiles() -> [CustomerFile] {
-        
-        // If the files object is null, set the mFiles variable as an empty array
-        if(mFiles == nil) {
-            mFiles = []
-        }
-        
-        // Return the array of files as a result
-        return mFiles!
-    }
-    
-    //
     // This function renames a file in a file array associated with a customer record
     //
     func renameFile(index:Int, newName: String) {

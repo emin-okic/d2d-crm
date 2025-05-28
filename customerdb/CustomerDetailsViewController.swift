@@ -175,14 +175,8 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
             }
             
         }
-        
-        let files = mCurrentCustomer!.getFiles()
         for view in stackViewFiles.arrangedSubviews {
             view.removeFromSuperview()
-        }
-        for file in files {
-            if file.mContent == nil { continue }
-            insertFile(file: file)
         }
         
     }
@@ -424,23 +418,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
             }
             completion(placemarks?.first?.location?.coordinate)
         }
-    }
-    
-    
-    func insertFile(file:CustomerFile) {
-        let button = FileButton(file: file)
-        button.addTarget(self, action: #selector(onClickFileButton), for: .touchUpInside)
-        
-        let imageClip = UIImageView(image: UIImage(named: "baseline_attach_file_black_24pt"))
-        imageClip.tintColor = UIColor.init(hex: "#828282")
-        imageClip.contentMode = .scaleAspectFill
-        imageClip.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        
-        let stackView = UIStackView(arrangedSubviews: [imageClip, button])
-        stackView.axis = .horizontal
-        stackView.spacing = 10
-        
-        stackViewFiles.addArrangedSubview(stackView)
     }
     
     var mCurrentFileUrl:URL?

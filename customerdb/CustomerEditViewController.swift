@@ -261,18 +261,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
             mDisplayAttributes.append(attribute!)
         }
         
-        refreshFiles()
-    }
-    func refreshFiles() {
-        for view in stackViewFiles.arrangedSubviews {
-            view.removeFromSuperview()
-        }
-        if let files = mCurrentCustomer?.getFiles() {
-            for (index, file) in files.enumerated() {
-                if file.mContent == nil { continue }
-                insertFile(file: file, index: index)
-            }
-        }
     }
     
     var imagePicker = UIImagePickerController()
@@ -590,23 +578,10 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
         
         return inputView
     }
-    
-    func insertFile(file:CustomerFile, index:Int) {
-        let buttonFile = FileIndexButton(file: file, index: index)
-        buttonFile.setTitle(file.mName, for: .normal)
-        buttonFile.addTarget(self, action: #selector(onClickFile), for: .touchUpInside)
-        
-        let imageClip = UIImageView(image: UIImage(named: "baseline_attach_file_black_24pt"))
-        imageClip.tintColor = UIColor.init(hex: "#828282")
-        imageClip.contentMode = .scaleAspectFill
-        imageClip.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        imageClip.widthAnchor.constraint(equalToConstant: 10).isActive = true
-    }
     @objc func onClickFile(sender: FileIndexButton!) {
         inputBox(title: NSLocalizedString("file_name", comment: ""), defaultText: sender.mFile!.mName, callback: { newText in
             if(newText != nil) {
                 self.mCurrentCustomer?.renameFile(index: sender.mIndex, newName: newText!)
-                self.refreshFiles()
             }
         })
     }

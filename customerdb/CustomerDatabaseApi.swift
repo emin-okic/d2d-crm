@@ -68,14 +68,6 @@ class CustomerDatabaseApi {
         var customersDataArray:[[String:Any?]] = []
         for customer in mDb.getCustomers(search: nil, showDeleted: true, withFiles: true, modifiedSince: diffSince) {
             var customerFilesDataArray:[[String:Any?]] = []
-            for file in customer.getFiles() {
-                if file.mContent != nil {
-                    customerFilesDataArray.append([
-                        "name": file.mName,
-                        "content": file.mContent!.base64EncodedString()
-                    ])
-                }
-            }
             let filesJson = (try? JSONSerialization.data(withJSONObject: customerFilesDataArray))!
             
             customersDataArray.append([
