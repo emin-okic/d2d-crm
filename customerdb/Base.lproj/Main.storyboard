@@ -750,10 +750,8 @@ City Country</string>
                     </tabBar>
                     <connections>
                         <outlet property="buttonSearch" destination="B0e-41-Z5R" id="k9f-G9-Zkv"/>
-                        <segue destination="S5h-gi-I1r" kind="show" identifier="segueLock" id="M7k-Ph-edS"/>
                         <segue destination="SIb-RV-VgN" kind="show" identifier="segueBirthday" id="UFY-t5-qb5"/>
                         <segue destination="Xct-tD-FSc" kind="relationship" relationship="viewControllers" id="qs7-VQ-FnT"/>
-                        <segue destination="EMi-R2-zFW" kind="show" identifier="segueScanner" id="SVB-mj-1Bi"/>
                     </connections>
                 </tabBarController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="sqy-As-cMF" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
@@ -1171,78 +1169,9 @@ City Country</string>
             </objects>
             <point key="canvasLocation" x="2638" y="502"/>
         </scene>
-        <!--Scan-->
-        <scene sceneID="iza-Wb-bSd">
-            <objects>
-                <viewController id="EMi-R2-zFW" customClass="ScannerViewController" customModule="customerdb" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="iiM-UL-omz">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="border" translatesAutoresizingMaskIntoConstraints="NO" id="kQb-Zk-EOr">
-                                <rect key="frame" x="0.0" y="192" width="414" height="636"/>
-                            </imageView>
-                        </subviews>
-                        <viewLayoutGuide key="safeArea" id="PWA-Dp-NUO"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                        <constraints>
-                            <constraint firstItem="kQb-Zk-EOr" firstAttribute="bottom" secondItem="PWA-Dp-NUO" secondAttribute="bottom" id="HPe-rp-5Iv"/>
-                            <constraint firstItem="kQb-Zk-EOr" firstAttribute="leading" secondItem="PWA-Dp-NUO" secondAttribute="leading" id="HrM-5W-tgN"/>
-                            <constraint firstItem="PWA-Dp-NUO" firstAttribute="trailing" secondItem="kQb-Zk-EOr" secondAttribute="trailing" id="bxD-M5-8D0"/>
-                            <constraint firstItem="kQb-Zk-EOr" firstAttribute="top" secondItem="PWA-Dp-NUO" secondAttribute="top" id="wwp-gg-OoF"/>
-                        </constraints>
-                    </view>
-                    <navigationItem key="navigationItem" title="Scan" id="hxO-sq-gr1"/>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="aFb-6l-0Tb" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="-514" y="2624"/>
-        </scene>
-        <!--Locked-->
-        <scene sceneID="VL3-qY-Upl">
-            <objects>
-                <viewController id="S5h-gi-I1r" customClass="LockViewController" customModule="customerdb" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="CgB-5b-HIQ">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <subviews>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="3nc-A0-iIY">
-                                <rect key="frame" x="0.0" y="798" width="414" height="30"/>
-                                <state key="normal" title="Unlock">
-                                    <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                </state>
-                                <connections>
-                                    <action selector="onClickUnlock:" destination="S5h-gi-I1r" eventType="touchUpInside" id="4MH-J7-wpA"/>
-                                </connections>
-                            </button>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="klK-wg-M1I">
-                                <rect key="frame" x="0.0" y="252" width="414" height="516"/>
-                            </imageView>
-                        </subviews>
-                        <viewLayoutGuide key="safeArea" id="bkb-uB-SPW"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                        <constraints>
-                            <constraint firstItem="bkb-uB-SPW" firstAttribute="trailing" secondItem="3nc-A0-iIY" secondAttribute="trailing" id="5L0-Vw-x6B"/>
-                            <constraint firstItem="klK-wg-M1I" firstAttribute="leading" secondItem="bkb-uB-SPW" secondAttribute="leading" id="7zH-ha-JRI"/>
-                            <constraint firstItem="bkb-uB-SPW" firstAttribute="trailing" secondItem="klK-wg-M1I" secondAttribute="trailing" id="9uT-cC-OCP"/>
-                            <constraint firstItem="klK-wg-M1I" firstAttribute="top" secondItem="bkb-uB-SPW" secondAttribute="top" constant="60" id="A7G-Pr-BRV"/>
-                            <constraint firstItem="bkb-uB-SPW" firstAttribute="bottom" secondItem="klK-wg-M1I" secondAttribute="bottom" constant="60" id="E3I-fK-7w4"/>
-                            <constraint firstItem="bkb-uB-SPW" firstAttribute="bottom" secondItem="3nc-A0-iIY" secondAttribute="bottom" id="WSv-nh-YfX"/>
-                            <constraint firstItem="3nc-A0-iIY" firstAttribute="leading" secondItem="bkb-uB-SPW" secondAttribute="leading" id="krm-TB-jXc"/>
-                        </constraints>
-                    </view>
-                    <navigationItem key="navigationItem" title="Locked" id="c43-fC-EhI"/>
-                    <connections>
-                        <outlet property="imageViewLogo" destination="klK-wg-M1I" id="sMs-lL-63D"/>
-                    </connections>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="ACY-5A-kPH" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="554" y="2624"/>
-        </scene>
     </scenes>
     <inferredMetricsTieBreakers>
-        <segue reference="b4I-Iy-NtL"/>
+        <segue reference="vbO-zC-oNf"/>
     </inferredMetricsTieBreakers>
     <resources>
         <image name="baseline_add_white_36pt" width="36" height="36"/>
@@ -1253,7 +1182,6 @@ City Country</string>
         <image name="baseline_more_vert_black_24pt" width="24" height="24"/>
         <image name="baseline_people_black_24pt" width="24" height="24"/>
         <image name="baseline_search_black_24pt" width="24" height="24"/>
-        <image name="border" width="700" height="1000"/>
         <image name="icon_gray" width="1024" height="1024"/>
         <image name="person" width="96" height="96"/>
         <systemColor name="labelColor">
