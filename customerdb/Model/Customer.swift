@@ -24,7 +24,6 @@ class Customer {
     var mCountry = ""
     var mBirthday:Date? = nil
     var mGroup = ""
-    var mNewsletter = false
     var mNotes = ""
     var mCustomFields = ""
 
@@ -41,7 +40,7 @@ class Customer {
     }
     
     // This is another way to construct a customer model object
-    init(id:Int64, title:String, firstName:String, lastName:String, phoneHome:String, phoneMobile:String, phoneWork:String, email:String, street:String, zipcode:String, city:String, country:String, birthday:Date?, group:String, newsletter:Bool, notes:String, customFields:String, lastModified:Date, removed:Int) {
+    init(id:Int64, title:String, firstName:String, lastName:String, phoneHome:String, phoneMobile:String, phoneWork:String, email:String, street:String, zipcode:String, city:String, country:String, birthday:Date?, group:String, notes:String, customFields:String, lastModified:Date, removed:Int) {
         mId = id
         mTitle = title
         mFirstName = firstName
@@ -63,7 +62,7 @@ class Customer {
     }
     
     // Damn there is a third way to construct the customer model object
-    init(id:Int64, title:String, firstName:String, lastName:String, phoneHome:String, phoneMobile:String, phoneWork:String, email:String, street:String, zipcode:String, city:String, country:String, birthday:Date?, group:String, newsletter:Bool, notes:String, customFields:String, image:Data?, consentImage:Data?, lastModified:Date, removed:Int) {
+    init(id:Int64, title:String, firstName:String, lastName:String, phoneHome:String, phoneMobile:String, phoneWork:String, email:String, street:String, zipcode:String, city:String, country:String, birthday:Date?, group:String, notes:String, customFields:String, image:Data?, consentImage:Data?, lastModified:Date, removed:Int) {
         mId = id
         mTitle = title
         mFirstName = firstName

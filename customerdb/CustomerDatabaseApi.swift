@@ -82,7 +82,6 @@ class CustomerDatabaseApi {
                 "country": customer.mCountry,
                 "birthday": customer.mBirthday==nil ? nil : CustomerDatabase.dateToStringRaw(date: customer.mBirthday!),
                 "customer_group": customer.mGroup,
-                "newsletter": customer.mNewsletter ? 1 : 0,
                 "notes": customer.mNotes,
                 "custom_fields": customer.mCustomFields,
                 "image": customer.mImage==nil ? nil : customer.mImage!.base64EncodedString(),

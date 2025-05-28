@@ -13,7 +13,7 @@ class CustomerDatabase {
     // These essentially automates the process of creating my database.
     // Only if a connection exists but not database tables too
     static var CREATE_DB_STATEMENTS = [
-        "CREATE TABLE IF NOT EXISTS customer (id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR NOT NULL, first_name VARCHAR NOT NULL, last_name VARCHAR NOT NULL, phone_home VARCHAR NOT NULL, phone_mobile VARCHAR NOT NULL, phone_work VARCHAR NOT NULL, email VARCHAR NOT NULL, street VARCHAR NOT NULL, zipcode VARCHAR NOT NULL, city VARCHAR NOT NULL, country VARCHAR NOT NULL, birthday DATETIME, notes VARCHAR NOT NULL, newsletter INTEGER DEFAULT 0 NOT NULL, customer_group VARCHAR NOT NULL, custom_fields VARCHAR NOT NULL, image BLOB, consent BLOB, last_modified DATETIME NOT NULL, removed INTEGER DEFAULT 0 NOT NULL);",
+        "CREATE TABLE IF NOT EXISTS customer (id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR NOT NULL, first_name VARCHAR NOT NULL, last_name VARCHAR NOT NULL, phone_home VARCHAR NOT NULL, phone_mobile VARCHAR NOT NULL, phone_work VARCHAR NOT NULL, email VARCHAR NOT NULL, street VARCHAR NOT NULL, zipcode VARCHAR NOT NULL, city VARCHAR NOT NULL, country VARCHAR NOT NULL, birthday DATETIME, notes VARCHAR NOT NULL, customer_group VARCHAR NOT NULL, custom_fields VARCHAR NOT NULL, image BLOB, consent BLOB, last_modified DATETIME NOT NULL, removed INTEGER DEFAULT 0 NOT NULL);",
         "CREATE TABLE IF NOT EXISTS customer_extra_fields (id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR UNIQUE NOT NULL, type INTEGER NOT NULL, last_modified DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL, removed INTEGER DEFAULT 0 NOT NULL);",
         "CREATE TABLE IF NOT EXISTS customer_extra_presets (id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR NOT NULL, extra_field_id INTEGER NOT NULL);"
     ]
@@ -189,9 +189,9 @@ class CustomerDatabase {
     func getCustomers(search:String?, showDeleted:Bool, withFiles:Bool, modifiedSince:Date?=nil) -> [Customer] {
         var customers:[Customer] = []
         var stmt:OpaquePointer?
-        var sql = "SELECT id, title, first_name, last_name, phone_home, phone_mobile, phone_work, email, street, zipcode, city, country, birthday, customer_group, newsletter, notes, custom_fields, last_modified, removed FROM customer WHERE removed = 0 ORDER BY last_name, first_name"
+        var sql = "SELECT id, title, first_name, last_name, phone_home, phone_mobile, phone_work, email, street, zipcode, city, country, birthday, customer_group, notes, custom_fields, last_modified, removed FROM customer WHERE removed = 0 ORDER BY last_name, first_name"
         if(showDeleted) {
-            sql = "SELECT id, title, first_name, last_name, phone_home, phone_mobile, phone_work, email, street, zipcode, city, country, birthday, customer_group, newsletter, notes, custom_fields, last_modified, removed FROM customer ORDER BY last_name, first_name"
+            sql = "SELECT id, title, first_name, last_name, phone_home, phone_mobile, phone_work, email, street, zipcode, city, country, birthday, customer_group, notes, custom_fields, last_modified, removed FROM customer ORDER BY last_name, first_name"
         }
         if sqlite3_prepare(self.db, sql, -1, &stmt, nil) == SQLITE_OK {
             while sqlite3_step(stmt) == SQLITE_ROW {
@@ -222,7 +222,6 @@ class CustomerDatabase {
                     country: String(cString: sqlite3_column_text(stmt, 11)),
                     birthday: birthday,
                     group: String(cString: sqlite3_column_text(stmt, 13)),
-                    newsletter: Int(sqlite3_column_int(stmt, 14)) > 0,
                     notes: String(cString: sqlite3_column_text(stmt, 15)),
                     customFields: String(cString: sqlite3_column_text(stmt, 16)),
                     lastModified: lastModified,
@@ -283,7 +282,7 @@ class CustomerDatabase {
     }
     func getCustomer(id:Int64, showDeleted:Bool=false) -> Customer? {
         var customer:Customer? = nil
-        var sql = "SELECT id, title, first_name, last_name, phone_home, phone_mobile, phone_work, email, street, zipcode, city, country, birthday, customer_group, newsletter, notes, custom_fields, image, consent, last_modified, removed FROM customer WHERE id = ?"
+        var sql = "SELECT id, title, first_name, last_name, phone_home, phone_mobile, phone_work, email, street, zipcode, city, country, birthday, customer_group, notes, custom_fields, image, consent, last_modified, removed FROM customer WHERE id = ?"
         if(!showDeleted) {
             sql = sql + " AND removed = 0"
         }
@@ -311,7 +310,6 @@ class CustomerDatabase {
                         country: String(cString: sqlite3_column_text(stmt, 11)),
                         birthday: birthday,
                         group: String(cString: sqlite3_column_text(stmt, 13)),
-                        newsletter: Int(sqlite3_column_int(stmt, 14)) > 0,
                         notes: String(cString: sqlite3_column_text(stmt, 15)),
                         customFields: String(cString: sqlite3_column_text(stmt, 16)),
                         lastModified: CustomerDatabase.parseDate(strDate: String(cString: sqlite3_column_text(stmt, 19))) ?? Date(),
@@ -327,7 +325,7 @@ class CustomerDatabase {
     func updateCustomer(c: Customer, transact: Bool = true) -> Bool {
         if(transact) { beginTransaction() }
         var stmt:OpaquePointer?
-        if sqlite3_prepare(self.db, "UPDATE customer SET title = ?, first_name = ?, last_name = ?, phone_home = ?, phone_mobile = ?, phone_work = ?, email = ?, street = ?, zipcode = ?, city = ?, country = ?, birthday = ?, notes = ?, newsletter = ?, customer_group = ?, custom_fields = ?, image = ?, consent = ?, last_modified = ? WHERE id = ?", -1, &stmt, nil) == SQLITE_OK {
+        if sqlite3_prepare(self.db, "UPDATE customer SET title = ?, first_name = ?, last_name = ?, phone_home = ?, phone_mobile = ?, phone_work = ?, email = ?, street = ?, zipcode = ?, city = ?, country = ?, birthday = ?, notes = ?, customer_group = ?, custom_fields = ?, image = ?, consent = ?, last_modified = ? WHERE id = ?", -1, &stmt, nil) == SQLITE_OK {
             let title = c.mTitle as NSString
             let firstName = c.mFirstName as NSString
             let lastName = c.mLastName as NSString
@@ -361,7 +359,6 @@ class CustomerDatabase {
                 sqlite3_bind_text(stmt, 12, birthday!.utf8String, -1, nil)
             }
             sqlite3_bind_text(stmt, 13, notes.utf8String, -1, nil)
-            sqlite3_bind_int(stmt, 14, c.mNewsletter ? 1 : 0)
             sqlite3_bind_text(stmt, 15, group.utf8String, -1, nil)
             sqlite3_bind_text(stmt, 16, customFields.utf8String, -1, nil)
             if(c.mImage == nil) {
@@ -394,7 +391,7 @@ class CustomerDatabase {
         }
         if(transact) { beginTransaction() }
         var stmt:OpaquePointer?
-        if sqlite3_prepare(self.db, "INSERT INTO customer (id, title, first_name, last_name, phone_home, phone_mobile, phone_work, email, street, zipcode, city, country, birthday, notes, newsletter, customer_group, custom_fields, image, consent, last_modified, removed) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", -1, &stmt, nil) == SQLITE_OK {
+        if sqlite3_prepare(self.db, "INSERT INTO customer (id, title, first_name, last_name, phone_home, phone_mobile, phone_work, email, street, zipcode, city, country, birthday, notes, customer_group, custom_fields, image, consent, last_modified, removed) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", -1, &stmt, nil) == SQLITE_OK {
             let title = c.mTitle as NSString
             let firstName = c.mFirstName as NSString
             let lastName = c.mLastName as NSString
@@ -429,7 +426,6 @@ class CustomerDatabase {
                 sqlite3_bind_text(stmt, 13, birthday!.utf8String, -1, nil)
             }
             sqlite3_bind_text(stmt, 14, notes.utf8String, -1, nil)
-            sqlite3_bind_int(stmt, 15, c.mNewsletter ? 1 : 0)
             sqlite3_bind_text(stmt, 16, group.utf8String, -1, nil)
             sqlite3_bind_text(stmt, 17, customFields.utf8String, -1, nil)
             if(c.mImage == nil) {
