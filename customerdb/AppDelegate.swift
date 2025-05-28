@@ -1,6 +1,5 @@
 //
-//  AppDelegate.swift
-//  Copyright © 2018 Georg Sieber. All rights reserved.
+//  App Delegate Class
 //
 
 import UIKit

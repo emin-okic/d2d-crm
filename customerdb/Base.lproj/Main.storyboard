@@ -2,7 +2,6 @@
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23727" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="36O-zw-ABK">
     <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
-        <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23721"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
@@ -891,9 +890,6 @@
                                                         <rect key="frame" x="0.0" y="204" width="374" height="33"/>
                                                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                         <state key="normal" title="More Information &amp; Registration ..."/>
-                                                        <connections>
-                                                            <segue destination="2fM-Ak-Hih" kind="showDetail" id="erW-Pl-nrt"/>
-                                                        </connections>
                                                     </button>
                                                 </subviews>
                                             </stackView>
@@ -1572,302 +1568,6 @@
             </objects>
             <point key="canvasLocation" x="1821.7391304347827" y="-155.35714285714286"/>
         </scene>
-        <!--Sync Info View Controller-->
-        <scene sceneID="6RZ-Zq-FKB">
-            <objects>
-                <viewController id="2fM-Ak-Hih" customClass="SyncInfoViewController" customModule="customerdb" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="b3y-fq-hJa">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="838"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <subviews>
-                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="aly-vL-3Nd">
-                                <rect key="frame" x="0.0" y="104" width="414" height="734"/>
-                                <subviews>
-                                    <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="15" translatesAutoresizingMaskIntoConstraints="NO" id="UCD-50-VYw">
-                                        <rect key="frame" x="20" y="20" width="374" height="691.5"/>
-                                        <subviews>
-                                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="5" translatesAutoresizingMaskIntoConstraints="NO" id="pr1-6r-2rx">
-                                                <rect key="frame" x="0.0" y="0.0" width="374" height="138.5"/>
-                                                <subviews>
-                                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Sync Feature Capabilities" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Cqd-eO-HmS">
-                                                        <rect key="frame" x="0.0" y="0.0" width="374" height="26.5"/>
-                                                        <fontDescription key="fontDescription" type="boldSystem" pointSize="22"/>
-                                                        <nil key="textColor"/>
-                                                        <nil key="highlightedColor"/>
-                                                    </label>
-                                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="10" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="yvi-lu-Hmc">
-                                                        <rect key="frame" x="0.0" y="31.5" width="374" height="72"/>
-                                                        <string key="text">With the sync feature you can backup your customer data on a database server and sync it over multiple devices. You have the following options to use this feature.</string>
-                                                        <fontDescription key="fontDescription" type="system" pointSize="15"/>
-                                                        <nil key="textColor"/>
-                                                        <nil key="highlightedColor"/>
-                                                    </label>
-                                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="JWp-aD-hZ3">
-                                                        <rect key="frame" x="0.0" y="108.5" width="374" height="30"/>
-                                                        <state key="normal" title="How does the sync function work? (FAQ)"/>
-                                                        <connections>
-                                                            <action selector="onClickFaq:" destination="2fM-Ak-Hih" eventType="touchUpInside" id="gSh-Tc-n4q"/>
-                                                        </connections>
-                                                    </button>
-                                                </subviews>
-                                            </stackView>
-                                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="5" translatesAutoresizingMaskIntoConstraints="NO" id="p36-yU-h3f">
-                                                <rect key="frame" x="0.0" y="153.5" width="374" height="366.5"/>
-                                                <subviews>
-                                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Cloud Service" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="LLl-au-ZIx">
-                                                        <rect key="frame" x="0.0" y="0.0" width="374" height="26.5"/>
-                                                        <fontDescription key="fontDescription" type="boldSystem" pointSize="22"/>
-                                                        <nil key="textColor"/>
-                                                        <nil key="highlightedColor"/>
-                                                    </label>
-                                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="You can use the paid customer database cloud." textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="10" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Ddy-qL-n7v">
-                                                        <rect key="frame" x="0.0" y="31.5" width="374" height="18"/>
-                                                        <fontDescription key="fontDescription" type="system" pointSize="15"/>
-                                                        <nil key="textColor"/>
-                                                        <nil key="highlightedColor"/>
-                                                    </label>
-                                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="1. Create an account." textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="10" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="waD-0c-hrC">
-                                                        <rect key="frame" x="0.0" y="54.5" width="374" height="18"/>
-                                                        <fontDescription key="fontDescription" name=".AppleSystemUIFont" family=".AppleSystemUIFont" pointSize="15"/>
-                                                        <nil key="textColor"/>
-                                                        <nil key="highlightedColor"/>
-                                                    </label>
-                                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Nvh-Kw-UfX">
-                                                        <rect key="frame" x="0.0" y="77.5" width="374" height="30"/>
-                                                        <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
-                                                        <state key="normal" title="Create Account"/>
-                                                        <connections>
-                                                            <segue destination="7Py-3Z-r6Z" kind="showDetail" id="wmT-t7-BID"/>
-                                                        </connections>
-                                                    </button>
-                                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Tkq-jF-a4z">
-                                                        <rect key="frame" x="0.0" y="112.5" width="374" height="30"/>
-                                                        <state key="normal" title="Reset Password"/>
-                                                        <connections>
-                                                            <action selector="onClickResetPassword:" destination="2fM-Ak-Hih" eventType="touchUpInside" id="VEH-4a-AEV"/>
-                                                        </connections>
-                                                    </button>
-                                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="6Ns-3b-kS1">
-                                                        <rect key="frame" x="0.0" y="147.5" width="374" height="30"/>
-                                                        <state key="normal" title="Delete Account"/>
-                                                        <connections>
-                                                            <action selector="onClickDeleteAccount:" destination="2fM-Ak-Hih" eventType="touchUpInside" id="D4F-GZ-QMb"/>
-                                                        </connections>
-                                                    </button>
-                                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="10" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="PIl-as-zjn">
-                                                        <rect key="frame" x="0.0" y="182.5" width="374" height="72"/>
-                                                        <string key="text">2. Please subscribe to the customer database cloud access license to connect to the cloud. (A recurring payment is necessary because the database server incurs running costs.)</string>
-                                                        <fontDescription key="fontDescription" name=".AppleSystemUIFont" family=".AppleSystemUIFont" pointSize="15"/>
-                                                        <nil key="textColor"/>
-                                                        <nil key="highlightedColor"/>
-                                                    </label>
-                                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="HEu-CO-Bv1">
-                                                        <rect key="frame" x="0.0" y="259.5" width="374" height="30"/>
-                                                        <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
-                                                        <state key="normal" title="Subscribe"/>
-                                                        <connections>
-                                                            <segue destination="Jnc-ov-Vlt" kind="showDetail" id="Jxd-z2-kNP"/>
-                                                        </connections>
-                                                    </button>
-                                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="10" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="LPQ-eR-9t1">
-                                                        <rect key="frame" x="0.0" y="294.5" width="374" height="72"/>
-                                                        <string key="text">3. Press the sync button on the main screen regularly to upload your data in the cloud. Optionally, you can log in with the same account on other devices to sync the data to this device.</string>
-                                                        <fontDescription key="fontDescription" name=".AppleSystemUIFont" family=".AppleSystemUIFont" pointSize="15"/>
-                                                        <nil key="textColor"/>
-                                                        <nil key="highlightedColor"/>
-                                                    </label>
-                                                </subviews>
-                                            </stackView>
-                                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="5" translatesAutoresizingMaskIntoConstraints="NO" id="T62-2Q-3Xh">
-                                                <rect key="frame" x="0.0" y="535" width="374" height="156.5"/>
-                                                <subviews>
-                                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Own Server" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="QZa-NI-Quc">
-                                                        <rect key="frame" x="0.0" y="0.0" width="374" height="26.5"/>
-                                                        <fontDescription key="fontDescription" type="boldSystem" pointSize="22"/>
-                                                        <nil key="textColor"/>
-                                                        <nil key="highlightedColor"/>
-                                                    </label>
-                                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="10" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="rWa-ed-461">
-                                                        <rect key="frame" x="0.0" y="31.5" width="374" height="90"/>
-                                                        <string key="text">The customer database server is Open Source, so you can set up an own database server. This assumes that you are familiar with the Apache Webserver, PHP and MySQL. Please visit the GitHub page for more information.</string>
-                                                        <fontDescription key="fontDescription" type="system" pointSize="15"/>
-                                                        <nil key="textColor"/>
-                                                        <nil key="highlightedColor"/>
-                                                    </label>
-                                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="mwc-km-vKJ">
-                                                        <rect key="frame" x="0.0" y="126.5" width="374" height="30"/>
-                                                        <state key="normal" title="https://github.com"/>
-                                                        <connections>
-                                                            <action selector="onClickServerGithub:" destination="2fM-Ak-Hih" eventType="touchUpInside" id="fZN-4t-AAU"/>
-                                                        </connections>
-                                                    </button>
-                                                </subviews>
-                                            </stackView>
-                                        </subviews>
-                                    </stackView>
-                                </subviews>
-                                <constraints>
-                                    <constraint firstItem="UCD-50-VYw" firstAttribute="top" secondItem="aly-vL-3Nd" secondAttribute="top" constant="20" id="R8Z-wY-Uzr"/>
-                                    <constraint firstAttribute="trailing" secondItem="UCD-50-VYw" secondAttribute="trailing" constant="20" id="V9s-4V-nlh"/>
-                                    <constraint firstAttribute="bottom" secondItem="UCD-50-VYw" secondAttribute="bottom" constant="20" id="X7R-mq-Q4v"/>
-                                    <constraint firstItem="UCD-50-VYw" firstAttribute="leading" secondItem="aly-vL-3Nd" secondAttribute="leading" constant="20" id="eww-yl-F1E"/>
-                                    <constraint firstItem="UCD-50-VYw" firstAttribute="centerX" secondItem="aly-vL-3Nd" secondAttribute="centerX" id="iCw-N8-0xb"/>
-                                </constraints>
-                            </scrollView>
-                            <navigationBar contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="jN7-zN-H7e">
-                                <rect key="frame" x="0.0" y="48" width="414" height="56"/>
-                                <items>
-                                    <navigationItem title="Sync" id="dMa-s6-QnY">
-                                        <barButtonItem key="rightBarButtonItem" systemItem="done" id="e7d-y3-l2N">
-                                            <connections>
-                                                <action selector="onClickDone:" destination="2fM-Ak-Hih" id="Cce-wV-ykc"/>
-                                            </connections>
-                                        </barButtonItem>
-                                    </navigationItem>
-                                </items>
-                            </navigationBar>
-                        </subviews>
-                        <viewLayoutGuide key="safeArea" id="Dv3-zV-i1P"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                        <constraints>
-                            <constraint firstItem="aly-vL-3Nd" firstAttribute="trailing" secondItem="Dv3-zV-i1P" secondAttribute="trailing" id="0fd-Dd-QXu"/>
-                            <constraint firstItem="aly-vL-3Nd" firstAttribute="top" secondItem="jN7-zN-H7e" secondAttribute="bottom" id="Vjo-DN-biO"/>
-                            <constraint firstItem="jN7-zN-H7e" firstAttribute="leading" secondItem="Dv3-zV-i1P" secondAttribute="leading" id="YjE-E4-mPK"/>
-                            <constraint firstItem="Dv3-zV-i1P" firstAttribute="trailing" secondItem="jN7-zN-H7e" secondAttribute="trailing" id="ZDU-eD-vLN"/>
-                            <constraint firstItem="jN7-zN-H7e" firstAttribute="top" secondItem="Dv3-zV-i1P" secondAttribute="top" id="h0U-58-dNm"/>
-                            <constraint firstItem="Dv3-zV-i1P" firstAttribute="bottom" secondItem="aly-vL-3Nd" secondAttribute="bottom" id="mFc-1F-Yhn"/>
-                            <constraint firstItem="aly-vL-3Nd" firstAttribute="leading" secondItem="Dv3-zV-i1P" secondAttribute="leading" id="xRd-k9-Do6"/>
-                        </constraints>
-                    </view>
-                    <connections>
-                        <outlet property="buttonFaq" destination="JWp-aD-hZ3" id="bGg-pT-ND0"/>
-                        <outlet property="buttonGithub" destination="mwc-km-vKJ" id="na7-Mm-cY5"/>
-                    </connections>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="bGh-ai-74V" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="2638" y="-155"/>
-        </scene>
-        <!--Create Account View Controller-->
-        <scene sceneID="PG9-i0-3bb">
-            <objects>
-                <viewController id="7Py-3Z-r6Z" customClass="CreateAccountViewController" customModule="customerdb" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="Qwt-bf-GLg">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="838"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <subviews>
-                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="ePf-va-7Qg">
-                                <rect key="frame" x="0.0" y="104" width="414" height="734"/>
-                                <subviews>
-                                    <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="5" translatesAutoresizingMaskIntoConstraints="NO" id="XSp-1n-yTm">
-                                        <rect key="frame" x="20" y="20" width="374" height="259"/>
-                                        <subviews>
-                                            <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Your Email Address" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="GMk-gw-2ge">
-                                                <rect key="frame" x="0.0" y="0.0" width="374" height="34"/>
-                                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                                <textInputTraits key="textInputTraits" keyboardType="emailAddress" textContentType="email"/>
-                                            </textField>
-                                            <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Choose a Password" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="SdJ-qE-415">
-                                                <rect key="frame" x="0.0" y="39" width="374" height="34"/>
-                                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                                <textInputTraits key="textInputTraits" secureTextEntry="YES" textContentType="password"/>
-                                            </textField>
-                                            <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Confirm Password" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="Lvv-ze-3xB">
-                                                <rect key="frame" x="0.0" y="78" width="374" height="34"/>
-                                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                                <textInputTraits key="textInputTraits" secureTextEntry="YES" textContentType="password"/>
-                                            </textField>
-                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="A verification link will be sent to your email address." textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="10" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gA3-Ab-qGa">
-                                                <rect key="frame" x="0.0" y="117" width="374" height="18"/>
-                                                <fontDescription key="fontDescription" type="system" pointSize="15"/>
-                                                <color key="textColor" systemColor="secondaryLabelColor"/>
-                                                <nil key="highlightedColor"/>
-                                            </label>
-                                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="O76-FI-38X">
-                                                <rect key="frame" x="0.0" y="140" width="374" height="20"/>
-                                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                                <constraints>
-                                                    <constraint firstAttribute="height" constant="20" id="ND3-dC-SF3"/>
-                                                </constraints>
-                                            </view>
-                                            <stackView opaque="NO" contentMode="scaleToFill" alignment="center" spacing="5" translatesAutoresizingMaskIntoConstraints="NO" id="WvJ-pQ-zA0">
-                                                <rect key="frame" x="0.0" y="165" width="374" height="31"/>
-                                                <subviews>
-                                                    <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" ambiguous="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="hPX-8y-5ry">
-                                                        <rect key="frame" x="0.0" y="0.0" width="47" height="31"/>
-                                                    </switch>
-                                                    <button opaque="NO" contentMode="scaleToFill" ambiguous="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="wordWrap" translatesAutoresizingMaskIntoConstraints="NO" id="dIF-Z6-yfw">
-                                                        <rect key="frame" x="50" y="0.5" width="324" height="30"/>
-                                                        <state key="normal" title="I accept the terms of service and privacy policy"/>
-                                                        <connections>
-                                                            <action selector="onClickPolicy:" destination="7Py-3Z-r6Z" eventType="touchUpInside" id="1z1-HW-jtY"/>
-                                                        </connections>
-                                                    </button>
-                                                </subviews>
-                                            </stackView>
-                                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="OD0-V4-vIS">
-                                                <rect key="frame" x="0.0" y="201" width="374" height="20"/>
-                                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                                <constraints>
-                                                    <constraint firstAttribute="height" constant="20" id="im4-fQ-4Mm"/>
-                                                </constraints>
-                                            </view>
-                                            <button opaque="NO" contentMode="scaleToFill" selected="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="m33-tJ-KZc">
-                                                <rect key="frame" x="0.0" y="226" width="374" height="33"/>
-                                                <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
-                                                <state key="normal" title="Register Now"/>
-                                                <connections>
-                                                    <action selector="onClickRegister:" destination="7Py-3Z-r6Z" eventType="touchUpInside" id="S3O-od-Sin"/>
-                                                </connections>
-                                            </button>
-                                        </subviews>
-                                    </stackView>
-                                </subviews>
-                                <constraints>
-                                    <constraint firstAttribute="bottom" secondItem="XSp-1n-yTm" secondAttribute="bottom" constant="20" id="7Rt-OL-vJP"/>
-                                    <constraint firstItem="XSp-1n-yTm" firstAttribute="centerX" secondItem="ePf-va-7Qg" secondAttribute="centerX" id="Ih2-b9-TIh"/>
-                                    <constraint firstItem="XSp-1n-yTm" firstAttribute="leading" secondItem="ePf-va-7Qg" secondAttribute="leading" constant="20" id="NuJ-vE-ziS"/>
-                                    <constraint firstItem="XSp-1n-yTm" firstAttribute="top" secondItem="ePf-va-7Qg" secondAttribute="top" constant="20" id="Vk7-lQ-MJb"/>
-                                    <constraint firstAttribute="trailing" secondItem="XSp-1n-yTm" secondAttribute="trailing" constant="20" id="YOy-Tb-pxm"/>
-                                </constraints>
-                            </scrollView>
-                            <navigationBar contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="oZM-oj-e4X">
-                                <rect key="frame" x="0.0" y="48" width="414" height="56"/>
-                                <items>
-                                    <navigationItem title="Create Account" id="qAm-xZ-WHk">
-                                        <barButtonItem key="leftBarButtonItem" systemItem="cancel" id="CJd-3V-bDv">
-                                            <connections>
-                                                <action selector="onClickDone:" destination="7Py-3Z-r6Z" id="TMg-yZ-21h"/>
-                                            </connections>
-                                        </barButtonItem>
-                                    </navigationItem>
-                                </items>
-                            </navigationBar>
-                        </subviews>
-                        <viewLayoutGuide key="safeArea" id="9UI-Qf-t4I"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                        <constraints>
-                            <constraint firstItem="ePf-va-7Qg" firstAttribute="trailing" secondItem="9UI-Qf-t4I" secondAttribute="trailing" id="0QI-iK-v1T"/>
-                            <constraint firstItem="9UI-Qf-t4I" firstAttribute="bottom" secondItem="ePf-va-7Qg" secondAttribute="bottom" id="IJ6-lN-jGE"/>
-                            <constraint firstItem="oZM-oj-e4X" firstAttribute="top" secondItem="9UI-Qf-t4I" secondAttribute="top" id="V0Y-9c-4Gt"/>
-                            <constraint firstItem="ePf-va-7Qg" firstAttribute="top" secondItem="oZM-oj-e4X" secondAttribute="bottom" id="W4j-4v-Z6C"/>
-                            <constraint firstItem="oZM-oj-e4X" firstAttribute="leading" secondItem="9UI-Qf-t4I" secondAttribute="leading" id="WQz-Ou-9N4"/>
-                            <constraint firstItem="ePf-va-7Qg" firstAttribute="leading" secondItem="9UI-Qf-t4I" secondAttribute="leading" id="WWj-qv-5pw"/>
-                            <constraint firstItem="9UI-Qf-t4I" firstAttribute="trailing" secondItem="oZM-oj-e4X" secondAttribute="trailing" id="nyW-fB-4ut"/>
-                        </constraints>
-                    </view>
-                    <connections>
-                        <outlet property="buttonRegister" destination="m33-tJ-KZc" id="KIS-LQ-aAC"/>
-                        <outlet property="switchPolicy" destination="hPX-8y-5ry" id="5W4-kj-Nhc"/>
-                        <outlet property="textFieldEmail" destination="GMk-gw-2ge" id="bML-m5-8aK"/>
-                        <outlet property="textFieldPassword" destination="SdJ-qE-415" id="ExQ-6H-MzS"/>
-                        <outlet property="textFieldPasswordConfirm" destination="Lvv-ze-3xB" id="QsH-bI-RSk"/>
-                    </connections>
-                </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="ZdT-8c-eYP" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="3461" y="-155"/>
-        </scene>
         <!--Customers-->
         <scene sceneID="wIo-hx-ZpT">
             <objects>
@@ -2467,23 +2167,11 @@ City Country</string>
                 <tabBarController id="8xm-T7-4QM" customClass="MainViewController" customModule="customerdb" customModuleProvider="target" sceneMemberID="viewController">
                     <navigationItem key="navigationItem" title="Customer Database" largeTitleDisplayMode="always" id="0Ad-hN-GzP">
                         <barButtonItem key="backBarButtonItem" title="Back" id="jMS-dn-Ffb"/>
-                        <barButtonItem key="leftBarButtonItem" image="baseline_menu_black_24pt" id="AiF-pT-xTq">
+                        <barButtonItem key="rightBarButtonItem" image="baseline_search_black_24pt" id="B0e-41-Z5R">
                             <connections>
-                                <action selector="onClickMenu:" destination="8xm-T7-4QM" id="k1A-GY-LOA"/>
+                                <action selector="onClickSearch:" destination="8xm-T7-4QM" id="5Wt-y5-Zm6"/>
                             </connections>
                         </barButtonItem>
-                        <rightBarButtonItems>
-                            <barButtonItem image="baseline_autorenew_black_24pt" id="dCP-UC-JMG">
-                                <connections>
-                                    <action selector="onClickSync:" destination="8xm-T7-4QM" id="7i9-Rx-iq4"/>
-                                </connections>
-                            </barButtonItem>
-                            <barButtonItem image="baseline_search_black_24pt" id="B0e-41-Z5R">
-                                <connections>
-                                    <action selector="onClickSearch:" destination="8xm-T7-4QM" id="5Wt-y5-Zm6"/>
-                                </connections>
-                            </barButtonItem>
-                        </rightBarButtonItems>
                     </navigationItem>
                     <tabBar key="tabBar" hidden="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="tqY-6F-MfV">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="49"/>
@@ -2492,7 +2180,6 @@ City Country</string>
                     </tabBar>
                     <connections>
                         <outlet property="buttonSearch" destination="B0e-41-Z5R" id="k9f-G9-Zkv"/>
-                        <outlet property="buttonSync" destination="dCP-UC-JMG" id="AfK-tE-dBs"/>
                         <segue destination="Eos-1F-Pem" kind="presentation" identifier="segueSettings" id="SCH-p0-D9Y"/>
                         <segue destination="Jnc-ov-Vlt" kind="presentation" identifier="segueInfo" id="VYG-mX-XiC"/>
                         <segue destination="PgL-5M-hcZ" kind="show" identifier="segueInputOnlyMode" id="Q6X-SU-Jkd"/>
@@ -2989,17 +2676,15 @@ City Country</string>
     </scenes>
     <inferredMetricsTieBreakers>
         <segue reference="b4I-Iy-NtL"/>
-        <segue reference="VYG-mX-XiC"/>
+        <segue reference="mve-0J-uBD"/>
     </inferredMetricsTieBreakers>
     <resources>
         <image name="baseline_add_white_36pt" width="36" height="36"/>
-        <image name="baseline_autorenew_black_24pt" width="24" height="24"/>
         <image name="baseline_clear_black_24pt" width="24" height="24"/>
         <image name="baseline_done_black_24pt" width="24" height="24"/>
         <image name="baseline_edit_white_24pt" width="24" height="24"/>
         <image name="baseline_help_outline_black_24pt" width="24" height="24"/>
         <image name="baseline_import_export_black_24pt" width="24" height="24"/>
-        <image name="baseline_menu_black_24pt" width="24" height="24"/>
         <image name="baseline_more_vert_black_24pt" width="24" height="24"/>
         <image name="baseline_people_black_24pt" width="24" height="24"/>
         <image name="baseline_search_black_24pt" width="24" height="24"/>
