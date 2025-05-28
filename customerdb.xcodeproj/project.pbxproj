@@ -35,7 +35,6 @@
 		56D51FCA2392C7810097DBDE /* InfoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D51FC92392C7810097DBDE /* InfoViewController.swift */; };
 		56D51FCC2392C7A70097DBDE /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D51FCB2392C7A70097DBDE /* SettingsViewController.swift */; };
 		56D51FCE239C4A5C0097DBDE /* CustomerDatabaseApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D51FCD239C4A5C0097DBDE /* CustomerDatabaseApi.swift */; };
-		56D55EC123EC407100FA8B7F /* CustomerCsvWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D55EC023EC407100FA8B7F /* CustomerCsvWriter.swift */; };
 		56DDADC123E780DC00879CBD /* String+Lines.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DDADBA23E780DC00879CBD /* String+Lines.swift */; };
 		56DDADC223E780DC00879CBD /* Parser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DDADBB23E780DC00879CBD /* Parser.swift */; };
 		56DDADC323E780DC00879CBD /* ParsingState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DDADBC23E780DC00879CBD /* ParsingState.swift */; };
@@ -48,9 +47,7 @@
 		56E9C02D246C64CA00DBB9DA /* MainSplitViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E9C02C246C64CA00DBB9DA /* MainSplitViewController.swift */; };
 		56E9C02F246C6E6E00DBB9DA /* NavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E9C02E246C6E6E00DBB9DA /* NavigationController.swift */; };
 		56F4E61124B2208D002F5569 /* UIColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56F4E61024B2208D002F5569 /* UIColor.swift */; };
-		56FDB94323FDC54A0018004C /* CustomerVcfWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FDB94223FDC54A0018004C /* CustomerVcfWriter.swift */; };
 		56FDB94524083CB60018004C /* InputOnlyModeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FDB94424083CB60018004C /* InputOnlyModeViewController.swift */; };
-		56FDB949240947E70018004C /* BirthdayViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FDB948240947E70018004C /* BirthdayViewController.swift */; };
 		56FFD28F25B4F4A300F1611A /* CallDirectoryNumber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561B7C5B25B4D114005ABB43 /* CallDirectoryNumber.swift */; };
 		C5818D742DE643FF002B9E4D /* Models-README.md in Resources */ = {isa = PBXBuildFile; fileRef = C5818D732DE643FF002B9E4D /* Models-README.md */; };
 /* End PBXBuildFile section */
@@ -111,7 +108,6 @@
 		56D51FC92392C7810097DBDE /* InfoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoViewController.swift; sourceTree = "<group>"; };
 		56D51FCB2392C7A70097DBDE /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 		56D51FCD239C4A5C0097DBDE /* CustomerDatabaseApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerDatabaseApi.swift; sourceTree = "<group>"; };
-		56D55EC023EC407100FA8B7F /* CustomerCsvWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCsvWriter.swift; sourceTree = "<group>"; };
 		56DDADBA23E780DC00879CBD /* String+Lines.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+Lines.swift"; sourceTree = "<group>"; };
 		56DDADBB23E780DC00879CBD /* Parser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Parser.swift; sourceTree = "<group>"; };
 		56DDADBC23E780DC00879CBD /* ParsingState.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ParsingState.swift; sourceTree = "<group>"; };
@@ -124,9 +120,7 @@
 		56E9C02C246C64CA00DBB9DA /* MainSplitViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainSplitViewController.swift; sourceTree = "<group>"; };
 		56E9C02E246C6E6E00DBB9DA /* NavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationController.swift; sourceTree = "<group>"; };
 		56F4E61024B2208D002F5569 /* UIColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIColor.swift; sourceTree = "<group>"; };
-		56FDB94223FDC54A0018004C /* CustomerVcfWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerVcfWriter.swift; sourceTree = "<group>"; };
 		56FDB94424083CB60018004C /* InputOnlyModeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputOnlyModeViewController.swift; sourceTree = "<group>"; };
-		56FDB948240947E70018004C /* BirthdayViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BirthdayViewController.swift; sourceTree = "<group>"; };
 		56FFD29425B6179C00F1611A /* CustomerDatabaseDirectory.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CustomerDatabaseDirectory.entitlements; sourceTree = "<group>"; };
 		C5818D732DE643FF002B9E4D /* Models-README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Models-README.md"; sourceTree = "<group>"; };
 		C5B787D02DE74F5B00A6715E /* customerdbRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = customerdbRelease.entitlements; sourceTree = "<group>"; };
@@ -189,7 +183,6 @@
 				562A8BB0249BA20A003CB9C4 /* DocumentPickers.swift */,
 				56C089D2244A32D9005F8A1B /* PickerController.swift */,
 				56FDB94424083CB60018004C /* InputOnlyModeViewController.swift */,
-				56FDB948240947E70018004C /* BirthdayViewController.swift */,
 				56D51FC92392C7810097DBDE /* InfoViewController.swift */,
 				564EC39D27BEEDDA00C7BE81 /* TextViewViewController.swift */,
 				56D51FCB2392C7A70097DBDE /* SettingsViewController.swift */,
@@ -233,8 +226,6 @@
 			isa = PBXGroup;
 			children = (
 				56DDADB923E780BF00879CBD /* SwiftCSV */,
-				56D55EC023EC407100FA8B7F /* CustomerCsvWriter.swift */,
-				56FDB94223FDC54A0018004C /* CustomerVcfWriter.swift */,
 				56B34E7624802FF600DEDEA4 /* QuotedPrintable.swift */,
 			);
 			path = ImportExport;
@@ -372,7 +363,6 @@
 				56C089D3244A32D9005F8A1B /* PickerController.swift in Sources */,
 				56E9C01824F5271500CD15DA /* GuiHelper.swift in Sources */,
 				56B2B7CF23E5EAFF00295569 /* MasterNavigationViewController.swift in Sources */,
-				56FDB949240947E70018004C /* BirthdayViewController.swift in Sources */,
 				56E9C02F246C6E6E00DBB9DA /* NavigationController.swift in Sources */,
 				561B7C5C25B4D114005ABB43 /* CallDirectoryNumber.swift in Sources */,
 				56D51FC4237DEA080097DBDE /* CustomField.swift in Sources */,
@@ -392,8 +382,6 @@
 				568DFAB1255200F900546F6B /* CallDirectoryDatabase.swift in Sources */,
 				562A8BB724A67DF5003CB9C4 /* CustomerFile.swift in Sources */,
 				56D51FCA2392C7810097DBDE /* InfoViewController.swift in Sources */,
-				56FDB94323FDC54A0018004C /* CustomerVcfWriter.swift in Sources */,
-				56D55EC123EC407100FA8B7F /* CustomerCsvWriter.swift in Sources */,
 				569E14512374595F007BFAF0 /* Customer.swift in Sources */,
 				56DDADC123E780DC00879CBD /* String+Lines.swift in Sources */,
 			);

@@ -127,9 +127,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
                     if let mvc = mnvc.viewControllers.last as? MainViewController {
                         mvc.reloadData()
                     }
-                    else if let bvc = mnvc.viewControllers.last as? CustomerBirthdayTableViewController {
-                        bvc.reloadCustomers()
-                    }
                 }
             }
         }
@@ -228,16 +225,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
         self.present(alert, animated: true)
     }
     @IBAction func onClickExport(_ sender: UIBarButtonItem) {
-        let exportVcfAction = UIAlertAction(
-            title: NSLocalizedString("export_vcf", comment: ""),
-            style: .default) { (action) in
-                self.exportVcf(sender)
-            }
-        let exportCsvAction = UIAlertAction(
-            title: NSLocalizedString("export_csv", comment: ""),
-            style: .default) { (action) in
-                self.exportCsv(sender)
-            }
         let cancelAction = UIAlertAction(
             title: NSLocalizedString("close", comment: ""),
             style: .cancel) { (action) in
@@ -248,51 +235,11 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
             message: NSLocalizedString("export_single_customer_record_description", comment: ""),
             preferredStyle: .actionSheet
         )
-        alert.addAction(exportVcfAction)
-        alert.addAction(exportCsvAction)
         alert.addAction(cancelAction)
         
         // On iPad, action sheets must be presented from a popover.
         alert.popoverPresentationController?.barButtonItem = sender
         self.present(alert, animated: true)
-    }
-    
-    func exportCsv(_ sender: UIBarButtonItem) {
-        let csv = CustomerCsvWriter(customers: [mCurrentCustomer!], customFields: self.mDb.getCustomFields())
-        
-        let fileurl = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathComponent("export."+String(mCurrentCustomer!.mId)+".csv")
-        
-        do {
-            try csv.buildCsvContent().write(to: fileurl, atomically: true, encoding: .utf8)
-            
-            let activityController = UIActivityViewController(
-                activityItems: [fileurl], applicationActivities: nil
-            )
-            activityController.popoverPresentationController?.barButtonItem = sender
-            self.present(activityController, animated: true, completion: nil)
-            
-        } catch let error {
-            print(error.localizedDescription)
-        }
-    }
-    
-    func exportVcf(_ sender: UIBarButtonItem) {
-        let vcf = CustomerVcfWriter(customers: [mCurrentCustomer!])
-        
-        let fileurl = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathComponent("export."+String(mCurrentCustomer!.mId)+".vcf")
-        
-        do {
-            try vcf.buildVcfContent().write(to: fileurl, atomically: true, encoding: .utf8)
-            
-            let activityController = UIActivityViewController(
-                activityItems: [fileurl], applicationActivities: nil
-            )
-            activityController.popoverPresentationController?.barButtonItem = sender
-            self.present(activityController, animated: true, completion: nil)
-            
-        } catch let error {
-            print(error.localizedDescription)
-        }
     }
     
     @IBAction func onClickEdit(_ sender: UIButton) {

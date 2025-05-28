@@ -1,6 +1,5 @@
 //
-//  InputOnlyModeViewController.swift
-//  Copyright © 2020 Georg Sieber. All rights reserved.
+//  Input Only Mode View Controller Class
 //
 
 import Foundation

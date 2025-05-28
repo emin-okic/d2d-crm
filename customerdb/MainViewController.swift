@@ -365,22 +365,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
         }
         newsletterAction.setValue(UIImage(named:"baseline_markunread_mailbox_black_24pt"), forKey: "image")
         
-        let birthdayAction = UIAlertAction(
-            title: NSLocalizedString("birthdays", comment: ""),
-            style: .default) { (action) in
-                let previewDays = UserDefaults.standard.integer(forKey: "birthday-preview-days")
-                let birthdays = CustomerBirthdayTableViewController.getSoonBirthdayCustomers(customers: customers, days: previewDays )
-                if(birthdays.count == 0) {
-                    self.dialog(
-                        title: nil,
-                        text: NSLocalizedString("no_birthdays_in_the_next_days", comment: "").replacingOccurrences(of: "%d", with: String(previewDays))
-                    )
-                    return
-                }
-                self.performSegue(withIdentifier: "segueBirthday", sender: nil)
-        }
-        birthdayAction.setValue(UIImage(named:"baseline_cake_black_24pt"), forKey: "image")
-        
         let importExportAction = UIAlertAction(
             title: NSLocalizedString("import_export", comment: ""),
             style: .default) { (action) in
@@ -407,14 +391,10 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
         let alert = UIAlertController(
             title: infoString, message: infoString2, preferredStyle: .actionSheet
         )
-        alert.addAction(infoAction)
-        alert.addAction(settingsAction)
-        alert.addAction(inputOnlyModeAction)
-        alert.addAction(lockAction)
-        alert.addAction(sortAction) // ToDo
+        
+        alert.addAction(sortAction) // Todo
         alert.addAction(filterAction)
         alert.addAction(newsletterAction)
-        alert.addAction(birthdayAction)
         alert.addAction(importExportAction)
         alert.addAction(deleteAction)
         alert.addAction(cancelAction)
@@ -501,21 +481,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
                     )
                 }
         }
-        let importCodeAction = UIAlertAction(
-            title: NSLocalizedString("import_qr_code", comment: ""),
-            style: .default) { (action) in
-                self.performSegue(withIdentifier: "segueScanner", sender: nil)
-        }
-        let exportVcfAction = UIAlertAction(
-            title: NSLocalizedString("export_vcf", comment: ""),
-            style: .default) { (action) in
-                self.exportVcf(barButtonItem: sender)
-        }
-        let exportCsvAction = UIAlertAction(
-            title: NSLocalizedString("export_csv", comment: ""),
-            style: .default) { (action) in
-                self.exportCsvCustomer(barButtonItem: sender)
-        }
         let cancelAction = UIAlertAction(
             title: NSLocalizedString("close", comment: ""),
             style: .cancel) { (action) in
@@ -524,51 +489,10 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alert.addAction(importVcfAction)
         alert.addAction(importCsvAction)
-        alert.addAction(importCodeAction)
-        alert.addAction(exportVcfAction)
-        alert.addAction(exportCsvAction)
         alert.addAction(cancelAction)
         
         alert.popoverPresentationController?.barButtonItem = sender
         self.present(alert, animated: true)
-    }
-    
-    func exportCsvCustomer(barButtonItem:UIBarButtonItem) {
-        let csv = CustomerCsvWriter(customers: self.mDb.getCustomers(search: nil, showDeleted: false, withFiles: false), customFields: self.mDb.getCustomFields())
-        
-        let fileurl = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathComponent("export.csv")
-
-        do {
-            try csv.buildCsvContent().write(to: fileurl, atomically: true, encoding: .utf8)
-
-            let activityController = UIActivityViewController(
-                activityItems: [fileurl], applicationActivities: nil
-            )
-            activityController.popoverPresentationController?.barButtonItem = barButtonItem
-            self.present(activityController, animated: true, completion: nil)
-
-        } catch let error {
-            print(error.localizedDescription)
-        }
-    }
-    
-    func exportVcf(barButtonItem:UIBarButtonItem) {
-        let vcf = CustomerVcfWriter(customers: self.mDb.getCustomers(search: nil, showDeleted: false, withFiles: true))
-        
-        let fileurl = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathComponent("export.vcf")
-
-        do {
-            try vcf.buildVcfContent().write(to: fileurl, atomically: true, encoding: .utf8)
-
-            let activityController = UIActivityViewController(
-                activityItems: [fileurl], applicationActivities: nil
-            )
-            activityController.popoverPresentationController?.barButtonItem = barButtonItem
-            self.present(activityController, animated: true, completion: nil)
-
-        } catch let error {
-            print(error.localizedDescription)
-        }
     }
     
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
@@ -600,23 +524,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
                         handleImportSuccess(imported: inserted)
                     } catch let error {
                         handleImportError(message: error.localizedDescription)
-                    }
-                } else if(url.pathExtension.lowercased() == "vcf") {
-                    var inserted = 0
-                    for newCustomer in CustomerVcfWriter.readVcfFile(url: url) {
-                        if(newCustomer.mTitle != "" || newCustomer.mFirstName != "" || newCustomer.mLastName != "") {
-                            // generate new ID because ID is not present in vcf file
-                            newCustomer.mId = Customer.generateID(suffix: inserted)
-                            if(mDb.insertCustomer(c: newCustomer)) {
-                                inserted += 1
-                            }
-                        }
-                    }
-                    if(inserted > 0) {
-                        mDb.updateCallDirectoryDatabase()
-                        handleImportSuccess(imported: inserted)
-                    } else {
-                        handleImportError(message: NSLocalizedString("file_does_not_contain_valid_records", comment: ""))
                     }
                 } else {
                     handleImportError(message: NSLocalizedString("unknown_file_format", comment: ""))
