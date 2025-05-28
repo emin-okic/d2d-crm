@@ -70,7 +70,7 @@
 		562A8BB624A67DF5003CB9C4 /* CustomerFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerFile.swift; sourceTree = "<group>"; };
 		56386B4E23F74CFE007D32DC /* customerdb.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = customerdb.entitlements; sourceTree = "<group>"; };
 		563903C82374C75D00753D93 /* CustomerTableController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerTableController.swift; sourceTree = "<group>"; };
-		563FEE8020FFD6C500DFD7B7 /* customerdb.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = customerdb.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		563FEE8020FFD6C500DFD7B7 /* d2d-crm.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "d2d-crm.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		563FEE8320FFD6C500DFD7B7 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		563FEE8820FFD6C500DFD7B7 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		563FEE8A20FFD6C600DFD7B7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -132,7 +132,7 @@
 		563FEE8120FFD6C500DFD7B7 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				563FEE8020FFD6C500DFD7B7 /* customerdb.app */,
+				563FEE8020FFD6C500DFD7B7 /* d2d-crm.app */,
 				568DFA902550AE9100546F6B /* CustomerDatabaseDirectory.appex */,
 			);
 			name = Products;
@@ -196,9 +196,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		563FEE7F20FFD6C500DFD7B7 /* customerdb */ = {
+		563FEE7F20FFD6C500DFD7B7 /* d2d-crm */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 563FEE9220FFD6C600DFD7B7 /* Build configuration list for PBXNativeTarget "customerdb" */;
+			buildConfigurationList = 563FEE9220FFD6C600DFD7B7 /* Build configuration list for PBXNativeTarget "d2d-crm" */;
 			buildPhases = (
 				563FEE7C20FFD6C500DFD7B7 /* Sources */,
 				563FEE7D20FFD6C500DFD7B7 /* Frameworks */,
@@ -210,9 +210,9 @@
 			dependencies = (
 				568DFA962550AE9100546F6B /* PBXTargetDependency */,
 			);
-			name = customerdb;
+			name = "d2d-crm";
 			productName = customerdb;
-			productReference = 563FEE8020FFD6C500DFD7B7 /* customerdb.app */;
+			productReference = 563FEE8020FFD6C500DFD7B7 /* d2d-crm.app */;
 			productType = "com.apple.product-type.application";
 		};
 		568DFA8F2550AE9100546F6B /* CustomerDatabaseDirectory */ = {
@@ -252,7 +252,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 563FEE7B20FFD6C500DFD7B7 /* Build configuration list for PBXProject "customerdb" */;
+			buildConfigurationList = 563FEE7B20FFD6C500DFD7B7 /* Build configuration list for PBXProject "d2d-crm" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -265,7 +265,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				563FEE7F20FFD6C500DFD7B7 /* customerdb */,
+				563FEE7F20FFD6C500DFD7B7 /* d2d-crm */,
 				568DFA8F2550AE9100546F6B /* CustomerDatabaseDirectory */,
 			);
 		};
@@ -599,7 +599,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		563FEE7B20FFD6C500DFD7B7 /* Build configuration list for PBXProject "customerdb" */ = {
+		563FEE7B20FFD6C500DFD7B7 /* Build configuration list for PBXProject "d2d-crm" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				563FEE9020FFD6C600DFD7B7 /* Debug */,
@@ -608,7 +608,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		563FEE9220FFD6C600DFD7B7 /* Build configuration list for PBXNativeTarget "customerdb" */ = {
+		563FEE9220FFD6C600DFD7B7 /* Build configuration list for PBXNativeTarget "d2d-crm" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				563FEE9320FFD6C600DFD7B7 /* Debug */,

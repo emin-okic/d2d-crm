@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "563FEE7F20FFD6C500DFD7B7"
-               BuildableName = "customerdb.app"
-               BlueprintName = "customerdb"
-               ReferencedContainer = "container:customerdb.xcodeproj">
+               BuildableName = "d2d-crm.app"
+               BlueprintName = "d2d-crm"
+               ReferencedContainer = "container:d2d-crm.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "563FEE7F20FFD6C500DFD7B7"
-            BuildableName = "customerdb.app"
-            BlueprintName = "customerdb"
-            ReferencedContainer = "container:customerdb.xcodeproj">
+            BuildableName = "d2d-crm.app"
+            BlueprintName = "d2d-crm"
+            ReferencedContainer = "container:d2d-crm.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "563FEE7F20FFD6C500DFD7B7"
-            BuildableName = "customerdb.app"
-            BlueprintName = "customerdb"
-            ReferencedContainer = "container:customerdb.xcodeproj">
+            BuildableName = "d2d-crm.app"
+            BlueprintName = "d2d-crm"
+            ReferencedContainer = "container:d2d-crm.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
