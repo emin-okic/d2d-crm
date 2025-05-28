@@ -30,6 +30,8 @@ class Customer {
 
     var mImage:Data? = nil
     var mConsentImage:Data? = nil
+    
+    // The Customer Model has a dependency with the Customer File Model
     var mFiles:[CustomerFile]? = nil
     
     var mLastModified:Date = Date()

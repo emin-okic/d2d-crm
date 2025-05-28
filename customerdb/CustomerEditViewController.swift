@@ -311,12 +311,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
                         mCurrentCustomerImage = jpeg
                     }
                 }
-                else if picker is ImagePickerCustomerFile {
-                    if let jpeg = compressedImage.jpegData(compressionQuality: 0.60) {
-                        DispatchQueue.main.async { // use DispatchQueue for potential alert dialog
-                        }
-                    }
-                }
             }
         }
         imagePicker.dismiss(animated: true, completion: nil)
@@ -680,6 +674,4 @@ class FileIndexButton: UIButton {
     }
 }
 class ImagePickerCustomerPicture: UIImagePickerController {
-}
-class ImagePickerCustomerFile: UIImagePickerController {
 }

@@ -4,6 +4,7 @@
 
 import Foundation
 
+// The Customer File Model is dependent on the Customer Model existing first
 class CustomerFile {
     
     //
