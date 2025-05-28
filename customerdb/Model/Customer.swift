@@ -31,9 +31,6 @@ class Customer {
     var mImage:Data? = nil
     var mConsentImage:Data? = nil
     
-    // The Customer Model has a dependency with the Customer File Model
-    var mFiles:[CustomerFile]? = nil
-    
     var mLastModified:Date = Date()
     var mRemoved = 0
     
@@ -162,20 +159,6 @@ class Customer {
     enum FileErrors: Error {
         case fileTooBig
         case fileLimitReached
-    }
-    
-    //
-    // This function renames a file in a file array associated with a customer record
-    //
-    func renameFile(index:Int, newName: String) {
-        
-        // If there are no files for a customer, return nothing
-        if(mFiles == nil || newName == "") {
-            return
-        }
-        
-        // Otherwise set the name of the given file to the new name defined in the input as required.
-        mFiles![index].mName = newName
     }
     
     //

@@ -254,9 +254,6 @@ class CustomerDatabase {
         
         if(withFiles) {
             var customersWithFiles:[Customer] = []
-            for customer in customers {
-                customersWithFiles.append(getCustomerFiles(c: customer))
-            }
             return customersWithFiles
         }
         
@@ -278,21 +275,6 @@ class CustomerDatabase {
                 if let pointer = sqlite3_column_blob(stmt, 0) {
                     let length = Int(sqlite3_column_bytes(stmt, 0))
                     c.mImage = Data(bytes: pointer, count: length)
-                }
-            }
-        }
-        
-        c.mFiles = []
-        var stmt2:OpaquePointer?
-        if sqlite3_prepare(self.db, "SELECT name, content FROM customer_file WHERE customer_id = ?", -1, &stmt2, nil) == SQLITE_OK {
-            sqlite3_bind_int64(stmt2, 1, c.mId)
-            while sqlite3_step(stmt2) == SQLITE_ROW {
-                if let pointer = sqlite3_column_blob(stmt2, 1) {
-                    let length = Int(sqlite3_column_bytes(stmt2, 1))
-                    c.mFiles?.append(CustomerFile(
-                        name: String(cString: sqlite3_column_text(stmt2, 0)),
-                        content: Data(bytes: pointer, count: length)
-                    ))
                 }
             }
         }
@@ -336,6 +318,7 @@ class CustomerDatabase {
                         removed: Int(sqlite3_column_int(stmt, 20))
                     )
                 )
+                // It seems this getCustomerFiles function is required to get prospect thumbnails.
                 customer = getCustomerFiles(c: customer!)
             }
         }
@@ -402,25 +385,6 @@ class CustomerDatabase {
             }
         }
         
-        if(c.mFiles != nil) {
-            var stmt:OpaquePointer?
-            if sqlite3_prepare(self.db, "DELETE FROM customer_file WHERE customer_id = ?", -1, &stmt, nil) == SQLITE_OK {
-                sqlite3_bind_int64(stmt, 1, c.mId)
-                if sqlite3_step(stmt) == SQLITE_DONE { sqlite3_finalize(stmt) }
-            }
-            for file in c.mFiles! {
-                if(file.mContent == nil || file.mContent?.count == 0) { continue }
-                if sqlite3_prepare(self.db, "INSERT INTO customer_file (customer_id, name, content) VALUES (?,?,?)", -1, &stmt, nil) == SQLITE_OK {
-                    let name = file.mName as NSString
-                    let tempData: NSMutableData = NSMutableData(length: 0)!
-                    tempData.append(file.mContent!)
-                    sqlite3_bind_int64(stmt, 1, c.mId)
-                    sqlite3_bind_text(stmt, 2, name.utf8String, -1, nil)
-                    sqlite3_bind_blob(stmt, 3, tempData.bytes, Int32(tempData.length), nil)
-                    if sqlite3_step(stmt) == SQLITE_DONE { sqlite3_finalize(stmt) }
-                }
-            }
-        }
         if(transact) { commitTransaction() }
         return true
     }
@@ -486,22 +450,6 @@ class CustomerDatabase {
             sqlite3_bind_int(stmt, 21, Int32(c.mRemoved))
             if sqlite3_step(stmt) == SQLITE_DONE {
                 sqlite3_finalize(stmt)
-            }
-        }
-        
-        if(c.mFiles != nil) {
-            var stmt2:OpaquePointer?
-            for file in c.mFiles! {
-                if(file.mContent == nil || file.mContent?.count == 0) { continue }
-                if sqlite3_prepare(self.db, "INSERT INTO customer_file (customer_id, name, content) VALUES (?,?,?)", -1, &stmt2, nil) == SQLITE_OK {
-                    let name = file.mName as NSString
-                    let tempData: NSMutableData = NSMutableData(length: 0)!
-                    tempData.append(file.mContent!)
-                    sqlite3_bind_int64(stmt2, 1, c.mId)
-                    sqlite3_bind_text(stmt2, 2, name.utf8String, -1, nil)
-                    sqlite3_bind_blob(stmt2, 3, tempData.bytes, Int32(tempData.length), nil)
-                    if sqlite3_step(stmt2) == SQLITE_DONE { sqlite3_finalize(stmt2) }
-                }
             }
         }
         if(transact) { commitTransaction() }

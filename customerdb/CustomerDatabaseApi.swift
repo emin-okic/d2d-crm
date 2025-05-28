@@ -66,10 +66,7 @@ class CustomerDatabaseApi {
     
     private func putCustomers(diffSince:Date?=nil) {
         var customersDataArray:[[String:Any?]] = []
-        for customer in mDb.getCustomers(search: nil, showDeleted: true, withFiles: true, modifiedSince: diffSince) {
-            var customerFilesDataArray:[[String:Any?]] = []
-            let filesJson = (try? JSONSerialization.data(withJSONObject: customerFilesDataArray))!
-            
+        for customer in mDb.getCustomers(search: nil, showDeleted: true, withFiles: true, modifiedSince: diffSince) {            
             customersDataArray.append([
                 "id": customer.mId,
                 "title": customer.mTitle,
@@ -90,7 +87,6 @@ class CustomerDatabaseApi {
                 "custom_fields": customer.mCustomFields,
                 "image": customer.mImage==nil ? nil : customer.mImage!.base64EncodedString(),
                 "consent": nil,
-                "files": customerFilesDataArray.count==0 ? nil : String(decoding:filesJson, as:UTF8.self),
                 "last_modified": CustomerDatabase.dateToString(date: customer.mLastModified),
                 "removed": customer.mRemoved
             ])
@@ -202,7 +198,6 @@ class CustomerDatabaseApi {
                     if let customers = result["customers"] as? [[String:Any]] {
                         for customer in customers {
                             let c = Customer()
-                            c.mFiles = []
                             for (key, value) in customer {
                                 var parsedValue = ""
                                 if let int64Value = value as? Int64 {
