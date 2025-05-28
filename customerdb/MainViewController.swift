@@ -25,7 +25,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
         navigationController?.navigationBar.barStyle = .black
         initColor()
         initSearch()
-        initLock()
         
         if(UIDevice.current.userInterfaceIdiom == .pad) {
             // iOS automatically displays a search button in iPads
@@ -52,10 +51,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
     }
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
-        coordinator.animate(alongsideTransition: nil, completion: {
-            _ in
-            self.initLock()
-        })
         /*if UIDevice.currentDevice.orientation.isLandscape.boolValue {
             print("Landscape")
         }*/
@@ -83,20 +78,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
     func initColor() {
         if let cvc = selectedViewController as? CustomerTableViewController {
             cvc.initColor()
-        }
-    }
-    
-    func initLock() {
-        if(UserDefaults.standard.bool(forKey: "iom")) {
-            guard (navigationController!.topViewController as? InputOnlyModeViewController) != nil else {
-                performSegue(withIdentifier: "segueInputOnlyMode", sender: nil)
-                return
-            }
-        } else if(UserDefaults.standard.bool(forKey: "lock")) {
-            guard (navigationController!.topViewController as? LockViewController) != nil else {
-                performSegue(withIdentifier: "segueLock", sender: nil)
-                return
-            }
         }
     }
     

@@ -44,14 +44,12 @@
 		56DDADC623E780DC00879CBD /* CSV.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DDADBF23E780DC00879CBD /* CSV.swift */; };
 		56DDADC723E780DC00879CBD /* Description.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DDADC023E780DC00879CBD /* Description.swift */; };
 		56DDADC923E8AF5000879CBD /* SyncInfoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DDADC823E8AF5000879CBD /* SyncInfoViewController.swift */; };
-		56DDADCB23E8B8EA00879CBD /* CreateAccountViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56DDADCA23E8B8EA00879CBD /* CreateAccountViewController.swift */; };
 		56E9C01824F5271500CD15DA /* GuiHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E9C01724F5271500CD15DA /* GuiHelper.swift */; };
 		56E9C02D246C64CA00DBB9DA /* MainSplitViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E9C02C246C64CA00DBB9DA /* MainSplitViewController.swift */; };
 		56E9C02F246C6E6E00DBB9DA /* NavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E9C02E246C6E6E00DBB9DA /* NavigationController.swift */; };
 		56F4E61124B2208D002F5569 /* UIColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56F4E61024B2208D002F5569 /* UIColor.swift */; };
 		56FDB94323FDC54A0018004C /* CustomerVcfWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FDB94223FDC54A0018004C /* CustomerVcfWriter.swift */; };
 		56FDB94524083CB60018004C /* InputOnlyModeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FDB94424083CB60018004C /* InputOnlyModeViewController.swift */; };
-		56FDB947240840620018004C /* LockViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FDB946240840620018004C /* LockViewController.swift */; };
 		56FDB949240947E70018004C /* BirthdayViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56FDB948240947E70018004C /* BirthdayViewController.swift */; };
 		56FFD28F25B4F4A300F1611A /* CallDirectoryNumber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 561B7C5B25B4D114005ABB43 /* CallDirectoryNumber.swift */; };
 		C5818D742DE643FF002B9E4D /* Models-README.md in Resources */ = {isa = PBXBuildFile; fileRef = C5818D732DE643FF002B9E4D /* Models-README.md */; };
@@ -122,14 +120,12 @@
 		56DDADBF23E780DC00879CBD /* CSV.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CSV.swift; sourceTree = "<group>"; };
 		56DDADC023E780DC00879CBD /* Description.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Description.swift; sourceTree = "<group>"; };
 		56DDADC823E8AF5000879CBD /* SyncInfoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncInfoViewController.swift; sourceTree = "<group>"; };
-		56DDADCA23E8B8EA00879CBD /* CreateAccountViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAccountViewController.swift; sourceTree = "<group>"; };
 		56E9C01724F5271500CD15DA /* GuiHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuiHelper.swift; sourceTree = "<group>"; };
 		56E9C02C246C64CA00DBB9DA /* MainSplitViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainSplitViewController.swift; sourceTree = "<group>"; };
 		56E9C02E246C6E6E00DBB9DA /* NavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationController.swift; sourceTree = "<group>"; };
 		56F4E61024B2208D002F5569 /* UIColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIColor.swift; sourceTree = "<group>"; };
 		56FDB94223FDC54A0018004C /* CustomerVcfWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerVcfWriter.swift; sourceTree = "<group>"; };
 		56FDB94424083CB60018004C /* InputOnlyModeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputOnlyModeViewController.swift; sourceTree = "<group>"; };
-		56FDB946240840620018004C /* LockViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockViewController.swift; sourceTree = "<group>"; };
 		56FDB948240947E70018004C /* BirthdayViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BirthdayViewController.swift; sourceTree = "<group>"; };
 		56FFD29425B6179C00F1611A /* CustomerDatabaseDirectory.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CustomerDatabaseDirectory.entitlements; sourceTree = "<group>"; };
 		C5818D732DE643FF002B9E4D /* Models-README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Models-README.md"; sourceTree = "<group>"; };
@@ -193,13 +189,11 @@
 				562A8BB0249BA20A003CB9C4 /* DocumentPickers.swift */,
 				56C089D2244A32D9005F8A1B /* PickerController.swift */,
 				56FDB94424083CB60018004C /* InputOnlyModeViewController.swift */,
-				56FDB946240840620018004C /* LockViewController.swift */,
 				56FDB948240947E70018004C /* BirthdayViewController.swift */,
 				56D51FC92392C7810097DBDE /* InfoViewController.swift */,
 				564EC39D27BEEDDA00C7BE81 /* TextViewViewController.swift */,
 				56D51FCB2392C7A70097DBDE /* SettingsViewController.swift */,
 				56DDADC823E8AF5000879CBD /* SyncInfoViewController.swift */,
-				56DDADCA23E8B8EA00879CBD /* CreateAccountViewController.swift */,
 				563903C82374C75D00753D93 /* CustomerTableController.swift */,
 				56D51FBF2376D97E0097DBDE /* CustomerDetailsViewController.swift */,
 				56D51FC1237898E70097DBDE /* CustomerEditViewController.swift */,
@@ -381,7 +375,6 @@
 				56FDB949240947E70018004C /* BirthdayViewController.swift in Sources */,
 				56E9C02F246C6E6E00DBB9DA /* NavigationController.swift in Sources */,
 				561B7C5C25B4D114005ABB43 /* CallDirectoryNumber.swift in Sources */,
-				56DDADCB23E8B8EA00879CBD /* CreateAccountViewController.swift in Sources */,
 				56D51FC4237DEA080097DBDE /* CustomField.swift in Sources */,
 				56D51FC02376D97E0097DBDE /* CustomerDetailsViewController.swift in Sources */,
 				563FEE8420FFD6C500DFD7B7 /* AppDelegate.swift in Sources */,
@@ -399,7 +392,6 @@
 				568DFAB1255200F900546F6B /* CallDirectoryDatabase.swift in Sources */,
 				562A8BB724A67DF5003CB9C4 /* CustomerFile.swift in Sources */,
 				56D51FCA2392C7810097DBDE /* InfoViewController.swift in Sources */,
-				56FDB947240840620018004C /* LockViewController.swift in Sources */,
 				56FDB94323FDC54A0018004C /* CustomerVcfWriter.swift in Sources */,
 				56D55EC123EC407100FA8B7F /* CustomerCsvWriter.swift in Sources */,
 				569E14512374595F007BFAF0 /* Customer.swift in Sources */,
