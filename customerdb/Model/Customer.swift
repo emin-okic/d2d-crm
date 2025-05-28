@@ -56,7 +56,6 @@ class Customer {
         mCountry = country
         mBirthday = birthday
         mGroup = group
-        mNewsletter = newsletter
         mNotes = notes
         mCustomFields = customFields
         mLastModified = lastModified
@@ -79,7 +78,6 @@ class Customer {
         mCountry = country
         mBirthday = birthday
         mGroup = group
-        mNewsletter = newsletter
         mNotes = notes
         mCustomFields = customFields
         mImage = image
@@ -124,8 +122,6 @@ class Customer {
             break
         case "group", "customer_group":
             mGroup = value; break
-        case "newsletter":
-            mNewsletter = value=="1"; break
         case "notes":
             mNotes = value; break
         case "last_modified":
