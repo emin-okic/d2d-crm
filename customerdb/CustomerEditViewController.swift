@@ -219,35 +219,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
         }
         
         mDisplayAttributes = []
-        for field in mDb.getCustomFields() {
-            // get field value
-            var attribute = mCurrentCustomer?.getCustomField(key: field.mTitle)
-            if(attribute == nil) {
-                attribute = CustomField(title: field.mTitle, value: "")
-            }
-            attribute!.mType = field.mType
-            
-            // convert date to display format
-            if(attribute!.mType == CustomField.TYPE.DATE) {
-                let date = CustomerDatabase.parseDateRaw(strDate: attribute!.mValue)
-                if(date != nil) {
-                    attribute!.mValue = CustomerDatabase.dateToDisplayStringWithoutTime(date: date!)
-                }
-            }
-            
-            // load presets
-            if(field.mType == CustomField.TYPE.DROPDOWN) {
-                var parsedData: [KeyValueItem] = []
-                for field in mDb.getCustomFieldPresets(customFieldId: field.mId) {
-                    parsedData.append(KeyValueItem(String(field.mId), field.mTitle))
-                }
-                attribute!.mPresetPickerController = PickerDataController(data: parsedData)
-            }
-            
-            // add to view
-            attribute!.mTextFieldHandle = insertDetail(customField: attribute!)
-            mDisplayAttributes.append(attribute!)
-        }
         
     }
     
@@ -443,10 +414,6 @@ class CustomerEditViewController : UIViewController, UINavigationControllerDeleg
                         finalValue = CustomerDatabase.dateToStringRaw(date: date!)
                     }
                 }
-                mCurrentCustomer?.setCustomField(title:attribute.mTitle, value:finalValue)
-            }
-            else if let textView = attribute.mTextFieldHandle as? UITextView {
-                mCurrentCustomer?.setCustomField(title:attribute.mTitle, value:textView.text!)
             }
         }
         

@@ -241,19 +241,13 @@ class CustomerDatabase {
                        && !c.mZipcode.uppercased().contains(normalizedSearch)
                        && !c.mCity.uppercased().contains(normalizedSearch)
                        && !c.mGroup.uppercased().contains(normalizedSearch)
-                       && !c.mNotes.uppercased().contains(normalizedSearch)
-                       && !findInCustomFields(searchUpperCase: normalizedSearch, fields: c.getCustomFields())) {
+                       && !c.mNotes.uppercased().contains(normalizedSearch)) {
                         continue
                     }
                 }
                 
                 customers.append(c)
             }
-        }
-        
-        if(withFiles) {
-            var customersWithFiles:[Customer] = []
-            return customersWithFiles
         }
         
         return customers
@@ -483,40 +477,6 @@ class CustomerDatabase {
         if(transact) { commitTransaction() }
     }
     
-    // Custom Field Operations
-    func getCustomFields() -> [CustomField] {
-        var fields:[CustomField] = []
-        var stmt:OpaquePointer?
-        if sqlite3_prepare(self.db, "SELECT id, title, type FROM customer_extra_fields", -1, &stmt, nil) == SQLITE_OK {
-            while sqlite3_step(stmt) == SQLITE_ROW {
-                fields.append(
-                    CustomField(
-                        id: Int64(sqlite3_column_int(stmt, 0)),
-                        title: String(cString: sqlite3_column_text(stmt, 1)),
-                        type: Int(sqlite3_column_int(stmt, 2))
-                    )
-                )
-            }
-        }
-        return fields
-    }
-    func getCustomField(id:Int) -> CustomField? {
-        var customField:CustomField? = nil
-        var stmt:OpaquePointer?
-        if sqlite3_prepare(self.db, "SELECT id, title, type FROM customer_extra_fields WHERE id = ?", -1, &stmt, nil) == SQLITE_OK {
-            sqlite3_bind_int(stmt, 1, Int32(id))
-            while sqlite3_step(stmt) == SQLITE_ROW {
-                customField = (
-                    CustomField(
-                        id: Int64(sqlite3_column_int(stmt, 0)),
-                        title: String(cString: sqlite3_column_text(stmt, 1)),
-                        type: Int(sqlite3_column_int(stmt, 2))
-                    )
-                )
-            }
-        }
-        return customField
-    }
     func updateCustomField(cf: CustomField) -> Bool {
         var stmt:OpaquePointer?
         if sqlite3_prepare(self.db, "UPDATE customer_extra_fields SET title = ?, type = ? WHERE id = ?", -1, &stmt, nil) == SQLITE_OK {
@@ -552,23 +512,6 @@ class CustomerDatabase {
         }
     }
     
-    func getCustomFieldPresets(customFieldId: Int64) -> [CustomField] {
-        var fields:[CustomField] = []
-        var stmt:OpaquePointer?
-        if sqlite3_prepare(self.db, "SELECT id, title FROM customer_extra_presets WHERE extra_field_id = ?", -1, &stmt, nil) == SQLITE_OK {
-            sqlite3_bind_int64(stmt, 1, customFieldId)
-            while sqlite3_step(stmt) == SQLITE_ROW {
-                fields.append(
-                    CustomField(
-                        id: sqlite3_column_int64(stmt, 0),
-                        title: String(cString: sqlite3_column_text(stmt, 1)),
-                        type: -1
-                    )
-                )
-            }
-        }
-        return fields
-    }
     func insertCustomFieldPreset(fieldId: Int64, preset: String) -> Bool {
         var stmt:OpaquePointer?
         if sqlite3_prepare(self.db, "INSERT INTO customer_extra_presets (title, extra_field_id) VALUES (?,?)", -1, &stmt, nil) == SQLITE_OK {

@@ -135,7 +135,7 @@ class Customer {
         case "custom_fields":
             mCustomFields = value; break
         default:
-            setCustomField(title: key, value: value)
+            mCustomFields = value; break
         }
     }
     
@@ -182,80 +182,14 @@ class Customer {
         else if(mPhoneMobile != "") { return mPhoneMobile }
         else if(mPhoneWork != "") { return mPhoneWork }
         else if(mEmail != "") { return mEmail }
-        else { return getFirstNotEmptyCustomFieldString() }
+        else { return ""}
     }
     
     func getAddressString() -> String {
         return (mStreet + "\n" + mZipcode + " " + mCity + "\n" + mCountry)
                 .trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    
-    func getCustomFields() -> [CustomField] {
-        var attributes:[CustomField] = []
-        for urlEncodedAttribute in mCustomFields.components(separatedBy: "&") {
-            let keyValuePair = urlEncodedAttribute.components(separatedBy: "=")
-            if(keyValuePair.count != 2) { continue }
-            let key = keyValuePair[0].stringByRemovingPercentEncoding() ?? ""
-            let value = keyValuePair[1].stringByRemovingPercentEncoding() ?? ""
-            if(key == "") { continue }
-            attributes.append(CustomField(
-                title: key, value: value
-            ))
-        }
-        return attributes
-    }
-    func getCustomField(key:String) -> CustomField? {
-        for field in getCustomFields() {
-            if(field.mTitle == key) {
-                return field
-            }
-        }
-        return nil
-    }
-    func getCustomFieldString(key:String) -> String? {
-        for field in getCustomFields() {
-            if(field.mTitle == key) {
-                if(field.mValue == "") {
-                    return nil
-                } else {
-                    return field.mValue
-                }
-            }
-        }
-        return nil
-    }
-    func getFirstNotEmptyCustomFieldString() -> String {
-        for field in getCustomFields() {
-            if(field.mValue != "") {
-                return field.mValue
-            }
-        }
-        return ""
-    }
-    func setCustomFields(fields: [CustomField]) {
-        var attributeString = ""
-        for field in fields {
-            if let titleEncoded = field.mTitle.stringByAddingPercentEncodingForRFC3986() {
-                attributeString += titleEncoded
-                attributeString += "="
-                attributeString += field.mValue.stringByAddingPercentEncodingForRFC3986() ?? ""
-                attributeString += "&"
-            }
-        }
-        mCustomFields = attributeString
-    }
-    func setCustomField(title:String, value:String) {
-        var fields = getCustomFields()
-        for field in fields {
-            if(field.mTitle == title) {
-                field.mValue = value
-                setCustomFields(fields: fields)
-                return
-            }
-        }
-        fields.append(CustomField(title: title, value: value))
-        setCustomFields(fields: fields)
-    }
+
     
     func getNextBirthday() -> Date? {
         if(mBirthday == nil) { return nil }

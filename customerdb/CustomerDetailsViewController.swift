@@ -152,26 +152,7 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
             labelBirthday.text = mCurrentCustomer?.getBirthdayString()
         }
         labelLastModified.text = CustomerDatabase.dateToDisplayString(date: mCurrentCustomer!.mLastModified)
-        
-        let customFields = mDb.getCustomFields()
-        for view in stackViewAttributes.arrangedSubviews {
-            view.removeFromSuperview()
-        }
-        for field in customFields {
-            var finalText = mCurrentCustomer?.getCustomFieldString(key: field.mTitle) ?? ""
-            
-            // convert date to display format
-            if(field.mType == CustomField.TYPE.DATE) {
-                let date = CustomerDatabase.parseDateRaw(strDate: finalText)
-                if(date != nil) {
-                    finalText = CustomerDatabase.dateToDisplayStringWithoutTime(date: date!)
-                }
-            }
-            
-        }
-        for view in stackViewFiles.arrangedSubviews {
-            view.removeFromSuperview()
-        }
+
         
     }
     

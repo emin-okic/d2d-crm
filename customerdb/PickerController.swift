@@ -100,9 +100,6 @@ class SortPickerController: NSObject, UIPickerViewDataSource, UIPickerViewDelega
     var mSelectedOrderAsc = true
     
     init(db: CustomerDatabase) {
-        for field in db.getCustomFields() {
-            mSortFields.append(KeyValueItem(field.mTitle, field.mTitle))
-        }
         
         mSelectedSortField = mSortFields[0].key
     }

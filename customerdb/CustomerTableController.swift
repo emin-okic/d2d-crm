@@ -166,8 +166,6 @@ class CustomerTableViewController : UIViewController, UITableViewDelegate, UITab
                     tempCustomers.sort(by: { $0.mLastName < $1.mLastName })
                 } else if(mCurrentSortField == "last_modified") {
                     tempCustomers.sort(by: { $0.mLastModified < $1.mLastModified })
-                } else {
-                    tempCustomers.sort(by: { $0.getCustomFieldString(key: mCurrentSortField!) ?? "" < $1.getCustomFieldString(key: mCurrentSortField!) ?? "" })
                 }
             } else {
                 if(mCurrentSortField == "first_name") {
@@ -176,8 +174,6 @@ class CustomerTableViewController : UIViewController, UITableViewDelegate, UITab
                     tempCustomers.sort(by: { $0.mLastName > $1.mLastName })
                 } else if(mCurrentSortField == "last_modified") {
                     tempCustomers.sort(by: { $0.mLastModified > $1.mLastModified })
-                } else {
-                    tempCustomers.sort(by: { $0.getCustomFieldString(key: mCurrentSortField!) ?? "" > $1.getCustomFieldString(key: mCurrentSortField!) ?? "" })
                 }
             }
         }
