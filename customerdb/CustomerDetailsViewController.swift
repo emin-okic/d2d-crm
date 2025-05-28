@@ -174,7 +174,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
                 }
             }
             
-            insertDetail(title: field.mTitle, text: finalText)
         }
         
         let files = mCurrentCustomer!.getFiles()
@@ -427,22 +426,6 @@ class CustomerDetailsViewController : UIViewController, MFMessageComposeViewCont
         }
     }
     
-    func insertDetail(title:String?, text:String?) {
-        var finalText = text
-        if(title == nil) { return }
-        if(finalText == nil) { finalText = "" }
-        let labelTitle = SecondaryLabel()
-        labelTitle.text = title
-        
-        let labelText = UICopyLabel()
-        labelText.text = finalText
-        labelText.numberOfLines = 10
-        
-        let stackView = UIStackView(arrangedSubviews: [labelTitle, labelText])
-        stackView.axis = .vertical
-        
-        stackViewAttributes.addArrangedSubview(stackView)
-    }
     
     func insertFile(file:CustomerFile) {
         let button = FileButton(file: file)
