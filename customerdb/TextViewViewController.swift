@@ -1,6 +1,5 @@
 //
-//  Created by Schorschii on 17.02.22.
-//  Copyright © 2022 Georg Sieber. All rights reserved.
+// Text View Controller Class
 //
 
 import Foundation

@@ -1,7 +1,5 @@
 //
-//  GuiHelper.swift
-//  Various GUI helper classes
-//  Copyright © 2020 Georg Sieber. All rights reserved.
+//  Gui Helper Class
 //
 
 import Foundation

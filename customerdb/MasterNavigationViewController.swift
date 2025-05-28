@@ -1,6 +1,5 @@
 //
-//  NavigationViewController.swift
-//  Copyright © 2020 Georg Sieber. All rights reserved.
+//  Navigation View Controller Class
 //
 
 import Foundation

@@ -1,6 +1,5 @@
 //
-//  CustomerTableController.swift
-//  Copyright © 2019 Georg Sieber. All rights reserved.
+//  Customer Table Controller Class
 //
 
 import Foundation
