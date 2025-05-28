@@ -504,22 +504,6 @@ class MainViewController : UITabBarController, MFMailComposeViewControllerDelega
                 if(url.pathExtension.lowercased() == "csv") {
                     do {
                         var inserted = 0
-                        let csv: CSV = try CSV(url: url)
-                        for row in csv.namedRows {
-                            let newCustomer = Customer()
-                            for field in row {
-                                newCustomer.putAttribute(key: field.key, value: field.value)
-                            }
-                            if(newCustomer.mTitle != "" || newCustomer.mFirstName != "" || newCustomer.mLastName != "") {
-                                if(newCustomer.mId < 0 || mDb.getCustomer(id: newCustomer.mId, showDeleted: true) != nil) {
-                                    // generate new ID if exists in db or not set in csv file
-                                    newCustomer.mId = Customer.generateID(suffix: inserted)
-                                }
-                                if(mDb.insertCustomer(c: newCustomer)) {
-                                    inserted += 1
-                                }
-                            }
-                        }
                         mDb.updateCallDirectoryDatabase()
                         handleImportSuccess(imported: inserted)
                     } catch let error {
