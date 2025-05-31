@@ -11,15 +11,21 @@ import CoreLocation
 import UniformTypeIdentifiers   // for .commaSeparatedText
 
 struct MapSearchView: View {
-    @StateObject private var controller = MapController(region: MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
-        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-    ))
-    
+    @Binding var region: MKCoordinateRegion
+    @Binding var prospects: [Prospect]
+
+    @StateObject private var controller: MapController
+
     @State private var searchText: String = ""
-    
-    let prospects: [Prospect]
-    
+
+    init(region: Binding<MKCoordinateRegion>, prospects: Binding<[Prospect]>) {
+        // Initialize the MapController with the starting region
+        // We need to unwrap the binding’s wrappedValue here
+        _region = region
+        _prospects = prospects
+        _controller = StateObject(wrappedValue: MapController(region: region.wrappedValue))
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             Map(coordinateRegion: $controller.region, annotationItems: controller.markers) { place in
@@ -33,7 +39,7 @@ struct MapSearchView: View {
             }
             .frame(height: 300)
             .edgesIgnoringSafeArea(.horizontal)
-            
+
             HStack {
                 HStack {
                     Image(systemName: "magnifyingglass")
@@ -41,7 +47,7 @@ struct MapSearchView: View {
                     TextField("Search for a place…", text: $searchText, onCommit: {
                         let trimmed = searchText.trimmingCharacters(in: .whitespaces)
                         guard !trimmed.isEmpty else { return }
-                        controller.performSearch(query: trimmed)
+                        handleSearch(query: trimmed)
                     })
                     .foregroundColor(.primary)
                     .autocapitalization(.words)
@@ -50,31 +56,55 @@ struct MapSearchView: View {
                 .background(.ultraThinMaterial)
                 .cornerRadius(12)
                 .shadow(radius: 3, x: 0, y: 2)
-                
+
                 Spacer().frame(width: 8)
-                
+
                 ImportExportView(markers: controller.markers, onImport: { url in
                     importCSV(from: url)
                 })
             }
             .padding(.horizontal)
             .padding(.top, 12)
-            
+
             RecentSearchesView(
                 recentSearches: controller.recentSearches,
-                onSelect: controller.performSearch(query:)
+                onSelect: { query in handleSearch(query: query) }
             )
-            
+
             Spacer()
         }
         .onAppear {
             controller.addProspects(prospects)
         }
         .onTapGesture {
-            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            UIApplication.shared.sendAction(
+                #selector(UIResponder.resignFirstResponder),
+                to: nil, from: nil, for: nil
+            )
         }
     }
-    
+
+    private func handleSearch(query: String) {
+        controller.performSearch(query: query)
+
+        // After the map controller adds/updates the marker, check if we need to insert a Prospect:
+        let normalized = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let alreadyExists = prospects.contains {
+            $0.address.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == normalized
+        }
+
+        if !alreadyExists {
+            // Create a new Prospect. You can adjust fullName as needed;
+            // here we’re just setting the name to “New Prospect” as a placeholder
+            let newProspect = Prospect(
+                id: UUID(),
+                fullName: "New Prospect",
+                address: query
+            )
+            prospects.append(newProspect)
+        }
+    }
+
     private func importCSV(from url: URL) {
         do {
             let content = try String(contentsOf: url)
@@ -84,7 +114,7 @@ struct MapSearchView: View {
             for line in lines {
                 let columns = line.components(separatedBy: ",")
                 if let address = columns.first, !address.isEmpty {
-                    controller.performSearch(query: address.trimmingCharacters(in: .whitespacesAndNewlines))
+                    handleSearch(query: address.trimmingCharacters(in: .whitespacesAndNewlines))
                 }
             }
         } catch {

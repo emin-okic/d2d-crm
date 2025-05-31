@@ -18,10 +18,9 @@ struct RootView: View {
 
     var body: some View {
         TabView {
-            MapSearchView(prospects: prospects)
-                .tabItem {
-                    Label("Map", systemImage: "map.fill")
-                }
+            MapSearchView(region: $region, prospects: $prospects)
+                .tabItem { Label("Map", systemImage: "map.fill") }
+
 
             ProspectsView(prospects: $prospects)
                 .tabItem {
