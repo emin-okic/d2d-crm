@@ -1,6 +1,0 @@
-/* 
-  InfoPlist.strings in italian
-*/
-"CFBundleDisplayName" = "Clientes";
-"NewCustomer" = "Nuevo cliente";
-"NewAppointment" = "Nueva cita";
