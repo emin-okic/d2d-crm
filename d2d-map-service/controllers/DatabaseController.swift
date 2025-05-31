@@ -9,6 +9,7 @@ import SQLite
 
 import Foundation
 
+
 class DatabaseController {
     
     // These two variables set the sqlite database
@@ -97,4 +98,29 @@ class DatabaseController {
         }
         return result
     }
+    
+
+    func updateProspect(_ prospect: Prospect) {
+        guard let db = db else { return }
+
+        // Filter the row by integer id (assuming your Prospect.id is Int64)
+        let prospectToUpdate = prospects.filter(list == "Prospects")
+
+        do {
+            let update = prospectToUpdate.update(
+                fullName <- prospect.fullName,
+                address <- prospect.address,
+                list <- prospect.list
+            )
+            if try db.run(update) > 0 {
+                print("Successfully updated prospect")
+            } else {
+                print("No prospect found to update")
+            }
+        } catch {
+            print("Update failed: \(error)")
+        }
+    }
+
+
 }

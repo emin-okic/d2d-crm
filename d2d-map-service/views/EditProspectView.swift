@@ -33,9 +33,13 @@ struct EditProspectView: View {
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") {
-                    // Optional: update DB here
+                    // Update the prospect in the database
+                    DatabaseController.shared.updateProspect(prospect)
+                    
+                    // Dismiss the edit view
                     presentationMode.wrappedValue.dismiss()
                 }
+
             }
         }
     }

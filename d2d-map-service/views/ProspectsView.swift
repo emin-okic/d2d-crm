@@ -8,15 +8,21 @@
 import SwiftUI
 
 struct ProspectsView: View {
-    // @State private var prospects: [Prospect] = []
     @Binding var prospects: [Prospect]
     @State private var selectedProspectID: UUID?
     @State private var showingAddProspect = false
+    @State private var selectedList: String = "Prospects"
+
+    let availableLists = ["Prospects", "Customers"]
 
     var body: some View {
         NavigationView {
             List {
-                ForEach($prospects, id: \.id) { $prospect in
+                let filteredProspects = selectedList == "All"
+                    ? prospects
+                    : prospects.filter { $0.list == selectedList }
+
+                ForEach(filteredProspects, id: \.id) { prospect in
                     Button {
                         selectedProspectID = prospect.id
                     } label: {
@@ -44,6 +50,18 @@ struct ProspectsView: View {
             }
             .navigationTitle("Prospects")
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Menu {
+                        Picker("Filter", selection: $selectedList) {
+                            ForEach(availableLists, id: \.self) { list in
+                                Text(list)
+                            }
+                        }
+                    } label: {
+                        Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
+                    }
+                }
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         showingAddProspect = true
@@ -65,5 +83,4 @@ struct ProspectsView: View {
         return $prospects[index]
     }
 }
-
 
