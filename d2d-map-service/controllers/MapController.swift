@@ -23,6 +23,9 @@ class MapController: ObservableObject {
         query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
     
+    /**
+     This function performs a search and places a marker
+     */
     func performSearch(query: String) {
         let key = normalized(query)
         let geocoder = CLGeocoder()
@@ -53,6 +56,9 @@ class MapController: ObservableObject {
         }
     }
     
+    /**
+     This function gets all the recent searches in a search session
+     */
     public func updateRecentSearches(with query: String) {
         let key = normalized(query)
         recentSearches.removeAll(where: { normalized($0) == key })
