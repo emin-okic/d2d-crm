@@ -111,7 +111,8 @@ struct MapSearchView: View {
                 id: UUID(),
                 fullName: "New Prospect",
                 address: query,     // We’ll normalize later inside performSearch
-                count: 1
+                count: 1,
+                list: "Prospects"
             )
             prospects.append(newProspect)
             controller.updateRecentSearches(with: newProspect)

@@ -26,7 +26,7 @@ struct NewProspectView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        let newProspect = Prospect(id: UUID(), fullName: fullName, address: address, count: 0)
+                        let newProspect = Prospect(id: UUID(), fullName: fullName, address: address, count: 0, list: "Prospects")
                         prospects.append(newProspect)
                         presentationMode.wrappedValue.dismiss()
                     }
