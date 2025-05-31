@@ -18,6 +18,8 @@ struct MapSearchView: View {
     
     @State private var searchText: String = ""
     
+    let prospects: [Prospect]
+    
     var body: some View {
         VStack(spacing: 0) {
             Map(coordinateRegion: $controller.region, annotationItems: controller.markers) { place in
@@ -64,6 +66,9 @@ struct MapSearchView: View {
             )
             
             Spacer()
+        }
+        .onAppear {
+            controller.addProspects(prospects)
         }
         .onTapGesture {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)

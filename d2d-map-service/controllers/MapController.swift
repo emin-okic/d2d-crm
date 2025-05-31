@@ -89,5 +89,11 @@ class MapController: ObservableObject {
             span: MKCoordinateSpan(latitudeDelta: max(latDelta, 0.01), longitudeDelta: max(lonDelta, 0.01))
         )
     }
+    
+    func addProspects(_ prospects: [Prospect]) {
+        for prospect in prospects {
+            performSearch(query: prospect.address)
+        }
+    }
 
 }
