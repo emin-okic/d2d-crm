@@ -69,57 +69,8 @@ struct MapSearchView: View {
                 
                 Spacer().frame(width: 8)
                 
-                // Export button (disabled if there are no markers yet)
-                Button {
-                    let csvText = buildCSV(from: markers)
-                    if let fileURL = saveCSVFile(content: csvText) {
-                        self.csvURL = fileURL
-                        self.showShareSheet = true
-                    }
-                } label: {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(markers.isEmpty ? .gray : .blue)
-                }
-                .disabled(markers.isEmpty)
-                .padding(12)
-                .background(RoundedRectangle(cornerRadius: 8)
-                                .stroke(markers.isEmpty ? Color.gray : Color.blue, lineWidth: 1))
-                .shadow(radius: 2, x: 0, y: 1)
-                .sheet(isPresented: $showShareSheet) {
-                    if let fileURL = csvURL {
-                        ShareSheet(activityItems: [fileURL])
-                    }
-                }
-                
-                Spacer().frame(width: 8)
-                
-                // Import button
-                Button {
-                    isImporterPresented = true
-                } label: {
-                    Image(systemName: "square.and.arrow.down")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(.white)
-                        .padding(12)
-                        .background(Color.blue)
-                        .cornerRadius(8)
-                }
-                .shadow(radius: 2, x: 0, y: 1)
-                .fileImporter(
-                    isPresented: $isImporterPresented,
-                    allowedContentTypes: [.commaSeparatedText],
-                    allowsMultipleSelection: false
-                ) { result in
-                    switch result {
-                    case .success(let urls):
-                        if let url = urls.first {
-                            importCSV(from: url)
-                        }
-                    case .failure(let error):
-                        print("File import failed: \(error)")
-                    }
-                }
+                // Import/Export buttons separated into new view
+                ImportExportView(markers: markers, onImport: importCSV)
             }
             .padding(.horizontal)
             .padding(.top, 12)
@@ -127,28 +78,10 @@ struct MapSearchView: View {
             // ──────────────────────────────────────────────────────────────────
             // 3) RECENT SEARCHES SCROLL
             // ──────────────────────────────────────────────────────────────────
-            ScrollView {
-                VStack(spacing: 8) {
-                    ForEach(recentSearches, id: \.self) { query in
-                        Button(action: {
-                            performSearch(query: query)
-                        }) {
-                            Text(query)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.vertical, 10)
-                                .padding(.horizontal)
-                                .background(Color.clear)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color.gray.opacity(0.5), lineWidth: 1)
-                                )
-                        }
-                    }
-                }
-                .padding(.horizontal)
-            }
-            .frame(maxHeight: 180)
-            .padding(.top, 8)
+            RecentSearchesView(
+                recentSearches: recentSearches,
+                onSelect: performSearch
+            )
             
             Spacer()  // push everything up
         }
