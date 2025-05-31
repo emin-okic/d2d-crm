@@ -25,6 +25,9 @@ struct ProspectsView: View {
                             Text(prospect.address)
                                 .font(.subheadline)
                                 .foregroundColor(.gray)
+                            Text(prospect.list)
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
                         }
                     }
                     .background(
