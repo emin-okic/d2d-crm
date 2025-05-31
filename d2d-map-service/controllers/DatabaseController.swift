@@ -53,44 +53,69 @@ class DatabaseController {
     /**
      This function creates a table in the sqlite database to hold prospects
      */
+    private let listName = Expression<String?>("listName")  // Optional string
+
     private func createTable() {
         do {
             try db?.run(prospects.create(ifNotExists: true) { t in
                 t.column(id, primaryKey: .autoincrement)
                 t.column(fullName)
                 t.column(address)
+                t.column(listName)  // Add listName column
+                // You can add 'count' column too if you want to store it in DB
             })
         } catch {
             print("Create table failed: \(error)")
         }
     }
 
+
+
     /**
      This function adds prospects to the sqlite database
      */
-    func addProspect(name: String, addr: String) {
+    func addProspect(prospect: Prospect) {
         do {
-            let insert = prospects.insert(fullName <- name, address <- addr)
+            let insert = prospects.insert(
+                fullName <- prospect.fullName,
+                address <- prospect.address,
+                listName <- prospect.listName
+            )
             try db?.run(insert)
         } catch {
             print("Insert failed: \(error)")
         }
     }
 
+
+
     /**
      This function gets all prospects from the sqlite database and returns a 2D string array
      */
-    func getAllProspects() -> [(String, String)] {
-        var result: [(String, String)] = []
+    func getAllProspects(for listFilter: String) -> [Prospect] {
+        var result: [Prospect] = []
         do {
-            for row in try db!.prepare(prospects) {
-                let name = row[fullName]
-                let addr = row[address]
-                result.append((name, addr))
+            let query = (listFilter == "All") ?
+                prospects : prospects.filter(listName == listFilter)
+
+            for row in try db!.prepare(query) {
+                let fullNameValue = try row.get(fullName)
+                let addressValue = try row.get(address)
+                let listValue = try? row.get(listName)
+
+                // Use default count, or add count to your DB & fetch it similarly
+                let p = Prospect(id: UUID(),
+                                 fullName: fullNameValue,
+                                 address: addressValue,
+                                 count: 0,
+                                 listName: listValue)
+                result.append(p)
             }
         } catch {
             print("Select failed: \(error)")
         }
         return result
     }
+
+
 }

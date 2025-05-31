@@ -8,49 +8,67 @@
 import SwiftUI
 
 struct ProspectsView: View {
-    // @State private var prospects: [Prospect] = []
     @Binding var prospects: [Prospect]
     @State private var selectedProspectID: UUID?
     @State private var showingAddProspect = false
 
+    // Add these:
+    @State private var selectedList: String = "All"
+    let allLists = ["All", "Favorites", "To Contact", "Hot Leads"]
+    
+    var db = DatabaseController.shared
+
     var body: some View {
         NavigationView {
-            List {
-                ForEach($prospects, id: \.id) { $prospect in
-                    Button {
-                        selectedProspectID = prospect.id
-                    } label: {
-                        VStack(alignment: .leading) {
-                            Text(prospect.fullName)
-                            Text(prospect.address)
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    .background(
-                        NavigationLink(
-                            destination: EditProspectView(prospect: binding(for: prospect.id)),
-                            tag: prospect.id,
-                            selection: $selectedProspectID
-                        ) {
-                            EmptyView()
-                        }
-                        .hidden()
-                    )
-                }
-            }
-            .navigationTitle("Prospects")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingAddProspect = true
-                    }) {
-                        Image(systemName: "plus")
+            VStack {
+                Picker("List", selection: $selectedList) {
+                    ForEach(allLists, id: \.self) { list in
+                        Text(list)
                     }
                 }
-            }
-            .sheet(isPresented: $showingAddProspect) {
-                NewProspectView(prospects: $prospects)
+                .pickerStyle(SegmentedPickerStyle())
+                .padding()
+                .onChange(of: selectedList) { newList in
+                    prospects = db.getAllProspects(for: newList)
+                }
+
+                List {
+                    ForEach($prospects, id: \.id) { $prospect in
+                        Button {
+                            selectedProspectID = prospect.id
+                        } label: {
+                            VStack(alignment: .leading) {
+                                Text(prospect.fullName)
+                                Text(prospect.address)
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                        .background(
+                            NavigationLink(
+                                destination: EditProspectView(prospect: binding(for: prospect.id)),
+                                tag: prospect.id,
+                                selection: $selectedProspectID
+                            ) {
+                                EmptyView()
+                            }
+                            .hidden()
+                        )
+                    }
+                }
+                .navigationTitle("Prospects")
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            showingAddProspect = true
+                        }) {
+                            Image(systemName: "plus")
+                        }
+                    }
+                }
+                .sheet(isPresented: $showingAddProspect) {
+                    NewProspectView(prospects: $prospects)
+                }
             }
         }
     }
@@ -62,5 +80,3 @@ struct ProspectsView: View {
         return $prospects[index]
     }
 }
-
-

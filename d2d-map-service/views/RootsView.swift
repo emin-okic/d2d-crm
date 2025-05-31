@@ -15,10 +15,13 @@ struct RootView: View {
     )
     
     @State private var prospects: [Prospect] = []  // 👈 Shared state
+    
+    // Create the store instance here, assuming ProspectsStore is a class or struct you can instantiate
+    @StateObject private var listStore = ProspectListStore()
 
     var body: some View {
         TabView {
-            MapSearchView(region: $region, prospects: $prospects)
+            MapSearchView(region: $region, prospects: $prospects, listStore: listStore)
                 .tabItem { Label("Map", systemImage: "map.fill") }
 
 

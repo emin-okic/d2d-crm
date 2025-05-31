@@ -17,16 +17,29 @@ struct MapSearchView: View {
     @StateObject private var controller: MapController
 
     @State private var searchText: String = ""
+    
+    @ObservedObject var listStore: ProspectListStore
 
-    init(region: Binding<MKCoordinateRegion>, prospects: Binding<[Prospect]>) {
-        // Initialize the MapController with the starting region
-        // We need to unwrap the binding’s wrappedValue here
+    private var filteredProspects: [Prospect] {
+        prospects.filter { $0.listName == listStore.selectedList }
+    }
+
+
+
+    init(
+        region: Binding<MKCoordinateRegion>,
+        prospects: Binding<[Prospect]>,
+        listStore: ProspectListStore
+    ) {
         _region = region
         _prospects = prospects
         _controller = StateObject(wrappedValue: MapController(region: region.wrappedValue))
+        self.listStore = listStore // ✅ THIS LINE FIXES THE ERROR
     }
 
+
     var body: some View {
+        
         VStack(spacing: 0) {
             Map(coordinateRegion: $controller.region, annotationItems: controller.markers) { place in
                 MapAnnotation(coordinate: place.location) {
@@ -66,7 +79,8 @@ struct MapSearchView: View {
 
         }
         .onAppear {
-            controller.addProspects(prospects)
+            controller.addProspects(filteredProspects)
+
         }
         .onChange(of: prospects) { newProspects in
             for prospect in newProspects {

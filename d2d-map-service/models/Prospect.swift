@@ -11,4 +11,5 @@ struct Prospect: Identifiable, Hashable {
     var fullName: String
     var address: String
     var count: Int
+    var listName: String? // Optional; nil means "unlisted"
 }
