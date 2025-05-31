@@ -75,24 +75,12 @@ struct MapSearchView: View {
             .padding(.horizontal)
             .padding(.top, 12)
             
-            // ──────────────────────────────────────────────────────────────────
-            // 3) RECENT SEARCHES SCROLL
-            // ──────────────────────────────────────────────────────────────────
-            RecentSearchesView(
-                recentSearches: recentSearches,
-                onSelect: performSearch
-            )
-            
-            Spacer()  // push everything up
         }
         .onTapGesture {
             // Dismiss the keyboard if you tap outside
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         }
     }
-    
-    
-    // MARK: - SEARCH / MARKER LOGIC
     
     /// Normalizes a query string (lowercased, trimmed).
     private func normalized(_ query: String) -> String {
