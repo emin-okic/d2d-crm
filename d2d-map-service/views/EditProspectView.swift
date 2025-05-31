@@ -10,11 +10,21 @@ import SwiftUI
 struct EditProspectView: View {
     @Binding var prospect: Prospect
     @Environment(\.presentationMode) var presentationMode
+    
+    let allLists = ["Prospects", "Customers"]
 
     var body: some View {
         Form {
             TextField("Full Name", text: $prospect.fullName)
             TextField("Address", text: $prospect.address)
+            
+            Picker("List", selection: $prospect.list) {
+                ForEach(allLists, id: \.self) { listName in
+                    Text(listName)
+                }
+            }
+            .pickerStyle(SegmentedPickerStyle()) // Or use DefaultPickerStyle() or MenuPickerStyle()
+
             Stepper(value: $prospect.count, in: 0...999) {
                 Text("Count: \(prospect.count)")
             }
@@ -23,10 +33,11 @@ struct EditProspectView: View {
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") {
-                    // You can call a DB update here
+                    // Optional: update DB here
                     presentationMode.wrappedValue.dismiss()
                 }
             }
         }
     }
 }
+
