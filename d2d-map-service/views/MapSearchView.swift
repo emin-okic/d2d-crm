@@ -57,11 +57,6 @@ struct MapSearchView: View {
                 .cornerRadius(12)
                 .shadow(radius: 3, x: 0, y: 2)
 
-                Spacer().frame(width: 8)
-
-                ImportExportView(markers: controller.markers, onImport: { url in
-                    importCSV(from: url)
-                })
             }
             .padding(.horizontal)
             .padding(.top, 12)
