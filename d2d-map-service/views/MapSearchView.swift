@@ -37,7 +37,7 @@ struct MapSearchView: View {
                         .animation(.easeInOut, value: place.count)
                 }
             }
-            .frame(height: 300)
+            .frame(maxHeight: .infinity)
             .edgesIgnoringSafeArea(.horizontal)
 
             HStack {
@@ -57,21 +57,26 @@ struct MapSearchView: View {
                 .cornerRadius(12)
                 .shadow(radius: 3, x: 0, y: 2)
 
+
             }
             .padding(.horizontal)
             .padding(.top, 12)
-
-            RecentSearchesView(
-                recentProspectIDs: controller.recentSearchIDs,
-                allProspects: prospects,
-                onSelect: { prospect in handleSearch(query: prospect.address) }
-            )
-
-
+            
             Spacer()
+
         }
         .onAppear {
             controller.addProspects(prospects)
+        }
+        .onChange(of: prospects) { newProspects in
+            for prospect in newProspects {
+                if let index = controller.markers.firstIndex(where: {
+                    $0.address.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ==
+                    prospect.address.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                }) {
+                    controller.markers[index].count = prospect.count
+                }
+            }
         }
         .onTapGesture {
             UIApplication.shared.sendAction(
@@ -82,18 +87,38 @@ struct MapSearchView: View {
     }
 
     private func handleSearch(query: String) {
-        controller.performSearch(query: query)
+        // Normalize for comparison
+        let normalizedQuery = query
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
 
-        let normalized = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if let existing = prospects.first(where: {
-            $0.address.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == normalized
+        // 1) Check if there’s already a Prospect with the same normalized address
+        if let existingIndex = prospects.firstIndex(where: {
+            $0.address
+              .trimmingCharacters(in: .whitespacesAndNewlines)
+              .lowercased() == normalizedQuery
         }) {
-            controller.updateRecentSearches(with: existing)
+            // a) Increment that Prospect’s count
+            prospects[existingIndex].count += 1
+
+            // b) Tell the controller to use this updated Prospect for “recent searches”
+            let updatedProspect = prospects[existingIndex]
+            controller.updateRecentSearches(with: updatedProspect)
+
         } else {
-            let newProspect = Prospect(id: UUID(), fullName: "New Prospect", address: query)
+            // 2) Otherwise—new prospect—for the first time
+            let newProspect = Prospect(
+                id: UUID(),
+                fullName: "New Prospect",
+                address: query,     // We’ll normalize later inside performSearch
+                count: 1
+            )
             prospects.append(newProspect)
             controller.updateRecentSearches(with: newProspect)
         }
+
+        // 3) Finally, run the geocoding/marker logic
+        controller.performSearch(query: query)
     }
 
 

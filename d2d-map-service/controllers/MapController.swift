@@ -51,7 +51,8 @@ class MapController: ObservableObject {
 
                 self.updateRegionToFitAllMarkers()
                 
-                let prospect = Prospect(id: UUID(), fullName: "New Prospect", address: query)
+                let prospect = Prospect(id: UUID(), fullName: "New Prospect", address: query, count: 1)
+
                 self.updateRecentSearches(with: prospect)
 
             }

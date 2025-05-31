@@ -7,26 +7,32 @@
 
 import SwiftUI
 import CoreLocation
+import MapKit
 
 // This struct enables us to create "Identifiable Places"
 // which is just making an easy to read coordinate map for
 // the mapkit to use as markers and moving the map.
-class IdentifiablePlace: ObservableObject, Identifiable {
+
+class IdentifiablePlace: NSObject, Identifiable {
     let id = UUID()
     let address: String
     let location: CLLocationCoordinate2D
-
-    @Published var count: Int
+    var count: Int
 
     var markerColor: Color {
         switch count {
-        case 1: return .green
-        case 2: return .yellow
-        default: return .red
+        case 0:
+            return .gray
+        case 1:
+            return .green
+        case 2...4:
+            return .yellow
+        default:
+            return .red
         }
     }
 
-    init(address: String, location: CLLocationCoordinate2D, count: Int) {
+    init(address: String, location: CLLocationCoordinate2D, count: Int = 1) {
         self.address = address
         self.location = location
         self.count = count

@@ -10,4 +10,5 @@ struct Prospect: Identifiable, Hashable {
     let id: UUID
     var fullName: String
     var address: String
+    var count: Int
 }
