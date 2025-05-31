@@ -8,15 +8,40 @@
 import SwiftUI
 
 struct ProspectsView: View {
-    // @State private var prospects: [Prospect] = []
     @Binding var prospects: [Prospect]
+    
+    // Instead of having its own `@State selectedList`, we accept a `Binding<String>`
+    @Binding var selectedList: String
+    
+    // A simple callback to let RootView know “Done saving”
+    var onSave: () -> Void
+
     @State private var selectedProspectID: UUID?
     @State private var showingAddProspect = false
+
+    // The two lists we support:
+    let availableLists = ["Prospects", "Customers"]
 
     var body: some View {
         NavigationView {
             List {
-                ForEach($prospects, id: \.id) { $prospect in
+                // Section for the "table header"-style list filter
+                Section {
+                    Picker("Select List", selection: $selectedList) {
+                        ForEach(availableLists, id: \.self) { listName in
+                            Text(listName)
+                        }
+                    }
+                    .pickerStyle(.segmented) // Use segmented style for header-like appearance
+                    .padding(.vertical, 4)
+                }
+                
+                // Filter by the single shared `selectedList`
+                let filteredProspects = selectedList == "All"
+                    ? prospects
+                    : prospects.filter { $0.list == selectedList }
+
+                ForEach(filteredProspects, id: \.id) { prospect in
                     Button {
                         selectedProspectID = prospect.id
                     } label: {
@@ -39,8 +64,10 @@ struct ProspectsView: View {
                     )
                 }
             }
-            .navigationTitle("Prospects")
+            .navigationTitle(selectedList)
             .toolbar {
+
+                // Right side: a “+” button to show the NewProspectView sheet
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         showingAddProspect = true
@@ -50,7 +77,14 @@ struct ProspectsView: View {
                 }
             }
             .sheet(isPresented: $showingAddProspect) {
-                NewProspectView(prospects: $prospects)
+                // Pass along the same `selectedList` binding
+                NewProspectView(
+                    prospects: $prospects,
+                    selectedList: $selectedList
+                ) {
+                    showingAddProspect = false
+                    onSave()
+                }
             }
         }
     }
@@ -62,5 +96,3 @@ struct ProspectsView: View {
         return $prospects[index]
     }
 }
-
-

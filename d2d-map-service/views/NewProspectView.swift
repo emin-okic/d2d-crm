@@ -10,6 +10,8 @@ import SwiftUI
 struct NewProspectView: View {
     @Environment(\.presentationMode) var presentationMode
     @Binding var prospects: [Prospect]
+    @Binding var selectedList: String  // ✅ Add this line
+    var onSave: () -> Void             // ✅ Add this line
 
     @State private var fullName: String = ""
     @State private var address: String = ""
@@ -26,8 +28,15 @@ struct NewProspectView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        let newProspect = Prospect(id: UUID(), fullName: fullName, address: address, count: 0)
+                        let newProspect = Prospect(
+                            id: UUID(),
+                            fullName: fullName,
+                            address: address,
+                            count: 0,
+                            list: selectedList  // ✅ Respect current list (Prospects/Customers)
+                        )
                         prospects.append(newProspect)
+                        onSave()  // ✅ Notify parent
                         presentationMode.wrappedValue.dismiss()
                     }
                 }

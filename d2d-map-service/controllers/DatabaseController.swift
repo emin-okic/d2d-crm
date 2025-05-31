@@ -9,6 +9,7 @@ import SQLite
 
 import Foundation
 
+
 class DatabaseController {
     
     // These two variables set the sqlite database
@@ -21,6 +22,8 @@ class DatabaseController {
     private let id = Expression<Int64>("id")
     private let fullName = Expression<String>("fullName")
     private let address = Expression<String>("address")
+    
+    private let list = Expression<String>("list")
 
     // Production Initializer
     private init() {
@@ -59,6 +62,7 @@ class DatabaseController {
                 t.column(id, primaryKey: .autoincrement)
                 t.column(fullName)
                 t.column(address)
+                t.column(list)
             })
         } catch {
             print("Create table failed: \(error)")
@@ -70,7 +74,7 @@ class DatabaseController {
      */
     func addProspect(name: String, addr: String) {
         do {
-            let insert = prospects.insert(fullName <- name, address <- addr)
+            let insert = prospects.insert(fullName <- name, address <- addr, list <- "Prospects")
             try db?.run(insert)
         } catch {
             print("Insert failed: \(error)")
@@ -80,17 +84,43 @@ class DatabaseController {
     /**
      This function gets all prospects from the sqlite database and returns a 2D string array
      */
-    func getAllProspects() -> [(String, String)] {
-        var result: [(String, String)] = []
+    func getAllProspects() -> [(String, String, String)] {
+        var result: [(String, String, String)] = []
         do {
             for row in try db!.prepare(prospects) {
                 let name = row[fullName]
                 let addr = row[address]
-                result.append((name, addr))
+                let list = row[list]
+                result.append((name, addr, list))
             }
         } catch {
             print("Select failed: \(error)")
         }
         return result
     }
+    
+
+    func updateProspect(_ prospect: Prospect) {
+        guard let db = db else { return }
+
+        // Filter the row by integer id (assuming your Prospect.id is Int64)
+        let prospectToUpdate = prospects.filter(list == "Prospects")
+
+        do {
+            let update = prospectToUpdate.update(
+                fullName <- prospect.fullName,
+                address <- prospect.address,
+                list <- prospect.list
+            )
+            if try db.run(update) > 0 {
+                print("Successfully updated prospect")
+            } else {
+                print("No prospect found to update")
+            }
+        } catch {
+            print("Update failed: \(error)")
+        }
+    }
+
+
 }
