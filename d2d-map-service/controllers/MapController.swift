@@ -41,15 +41,14 @@ class MapController: ObservableObject {
                 // If marker exists, bump count and recenter map
                 if let existingIndex = self.markers.firstIndex(where: { self.normalized($0.address) == key }) {
                     self.markers[existingIndex].count += 1
-                    self.region.center = self.markers[existingIndex].location
                 } else {
-                    // Create new marker and recenter
                     let newPlace = IdentifiablePlace(address: query,
-                                                    location: location.coordinate,
-                                                    count: 1)
+                                                     location: location.coordinate,
+                                                     count: 1)
                     self.markers.append(newPlace)
-                    self.region.center = location.coordinate
                 }
+
+                self.updateRegionToFitAllMarkers()
                 
                 self.updateRecentSearches(with: query)
             }
@@ -67,4 +66,28 @@ class MapController: ObservableObject {
             recentSearches = Array(recentSearches.prefix(3))
         }
     }
+    
+    private func updateRegionToFitAllMarkers() {
+        guard !markers.isEmpty else { return }
+
+        let latitudes = markers.map { $0.location.latitude }
+        let longitudes = markers.map { $0.location.longitude }
+
+        let minLat = latitudes.min()!
+        let maxLat = latitudes.max()!
+        let minLon = longitudes.min()!
+        let maxLon = longitudes.max()!
+
+        let centerLat = (minLat + maxLat) / 2
+        let centerLon = (minLon + maxLon) / 2
+
+        let latDelta = (maxLat - minLat) * 1.5 // add padding
+        let lonDelta = (maxLon - minLon) * 1.5
+
+        region = MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon),
+            span: MKCoordinateSpan(latitudeDelta: max(latDelta, 0.01), longitudeDelta: max(lonDelta, 0.01))
+        )
+    }
+
 }
