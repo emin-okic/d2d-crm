@@ -11,32 +11,16 @@ import CoreLocation
 import UniformTypeIdentifiers   // for .commaSeparatedText
 
 struct MapSearchView: View {
-    // The visible region on the map.
-    @Binding var region: MKCoordinateRegion
-
-    // Search text typed by the user.
+    @StateObject private var controller = MapController(region: MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
+        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+    ))
+    
     @State private var searchText: String = ""
-    // All of the “markers” that appear on the map.
-    @State private var markers: [IdentifiablePlace] = []
-    // The next three most recent search‐queries.  (Addresses only.)
-    @State private var recentSearches: [String] = []
-    
-    // Whether to show the share‐sheet for the exported CSV
-    @State private var showShareSheet: Bool = false
-    // URL for the CSV that we’ll pass into the share‐sheet
-    @State private var csvURL: URL? = nil
-    
-    // Whether to show the file‐importer dialog
-    @State private var isImporterPresented: Bool = false
-    
-    // MARK: - Body
     
     var body: some View {
         VStack(spacing: 0) {
-            // ──────────────────────────────────────────────────────────────────
-            // 1) THE MAP WITH PIN ANNOTATIONS
-            // ──────────────────────────────────────────────────────────────────
-            Map(coordinateRegion: $region, annotationItems: markers) { place in
+            Map(coordinateRegion: $controller.region, annotationItems: controller.markers) { place in
                 MapAnnotation(coordinate: place.location) {
                     Circle()
                         .fill(place.markerColor)
@@ -48,16 +32,14 @@ struct MapSearchView: View {
             .frame(height: 300)
             .edgesIgnoringSafeArea(.horizontal)
             
-            // ──────────────────────────────────────────────────────────────────
-            // 2) SEARCH BAR + EXPORT / IMPORT BUTTONS
-            // ──────────────────────────────────────────────────────────────────
             HStack {
                 HStack {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(.gray)
                     TextField("Search for a place…", text: $searchText, onCommit: {
-                        guard !searchText.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-                        performSearch(query: searchText.trimmingCharacters(in: .whitespaces))
+                        let trimmed = searchText.trimmingCharacters(in: .whitespaces)
+                        guard !trimmed.isEmpty else { return }
+                        controller.performSearch(query: trimmed)
                     })
                     .foregroundColor(.primary)
                     .autocapitalization(.words)
@@ -69,106 +51,25 @@ struct MapSearchView: View {
                 
                 Spacer().frame(width: 8)
                 
-                // Import/Export buttons separated into new view
-                ImportExportView(markers: markers, onImport: importCSV)
+                ImportExportView(markers: controller.markers, onImport: { url in
+                    importCSV(from: url)
+                })
             }
             .padding(.horizontal)
             .padding(.top, 12)
             
-            // ──────────────────────────────────────────────────────────────────
-            // 3) RECENT SEARCHES SCROLL
-            // ──────────────────────────────────────────────────────────────────
             RecentSearchesView(
-                recentSearches: recentSearches,
-                onSelect: performSearch
+                recentSearches: controller.recentSearches,
+                onSelect: controller.performSearch(query:)
             )
             
-            Spacer()  // push everything up
+            Spacer()
         }
         .onTapGesture {
-            // Dismiss the keyboard if you tap outside
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         }
     }
     
-    
-    // MARK: - SEARCH / MARKER LOGIC
-    
-    /// Normalizes a query string (lowercased, trimmed).
-    private func normalized(_ query: String) -> String {
-        query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-    }
-    
-    /// Called whenever the user hits “Return” in the search bar, or taps a recent search.
-    private func performSearch(query: String) {
-        let key = MapController.normalized(query)
-        let geocoder = CLGeocoder()
-        
-        geocoder.geocodeAddressString(query) { placemarks, error in
-            guard let placemark = placemarks?.first,
-                  let location = placemark.location else {
-                return
-            }
-            
-            DispatchQueue.main.async {
-                // 1) If marker already exists, bump its count and recenter the map
-                if let existing = markers.first(where: { normalized($0.address) == key }) {
-                    existing.count += 1
-                    region.center = existing.location
-                }
-                else {
-                    // 2) Otherwise: create a brand‐new place and append it
-                    let newPlace = IdentifiablePlace(address: query,
-                                                     location: location.coordinate,
-                                                     count: 1)
-                    markers.append(newPlace)
-                    region.center = location.coordinate
-                }
-                
-                // 3) Keep ‘recentSearches’ in sync (dedupe + cap at 3)
-                updateRecentSearches(with: query)
-            }
-        }
-    }
-    
-    /// Adds a query to the front of the `recentSearches` array, deduping and keeping max 3.
-    private func updateRecentSearches(with query: String) {
-        let key = normalized(query)
-        recentSearches.removeAll(where: { normalized($0) == key })
-        recentSearches.insert(query, at: 0)
-        if recentSearches.count > 3 {
-            recentSearches = Array(recentSearches.prefix(3))
-        }
-    }
-    
-    
-    // MARK: - CSV EXPORT / IMPORT
-    
-    /// Build a CSV string from our array of `IdentifiablePlace`.
-    private func buildCSV(from places: [IdentifiablePlace]) -> String {
-        var csv = "Address,Latitude,Longitude,Count\n"
-        for place in places {
-            let line = "\"\(place.address)\",\(place.location.latitude),\(place.location.longitude),\(place.count)"
-            csv.append("\(line)\n")
-        }
-        return csv
-    }
-    
-    /// Save that CSV string as a temporary file, returning its URL.
-    private func saveCSVFile(content: String, fileName: String = "Knocks.csv") -> URL? {
-        let fm = FileManager.default
-        let tempDir = fm.temporaryDirectory
-        let url = tempDir.appendingPathComponent(fileName)
-        do {
-            try content.write(to: url, atomically: true, encoding: .utf8)
-            return url
-        } catch {
-            print("Error writing CSV: \(error)")
-            return nil
-        }
-    }
-    
-    /// Read a CSV from disk, parse each row’s address, and re‐run `performSearch` on it.
     private func importCSV(from url: URL) {
         do {
             let content = try String(contentsOf: url)
@@ -178,7 +79,7 @@ struct MapSearchView: View {
             for line in lines {
                 let columns = line.components(separatedBy: ",")
                 if let address = columns.first, !address.isEmpty {
-                    performSearch(query: address.trimmingCharacters(in: .whitespacesAndNewlines))
+                    controller.performSearch(query: address.trimmingCharacters(in: .whitespacesAndNewlines))
                 }
             }
         } catch {
