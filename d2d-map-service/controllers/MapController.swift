@@ -53,7 +53,7 @@ class MapController: ObservableObject {
         }
     }
     
-    private func updateRecentSearches(with query: String) {
+    public func updateRecentSearches(with query: String) {
         let key = normalized(query)
         recentSearches.removeAll(where: { normalized($0) == key })
         recentSearches.insert(query, at: 0)
