@@ -101,7 +101,7 @@ struct MapSearchView: View {
     
     /// Called whenever the user hits “Return” in the search bar, or taps a recent search.
     private func performSearch(query: String) {
-        let key = normalized(query)
+        let key = MapController.normalized(query)
         let geocoder = CLGeocoder()
         
         geocoder.geocodeAddressString(query) { placemarks, error in
