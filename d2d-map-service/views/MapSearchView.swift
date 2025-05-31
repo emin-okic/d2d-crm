@@ -67,9 +67,11 @@ struct MapSearchView: View {
             .padding(.top, 12)
 
             RecentSearchesView(
-                recentSearches: controller.recentSearches,
-                onSelect: { query in handleSearch(query: query) }
+                recentProspectIDs: controller.recentSearchIDs,
+                allProspects: prospects,
+                onSelect: { prospect in handleSearch(query: prospect.address) }
             )
+
 
             Spacer()
         }
@@ -87,23 +89,18 @@ struct MapSearchView: View {
     private func handleSearch(query: String) {
         controller.performSearch(query: query)
 
-        // After the map controller adds/updates the marker, check if we need to insert a Prospect:
         let normalized = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        let alreadyExists = prospects.contains {
+        if let existing = prospects.first(where: {
             $0.address.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == normalized
-        }
-
-        if !alreadyExists {
-            // Create a new Prospect. You can adjust fullName as needed;
-            // here we’re just setting the name to “New Prospect” as a placeholder
-            let newProspect = Prospect(
-                id: UUID(),
-                fullName: "New Prospect",
-                address: query
-            )
+        }) {
+            controller.updateRecentSearches(with: existing)
+        } else {
+            let newProspect = Prospect(id: UUID(), fullName: "New Prospect", address: query)
             prospects.append(newProspect)
+            controller.updateRecentSearches(with: newProspect)
         }
     }
+
 
     private func importCSV(from url: URL) {
         do {

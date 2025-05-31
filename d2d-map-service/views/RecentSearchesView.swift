@@ -8,25 +8,35 @@
 import SwiftUI
 
 struct RecentSearchesView: View {
-    let recentSearches: [String]
-    let onSelect: (String) -> Void
+    let recentProspectIDs: [UUID]
+    let allProspects: [Prospect]
+    let onSelect: (Prospect) -> Void
 
     var body: some View {
+        let recentProspects = recentProspectIDs.compactMap { id in
+            allProspects.first(where: { $0.id == id })
+        }
+
         ScrollView {
             VStack(spacing: 8) {
-                ForEach(recentSearches, id: \.self) { query in
+                ForEach(recentProspects, id: \.id) { prospect in
                     Button(action: {
-                        onSelect(query)
+                        onSelect(prospect)
                     }) {
-                        Text(query)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.vertical, 10)
-                            .padding(.horizontal)
-                            .background(Color.clear)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
-                            )
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(prospect.fullName)
+                                .font(.headline)
+                            Text(prospect.address)
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.clear)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                        )
                     }
                 }
             }

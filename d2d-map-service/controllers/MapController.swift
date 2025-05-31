@@ -11,7 +11,8 @@ import CoreLocation
 
 class MapController: ObservableObject {
     @Published var markers: [IdentifiablePlace] = []
-    @Published var recentSearches: [String] = []
+    @Published var recentSearches: [Prospect] = []
+    @Published var recentSearchIDs: [UUID] = []
     @Published var region: MKCoordinateRegion
     
     init(region: MKCoordinateRegion) {
@@ -50,7 +51,9 @@ class MapController: ObservableObject {
 
                 self.updateRegionToFitAllMarkers()
                 
-                self.updateRecentSearches(with: query)
+                let prospect = Prospect(id: UUID(), fullName: "New Prospect", address: query)
+                self.updateRecentSearches(with: prospect)
+
             }
         }
     }
@@ -58,14 +61,15 @@ class MapController: ObservableObject {
     /**
      This function gets all the recent searches in a search session
      */
-    public func updateRecentSearches(with query: String) {
-        let key = normalized(query)
-        recentSearches.removeAll(where: { normalized($0) == key })
-        recentSearches.insert(query, at: 0)
-        if recentSearches.count > 3 {
-            recentSearches = Array(recentSearches.prefix(3))
+    public func updateRecentSearches(with prospect: Prospect) {
+        recentSearchIDs.removeAll { $0 == prospect.id }
+        recentSearchIDs.insert(prospect.id, at: 0)
+        if recentSearchIDs.count > 3 {
+            recentSearchIDs = Array(recentSearchIDs.prefix(3))
         }
     }
+
+
     
     private func updateRegionToFitAllMarkers() {
         guard !markers.isEmpty else { return }
