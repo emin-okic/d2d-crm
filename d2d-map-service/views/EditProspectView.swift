@@ -15,6 +15,9 @@ struct EditProspectView: View {
         Form {
             TextField("Full Name", text: $prospect.fullName)
             TextField("Address", text: $prospect.address)
+            Stepper(value: $prospect.count, in: 0...999) {
+                Text("Count: \(prospect.count)")
+            }
         }
         .navigationTitle("Edit Prospect")
         .toolbar {

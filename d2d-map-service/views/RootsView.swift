@@ -13,14 +13,16 @@ struct RootView: View {
         center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
         span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
     )
+    
+    @State private var prospects: [Prospect] = []  // 👈 Shared state
+
     var body: some View {
         TabView {
-            MapSearchView()
-                .tabItem {
-                    Label("Map", systemImage: "map.fill")
-                }
+            MapSearchView(region: $region, prospects: $prospects)
+                .tabItem { Label("Map", systemImage: "map.fill") }
 
-            ProspectsView()
+
+            ProspectsView(prospects: $prospects)
                 .tabItem {
                     Label("Prospects", systemImage: "person.3.fill")
                 }

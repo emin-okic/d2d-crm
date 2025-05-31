@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct ProspectsView: View {
-    @State private var prospects: [Prospect] = []
+    // @State private var prospects: [Prospect] = []
+    @Binding var prospects: [Prospect]
     @State private var selectedProspectID: UUID?
     @State private var showingAddProspect = false
 

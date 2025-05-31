@@ -11,7 +11,8 @@ import CoreLocation
 
 class MapController: ObservableObject {
     @Published var markers: [IdentifiablePlace] = []
-    @Published var recentSearches: [String] = []
+    @Published var recentSearches: [Prospect] = []
+    @Published var recentSearchIDs: [UUID] = []
     @Published var region: MKCoordinateRegion
     
     init(region: MKCoordinateRegion) {
@@ -41,17 +42,19 @@ class MapController: ObservableObject {
                 // If marker exists, bump count and recenter map
                 if let existingIndex = self.markers.firstIndex(where: { self.normalized($0.address) == key }) {
                     self.markers[existingIndex].count += 1
-                    self.region.center = self.markers[existingIndex].location
                 } else {
-                    // Create new marker and recenter
                     let newPlace = IdentifiablePlace(address: query,
-                                                    location: location.coordinate,
-                                                    count: 1)
+                                                     location: location.coordinate,
+                                                     count: 1)
                     self.markers.append(newPlace)
-                    self.region.center = location.coordinate
                 }
+
+                self.updateRegionToFitAllMarkers()
                 
-                self.updateRecentSearches(with: query)
+                let prospect = Prospect(id: UUID(), fullName: "New Prospect", address: query, count: 1)
+
+                self.updateRecentSearches(with: prospect)
+
             }
         }
     }
@@ -59,12 +62,43 @@ class MapController: ObservableObject {
     /**
      This function gets all the recent searches in a search session
      */
-    public func updateRecentSearches(with query: String) {
-        let key = normalized(query)
-        recentSearches.removeAll(where: { normalized($0) == key })
-        recentSearches.insert(query, at: 0)
-        if recentSearches.count > 3 {
-            recentSearches = Array(recentSearches.prefix(3))
+    public func updateRecentSearches(with prospect: Prospect) {
+        recentSearchIDs.removeAll { $0 == prospect.id }
+        recentSearchIDs.insert(prospect.id, at: 0)
+        if recentSearchIDs.count > 3 {
+            recentSearchIDs = Array(recentSearchIDs.prefix(3))
         }
     }
+
+
+    
+    private func updateRegionToFitAllMarkers() {
+        guard !markers.isEmpty else { return }
+
+        let latitudes = markers.map { $0.location.latitude }
+        let longitudes = markers.map { $0.location.longitude }
+
+        let minLat = latitudes.min()!
+        let maxLat = latitudes.max()!
+        let minLon = longitudes.min()!
+        let maxLon = longitudes.max()!
+
+        let centerLat = (minLat + maxLat) / 2
+        let centerLon = (minLon + maxLon) / 2
+
+        let latDelta = (maxLat - minLat) * 1.5 // add padding
+        let lonDelta = (maxLon - minLon) * 1.5
+
+        region = MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon),
+            span: MKCoordinateSpan(latitudeDelta: max(latDelta, 0.01), longitudeDelta: max(lonDelta, 0.01))
+        )
+    }
+    
+    func addProspects(_ prospects: [Prospect]) {
+        for prospect in prospects {
+            performSearch(query: prospect.address)
+        }
+    }
+
 }
