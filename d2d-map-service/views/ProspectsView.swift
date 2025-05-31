@@ -8,14 +8,15 @@
 import SwiftUI
 
 struct ProspectsView: View {
-    @State private var prospects: [Prospect] = []
+    @ObservedObject var store = ProspectsStore.shared
+
     @State private var selectedProspectID: UUID?
     @State private var showingAddProspect = false
 
     var body: some View {
         NavigationView {
             List {
-                ForEach($prospects, id: \.id) { $prospect in
+                ForEach(store.prospects) { prospect in
                     Button {
                         selectedProspectID = prospect.id
                     } label: {
@@ -41,25 +42,30 @@ struct ProspectsView: View {
             .navigationTitle("Prospects")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
+                    Button {
                         showingAddProspect = true
-                    }) {
+                    } label: {
                         Image(systemName: "plus")
                     }
                 }
             }
             .sheet(isPresented: $showingAddProspect) {
-                NewProspectView(prospects: $prospects)
+                NewProspectView() // updated to no longer need binding
+            }
+            .onAppear {
+                store.loadProspects()
             }
         }
     }
 
+
     private func binding(for id: UUID) -> Binding<Prospect> {
-        guard let index = prospects.firstIndex(where: { $0.id == id }) else {
+        guard let index = store.prospects.firstIndex(where: { $0.id == id }) else {
             fatalError("Prospect not found")
         }
-        return $prospects[index]
+        return Binding(
+            get: { store.prospects[index] },
+            set: { store.prospects[index] = $0 }
+        )
     }
 }
-
-

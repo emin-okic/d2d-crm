@@ -7,9 +7,12 @@
 
 import SwiftUI
 
+import MapKit
+import CoreLocation
+import UniformTypeIdentifiers
+
 struct NewProspectView: View {
     @Environment(\.presentationMode) var presentationMode
-    @Binding var prospects: [Prospect]
 
     @State private var fullName: String = ""
     @State private var address: String = ""
@@ -27,11 +30,10 @@ struct NewProspectView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         let newProspect = Prospect(id: UUID(), fullName: fullName, address: address)
-                        prospects.append(newProspect)
+                        ProspectsStore.shared.addProspect(newProspect)
                         presentationMode.wrappedValue.dismiss()
                     }
                 }
-
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
                         presentationMode.wrappedValue.dismiss()

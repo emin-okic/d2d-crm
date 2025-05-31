@@ -20,9 +20,16 @@ struct EditProspectView: View {
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") {
-                    // You can call a DB update here
+                    DatabaseController.shared.updateProspect(
+                        uuid: prospect.id,
+                        newName: prospect.fullName,
+                        newAddress: prospect.address
+                    )
+                    // Refresh in-memory store
+                    ProspectsStore.shared.loadProspects()
                     presentationMode.wrappedValue.dismiss()
                 }
+
             }
         }
     }

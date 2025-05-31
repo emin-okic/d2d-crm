@@ -80,8 +80,13 @@ struct MapSearchView: View {
             // ──────────────────────────────────────────────────────────────────
             RecentSearchesView(
                 recentSearches: recentSearches,
-                onSelect: performSearch
+                onSelect: { selectedAddress in
+                    performSearch(query: selectedAddress)
+                }
             )
+            .onAppear {
+                    recentSearches = DatabaseController.shared.getRecentSearches()
+                }
             
             Spacer()  // push everything up
         }
@@ -90,9 +95,6 @@ struct MapSearchView: View {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         }
     }
-    
-    
-    // MARK: - SEARCH / MARKER LOGIC
     
     /// Normalizes a query string (lowercased, trimmed).
     private func normalized(_ query: String) -> String {
@@ -123,6 +125,13 @@ struct MapSearchView: View {
                                                      count: 1)
                     markers.append(newPlace)
                     region.center = location.coordinate
+                    // Save to Prospects table
+                    let newProspect = Prospect(
+                            id: UUID(),
+                            fullName: "Test",
+                            address: query
+                        )
+                    ProspectsStore.shared.addProspect(newProspect)
                 }
                 
                 // 3) Keep ‘recentSearches’ in sync (dedupe + cap at 3)
@@ -141,8 +150,6 @@ struct MapSearchView: View {
         }
     }
     
-    
-    // MARK: - CSV EXPORT / IMPORT
     
     /// Build a CSV string from our array of `IdentifiablePlace`.
     private func buildCSV(from places: [IdentifiablePlace]) -> String {

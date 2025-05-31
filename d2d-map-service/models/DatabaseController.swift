@@ -17,6 +17,7 @@ class DatabaseController {
     // Table and columns
     private let prospects = Table("prospects")
     private let id = Expression<Int64>("id")
+    private let uuid = Expression<String>("uuid")
     private let fullName = Expression<String>("fullName")
     private let address = Expression<String>("address")
 
@@ -38,6 +39,7 @@ class DatabaseController {
         do {
             try db?.run(prospects.create(ifNotExists: true) { t in
                 t.column(id, primaryKey: .autoincrement)
+                t.column(uuid, unique: true)
                 t.column(fullName)
                 t.column(address)
             })
@@ -46,26 +48,55 @@ class DatabaseController {
         }
     }
 
-    func addProspect(name: String, addr: String) {
+
+    func addProspect(uuid: UUID, name: String, addr: String) {
         do {
-            let insert = prospects.insert(fullName <- name, address <- addr)
+            let insert = prospects.insert(self.uuid <- uuid.uuidString, fullName <- name, address <- addr)
             try db?.run(insert)
         } catch {
             print("Insert failed: \(error)")
         }
     }
 
-    func getAllProspects() -> [(String, String)] {
-        var result: [(String, String)] = []
+    func getAllProspects() -> [Prospect] {
+        var result: [Prospect] = []
         do {
             for row in try db!.prepare(prospects) {
                 let name = row[fullName]
                 let addr = row[address]
-                result.append((name, addr))
+                let uuidStr = row[uuid]
+                let id = UUID(uuidString: uuidStr) ?? UUID()
+                result.append(Prospect(id: id, fullName: name, address: addr))
             }
         } catch {
             print("Select failed: \(error)")
         }
         return result
     }
+    
+    func updateProspect(uuid: UUID, newName: String, newAddress: String) {
+        let prospectToUpdate = prospects.filter(self.uuid == uuid.uuidString)
+
+        do {
+            try db?.run(prospectToUpdate.update(fullName <- newName, address <- newAddress))
+        } catch {
+            print("Update failed: \(error)")
+        }
+    }
+    
+    func getRecentSearches() -> [String] {
+        var addresses: [String] = []
+        do {
+            let query = prospects.select(address).filter(address != "")
+            for row in try db!.prepare(query) {
+                addresses.append(row[address])
+            }
+        } catch {
+            print("Failed to fetch recent searches: \(error)")
+        }
+        return addresses
+    }
+
+
+
 }
