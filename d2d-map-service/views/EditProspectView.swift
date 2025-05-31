@@ -23,7 +23,7 @@ struct EditProspectView: View {
                     Text(listName)
                 }
             }
-            .pickerStyle(SegmentedPickerStyle()) // Or use DefaultPickerStyle() or MenuPickerStyle()
+            .pickerStyle(MenuPickerStyle()) // Use dropdown-style menu
 
             Stepper(value: $prospect.count, in: 0...999) {
                 Text("Count: \(prospect.count)")
