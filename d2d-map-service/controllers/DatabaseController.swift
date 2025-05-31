@@ -10,9 +10,11 @@ import SQLite
 import Foundation
 
 class DatabaseController {
+    
+    // These two variables set the sqlite database
     static let shared = DatabaseController()
 
-    private var db: Connection?
+    public var db: Connection?
 
     // Table and columns
     private let prospects = Table("prospects")
@@ -20,11 +22,25 @@ class DatabaseController {
     private let fullName = Expression<String>("fullName")
     private let address = Expression<String>("address")
 
+    // Production Initializer
     private init() {
         connect()
         createTable()
     }
+    
+    // Testing initializer (in-memory DB)
+    init(inMemory: Bool) {
+        if inMemory {
+            db = try? Connection(.inMemory)
+        } else {
+            connect()
+        }
+        createTable()
+    }
 
+    /**
+     This function connects to the sqlite database
+     */
     private func connect() {
         let path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first!
         do {
@@ -34,6 +50,9 @@ class DatabaseController {
         }
     }
 
+    /**
+     This function creates a table in the sqlite database to hold prospects
+     */
     private func createTable() {
         do {
             try db?.run(prospects.create(ifNotExists: true) { t in
@@ -46,6 +65,9 @@ class DatabaseController {
         }
     }
 
+    /**
+     This function adds prospects to the sqlite database
+     */
     func addProspect(name: String, addr: String) {
         do {
             let insert = prospects.insert(fullName <- name, address <- addr)
@@ -55,6 +77,9 @@ class DatabaseController {
         }
     }
 
+    /**
+     This function gets all prospects from the sqlite database and returns a 2D string array
+     */
     func getAllProspects() -> [(String, String)] {
         var result: [(String, String)] = []
         do {

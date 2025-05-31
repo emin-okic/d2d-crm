@@ -19,8 +19,8 @@ struct ImportExportView: View {
     var body: some View {
         HStack {
             Button {
-                let csvText = buildCSV(from: markers)
-                if let fileURL = saveCSVFile(content: csvText) {
+                let csvText = ImportExportController.buildCSV(from: markers)
+                if let fileURL = ImportExportController.saveCSVFile(content: csvText) {
                     self.csvURL = fileURL
                     self.showShareSheet = true
                 }
@@ -67,28 +67,6 @@ struct ImportExportView: View {
                     print("File import failed: \(error)")
                 }
             }
-        }
-    }
-
-    private func buildCSV(from places: [IdentifiablePlace]) -> String {
-        var csv = "Address,Latitude,Longitude,Count\n"
-        for place in places {
-            let line = "\"\(place.address)\",\(place.location.latitude),\(place.location.longitude),\(place.count)"
-            csv.append("\(line)\n")
-        }
-        return csv
-    }
-
-    private func saveCSVFile(content: String, fileName: String = "Knocks.csv") -> URL? {
-        let fm = FileManager.default
-        let tempDir = fm.temporaryDirectory
-        let url = tempDir.appendingPathComponent(fileName)
-        do {
-            try content.write(to: url, atomically: true, encoding: .utf8)
-            return url
-        } catch {
-            print("Error writing CSV: \(error)")
-            return nil
         }
     }
 }
