@@ -28,6 +28,17 @@ struct EditProspectView: View {
             Stepper(value: $prospect.count, in: 0...999) {
                 Text("Count: \(prospect.count)")
             }
+            Section(header: Text("Knock History")) {
+                if prospect.knockHistory.isEmpty {
+                    Text("No knocks recorded yet.")
+                        .foregroundColor(.secondary)
+                } else {
+                    ForEach(Array(prospect.knockHistory.enumerated()), id: \.offset) { index, status in
+                        Text("\(index + 1). \(status)")
+                    }
+                }
+            }
+
         }
         .navigationTitle("Edit Prospect")
         .toolbar {

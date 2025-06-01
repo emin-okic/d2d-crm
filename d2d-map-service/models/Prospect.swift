@@ -12,5 +12,5 @@ struct Prospect: Identifiable, Hashable {
     var address: String
     var count: Int
     var list: String
-    var status: String?  // "Answered", "Not Answered", or nil
+    var knockHistory: [String]  // e.g., ["Answered", "Not Answered", ...]
 }

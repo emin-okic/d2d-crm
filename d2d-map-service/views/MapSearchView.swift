@@ -119,7 +119,7 @@ struct MapSearchView: View {
             $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
         }) {
             prospects[index].count += 1
-            prospects[index].status = status
+            prospects[index].knockHistory.append(status)
         } else {
             let newProspect = Prospect(
                 id: UUID(),
@@ -127,13 +127,14 @@ struct MapSearchView: View {
                 address: address,
                 count: 1,
                 list: "Prospects",
-                status: status
+                knockHistory: [status]
             )
             prospects.append(newProspect)
         }
 
         controller.performSearch(query: address)
     }
+
 
 
 }

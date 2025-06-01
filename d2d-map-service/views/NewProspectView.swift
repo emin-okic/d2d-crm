@@ -33,7 +33,8 @@ struct NewProspectView: View {
                             fullName: fullName,
                             address: address,
                             count: 0,
-                            list: selectedList  // ✅ Respect current list (Prospects/Customers)
+                            list: selectedList,
+                            knockHistory: []
                         )
                         prospects.append(newProspect)
                         onSave()  // ✅ Notify parent
