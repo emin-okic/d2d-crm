@@ -19,7 +19,7 @@ struct d2d_map_serviceApp: App {
             if isLoggedIn {
                 RootView()
             } else {
-                LoginView()
+                LoginView(appDelegate: appDelegate) // 👈 inject
             }
         }
     }

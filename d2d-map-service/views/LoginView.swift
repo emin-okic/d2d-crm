@@ -9,16 +9,14 @@ import SwiftUI
 import AppAuth
 
 struct LoginView: View {
+    var appDelegate: AppDelegate
+
     @AppStorage("isLoggedIn") private var isLoggedIn = false
     @State private var authState: OIDAuthState?
     
     private let issuer = URL(string: "https://cognito-idp.us-east-2.amazonaws.com/us-east-2_3qKzMckST")!
     private let clientID = "7hkvtmon35nr1qkjnscbvgsosk"
-    private let redirectURI = URL(string: "myapp://callback")!
-    
-    @Environment(\.openURL) var openURL
-    
-    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    private let redirectURI = URL(string: "https://d84l1y8p4kdic.cloudfront.net")!
     
     var body: some View {
         VStack {
