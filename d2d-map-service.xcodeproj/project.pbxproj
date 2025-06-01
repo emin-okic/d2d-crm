@@ -10,6 +10,9 @@
 		C53F34042DE9E60900372BEE /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = C53F34032DE9E60900372BEE /* SQLite */; };
 		C5BFF5A62DECEA7000F2B170 /* Alamofire.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = C5BFF5A52DECEA7000F2B170 /* Alamofire.xcframework */; settings = {ATTRIBUTES = (Required, ); }; };
 		C5BFF5A72DECEA7000F2B170 /* Alamofire.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C5BFF5A52DECEA7000F2B170 /* Alamofire.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		C5BFF5AD2DECEC4500F2B170 /* AppAuth in Frameworks */ = {isa = PBXBuildFile; productRef = C5BFF5AC2DECEC4500F2B170 /* AppAuth */; };
+		C5BFF5AF2DECEC4500F2B170 /* AppAuthCore in Frameworks */ = {isa = PBXBuildFile; productRef = C5BFF5AE2DECEC4500F2B170 /* AppAuthCore */; };
+		C5BFF5B12DECEC4500F2B170 /* AppAuthTV in Frameworks */ = {isa = PBXBuildFile; productRef = C5BFF5B02DECEC4500F2B170 /* AppAuthTV */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -87,8 +90,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C5BFF5AD2DECEC4500F2B170 /* AppAuth in Frameworks */,
 				C5BFF5A62DECEA7000F2B170 /* Alamofire.xcframework in Frameworks */,
+				C5BFF5B12DECEC4500F2B170 /* AppAuthTV in Frameworks */,
 				C53F34042DE9E60900372BEE /* SQLite in Frameworks */,
+				C5BFF5AF2DECEC4500F2B170 /* AppAuthCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -161,6 +167,9 @@
 			name = "d2d-map-service";
 			packageProductDependencies = (
 				C53F34032DE9E60900372BEE /* SQLite */,
+				C5BFF5AC2DECEC4500F2B170 /* AppAuth */,
+				C5BFF5AE2DECEC4500F2B170 /* AppAuthCore */,
+				C5BFF5B02DECEC4500F2B170 /* AppAuthTV */,
 			);
 			productName = "d2d-map-service";
 			productReference = C5BE4B342DE7CC9E005C37B1 /* d2d-map-service.app */;
@@ -246,6 +255,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				C53F34022DE9E5D900372BEE /* XCRemoteSwiftPackageReference "SQLite" */,
+				C5BFF5AB2DECEC4500F2B170 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C5BE4B352DE7CC9E005C37B1 /* Products */;
@@ -622,6 +632,14 @@
 				minimumVersion = 0.15.3;
 			};
 		};
+		C5BFF5AB2DECEC4500F2B170 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/openid/AppAuth-iOS.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -629,6 +647,21 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C53F34022DE9E5D900372BEE /* XCRemoteSwiftPackageReference "SQLite" */;
 			productName = SQLite;
+		};
+		C5BFF5AC2DECEC4500F2B170 /* AppAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5BFF5AB2DECEC4500F2B170 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */;
+			productName = AppAuth;
+		};
+		C5BFF5AE2DECEC4500F2B170 /* AppAuthCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5BFF5AB2DECEC4500F2B170 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */;
+			productName = AppAuthCore;
+		};
+		C5BFF5B02DECEC4500F2B170 /* AppAuthTV */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5BFF5AB2DECEC4500F2B170 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */;
+			productName = AppAuthTV;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
