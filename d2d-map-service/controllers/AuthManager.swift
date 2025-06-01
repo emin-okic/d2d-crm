@@ -110,13 +110,15 @@ class AuthManager {
             }
 
             // ✅ Now build the auth request
-            let request = OIDAuthorizationRequest(configuration: config,
-                                                  clientId: self.clientID,
-                                                  clientSecret: nil,
-                                                  scopes: [OIDScopeOpenID, OIDScopeProfile],
-                                                  redirectURL: redirectURL,
-                                                  responseType: OIDResponseTypeCode,
-                                                  additionalParameters: nil)
+            let request = OIDAuthorizationRequest(
+                configuration: config,
+                clientId: self.clientID,
+                clientSecret: nil,
+                scopes: [OIDScopeOpenID, OIDScopeProfile],
+                redirectURL: redirectURL,
+                responseType: OIDResponseTypeCode,
+                additionalParameters: ["prompt": "login"] // 👈 forces login screen
+            )
 
             // ✅ Start the authorization flow
             self.currentAuthorizationFlow = OIDAuthState.authState(byPresenting: request, presenting: presentingViewController) { authState, error in

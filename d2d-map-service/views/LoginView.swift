@@ -24,9 +24,10 @@ struct LoginView: View {
                 }
 
                 AuthManager.shared.onSignIn = {
-                    session.isSignedIn = true // ✅ Actual transition point
+                    DispatchQueue.main.async {
+                        session.isSignedIn = true
+                    }
                 }
-
                 AuthManager.shared.authorize(presentingViewController: rootVC)
             }
             .foregroundColor(.white)

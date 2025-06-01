@@ -9,13 +9,15 @@ import SwiftUI
 
 @main
 struct d2d_map_serviceApp: App {
-    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    // @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
     @StateObject var session = SessionManager()
 
     var body: some Scene {
         WindowGroup {
             if session.isSignedIn {
                 RootView()
+                    .environmentObject(session)
             } else {
                 LoginView()
                     .environmentObject(session)
