@@ -24,6 +24,13 @@ class DatabaseController {
     private let address = Expression<String>("address")
     
     private let list = Expression<String>("list")
+    
+    private let knocks = Table("knocks")
+    private let knockId = Expression<Int64>("id")
+    private let prospectId = Expression<Int64>("prospect_id")
+    private let knockDate = Expression<Date>("date")
+    private let knockStatus = Expression<String>("status")
+
 
     // Production Initializer
     private init() {
@@ -64,6 +71,13 @@ class DatabaseController {
                 t.column(address)
                 t.column(list)
             })
+            try db?.run(knocks.create(ifNotExists: true) { t in
+                t.column(knockId, primaryKey: .autoincrement)
+                t.column(prospectId)
+                t.column(knockDate)
+                t.column(knockStatus)
+            })
+
         } catch {
             print("Create table failed: \(error)")
         }
@@ -72,14 +86,70 @@ class DatabaseController {
     /**
      This function adds prospects to the sqlite database
      */
-    func addProspect(name: String, addr: String) {
+    func addProspect(name: String, addr: String) -> Int64? {
         do {
             let insert = prospects.insert(fullName <- name, address <- addr, list <- "Prospects")
-            try db?.run(insert)
+            let rowId = try db?.run(insert)
+            return rowId
         } catch {
             print("Insert failed: \(error)")
+            return nil
         }
     }
+    
+    func addKnock(for prospectIdValue: Int64, date: Date, status: String) {
+        do {
+            let insert = knocks.insert(prospectId <- prospectIdValue, knockDate <- date, knockStatus <- status)
+            try db?.run(insert)
+        } catch {
+            print("Insert knock failed: \(error)")
+        }
+    }
+
+    
+    func getProspectsWithKnocks() -> [Prospect] {
+        var results: [Prospect] = []
+
+        do {
+            // Loop over all prospects
+            for row in try db!.prepare(prospects) {
+                let pId = row[id]                 // Prospect ID
+                let name = row[fullName]         // Prospect Name
+                let addr = row[address]          // Prospect Address
+                let listName = row[list]         // Prospect List
+
+                // Fetch knock history for this prospect
+                var knocksArray: [Knock] = []
+                for knockRow in try db!.prepare(knocks.filter(prospectId == pId)) {
+                    let dateVal = knockRow[knockDate]
+                    let statusVal = knockRow[knockStatus]
+                    let knock = Knock(date: dateVal, status: statusVal)
+                    knocksArray.append(knock)
+                }
+
+                let count = knocksArray.count
+
+                let prospect = Prospect(
+                    id: UUID(),  // Ideally you’d store this in DB or convert from pId
+                    fullName: name,
+                    address: addr,
+                    count: count,
+                    list: listName,
+                    knockHistory: knocksArray
+                )
+
+                results.append(prospect)
+            }
+        } catch {
+            print("Fetching prospects with knocks failed: \(error)")
+        }
+
+        return results
+    }
+
+
+
+
 
     /**
      This function gets all prospects from the sqlite database and returns a 2D string array

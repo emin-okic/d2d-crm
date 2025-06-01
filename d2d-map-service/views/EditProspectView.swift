@@ -10,38 +10,52 @@ import SwiftUI
 struct EditProspectView: View {
     @Binding var prospect: Prospect
     @Environment(\.presentationMode) var presentationMode
-    
+
     let allLists = ["Prospects", "Customers"]
 
     var body: some View {
         Form {
-            TextField("Full Name", text: $prospect.fullName)
-            TextField("Address", text: $prospect.address)
             
-            Picker("List", selection: $prospect.list) {
+            Section(header: Text("Prospect Details")) {
+                TextField("Full Name", text: $prospect.fullName)
+                TextField("Address", text: $prospect.address)
+            }
+            
+
+            Picker("Current List", selection: $prospect.list) {
                 ForEach(allLists, id: \.self) { listName in
                     Text(listName)
                 }
             }
-            .pickerStyle(MenuPickerStyle()) // Use dropdown-style menu
+            .pickerStyle(MenuPickerStyle())
 
-            Stepper(value: $prospect.count, in: 0...999) {
-                Text("Count: \(prospect.count)")
+
+            Section(header: Text("Knock History")) {
+                if prospect.knockHistory.isEmpty {
+                    Text("No knocks recorded yet.")
+                        .foregroundColor(.secondary)
+                } else {
+                    ForEach(prospect.knockHistory) { knock in
+                        HStack {
+                            Text(knock.status)
+                                .fontWeight(.semibold)
+                            Spacer()
+                            Text(knock.date.formatted(date: .abbreviated, time: .shortened))
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
             }
+
         }
         .navigationTitle("Edit Prospect")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") {
-                    // Update the prospect in the database
                     DatabaseController.shared.updateProspect(prospect)
-                    
-                    // Dismiss the edit view
                     presentationMode.wrappedValue.dismiss()
                 }
-
             }
         }
     }
 }
-
