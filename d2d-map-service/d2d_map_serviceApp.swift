@@ -9,10 +9,9 @@ import SwiftUI
 
 @main
 struct d2d_map_serviceApp: App {
-    // @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate // ✅ uncomment this
     @StateObject var session = SessionManager()
-
+    
     var body: some Scene {
         WindowGroup {
             if session.isSignedIn {
