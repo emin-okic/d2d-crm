@@ -35,11 +35,18 @@ struct EditProspectView: View {
                     Text("No knocks recorded yet.")
                         .foregroundColor(.secondary)
                 } else {
-                    ForEach(Array(prospect.knockHistory.enumerated()), id: \.offset) { index, record in
-                        Text("\(index + 1). \(record.status) – \(record.date.formatted(date: .abbreviated, time: .shortened))")
+                    ForEach(prospect.knockHistory) { knock in
+                        HStack {
+                            Text(knock.status)
+                                .fontWeight(.semibold)
+                            Spacer()
+                            Text(knock.date.formatted(date: .abbreviated, time: .shortened))
+                                .foregroundColor(.gray)
+                        }
                     }
                 }
             }
+
         }
         .navigationTitle("Edit Prospect")
         .toolbar {
