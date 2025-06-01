@@ -16,30 +16,24 @@ struct LoginView: View {
                 .font(.title)
                 .bold()
 
-            Button(action: {
+            Button("Sign In with Cognito") {
                 guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                       let rootVC = windowScene.windows.first?.rootViewController else {
                     print("❌ No root view controller found.")
                     return
                 }
 
-                AuthManager.shared.authorize(presentingViewController: rootVC)
-
-                // Use a delay or callback trigger to switch after login
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    if AuthManager.shared.authState?.isAuthorized == true {
-                        session.isSignedIn = true
-                    }
+                AuthManager.shared.onSignIn = {
+                    session.isSignedIn = true // ✅ Actual transition point
                 }
 
-            }) {
-                Text("Sign In with Cognito")
-                    .foregroundColor(.white)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.blue)
-                    .cornerRadius(10)
+                AuthManager.shared.authorize(presentingViewController: rootVC)
             }
+            .foregroundColor(.white)
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(Color.blue)
+            .cornerRadius(10)
             .padding(.horizontal)
         }
     }

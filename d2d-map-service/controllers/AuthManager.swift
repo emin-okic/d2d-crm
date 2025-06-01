@@ -21,6 +21,8 @@ class AuthManager {
 
     var currentAuthorizationFlow: OIDExternalUserAgentSession?
     var authState: OIDAuthState?
+    
+    var onSignIn: (() -> Void)?
 
     private init() {}
     
@@ -122,7 +124,10 @@ class AuthManager {
                     self.authState = authState
                     print("Access token: \(authState.lastTokenResponse?.accessToken ?? "")")
                     self.fetchUserInfo()
-                    // print("Authorization successful. Access token: \(authState.lastTokenResponse?.accessToken ?? "")")
+
+                    DispatchQueue.main.async {
+                        self.onSignIn?() // ✅ Trigger callback after successful login
+                    }
                 } else {
                     print("Authorization error: \(error?.localizedDescription ?? "Unknown error")")
                 }
