@@ -12,28 +12,24 @@ struct Prospect: Identifiable, Equatable, Hashable {
     var address: String
     var count: Int
     var list: String
-    var knockHistory: [(date: Date, status: String)]
+    var knockHistory: [Knock]
 
-    // Manually define Equatable
+    // update your Equatable and Hashable to handle [Knock]
     static func == (lhs: Prospect, rhs: Prospect) -> Bool {
         lhs.id == rhs.id &&
         lhs.fullName == rhs.fullName &&
         lhs.address == rhs.address &&
         lhs.count == rhs.count &&
         lhs.list == rhs.list &&
-        lhs.knockHistory.elementsEqual(rhs.knockHistory, by: { $0.date == $1.date && $0.status == $1.status })
+        lhs.knockHistory == rhs.knockHistory  // [Knock] is Equatable now
     }
 
-    // Manually define Hashable
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
         hasher.combine(fullName)
         hasher.combine(address)
         hasher.combine(count)
         hasher.combine(list)
-        for record in knockHistory {
-            hasher.combine(record.date)
-            hasher.combine(record.status)
-        }
+        hasher.combine(knockHistory)
     }
 }

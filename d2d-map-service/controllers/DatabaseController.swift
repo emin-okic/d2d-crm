@@ -111,25 +111,26 @@ class DatabaseController {
         var results: [Prospect] = []
 
         do {
+            // Loop over all prospects
             for row in try db!.prepare(prospects) {
-                let pId = row[id]
-                let name = row[fullName]
-                let addr = row[address]
-                let listName = row[list]
+                let pId = row[id]                 // Prospect ID
+                let name = row[fullName]         // Prospect Name
+                let addr = row[address]          // Prospect Address
+                let listName = row[list]         // Prospect List
 
                 // Fetch knock history for this prospect
-                var knocksArray: [(date: Date, status: String)] = []
-
+                var knocksArray: [Knock] = []
                 for knockRow in try db!.prepare(knocks.filter(prospectId == pId)) {
                     let dateVal = knockRow[knockDate]
                     let statusVal = knockRow[knockStatus]
-                    knocksArray.append((date: dateVal, status: statusVal))
+                    let knock = Knock(date: dateVal, status: statusVal)
+                    knocksArray.append(knock)
                 }
 
                 let count = knocksArray.count
 
                 let prospect = Prospect(
-                    id: UUID(), // You might want to convert Int64 -> UUID or adjust your model
+                    id: UUID(),  // Ideally you’d store this in DB or convert from pId
                     fullName: name,
                     address: addr,
                     count: count,
@@ -142,8 +143,10 @@ class DatabaseController {
         } catch {
             print("Fetching prospects with knocks failed: \(error)")
         }
+
         return results
     }
+
 
 
 
