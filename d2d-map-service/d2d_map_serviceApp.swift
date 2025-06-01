@@ -6,12 +6,21 @@
 //
 
 import SwiftUI
+import AppAuth
 
 @main
 struct d2d_map_serviceApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
+    @AppStorage("isLoggedIn") var isLoggedIn = false
+
     var body: some Scene {
         WindowGroup {
-            RootView()
+            if isLoggedIn {
+                RootView()
+            } else {
+                LoginView()
+            }
         }
     }
 }
