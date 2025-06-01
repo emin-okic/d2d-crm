@@ -17,6 +17,10 @@ struct MapSearchView: View {
 
     @StateObject private var controller: MapController
     @State private var searchText: String = ""
+    
+    @State private var pendingAddress: String?
+    @State private var showOutcomePrompt = false
+
 
     init(region: Binding<MKCoordinateRegion>,
          prospects: Binding<[Prospect]>,
@@ -46,7 +50,7 @@ struct MapSearchView: View {
                 HStack {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(.gray)
-                    TextField("Search for a place…", text: $searchText, onCommit: {
+                    TextField("Enter a knock here...", text: $searchText, onCommit: {
                         let trimmed = searchText.trimmingCharacters(in: .whitespaces)
                         guard !trimmed.isEmpty else { return }
                         handleSearch(query: trimmed)
@@ -86,30 +90,50 @@ struct MapSearchView: View {
                 to: nil, from: nil, for: nil
             )
         }
+        .alert("Knock Outcome", isPresented: $showOutcomePrompt, actions: {
+            Button("Answered") {
+                saveKnock(address: pendingAddress!, status: "Answered")
+            }
+            Button("Not Answered") {
+                saveKnock(address: pendingAddress!, status: "Not Answered")
+            }
+            Button("Cancel", role: .cancel) {}
+        }, message: {
+            Text("Did someone answer at \(pendingAddress ?? "this address")?")
+        })
+
     }
 
     private func handleSearch(query: String) {
-        let normalizedQuery = query
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
 
-        if let existingIndex = prospects.firstIndex(where: {
-            $0.address
-              .trimmingCharacters(in: .whitespacesAndNewlines)
-              .lowercased() == normalizedQuery
+        pendingAddress = trimmed
+        showOutcomePrompt = true
+    }
+    
+    private func saveKnock(address: String, status: String) {
+        let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let index = prospects.firstIndex(where: {
+            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
         }) {
-            prospects[existingIndex].count += 1
+            prospects[index].count += 1
+            prospects[index].status = status
         } else {
-            // Always add new searches into the “Prospects” list by default
             let newProspect = Prospect(
                 id: UUID(),
                 fullName: "New Prospect",
-                address: query,
+                address: address,
                 count: 1,
-                list: "Prospects"
+                list: "Prospects",
+                status: status
             )
             prospects.append(newProspect)
         }
-        controller.performSearch(query: query)
+
+        controller.performSearch(query: address)
     }
+
+
 }
