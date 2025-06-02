@@ -36,6 +36,19 @@ struct LoginView: View {
             .background(Color.blue)
             .cornerRadius(10)
             .padding(.horizontal)
+            
+            Button("Logout") {
+                AuthManager.shared.logoutLocally()
+                            session.isSignedIn = false
+                Image(systemName: "rectangle.portrait.and.arrow.right")
+                    .foregroundColor(.red)
+            }
+            .accessibilityLabel("Log out")
         }
+    }
+    
+    private func handleLogout() {
+        AuthManager.shared.logout()
+        session.isSignedIn = false
     }
 }

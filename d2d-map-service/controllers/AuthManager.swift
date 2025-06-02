@@ -88,6 +88,11 @@ class AuthManager {
             UIApplication.shared.open(logoutURL, options: [:], completionHandler: nil)
         }
     }
+    
+    func logoutLocally() {
+        self.authState = nil
+        self.currentAuthorizationFlow = nil
+    }
 
     func authorize(presentingViewController: UIViewController) {
         guard let issuerURL = URL(string: issuer) else {

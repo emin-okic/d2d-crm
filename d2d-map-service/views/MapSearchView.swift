@@ -27,6 +27,8 @@ struct MapSearchView: View {
     @State private var pendingAddress: String? = nil
     /// …and show an alert with “Answered / Not Answered”:
     @State private var showOutcomePrompt = false
+    
+    @EnvironmentObject var session: SessionManager
 
     init(region: Binding<MKCoordinateRegion>,
          prospects: Binding<[Prospect]>,
@@ -38,6 +40,15 @@ struct MapSearchView: View {
     }
 
     var body: some View {
+        
+        Button("Logout") {
+            AuthManager.shared.logoutLocally()
+                        session.isSignedIn = false
+            Image(systemName: "rectangle.portrait.and.arrow.right")
+                .foregroundColor(.red)
+        }
+        .accessibilityLabel("Log out")
+        
         VStack(spacing: 0) {
             // ──────────────────────────────────────────────────────────────────
             // 1) THE MAP WITH TAPPABLE ANNOTATIONS
@@ -150,6 +161,11 @@ struct MapSearchView: View {
         // Instead of geocoding immediately, first ask the user if they want to log “Answered/Not Answered”
         pendingAddress = trimmed
         showOutcomePrompt = true
+    }
+    
+    private func handleLogout() {
+        AuthManager.shared.logout()
+        session.isSignedIn = false
     }
 
     // Update your `prospects` array (and the MapController) once the user picks “Answered” / “Not Answered”:
