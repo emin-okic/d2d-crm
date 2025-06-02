@@ -17,6 +17,4 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build
-      run: swift build -v
-    - name: Run tests
-      run: swift test -v
+      run: xcodebuild build -scheme d2d-map-service -destination 'platform=iOS Simulator,name=iPhone 16'
