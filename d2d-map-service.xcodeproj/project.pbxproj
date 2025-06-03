@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		C53F34042DE9E60900372BEE /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = C53F34032DE9E60900372BEE /* SQLite */; };
+		C583E5E82DEF3F9500DBE8CC /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C583E5E72DEF3F9500DBE8CC /* Secrets.xcconfig */; };
 		C5BFF5A62DECEA7000F2B170 /* Alamofire.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = C5BFF5A52DECEA7000F2B170 /* Alamofire.xcframework */; settings = {ATTRIBUTES = (Required, ); }; };
 		C5BFF5A72DECEA7000F2B170 /* Alamofire.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C5BFF5A52DECEA7000F2B170 /* Alamofire.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C5BFF5AD2DECEC4500F2B170 /* AppAuth in Frameworks */ = {isa = PBXBuildFile; productRef = C5BFF5AC2DECEC4500F2B170 /* AppAuth */; };
@@ -47,6 +48,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C583E5E72DEF3F9500DBE8CC /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		C5BE4B342DE7CC9E005C37B1 /* d2d-map-service.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "d2d-map-service.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C5BE4B412DE7CC9F005C37B1 /* d2d-map-serviceTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "d2d-map-serviceTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C5BE4B4B2DE7CC9F005C37B1 /* d2d-map-serviceUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "d2d-map-serviceUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -118,6 +120,7 @@
 		C5BE4B2B2DE7CC9E005C37B1 = {
 			isa = PBXGroup;
 			children = (
+				C583E5E72DEF3F9500DBE8CC /* Secrets.xcconfig */,
 				C5E9F14F2DEB6CAB000A771B /* d2d-map-service.xctestplan */,
 				C5BE4B362DE7CC9E005C37B1 /* d2d-map-service */,
 				C5BE4B442DE7CC9F005C37B1 /* d2d-map-serviceTests */,
@@ -274,6 +277,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C583E5E82DEF3F9500DBE8CC /* Secrets.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -333,6 +337,7 @@
 /* Begin XCBuildConfiguration section */
 		C5BE4B532DE7CC9F005C37B1 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C583E5E72DEF3F9500DBE8CC /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -397,6 +402,7 @@
 		};
 		C5BE4B542DE7CC9F005C37B1 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C583E5E72DEF3F9500DBE8CC /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -454,6 +460,7 @@
 		};
 		C5BE4B562DE7CC9F005C37B1 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C583E5E72DEF3F9500DBE8CC /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -483,6 +490,7 @@
 		};
 		C5BE4B572DE7CC9F005C37B1 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C583E5E72DEF3F9500DBE8CC /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;

@@ -15,7 +15,7 @@ class AuthManager {
 
     // OIDC config
     let issuer = "https://cognito-idp.us-east-2.amazonaws.com/us-east-2_3qKzMckST"
-    let clientID = "7hkvtmon35nr1qkjnscbvgsosk"
+    let clientID = Bundle.main.infoDictionary?["CLIENT_ID"] as? String ?? ""
     let redirectURI = "com.yourapp.d2dcrm://oauth2redirect"
     let logoutURL = "myapp://logout"
 
