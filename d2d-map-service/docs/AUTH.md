@@ -12,3 +12,16 @@ https://docs.aws.amazon.com/cognito/
 ### Carthage
 https://github.com/Carthage/Carthage
 
+
+## Environment Configuration
+
+### Example Secrets.xconfig
+
+```
+
+ISSUER_URL = your_issuer_url
+CLIENT_ID = your_client_id
+REDIRECT_URI = com.yourapp.d2dcrm://callback
+LOGOUT_URI = yourapp://logout
+
+```
