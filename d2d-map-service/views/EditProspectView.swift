@@ -36,13 +36,25 @@ struct EditProspectView: View {
                         .foregroundColor(.secondary)
                 } else {
                     ForEach(prospect.knockHistory) { knock in
-                        HStack {
-                            Text(knock.status)
-                                .fontWeight(.semibold)
-                            Spacer()
-                            Text(knock.date.formatted(date: .abbreviated, time: .shortened))
-                                .foregroundColor(.gray)
+                        VStack(alignment: .leading) {
+                            HStack {
+                                
+                                Text(knock.status)
+                                    .fontWeight(.semibold)
+                                
+                                Spacer()
+                                
+                                Text(knock.date.formatted(date: .abbreviated, time: .shortened))
+                                    .foregroundColor(.gray)
+                                
+                                Spacer()
+                                
+                                Text("Lat: \(String(format: "%.4f", knock.latitude)), Lon: \(String(format: "%.4f", knock.longitude))")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
                         }
+                        .padding(.vertical, 4)
                     }
                 }
             }

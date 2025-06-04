@@ -155,27 +155,41 @@ struct MapSearchView: View {
     // Update your `prospects` array (and the MapController) once the user picks “Answered” / “Not Answered”:
     private func saveKnock(address: String, status: String) {
         let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        let now = Date()
+        let location = LocationManager.shared.currentLocation
+
+        let lat = location?.latitude ?? 0.0
+        let lon = location?.longitude ?? 0.0
+
+        var prospectId: Int64?
 
         if let index = prospects.firstIndex(where: {
             $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
         }) {
-            // If that prospect already exists, bump its count & append to its history:
             prospects[index].count += 1
-            prospects[index].knockHistory.append(Knock(date: Date(), status: status))
+            prospects[index].knockHistory.append(Knock(date: now, status: status, latitude: lat, longitude: lon))
+            prospectId = Int64(index) // Only if you're mapping UUID to Int64 row — ideally you'd store SQLite rowId in your Prospect
         } else {
-            // Otherwise, create a brand‐new Prospect with a default name:
             let newProspect = Prospect(
                 id: UUID(),
-                fullName: "New Prospect",       // Placeholder name
+                fullName: "New Prospect",
                 address: address,
                 count: 1,
-                list: "Prospects",              // Or whatever default list you want
-                knockHistory: [Knock(date: Date(), status: status)]
+                list: "Prospects",
+                knockHistory: [Knock(date: now, status: status, latitude: lat, longitude: lon)]
             )
             prospects.append(newProspect)
+
+            // Insert to DB and get row ID
+            if let newId = DatabaseController.shared.addProspect(name: newProspect.fullName, addr: newProspect.address) {
+                prospectId = newId
+            }
         }
 
-        // Finally—actually geocode the address and add/update the marker on the map:
+        if let id = prospectId {
+            DatabaseController.shared.addKnock(for: id, date: now, status: status, latitude: lat, longitude: lon)
+        }
+
         controller.performSearch(query: address)
     }
 }
