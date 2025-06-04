@@ -41,15 +41,16 @@ struct MapSearchView: View {
 
     var body: some View {
         
-        Button("Logout") {
-            AuthManager.shared.logoutLocally()
-                        session.isSignedIn = false
-            Image(systemName: "rectangle.portrait.and.arrow.right")
-                .foregroundColor(.red)
-        }
-        .accessibilityLabel("Log out")
-        
         VStack(spacing: 0) {
+            
+            Button("Logout") {
+                AuthManager.shared.logoutLocally()
+                            session.isSignedIn = false
+                Image(systemName: "rectangle.portrait.and.arrow.right")
+                    .foregroundColor(.red)
+            }
+            .accessibilityLabel("Log out")
+            
             // ──────────────────────────────────────────────────────────────────
             // 1) THE MAP WITH TAPPABLE ANNOTATIONS
             // ──────────────────────────────────────────────────────────────────

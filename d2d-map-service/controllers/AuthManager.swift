@@ -122,7 +122,7 @@ class AuthManager {
                 scopes: [OIDScopeOpenID, OIDScopeProfile],
                 redirectURL: redirectURL,
                 responseType: OIDResponseTypeCode,
-                additionalParameters: ["prompt": "login"] // 👈 forces login screen
+                additionalParameters: ["prompt": "login"] 
             )
 
             // ✅ Start the authorization flow
