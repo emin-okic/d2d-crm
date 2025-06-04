@@ -11,4 +11,6 @@ struct Knock: Identifiable, Equatable, Hashable {
     let id = UUID()
     var date: Date
     var status: String
+    var latitude: Double
+    var longitude: Double
 }

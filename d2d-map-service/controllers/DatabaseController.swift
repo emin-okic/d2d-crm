@@ -76,6 +76,8 @@ class DatabaseController {
                 t.column(prospectId)
                 t.column(knockDate)
                 t.column(knockStatus)
+                t.column(Expression<Double>("latitude"))
+                t.column(Expression<Double>("longitude"))
             })
 
         } catch {
@@ -97,9 +99,18 @@ class DatabaseController {
         }
     }
     
-    func addKnock(for prospectIdValue: Int64, date: Date, status: String) {
+    func addKnock(for prospectIdValue: Int64, date: Date, status: String, latitude: Double, longitude: Double) {
+        let lat = Expression<Double>("latitude")
+        let lon = Expression<Double>("longitude")
+
         do {
-            let insert = knocks.insert(prospectId <- prospectIdValue, knockDate <- date, knockStatus <- status)
+            let insert = knocks.insert(
+                prospectId <- prospectIdValue,
+                knockDate <- date,
+                knockStatus <- status,
+                lat <- latitude,
+                lon <- longitude
+            )
             try db?.run(insert)
         } catch {
             print("Insert knock failed: \(error)")
@@ -123,7 +134,9 @@ class DatabaseController {
                 for knockRow in try db!.prepare(knocks.filter(prospectId == pId)) {
                     let dateVal = knockRow[knockDate]
                     let statusVal = knockRow[knockStatus]
-                    let knock = Knock(date: dateVal, status: statusVal)
+                    let lat = knockRow[Expression<Double>("latitude")]
+                    let lon = knockRow[Expression<Double>("longitude")]
+                    let knock = Knock(date: dateVal, status: statusVal, latitude: lat, longitude: lon)
                     knocksArray.append(knock)
                 }
 
