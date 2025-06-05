@@ -23,3 +23,9 @@ class Prospect {
         self.knockHistory = []
     }
 }
+
+extension Prospect {
+    var sortedKnocks: [Knock] {
+        knockHistory.sorted(by: { $0.date > $1.date })
+    }
+}
