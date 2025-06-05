@@ -9,11 +9,12 @@ import SwiftUI
 import MapKit
 import CoreLocation
 import UniformTypeIdentifiers   // for .commaSeparatedText
+import SwiftData
 
 struct MapSearchView: View {
     // These are bindings passed in from ContentView (or wherever).
     @Binding var region: MKCoordinateRegion
-    @Binding var prospects: [Prospect]
+    @Query var prospects: [Prospect]
     @Binding var selectedList: String   // ← whatever filter you’re using
 
     // We keep a controller for map logic… (details omitted)
@@ -27,12 +28,12 @@ struct MapSearchView: View {
     @State private var pendingAddress: String? = nil
     /// …and show an alert with “Answered / Not Answered”:
     @State private var showOutcomePrompt = false
+    
+    @Environment(\.modelContext) private var modelContext
 
     init(region: Binding<MKCoordinateRegion>,
-         prospects: Binding<[Prospect]>,
          selectedList: Binding<String>) {
         _region = region
-        _prospects = prospects
         _selectedList = selectedList
         _controller = StateObject(wrappedValue: MapController(region: region.wrappedValue))
     }
@@ -163,22 +164,20 @@ struct MapSearchView: View {
 
         var prospectId: Int64?
 
-        if let index = prospects.firstIndex(where: {
+        if let existing = prospects.first(where: {
             $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
         }) {
-            prospects[index].count += 1
-            prospects[index].knockHistory.append(Knock(date: now, status: status, latitude: lat, longitude: lon))
-            prospectId = Int64(index) // Only if you're mapping UUID to Int64 row — ideally you'd store SQLite rowId in your Prospect
+            existing.count += 1
+            existing.knockHistory.append(Knock(date: now, status: status, latitude: lat, longitude: lon))
         } else {
             let newProspect = Prospect(
-                id: UUID(),
                 fullName: "New Prospect",
                 address: address,
                 count: 1,
-                list: "Prospects",
-                knockHistory: [Knock(date: now, status: status, latitude: lat, longitude: lon)]
+                list: "Prospects"
             )
-            prospects.append(newProspect)
+            newProspect.knockHistory = [Knock(date: now, status: status, latitude: lat, longitude: lon)]
+            modelContext.insert(newProspect)
 
             // Insert to DB and get row ID
             if let newId = DatabaseController.shared.addProspect(name: newProspect.fullName, addr: newProspect.address) {

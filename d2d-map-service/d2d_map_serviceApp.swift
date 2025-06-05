@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+import SwiftData
+import Foundation
 
 @main
 struct d2d_map_serviceApp: App {
@@ -13,5 +15,26 @@ struct d2d_map_serviceApp: App {
         WindowGroup {
             RootView()
         }
+        .modelContainer(sharedModelContainer)
     }
 }
+
+// Use a shared container pointed to the custom folder
+let sharedModelContainer: ModelContainer = {
+    // Get the app's Application Support directory
+    let appSupportURL = FileManager.default
+        .urls(for: .applicationSupportDirectory, in: .userDomainMask)
+        .first!
+        .appendingPathComponent("d2d-map-service/database", isDirectory: true)
+
+    // Create the directory if it doesn't exist
+    try? FileManager.default.createDirectory(at: appSupportURL, withIntermediateDirectories: true)
+
+    // Point SwiftData to that file
+    let config = ModelConfiguration(
+        "ProspectModel",
+        url: appSupportURL.appendingPathComponent("prospects.sqlite")
+    )
+
+    return try! ModelContainer(for: Prospect.self, Knock.self, configurations: config)
+}()

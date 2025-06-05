@@ -6,11 +6,19 @@
 //
 
 import Foundation
+import SwiftData
 
-struct Knock: Identifiable, Equatable, Hashable {
-    let id = UUID()
+@Model
+class Knock {
     var date: Date
     var status: String
     var latitude: Double
     var longitude: Double
+
+    init(date: Date, status: String, latitude: Double, longitude: Double) {
+        self.date = date
+        self.status = status
+        self.latitude = latitude
+        self.longitude = longitude
+    }
 }
