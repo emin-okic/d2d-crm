@@ -26,6 +26,13 @@ let sharedModelContainer: ModelContainer = {
         .urls(for: .applicationSupportDirectory, in: .userDomainMask)
         .first!
         .appendingPathComponent("d2d-map-service/database", isDirectory: true)
+    
+    let url = FileManager.default
+        .urls(for: .applicationSupportDirectory, in: .userDomainMask)
+        .first!
+        .appendingPathComponent("d2d-map-service/database/prospects.sqlite")
+
+    print("SwiftData SQLite location: \(url.path)")
 
     // Create the directory if it doesn't exist
     try? FileManager.default.createDirectory(at: appSupportURL, withIntermediateDirectories: true)

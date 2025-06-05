@@ -50,6 +50,7 @@ struct EditProspectView: View {
                     }
                 }
             }
+            
         }
         .navigationTitle("Edit Prospect")
         .toolbar {
