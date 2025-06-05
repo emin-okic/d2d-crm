@@ -8,13 +8,12 @@
 import SwiftUI
 
 struct NewProspectView: View {
-    @Environment(\.presentationMode) var presentationMode
-    @Binding var prospects: [Prospect]
-    @Binding var selectedList: String  // ✅ Add this line
-    var onSave: () -> Void             // ✅ Add this line
+    @Environment(\.modelContext) private var modelContext
+    @Binding var selectedList: String
+    var onSave: () -> Void
 
-    @State private var fullName: String = ""
-    @State private var address: String = ""
+    @State private var fullName = ""
+    @State private var address = ""
 
     var body: some View {
         NavigationView {
@@ -29,22 +28,19 @@ struct NewProspectView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         let newProspect = Prospect(
-                            id: UUID(),
                             fullName: fullName,
                             address: address,
                             count: 0,
-                            list: selectedList,
-                            knockHistory: []
+                            list: selectedList
                         )
-                        prospects.append(newProspect)
-                        onSave()  // ✅ Notify parent
-                        presentationMode.wrappedValue.dismiss()
+                        modelContext.insert(newProspect)
+                        onSave()
                     }
                 }
 
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
-                        presentationMode.wrappedValue.dismiss()
+                        onSave()
                     }
                 }
             }

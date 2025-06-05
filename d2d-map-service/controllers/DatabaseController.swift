@@ -143,13 +143,12 @@ class DatabaseController {
                 let count = knocksArray.count
 
                 let prospect = Prospect(
-                    id: UUID(),  // Ideally you’d store this in DB or convert from pId
                     fullName: name,
                     address: addr,
                     count: count,
-                    list: listName,
-                    knockHistory: knocksArray
+                    list: listName
                 )
+                prospect.knockHistory = knocksArray
 
                 results.append(prospect)
             }

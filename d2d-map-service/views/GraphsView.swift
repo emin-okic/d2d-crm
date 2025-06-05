@@ -7,9 +7,10 @@
 
 import SwiftUI
 import Charts
+import SwiftData
 
 struct GraphView: View {
-    var prospects: [Prospect]
+    @Query var prospects: [Prospect]
 
     var body: some View {
         let totalKnocks = GraphController.totalKnocks(from: prospects)
