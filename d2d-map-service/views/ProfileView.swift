@@ -10,13 +10,23 @@ import Charts
 import SwiftData
 
 struct ProfileView: View {
-    @Query var prospects: [Prospect]
     @Binding var isLoggedIn: Bool
+    let userEmail: String
+
+    @Query private var prospects: [Prospect]
+
+    init(isLoggedIn: Binding<Bool>, userEmail: String) {
+        self._isLoggedIn = isLoggedIn
+        self.userEmail = userEmail
+
+        // ✅ Add this
+        _prospects = Query(filter: #Predicate<Prospect> { $0.userEmail == userEmail })
+    }
 
     var body: some View {
-        let totalKnocks = ProfileController.totalKnocks(from: prospects)
-        let knocksByList = ProfileController.knocksByList(from: prospects)
-        let answeredVsUnanswered = ProfileController.knocksAnsweredVsUnanswered(from: prospects)
+        let totalKnocks = ProfileController.totalKnocks(from: prospects, userEmail: userEmail)
+        let knocksByList = ProfileController.knocksByList(from: prospects, userEmail: userEmail)
+        let answeredVsUnanswered = ProfileController.knocksAnsweredVsUnanswered(from: prospects, userEmail: userEmail)
 
         NavigationView {
             Form {

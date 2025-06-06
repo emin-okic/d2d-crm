@@ -14,7 +14,9 @@ import SwiftData
 struct MapSearchView: View {
     // These are bindings passed in from ContentView (or wherever).
     @Binding var region: MKCoordinateRegion
-    @Query var prospects: [Prospect]
+    
+    @Query private var prospects: [Prospect]
+    
     @Binding var selectedList: String   // ← whatever filter you’re using
     
     let userEmail: String
@@ -40,6 +42,9 @@ struct MapSearchView: View {
         _selectedList = selectedList
         self.userEmail = userEmail
         _controller = StateObject(wrappedValue: MapController(region: region.wrappedValue))
+
+        // ✅ Add this
+        _prospects = Query(filter: #Predicate<Prospect> { $0.userEmail == userEmail })
     }
 
     var body: some View {

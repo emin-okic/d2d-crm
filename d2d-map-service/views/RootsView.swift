@@ -25,11 +25,12 @@ struct RootView: View {
     @State private var showingAddProspect = false
 
     var body: some View {
+        
         TabView {
             MapSearchView(
                 region: $region,
                 selectedList: $selectedList,
-                userEmail: userEmail
+                userEmail: userEmail // ✅
             )
             .tabItem {
                 Label("Map", systemImage: "map.fill")
@@ -37,19 +38,22 @@ struct RootView: View {
 
             ProspectsView(
                 selectedList: $selectedList,
-                userEmail: userEmail,
-                onSave: {
-                    showingAddProspect = false
-                }
-            )
+                userEmail: userEmail
+            ) {
+                showingAddProspect = false
+            }
             .tabItem {
                 Label("Prospects", systemImage: "person.3.fill")
             }
 
-            ProfileView(isLoggedIn: $isLoggedIn)
-                .tabItem {
-                    Label("Profile", systemImage: "person.crop.circle")
-                }
+            ProfileView(
+                isLoggedIn: $isLoggedIn,
+                userEmail: userEmail // ✅
+            )
+            .tabItem {
+                Label("Profile", systemImage: "person.crop.circle")
+            }
         }
+        
     }
 }
