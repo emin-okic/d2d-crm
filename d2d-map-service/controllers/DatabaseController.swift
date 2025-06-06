@@ -149,7 +149,7 @@ class DatabaseController {
                 }
 
                 let count = knocksArray.count
-                let prospect = Prospect(fullName: name, address: addr, count: count, list: listName)
+                let prospect = Prospect(fullName: name, address: addr, count: count, list: listName, userEmail: userEmailValue ?? "")
                 prospect.knockHistory = knocksArray
                 results.append(prospect)
             }

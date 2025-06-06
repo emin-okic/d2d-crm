@@ -36,10 +36,12 @@ struct RootView: View {
             }
 
             ProspectsView(
-                selectedList: $selectedList
-            ) {
-                showingAddProspect = false
-            }
+                selectedList: $selectedList,
+                userEmail: userEmail,
+                onSave: {
+                    showingAddProspect = false
+                }
+            )
             .tabItem {
                 Label("Prospects", systemImage: "person.3.fill")
             }

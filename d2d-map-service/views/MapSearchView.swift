@@ -178,7 +178,8 @@ struct MapSearchView: View {
                 fullName: "New Prospect",
                 address: address,
                 count: 1,
-                list: "Prospects"
+                list: "Prospects",
+                userEmail: userEmail
             )
             newProspect.knockHistory = [Knock(date: now, status: status, latitude: lat, longitude: lon, userEmail: userEmail)]
             modelContext.insert(newProspect)
