@@ -10,6 +10,8 @@ import SwiftData
 import MapKit
 
 struct RootView: View {
+    @Binding var isLoggedIn: Bool
+    
     @Environment(\.modelContext) private var modelContext
 
     @State private var region = MKCoordinateRegion(
@@ -39,7 +41,7 @@ struct RootView: View {
                 Label("Prospects", systemImage: "person.3.fill")
             }
 
-            ProfileView()
+            ProfileView(isLoggedIn: $isLoggedIn)
                 .tabItem {
                     Label("Profile", systemImage: "person.crop.circle")
                 }

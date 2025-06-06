@@ -11,6 +11,7 @@ import SwiftData
 
 struct ProfileView: View {
     @Query var prospects: [Prospect]
+    @Binding var isLoggedIn: Bool
 
     var body: some View {
         let totalKnocks = ProfileController.totalKnocks(from: prospects)
@@ -52,10 +53,14 @@ struct ProfileView: View {
                 .padding()
 
                 Spacer()
+
+                Button("Log Out") {
+                    isLoggedIn = false
+                }
+                .foregroundColor(.red)
+                .padding(.bottom)
             }
             .navigationTitle("Knock Report")
         }
     }
 }
-
-

@@ -16,7 +16,7 @@ struct d2d_map_serviceApp: App {
     var body: some Scene {
         WindowGroup {
             if isLoggedIn {
-                RootView()
+                RootView(isLoggedIn: $isLoggedIn)
             } else {
                 LoginView(isLoggedIn: $isLoggedIn)
             }
