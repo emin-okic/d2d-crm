@@ -12,6 +12,8 @@ import MapKit
 struct RootView: View {
     @Binding var isLoggedIn: Bool
     
+    let userEmail: String
+    
     @Environment(\.modelContext) private var modelContext
 
     @State private var region = MKCoordinateRegion(
@@ -23,17 +25,20 @@ struct RootView: View {
     @State private var showingAddProspect = false
 
     var body: some View {
+        
         TabView {
             MapSearchView(
                 region: $region,
-                selectedList: $selectedList
+                selectedList: $selectedList,
+                userEmail: userEmail // ✅
             )
             .tabItem {
                 Label("Map", systemImage: "map.fill")
             }
 
             ProspectsView(
-                selectedList: $selectedList
+                selectedList: $selectedList,
+                userEmail: userEmail
             ) {
                 showingAddProspect = false
             }
@@ -41,10 +46,14 @@ struct RootView: View {
                 Label("Prospects", systemImage: "person.3.fill")
             }
 
-            ProfileView(isLoggedIn: $isLoggedIn)
-                .tabItem {
-                    Label("Profile", systemImage: "person.crop.circle")
-                }
+            ProfileView(
+                isLoggedIn: $isLoggedIn,
+                userEmail: userEmail // ✅
+            )
+            .tabItem {
+                Label("Profile", systemImage: "person.crop.circle")
+            }
         }
+        
     }
 }

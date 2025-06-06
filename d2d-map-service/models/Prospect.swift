@@ -14,13 +14,17 @@ class Prospect {
     var count: Int
     var list: String
     var knockHistory: [Knock]
+    
+    // ✅ Must be present
+    var userEmail: String
 
-    init(fullName: String, address: String, count: Int = 0, list: String = "Prospects") {
+    init(fullName: String, address: String, count: Int = 0, list: String = "Prospects", userEmail: String) {
         self.fullName = fullName
         self.address = address
         self.count = count
         self.list = list
         self.knockHistory = []
+        self.userEmail = userEmail
     }
 }
 

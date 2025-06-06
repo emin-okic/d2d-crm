@@ -10,15 +10,27 @@ import SwiftData
 
 struct ProspectsView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query var prospects: [Prospect]
 
     @Binding var selectedList: String
     var onSave: () -> Void
+    var userEmail: String
 
     @State private var selectedProspectID: PersistentIdentifier?
     @State private var showingAddProspect = false
 
     let availableLists = ["Prospects", "Customers"]
+
+    @Query var prospects: [Prospect]
+
+    // ✅ Custom initializer
+    init(selectedList: Binding<String>, userEmail: String, onSave: @escaping () -> Void) {
+        _selectedList = selectedList
+        self.userEmail = userEmail
+        self.onSave = onSave
+
+        // ✅ Inject predicate using runtime value
+        _prospects = Query(filter: #Predicate<Prospect> { $0.userEmail == userEmail })
+    }
 
     var body: some View {
         NavigationView {
@@ -65,10 +77,14 @@ struct ProspectsView: View {
                 }
             }
             .sheet(isPresented: $showingAddProspect) {
-                NewProspectView(selectedList: $selectedList) {
-                    showingAddProspect = false
-                    onSave()
-                }
+                NewProspectView(
+                    selectedList: $selectedList,
+                    onSave: {
+                        showingAddProspect = false
+                        onSave()
+                    },
+                    userEmail: userEmail
+                )
             }
         }
     }

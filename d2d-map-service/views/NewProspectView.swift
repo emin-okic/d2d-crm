@@ -11,6 +11,7 @@ struct NewProspectView: View {
     @Environment(\.modelContext) private var modelContext
     @Binding var selectedList: String
     var onSave: () -> Void
+    var userEmail: String
 
     @State private var fullName = ""
     @State private var address = ""
@@ -31,7 +32,8 @@ struct NewProspectView: View {
                             fullName: fullName,
                             address: address,
                             count: 0,
-                            list: selectedList
+                            list: selectedList,
+                            userEmail: userEmail
                         )
                         modelContext.insert(newProspect)
                         onSave()

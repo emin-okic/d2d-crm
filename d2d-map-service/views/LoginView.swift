@@ -9,7 +9,7 @@ import SwiftUI
 
 struct LoginView: View {
     @Binding var isLoggedIn: Bool
-    @State private var emailInput: String = ""
+    @Binding var emailInput: String
     @State private var errorMessage: String?
 
     var body: some View {

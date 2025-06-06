@@ -14,11 +14,13 @@ class Knock {
     var status: String
     var latitude: Double
     var longitude: Double
+    var userEmail: String  // New field
 
-    init(date: Date, status: String, latitude: Double, longitude: Double) {
+    init(date: Date, status: String, latitude: Double, longitude: Double, userEmail: String) {
         self.date = date
         self.status = status
         self.latitude = latitude
         self.longitude = longitude
+        self.userEmail = userEmail
     }
 }

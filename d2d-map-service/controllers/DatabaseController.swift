@@ -30,6 +30,9 @@ class DatabaseController {
     private let prospectId = Expression<Int64>("prospect_id")
     private let knockDate = Expression<Date>("date")
     private let knockStatus = Expression<String>("status")
+    
+    private let userEmail = Expression<String>("user_email")
+
 
 
     // Production Initializer
@@ -78,6 +81,7 @@ class DatabaseController {
                 t.column(knockStatus)
                 t.column(Expression<Double>("latitude"))
                 t.column(Expression<Double>("longitude"))
+                t.column(userEmail)
             })
 
         } catch {
@@ -99,7 +103,7 @@ class DatabaseController {
         }
     }
     
-    func addKnock(for prospectIdValue: Int64, date: Date, status: String, latitude: Double, longitude: Double) {
+    func addKnock(for prospectIdValue: Int64, date: Date, status: String, latitude: Double, longitude: Double, userEmailValue: String) {
         let lat = Expression<Double>("latitude")
         let lon = Expression<Double>("longitude")
 
@@ -109,7 +113,8 @@ class DatabaseController {
                 knockDate <- date,
                 knockStatus <- status,
                 lat <- latitude,
-                lon <- longitude
+                lon <- longitude,
+                userEmail <- userEmailValue
             )
             try db?.run(insert)
         } catch {
@@ -118,38 +123,34 @@ class DatabaseController {
     }
 
     
-    func getProspectsWithKnocks() -> [Prospect] {
+    func getProspectsWithKnocks(for userEmailValue: String? = nil) -> [Prospect] {
         var results: [Prospect] = []
 
         do {
-            // Loop over all prospects
             for row in try db!.prepare(prospects) {
-                let pId = row[id]                 // Prospect ID
-                let name = row[fullName]         // Prospect Name
-                let addr = row[address]          // Prospect Address
-                let listName = row[list]         // Prospect List
+                let pId = row[id]
+                let name = row[fullName]
+                let addr = row[address]
+                let listName = row[list]
 
-                // Fetch knock history for this prospect
                 var knocksArray: [Knock] = []
-                for knockRow in try db!.prepare(knocks.filter(prospectId == pId)) {
+                let knockQuery = userEmailValue == nil
+                    ? knocks.filter(prospectId == pId)
+                    : knocks.filter(prospectId == pId && userEmail == userEmailValue!)
+
+                for knockRow in try db!.prepare(knockQuery) {
                     let dateVal = knockRow[knockDate]
                     let statusVal = knockRow[knockStatus]
                     let lat = knockRow[Expression<Double>("latitude")]
                     let lon = knockRow[Expression<Double>("longitude")]
-                    let knock = Knock(date: dateVal, status: statusVal, latitude: lat, longitude: lon)
+                    let user = knockRow[userEmail]
+                    let knock = Knock(date: dateVal, status: statusVal, latitude: lat, longitude: lon, userEmail: user)
                     knocksArray.append(knock)
                 }
 
                 let count = knocksArray.count
-
-                let prospect = Prospect(
-                    fullName: name,
-                    address: addr,
-                    count: count,
-                    list: listName
-                )
+                let prospect = Prospect(fullName: name, address: addr, count: count, list: listName, userEmail: userEmailValue ?? "")
                 prospect.knockHistory = knocksArray
-
                 results.append(prospect)
             }
         } catch {
