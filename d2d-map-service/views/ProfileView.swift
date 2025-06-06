@@ -19,48 +19,48 @@ struct ProfileView: View {
         let answeredVsUnanswered = ProfileController.knocksAnsweredVsUnanswered(from: prospects)
 
         NavigationView {
-            VStack {
-                Text("Total Knocks: \(totalKnocks)")
-                    .font(.title2)
-                    .padding(.bottom)
+            Form {
+                Section(header: Text("Summary")) {
+                    Text("Total Knocks: \(totalKnocks)")
+                        .font(.headline)
+                }
 
-                Chart {
-                    ForEach(knocksByList.sorted(by: { $0.key < $1.key }), id: \.key) { list, total in
+                Section(header: Text("Knocks by List")) {
+                    Chart {
+                        ForEach(knocksByList.sorted(by: { $0.key < $1.key }), id: \.key) { list, total in
+                            BarMark(
+                                x: .value("List", list),
+                                y: .value("Knocks", total)
+                            )
+                        }
+                    }
+                    .frame(height: 120)
+                }
+
+                Section(header: Text("Answered vs Unanswered")) {
+                    Chart {
                         BarMark(
-                            x: .value("List", list),
-                            y: .value("Knocks", total)
+                            x: .value("Status", "Answered"),
+                            y: .value("Count", answeredVsUnanswered.answered)
+                        )
+                        BarMark(
+                            x: .value("Status", "Not Answered"),
+                            y: .value("Count", answeredVsUnanswered.unanswered)
                         )
                     }
+                    .frame(height: 120)
                 }
-                .frame(height: 120)
-                .padding()
 
-                Text("Answered vs Unanswered Knocks")
-                    .font(.headline)
-                    .padding(.top)
-
-                Chart {
-                    BarMark(
-                        x: .value("Status", "Answered"),
-                        y: .value("Count", answeredVsUnanswered.answered)
-                    )
-                    BarMark(
-                        x: .value("Status", "Not Answered"),
-                        y: .value("Count", answeredVsUnanswered.unanswered)
-                    )
+                Section {
+                    Button(role: .destructive) {
+                        isLoggedIn = false
+                    } label: {
+                        Text("Log Out")
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
                 }
-                .frame(height: 120)
-                .padding()
-
-                Spacer()
-
-                Button("Log Out") {
-                    isLoggedIn = false
-                }
-                .foregroundColor(.red)
-                .padding(.bottom)
             }
-            .navigationTitle("Knock Report")
+            .navigationTitle("Profile")
         }
     }
 }
