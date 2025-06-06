@@ -11,9 +11,15 @@ import Foundation
 
 @main
 struct d2d_map_serviceApp: App {
+    @State private var isLoggedIn = false
+
     var body: some Scene {
         WindowGroup {
-            RootView()
+            if isLoggedIn {
+                RootView(isLoggedIn: $isLoggedIn)
+            } else {
+                LoginView(isLoggedIn: $isLoggedIn)
+            }
         }
         .modelContainer(sharedModelContainer)
     }
