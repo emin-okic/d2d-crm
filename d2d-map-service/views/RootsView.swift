@@ -12,6 +12,8 @@ import MapKit
 struct RootView: View {
     @Binding var isLoggedIn: Bool
     
+    let userEmail: String
+    
     @Environment(\.modelContext) private var modelContext
 
     @State private var region = MKCoordinateRegion(
@@ -26,7 +28,8 @@ struct RootView: View {
         TabView {
             MapSearchView(
                 region: $region,
-                selectedList: $selectedList
+                selectedList: $selectedList,
+                userEmail: userEmail
             )
             .tabItem {
                 Label("Map", systemImage: "map.fill")

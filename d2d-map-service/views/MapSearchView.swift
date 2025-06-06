@@ -16,6 +16,8 @@ struct MapSearchView: View {
     @Binding var region: MKCoordinateRegion
     @Query var prospects: [Prospect]
     @Binding var selectedList: String   // ← whatever filter you’re using
+    
+    let userEmail: String
 
     // We keep a controller for map logic… (details omitted)
     @StateObject private var controller: MapController
@@ -30,11 +32,13 @@ struct MapSearchView: View {
     @State private var showOutcomePrompt = false
     
     @Environment(\.modelContext) private var modelContext
-
+    
     init(region: Binding<MKCoordinateRegion>,
-         selectedList: Binding<String>) {
+         selectedList: Binding<String>,
+         userEmail: String) {
         _region = region
         _selectedList = selectedList
+        self.userEmail = userEmail
         _controller = StateObject(wrappedValue: MapController(region: region.wrappedValue))
     }
 
@@ -168,7 +172,7 @@ struct MapSearchView: View {
             $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
         }) {
             existing.count += 1
-            existing.knockHistory.append(Knock(date: now, status: status, latitude: lat, longitude: lon))
+            existing.knockHistory.append(Knock(date: now, status: status, latitude: lat, longitude: lon, userEmail: userEmail))
         } else {
             let newProspect = Prospect(
                 fullName: "New Prospect",
@@ -176,7 +180,7 @@ struct MapSearchView: View {
                 count: 1,
                 list: "Prospects"
             )
-            newProspect.knockHistory = [Knock(date: now, status: status, latitude: lat, longitude: lon)]
+            newProspect.knockHistory = [Knock(date: now, status: status, latitude: lat, longitude: lon, userEmail: userEmail)]
             modelContext.insert(newProspect)
 
             // Insert to DB and get row ID
@@ -186,7 +190,7 @@ struct MapSearchView: View {
         }
 
         if let id = prospectId {
-            DatabaseController.shared.addKnock(for: id, date: now, status: status, latitude: lat, longitude: lon)
+            DatabaseController.shared.addKnock(for: id, date: now, status: status, latitude: lat, longitude: lon, userEmailValue: userEmail)
         }
 
         controller.performSearch(query: address)
