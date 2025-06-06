@@ -18,14 +18,20 @@ struct d2d_map_serviceApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if isLoggedIn {
-                RootView(isLoggedIn: $isLoggedIn, userEmail: emailInput)
-            } else {
-                LoginView(isLoggedIn: $isLoggedIn, emailInput: $emailInput)
+            ZStack {
+                if isLoggedIn {
+                    RootView(isLoggedIn: $isLoggedIn, userEmail: emailInput)
+                } else {
+                    LoginView(isLoggedIn: $isLoggedIn, emailInput: $emailInput)
+                }
+            }
+            .onOpenURL { url in
+                AuthManager.shared.handleRedirectURL(url)
             }
         }
         .modelContainer(sharedModelContainer)
     }
+    
 }
 
 // Use a shared container pointed to the custom folder

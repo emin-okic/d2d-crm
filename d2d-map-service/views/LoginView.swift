@@ -11,7 +11,7 @@ struct LoginView: View {
     @Binding var isLoggedIn: Bool
     @Binding var emailInput: String
     @State private var errorMessage: String?
-
+    
     var body: some View {
         VStack(spacing: 20) {
             Text("Login")
@@ -30,15 +30,28 @@ struct LoginView: View {
             }
 
             Button("Login") {
-                let trimmedEmail = emailInput.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !trimmedEmail.isEmpty {
-                    isLoggedIn = true
-                } else {
-                    errorMessage = "Please enter an email to continue"
-                }
+                login()
             }
             .padding()
         }
         .padding()
+    }
+
+    private func login() {
+        guard let windowScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
+              let rootVC = windowScene.windows.first?.rootViewController else {
+            errorMessage = "Unable to get root view controller"
+            return
+        }
+
+        AuthManager.shared.signIn(presentingViewController: rootVC) { success, error in
+            DispatchQueue.main.async {
+                if success {
+                    isLoggedIn = true
+                } else {
+                    errorMessage = error
+                }
+            }
+        }
     }
 }
