@@ -1,5 +1,5 @@
 //
-//  GraphsView.swift
+//  ProfileView.swift
 //  d2d-map-service
 //
 //  Created by Emin Okic on 5/31/25.
@@ -9,13 +9,13 @@ import SwiftUI
 import Charts
 import SwiftData
 
-struct GraphView: View {
+struct ProfileView: View {
     @Query var prospects: [Prospect]
 
     var body: some View {
-        let totalKnocks = GraphController.totalKnocks(from: prospects)
-        let knocksByList = GraphController.knocksByList(from: prospects)
-        let answeredVsUnanswered = GraphController.knocksAnsweredVsUnanswered(from: prospects)
+        let totalKnocks = ProfileController.totalKnocks(from: prospects)
+        let knocksByList = ProfileController.knocksByList(from: prospects)
+        let answeredVsUnanswered = ProfileController.knocksAnsweredVsUnanswered(from: prospects)
 
         NavigationView {
             VStack {

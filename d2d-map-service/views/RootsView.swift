@@ -39,9 +39,9 @@ struct RootView: View {
                 Label("Prospects", systemImage: "person.3.fill")
             }
 
-            GraphView()
+            ProfileView()
                 .tabItem {
-                    Label("Graph", systemImage: "chart.bar.fill")
+                    Label("Profile", systemImage: "person.crop.circle")
                 }
         }
     }

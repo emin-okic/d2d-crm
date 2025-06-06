@@ -1,5 +1,5 @@
 //
-//  GraphController.swift
+//  ProfileController.swift
 //  d2d-map-service
 //
 //  Created by Emin Okic on 5/31/25.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct GraphController {
+struct ProfileController {
     static func totalKnocks(from prospects: [Prospect]) -> Int {
         prospects.map { $0.count }.reduce(0, +)
     }
