@@ -18,6 +18,8 @@ struct LoginView: View {
     @State private var showCreateAccount = false
 
     @Environment(\.modelContext) private var context
+    
+    @State private var showForgotPassword = false
 
     var body: some View {
         VStack(spacing: 20) {
@@ -54,6 +56,13 @@ struct LoginView: View {
             }
             .sheet(isPresented: $showCreateAccount) {
                 CreateAccountView(isLoggedIn: $isLoggedIn, emailInput: $emailInput)
+            }
+            
+            Button("Forgot Password?") {
+                showForgotPassword = true
+            }
+            .sheet(isPresented: $showForgotPassword) {
+                ForgotPasswordView()
             }
         }
         .padding()
