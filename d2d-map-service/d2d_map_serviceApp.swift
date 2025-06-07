@@ -42,7 +42,7 @@ let sharedModelContainer: ModelContainer = {
     )
 
     do {
-        return try ModelContainer(for: Prospect.self, Knock.self, configurations: config)
+        return try ModelContainer(for: Prospect.self, Knock.self, User.self, configurations: config)
     } catch {
         fatalError("Failed to load ModelContainer: \(error)")
     }

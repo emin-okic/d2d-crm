@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+import Foundation
+import SwiftData
 
 struct LoginView: View {
     @Binding var isLoggedIn: Bool
@@ -13,8 +15,10 @@ struct LoginView: View {
 
     @State private var passwordInput: String = ""
     @State private var errorMessage: String?
-    
+
     @State private var showCreateAccount = false
+
+    @Environment(\.modelContext) private var context
 
     var body: some View {
         VStack(spacing: 20) {
@@ -57,12 +61,23 @@ struct LoginView: View {
         let trimmedEmail = emailInput.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedPassword = passwordInput.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !trimmedEmail.isEmpty, !trimmedPassword.isEmpty else {
-            errorMessage = "Please enter both email and password"
-            return
-        }
+        do {
+            let descriptor = FetchDescriptor<User>(
+                predicate: #Predicate {
+                    $0.email == trimmedEmail && $0.password == trimmedPassword
+                }
+            )
 
-        // ✅ Simulate successful login
-        isLoggedIn = true
+            let results = try context.fetch(descriptor)
+
+            if let _ = results.first {
+                isLoggedIn = true
+            } else {
+                errorMessage = "Invalid email or password"
+            }
+
+        } catch {
+            errorMessage = "Login failed: \(error.localizedDescription)"
+        }
     }
 }

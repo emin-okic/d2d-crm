@@ -51,7 +51,7 @@ struct CreateAccountView: View {
 
     private func createAccount() {
         guard !emailInput.isEmpty, !password.isEmpty else {
-            errorMessage = "Check that email and passwords are filled and match"
+            errorMessage = "Check that email and password are filled"
             return
         }
 
@@ -60,8 +60,9 @@ struct CreateAccountView: View {
 
         do {
             try context.save()
+            // Instead of relying on @Query updates, directly flag login and dismiss
             isLoggedIn = true
-            dismiss() // Dismiss to go back to main view
+            dismiss()
         } catch {
             errorMessage = "Failed to create user: \(error.localizedDescription)"
         }
