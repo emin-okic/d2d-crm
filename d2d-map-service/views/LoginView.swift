@@ -22,69 +22,76 @@ struct LoginView: View {
     @Environment(\.modelContext) private var context
 
     var body: some View {
-        VStack(spacing: 24) {
-            // MARK: - Title
-            Text("Login")
-                .font(.largeTitle)
-                .bold()
-                .padding(.top, 40)
+        GeometryReader { geometry in
+            VStack {
+                Spacer(minLength: geometry.size.height * 0.1)
 
-            // MARK: - Credentials
-            VStack(spacing: 16) {
-                TextField("Email", text: $emailInput)
-                    .keyboardType(.emailAddress)
-                    .autocapitalization(.none)
-                    .textContentType(.username)
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(10)
+                VStack(spacing: 24) {
+                    // MARK: - Title
+                    Text("The D2D CRM")
+                        .font(.largeTitle)
+                        .bold()
 
-                SecureField("Password", text: $passwordInput)
-                    .textContentType(.password)
-                    .autocapitalization(.none)
-                    .disableAutocorrection(true)
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(10)
-            }
+                    // MARK: - Credentials
+                    VStack(spacing: 16) {
+                        TextField("Email", text: $emailInput)
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                            .textContentType(.username)
+                            .padding()
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(10)
 
-            // MARK: - Error Message
-            if let error = errorMessage {
-                Text(error)
-                    .foregroundColor(.red)
-                    .font(.subheadline)
-                    .padding(.top, -12)
-            }
+                        SecureField("Password", text: $passwordInput)
+                            .textContentType(.password)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .padding()
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(10)
+                    }
 
-            // MARK: - Login Button
-            Button(action: login) {
-                Text("Login")
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-            }
+                    // MARK: - Error Message
+                    if let error = errorMessage {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .font(.subheadline)
+                            .padding(.top, -12)
+                    }
 
-            Spacer()
-
-            // MARK: - Secondary Actions
-            VStack(spacing: 8) {
-                Button("Create Account") {
-                    showCreateAccount = true
+                    // MARK: - Login Button
+                    Button(action: login) {
+                        Text("Login")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                    }
                 }
-                .font(.footnote)
-                .foregroundColor(.blue)
+                .padding(.horizontal)
+                
+                Spacer()
 
-                Button("Forgot Password?") {
-                    showForgotPassword = true
+                // MARK: - Secondary Actions
+                VStack(spacing: 12) {
+                    Button("Create Account") {
+                        showCreateAccount = true
+                    }
+                    .font(.footnote)
+                    .foregroundColor(.blue)
+                    .padding(.bottom, 4)
+
+                    Button("Forgot Password?") {
+                        showForgotPassword = true
+                    }
+                    .font(.footnote)
+                    .foregroundColor(.gray)
+                    .padding(.bottom, 36)
                 }
-                .font(.footnote)
-                .foregroundColor(.gray)
             }
-            .padding(.bottom, 40)
+            .frame(width: geometry.size.width, height: geometry.size.height)
         }
-        .padding(.horizontal)
         .sheet(isPresented: $showCreateAccount) {
             CreateAccountView(isLoggedIn: $isLoggedIn, emailInput: $emailInput)
         }
