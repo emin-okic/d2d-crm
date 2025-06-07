@@ -23,6 +23,8 @@ struct EditProspectView: View {
 
     /// Predefined list categories a prospect can belong to.
     let allLists = ["Prospects", "Customers"]
+    
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         Form {
@@ -50,6 +52,27 @@ struct EditProspectView: View {
                     presentationMode.wrappedValue.dismiss()
                 }
             }
+            ToolbarItem(placement: .destructiveAction) {
+                Button(role: .destructive) {
+                    deleteProspect()
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
         }
+    }
+    
+    private func deleteProspect() {
+        // 1. Delete the prospect from SwiftData
+        modelContext.delete(prospect)
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to delete prospect from SwiftData: \(error)")
+        }
+
+        // 2. Dismiss the view
+        presentationMode.wrappedValue.dismiss()
     }
 }
