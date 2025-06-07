@@ -42,7 +42,10 @@
 		C59F0F852DE7CEAB00D186C5 /* Exceptions for "d2d-map-service" folder in "d2d-map-service" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				controllers/README.md,
 				Info.plist,
+				models/README.md,
+				views/README.md,
 			);
 			target = C5BE4B332DE7CC9E005C37B1 /* d2d-map-service */;
 		};
