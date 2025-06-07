@@ -10,6 +10,8 @@ import SwiftUI
 struct LoginView: View {
     @Binding var isLoggedIn: Bool
     @Binding var emailInput: String
+
+    @State private var passwordInput: String = ""
     @State private var errorMessage: String?
 
     var body: some View {
@@ -24,21 +26,34 @@ struct LoginView: View {
                 .background(Color(.secondarySystemBackground))
                 .cornerRadius(10)
 
+            SecureField("Password", text: $passwordInput)
+                .padding()
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(10)
+
             if let error = errorMessage {
                 Text(error)
                     .foregroundColor(.red)
             }
 
             Button("Login") {
-                let trimmedEmail = emailInput.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !trimmedEmail.isEmpty {
-                    isLoggedIn = true
-                } else {
-                    errorMessage = "Please enter an email to continue"
-                }
+                login()
             }
             .padding()
         }
         .padding()
+    }
+
+    private func login() {
+        let trimmedEmail = emailInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPassword = passwordInput.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !trimmedEmail.isEmpty, !trimmedPassword.isEmpty else {
+            errorMessage = "Please enter both email and password"
+            return
+        }
+
+        // ✅ Simulate successful login
+        isLoggedIn = true
     }
 }
