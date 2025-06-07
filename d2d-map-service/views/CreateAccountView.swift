@@ -8,12 +8,6 @@
 import SwiftUI
 import SwiftData
 
-import CryptoKit
-
-/// A SwiftUI view that allows users to create a new account.
-///
-/// The view handles form input, performs validation, and stores new users in the SwiftData model.
-/// On successful account creation, it logs the user in and dismisses the view.
 struct CreateAccountView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
@@ -78,7 +72,7 @@ struct CreateAccountView: View {
                 return
             }
 
-            let hashedPassword = sha256Hash(trimmedPassword)
+            let hashedPassword = PasswordController.hash(trimmedPassword)
             let newUser = User(email: trimmedEmail, password: hashedPassword)
             context.insert(newUser)
             try context.save()
@@ -89,11 +83,5 @@ struct CreateAccountView: View {
         } catch {
             errorMessage = "Account creation failed: \(error.localizedDescription)"
         }
-    }
-
-    private func sha256Hash(_ string: String) -> String {
-        let data = Data(string.utf8)
-        let hash = SHA256.hash(data: data)
-        return hash.map { String(format: "%02x", $0) }.joined()
     }
 }

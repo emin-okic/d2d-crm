@@ -8,12 +8,7 @@
 import SwiftUI
 import Foundation
 import SwiftData
-import CryptoKit
 
-/// A login screen that allows users to sign in using an email and password.
-///
-/// If login is successful, the view sets `isLoggedIn` to true to transition to the main app.
-/// Includes a link to a `CreateAccountView` for new user registration.
 struct LoginView: View {
     @Binding var isLoggedIn: Bool
     @Binding var emailInput: String
@@ -67,7 +62,7 @@ struct LoginView: View {
     private func login() {
         let trimmedEmail = emailInput.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedPassword = passwordInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        let hashedInput = sha256Hash(trimmedPassword)
+        let hashedInput = PasswordController.hash(trimmedPassword)
 
         do {
             let descriptor = FetchDescriptor<User>(
@@ -86,11 +81,5 @@ struct LoginView: View {
         } catch {
             errorMessage = "Login failed: \(error.localizedDescription)"
         }
-    }
-
-    private func sha256Hash(_ string: String) -> String {
-        let data = Data(string.utf8)
-        let hash = SHA256.hash(data: data)
-        return hash.map { String(format: "%02x", $0) }.joined()
     }
 }
