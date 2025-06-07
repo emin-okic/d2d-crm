@@ -8,33 +8,47 @@
 import SwiftUI
 import MapKit
 import CoreLocation
-import UniformTypeIdentifiers   // for .commaSeparatedText
+import UniformTypeIdentifiers
 import SwiftData
 
+/// A view that displays a map with prospect markers and a search bar for logging door knocks.
+///
+/// Tapping a marker allows the user to record a knock outcome ("Answered" or "Not Answered").
+/// New addresses entered in the search bar also trigger this prompt.
 struct MapSearchView: View {
-    // These are bindings passed in from ContentView (or wherever).
+    // MARK: - Dependencies
+
+    /// The currently visible map region, bound to the parent.
     @Binding var region: MKCoordinateRegion
-    
+
+    /// The list of all prospects filtered by user.
     @Query private var prospects: [Prospect]
-    
-    @Binding var selectedList: String   // ← whatever filter you’re using
-    
+
+    /// The selected list/category filter (e.g., "Prospects" or "Customers").
+    @Binding var selectedList: String
+
+    /// The current user's email (used to scope data).
     let userEmail: String
 
-    // We keep a controller for map logic… (details omitted)
+    /// Controller to manage map logic and annotations.
     @StateObject private var controller: MapController
 
-    // This is the text in the search box:
+    // MARK: - Local State
+
+    /// The search field text input.
     @State private var searchText: String = ""
 
-    // MARK: – NEW STATE PROPERTIES FOR INTERACTIVE TAP
-    /// When you tap a marker, we store its address here…
+    /// Holds the address tapped or entered before choosing an outcome.
     @State private var pendingAddress: String? = nil
-    /// …and show an alert with “Answered / Not Answered”:
+
+    /// Controls whether the knock outcome prompt is visible.
     @State private var showOutcomePrompt = false
-    
+
+    /// SwiftData context for model updates.
     @Environment(\.modelContext) private var modelContext
-    
+
+    // MARK: - Init
+
     init(region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
          userEmail: String) {
@@ -42,44 +56,32 @@ struct MapSearchView: View {
         _selectedList = selectedList
         self.userEmail = userEmail
         _controller = StateObject(wrappedValue: MapController(region: region.wrappedValue))
-
-        // ✅ Add this
         _prospects = Query(filter: #Predicate<Prospect> { $0.userEmail == userEmail })
     }
 
+    // MARK: - Body
+
     var body: some View {
         VStack(spacing: 0) {
-            // ──────────────────────────────────────────────────────────────────
-            // 1) THE MAP WITH TAPPABLE ANNOTATIONS
-            // ──────────────────────────────────────────────────────────────────
+            // MARK: Map with markers
             Map(coordinateRegion: $controller.region,
-                 annotationItems: controller.markers) { place in
-
+                annotationItems: controller.markers) { place in
                 MapAnnotation(coordinate: place.location) {
                     Circle()
                         .fill(place.markerColor)
                         .frame(width: 20, height: 20)
                         .overlay(Circle().stroke(Color.black, lineWidth: 1))
-                        .contentShape(Rectangle()) // defines tappable area
+                        .contentShape(Rectangle()) // Ensures full tap target
                         .onTapGesture {
-                            pendingAddress = place.address
-                            showOutcomePrompt = true
-                        }
-                        .allowsHitTesting(true)
-                        .onTapGesture {
-                            print("Tapped marker at \(place.address)")
                             pendingAddress = place.address
                             showOutcomePrompt = true
                         }
                 }
             }
-
             .frame(maxHeight: .infinity)
             .edgesIgnoringSafeArea(.horizontal)
 
-            // ──────────────────────────────────────────────────────────────────
-            // 2) SEARCH BAR (unchanged)
-            // ──────────────────────────────────────────────────────────────────
+            // MARK: Search bar
             HStack {
                 HStack {
                     Image(systemName: "magnifyingglass")
@@ -102,72 +104,62 @@ struct MapSearchView: View {
 
             Spacer()
         }
-        // ──────────────────────────────────────────────────────────────────
-        // 3) LIFECYCLE / UPDATE MARKERS WHEN PROSPECTS OR SELECTED LIST CHANGES
-        // ──────────────────────────────────────────────────────────────────
+        // MARK: Map Marker Updates
         .onAppear {
-            let filtered = prospects.filter { $0.list == selectedList }
-            controller.setMarkers(for: filtered)
+            updateMarkers()
         }
-        .onChange(of: prospects) { newProspects in
-            let filtered = newProspects.filter { $0.list == selectedList }
-            controller.setMarkers(for: filtered)
-        }
-        .onChange(of: selectedList) { newList in
-            let filtered = prospects.filter { $0.list == newList }
-            controller.setMarkers(for: filtered)
-        }
+        .onChange(of: prospects) { _ in updateMarkers() }
+        .onChange(of: selectedList) { _ in updateMarkers() }
+
+        // Dismisses keyboard when tapping outside
         .onTapGesture {
-            // Dismiss keyboard if you tap outside
             UIApplication.shared.sendAction(
                 #selector(UIResponder.resignFirstResponder),
                 to: nil, from: nil, for: nil
             )
         }
-        // ──────────────────────────────────────────────────────────────────
-        // 4) ALERT TO CHOOSE “Answered” OR “Not Answered”
-        // ──────────────────────────────────────────────────────────────────
+
+        // MARK: Knock Outcome Prompt
         .alert("Knock Outcome",
                isPresented: $showOutcomePrompt,
                actions: {
             Button("Answered") {
-                // User tapped “Answered”
                 if let addr = pendingAddress {
                     saveKnock(address: addr, status: "Answered")
                 }
             }
             Button("Not Answered") {
-                // User tapped “Not Answered”
                 if let addr = pendingAddress {
                     saveKnock(address: addr, status: "Not Answered")
                 }
             }
-            Button("Cancel", role: .cancel) {
-                // Nothing to do here
-            }
-        },
-               message: {
+            Button("Cancel", role: .cancel) {}
+        }, message: {
             Text("Did someone answer at \(pendingAddress ?? "this address")?")
-        }
-        )
+        })
     }
 
-    // Called when the user types something into the search bar and hits Return.
+    // MARK: - Methods
+
+    /// Updates the visible map markers based on the current list and user scope.
+    private func updateMarkers() {
+        let filtered = prospects.filter { $0.list == selectedList }
+        controller.setMarkers(for: filtered)
+    }
+
+    /// Triggers the outcome prompt when a user types an address into the search bar.
     private func handleSearch(query: String) {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-
-        // Instead of geocoding immediately, first ask the user if they want to log “Answered/Not Answered”
         pendingAddress = trimmed
         showOutcomePrompt = true
     }
 
-    // Update your `prospects` array (and the MapController) once the user picks “Answered” / “Not Answered”:
+    /// Saves a knock for the given address and outcome status. Adds a new prospect if necessary.
     private func saveKnock(address: String, status: String) {
         let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         let now = Date()
         let location = LocationManager.shared.currentLocation
-
         let lat = location?.latitude ?? 0.0
         let lon = location?.longitude ?? 0.0
 
@@ -189,14 +181,21 @@ struct MapSearchView: View {
             newProspect.knockHistory = [Knock(date: now, status: status, latitude: lat, longitude: lon, userEmail: userEmail)]
             modelContext.insert(newProspect)
 
-            // Insert to DB and get row ID
+            // Also insert into SQLite DB
             if let newId = DatabaseController.shared.addProspect(name: newProspect.fullName, addr: newProspect.address) {
                 prospectId = newId
             }
         }
 
         if let id = prospectId {
-            DatabaseController.shared.addKnock(for: id, date: now, status: status, latitude: lat, longitude: lon, userEmailValue: userEmail)
+            DatabaseController.shared.addKnock(
+                for: id,
+                date: now,
+                status: status,
+                latitude: lat,
+                longitude: lon,
+                userEmailValue: userEmail
+            )
         }
 
         controller.performSearch(query: address)
