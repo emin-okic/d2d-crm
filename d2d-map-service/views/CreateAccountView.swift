@@ -50,21 +50,35 @@ struct CreateAccountView: View {
     }
 
     private func createAccount() {
-        guard !emailInput.isEmpty, !password.isEmpty else {
-            errorMessage = "Check that email and password are filled"
+        let trimmedEmail = emailInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !trimmedEmail.isEmpty, !trimmedPassword.isEmpty else {
+            errorMessage = "Email and password must not be empty"
             return
         }
 
-        let newUser = User(email: emailInput, password: password)
-        context.insert(newUser)
-
         do {
+            let descriptor = FetchDescriptor<User>(
+                predicate: #Predicate { $0.email == trimmedEmail }
+            )
+
+            let existingUsers = try context.fetch(descriptor)
+
+            if !existingUsers.isEmpty {
+                errorMessage = "An account with this email already exists"
+                return
+            }
+
+            let newUser = User(email: trimmedEmail, password: trimmedPassword)
+            context.insert(newUser)
+
             try context.save()
-            // Instead of relying on @Query updates, directly flag login and dismiss
             isLoggedIn = true
             dismiss()
+
         } catch {
-            errorMessage = "Failed to create user: \(error.localizedDescription)"
+            errorMessage = "Account creation failed: \(error.localizedDescription)"
         }
     }
 }
