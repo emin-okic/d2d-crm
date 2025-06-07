@@ -13,6 +13,8 @@ struct LoginView: View {
 
     @State private var passwordInput: String = ""
     @State private var errorMessage: String?
+    
+    @State private var showCreateAccount = false
 
     var body: some View {
         VStack(spacing: 20) {
@@ -40,6 +42,13 @@ struct LoginView: View {
                 login()
             }
             .padding()
+
+            Button("Create Account") {
+                showCreateAccount = true
+            }
+            .sheet(isPresented: $showCreateAccount) {
+                CreateAccountView(isLoggedIn: $isLoggedIn, emailInput: $emailInput)
+            }
         }
         .padding()
     }
