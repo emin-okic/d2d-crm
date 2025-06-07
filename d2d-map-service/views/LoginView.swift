@@ -50,6 +50,9 @@ struct LoginView: View {
                 .padding()
                 .background(Color(.secondarySystemBackground))
                 .cornerRadius(10)
+                .textContentType(.password)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
 
             // Show error if login fails
             if let error = errorMessage {
@@ -79,7 +82,7 @@ struct LoginView: View {
     /// If successful, updates the `isLoggedIn` state. Otherwise, shows an error message.
     private func login() {
         let trimmedEmail = emailInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedPassword = passwordInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPassword = passwordInput.trimmingCharacters(in: .whitespaces)
 
         do {
             // Look for a user that matches the email and password

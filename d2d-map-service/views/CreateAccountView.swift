@@ -48,6 +48,9 @@ struct CreateAccountView: View {
                 .padding()
                 .background(Color(.secondarySystemBackground))
                 .cornerRadius(10)
+                .textContentType(.password)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
 
             // Display any error messages
             if let error = errorMessage {
@@ -71,7 +74,7 @@ struct CreateAccountView: View {
     /// - Inserts the new user and logs them in if successful.
     private func createAccount() {
         let trimmedEmail = emailInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPassword = password.trimmingCharacters(in: .whitespaces)
 
         guard !trimmedEmail.isEmpty, !trimmedPassword.isEmpty else {
             errorMessage = "Email and password must not be empty"
