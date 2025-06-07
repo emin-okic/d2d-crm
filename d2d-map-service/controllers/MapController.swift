@@ -9,23 +9,39 @@ import Foundation
 import MapKit
 import CoreLocation
 
+/// `MapController` manages map-related logic such as marker placement, geocoding searches,
+/// and updating the visible map region based on annotations.
+///
+/// This class supports:
+/// - Managing a list of `IdentifiablePlace` markers
+/// - Performing geocoded address searches
+/// - Centering and zooming the map to fit all markers
+/// - Dynamically updating markers based on prospects
 class MapController: ObservableObject {
+    
+    /// Published list of markers (used in SwiftUI map annotations)
     @Published var markers: [IdentifiablePlace] = []
+
+    /// Current visible region of the map
     @Published var region: MKCoordinateRegion
     
+    /// Initializes the controller with a given map region.
     init(region: MKCoordinateRegion) {
         self.region = region
     }
     
-    // Clears all existing markers immediately
+    /// Clears all existing markers from the map.
     func clearMarkers() {
         markers.removeAll()
     }
-    
+
+    /// Normalizes a string (e.g. address) for comparison (lowercased and trimmed).
     private func normalized(_ query: String) -> String {
         query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
     
+    /// Performs a geocoding search on the provided address and places or updates a marker on the map.
+    /// - Parameter query: The address string to geocode.
     func performSearch(query: String) {
         let key = normalized(query)
         let geocoder = CLGeocoder()
@@ -53,7 +69,7 @@ class MapController: ObservableObject {
         }
     }
     
-    // Adjusts map region to fit all markers
+    /// Updates the `region` property to fit all current markers on the map.
     private func updateRegionToFitAllMarkers() {
         guard !markers.isEmpty else { return }
 
@@ -72,26 +88,25 @@ class MapController: ObservableObject {
         let lonDelta = (maxLon - minLon) * 1.5
 
         region = MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: centerLat,
-                                           longitude: centerLon),
+            center: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon),
             span: MKCoordinateSpan(latitudeDelta: max(latDelta, 0.01),
                                    longitudeDelta: max(lonDelta, 0.01))
         )
     }
     
-    /// Adds markers for each prospect in the passed array (does NOT clear existing markers!)
+    /// Geocodes and adds map markers for the given list of prospects.
+    /// - Parameter prospects: Array of `Prospect` objects.
     func addProspects(_ prospects: [Prospect]) {
         for prospect in prospects {
             performSearch(query: prospect.address)
         }
     }
     
-    // Called when you want to show only these prospects’ markers
+    /// Replaces existing markers with those derived from the provided list of prospects.
+    /// - Parameter prospects: Array of `Prospect` objects to display.
     func setMarkers(for prospects: [Prospect]) {
-        // 1) Remove anything currently on the map
         clearMarkers()
         
-        // 2) For each prospect, geocode its address and then append a new marker
         for prospect in prospects {
             let address = prospect.address
             let geocoder = CLGeocoder()
@@ -115,5 +130,4 @@ class MapController: ObservableObject {
             }
         }
     }
-
 }
