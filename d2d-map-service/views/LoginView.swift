@@ -8,28 +8,20 @@
 import SwiftUI
 import Foundation
 import SwiftData
+import CryptoKit
 
 /// A login screen that allows users to sign in using an email and password.
 ///
 /// If login is successful, the view sets `isLoggedIn` to true to transition to the main app.
 /// Includes a link to a `CreateAccountView` for new user registration.
 struct LoginView: View {
-    /// Tracks whether the user has successfully logged in.
     @Binding var isLoggedIn: Bool
-
-    /// Email input bound from the parent context.
     @Binding var emailInput: String
 
-    /// Password entered by the user.
     @State private var passwordInput: String = ""
-
-    /// Optional error message shown when login fails.
     @State private var errorMessage: String?
-
-    /// Controls whether the Create Account sheet is shown.
     @State private var showCreateAccount = false
 
-    /// The SwiftData model context used for fetching user records.
     @Environment(\.modelContext) private var context
 
     var body: some View {
@@ -37,7 +29,6 @@ struct LoginView: View {
             Text("Login")
                 .font(.largeTitle)
 
-            // Email input field
             TextField("Email", text: $emailInput)
                 .autocapitalization(.none)
                 .keyboardType(.emailAddress)
@@ -45,7 +36,6 @@ struct LoginView: View {
                 .background(Color(.secondarySystemBackground))
                 .cornerRadius(10)
 
-            // Password input field
             SecureField("Password", text: $passwordInput)
                 .padding()
                 .background(Color(.secondarySystemBackground))
@@ -54,19 +44,16 @@ struct LoginView: View {
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
 
-            // Show error if login fails
             if let error = errorMessage {
                 Text(error)
                     .foregroundColor(.red)
             }
 
-            // Trigger login flow
             Button("Login") {
                 login()
             }
             .padding()
 
-            // Show Create Account sheet
             Button("Create Account") {
                 showCreateAccount = true
             }
@@ -77,25 +64,20 @@ struct LoginView: View {
         .padding()
     }
 
-    /// Attempts to authenticate the user using the provided email and password.
-    ///
-    /// If successful, updates the `isLoggedIn` state. Otherwise, shows an error message.
     private func login() {
         let trimmedEmail = emailInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedPassword = passwordInput.trimmingCharacters(in: .whitespaces)
+        let trimmedPassword = passwordInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        let hashedInput = sha256Hash(trimmedPassword)
 
         do {
-            // Look for a user that matches the email and password
             let descriptor = FetchDescriptor<User>(
                 predicate: #Predicate {
-                    $0.email == trimmedEmail && $0.password == trimmedPassword
+                    $0.email == trimmedEmail && $0.password == hashedInput
                 }
             )
-
             let results = try context.fetch(descriptor)
 
-            // If user found, login succeeds
-            if let _ = results.first {
+            if results.first != nil {
                 isLoggedIn = true
             } else {
                 errorMessage = "Invalid email or password"
@@ -104,5 +86,11 @@ struct LoginView: View {
         } catch {
             errorMessage = "Login failed: \(error.localizedDescription)"
         }
+    }
+
+    private func sha256Hash(_ string: String) -> String {
+        let data = Data(string.utf8)
+        let hash = SHA256.hash(data: data)
+        return hash.map { String(format: "%02x", $0) }.joined()
     }
 }
