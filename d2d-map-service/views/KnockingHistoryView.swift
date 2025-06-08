@@ -19,7 +19,7 @@ struct KnockingHistoryView: View {
     @Bindable var prospect: Prospect
     
     var body: some View {
-        Section(header: Text("Knock History")) {
+        Section() {
             if prospect.knockHistory.isEmpty {
                 // Show message if there are no recorded knocks
                 Text("No knocks recorded yet.")
