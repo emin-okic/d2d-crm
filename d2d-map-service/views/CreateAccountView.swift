@@ -19,6 +19,9 @@ struct CreateAccountView: View {
     @State private var confirmPassword: String = ""
     @State private var errorMessage: String?
 
+    @State private var showVerification = false
+    @State private var generatedCode: String?
+
     var body: some View {
         VStack(spacing: 20) {
             Text("Create Account")
@@ -35,9 +38,6 @@ struct CreateAccountView: View {
                 .padding()
                 .background(Color(.secondarySystemBackground))
                 .cornerRadius(10)
-                .textContentType(.password)
-                .autocapitalization(.none)
-                .disableAutocorrection(true)
 
             if let error = errorMessage {
                 Text(error)
@@ -50,6 +50,18 @@ struct CreateAccountView: View {
             .padding()
         }
         .padding()
+        .sheet(isPresented: $showVerification) {
+            if let code = generatedCode {
+                VerifyCodeView(
+                    email: emailInput,
+                    expectedCode: code,
+                    onVerified: {
+                        isLoggedIn = true
+                        dismiss()
+                    }
+                )
+            }
+        }
     }
 
     private func createAccount() {
@@ -72,13 +84,11 @@ struct CreateAccountView: View {
                 return
             }
 
-            let hashedPassword = PasswordController.hash(trimmedPassword)
-            let newUser = User(email: trimmedEmail, password: hashedPassword)
-            context.insert(newUser)
-            try context.save()
-
-            isLoggedIn = true
-            dismiss()
+            // Send email verification code
+            let code = VerificationCodeGenerator.generate()
+            BrevoMailer.sendVerification(to: trimmedEmail, code: code)
+            generatedCode = code
+            showVerification = true
 
         } catch {
             errorMessage = "Account creation failed: \(error.localizedDescription)"

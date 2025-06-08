@@ -25,6 +25,8 @@ class User {
 
     /// A unique identifier for the user (generated automatically by default).
     var id: UUID
+    
+    var isVerified: Bool
 
     /// Initializes a new `User` instance.
     ///
@@ -32,9 +34,10 @@ class User {
     ///   - email: The user's email address.
     ///   - password: The user's password.
     ///   - id: Optional UUID; defaults to a newly generated UUID.
-    init(email: String, password: String, id: UUID = UUID()) {
+    init(email: String, password: String, isVerified: Bool = false, id: UUID = UUID()) {
         self.email = email
         self.password = password
         self.id = id
+        self.isVerified = isVerified
     }
 }
