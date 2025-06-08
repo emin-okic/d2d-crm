@@ -22,6 +22,7 @@ struct ProfileView: View {
 
     /// A query that fetches all `Prospect` records associated with the current user.
     @Query private var prospects: [Prospect]
+    @Query private var allProspects: [Prospect]        // Global
 
     /// Initializes the profile view with a login state binding and user email.
     /// Filters prospects to only include those associated with the current user.
@@ -41,10 +42,18 @@ struct ProfileView: View {
 
         NavigationView {
             Form {
+                
+                // Get personal and global knock counts
+                let yourKnocks = ProfileController.totalKnocks(from: prospects, userEmail: userEmail)
+                let globalKnocks = ProfileController.totalKnocks(from: allProspects)
+
                 // MARK: Total Knocks Summary
                 Section(header: Text("Summary")) {
-                    Text("Total Knocks: \(totalKnocks)")
-                        .font(.headline)
+                    HStack(spacing: 12) {
+                        LeaderboardCardView(title: "You", count: yourKnocks)
+                        LeaderboardCardView(title: "Global", count: globalKnocks)
+                    }
+                    .padding(.vertical, 8)
                 }
 
                 // MARK: Knocks Grouped by List
