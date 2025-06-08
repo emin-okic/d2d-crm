@@ -139,17 +139,15 @@ struct MapSearchView: View {
         })
         .sheet(isPresented: $showNoteInput) {
             NavigationView {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Add a note about the knock")
-                        .font(.headline)
+                Form {
+                    Section(header: Text("Note Details")) {
+                        TextEditor(text: $newNoteText)
+                            .frame(minHeight: 100)
+                            .padding(.vertical, 4)
+                    }
 
-                    TextEditor(text: $newNoteText)
-                        .frame(height: 120)
-                        .border(Color.secondary)
-
-                    HStack {
-                        Spacer()
-                        Button("Save") {
+                    Section {
+                        Button("Save Note") {
                             if let prospect = prospectToNote {
                                 let note = Note(content: newNoteText, authorEmail: userEmail)
                                 prospect.notes.append(note)
@@ -161,8 +159,8 @@ struct MapSearchView: View {
                         .disabled(newNoteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                 }
-                .padding()
                 .navigationTitle("New Note")
+                .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel") {
@@ -172,6 +170,7 @@ struct MapSearchView: View {
                     }
                 }
             }
+            .tint(.accentColor) // Use system accent
         }
     }
 
