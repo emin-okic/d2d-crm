@@ -44,6 +44,25 @@ struct EditProspectView: View {
 
             // MARK: - Knock History Section
             KnockingHistoryView(prospect: prospect)
+            
+            // Inside Form, after KnockingHistoryView
+
+            Section(header: Text("Notes")) {
+                ForEach(prospect.notes.sorted(by: { $0.date > $1.date }), id: \.date) { note in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(note.content)
+                            .font(.body)
+                        Text("— \(note.authorEmail), \(note.date.formatted(.dateTime.month().day().hour().minute()))")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.vertical, 4)
+                }
+
+                // New Note Input
+                AddNoteView(prospect: prospect)
+            }
+            
         }
         .navigationTitle("Edit Prospect")
         .toolbar {
