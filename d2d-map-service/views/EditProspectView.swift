@@ -25,6 +25,9 @@ struct EditProspectView: View {
     let allLists = ["Prospects", "Customers"]
     
     @Environment(\.modelContext) private var modelContext
+    
+    @State private var showKnockHistory = false
+    @State private var showNotes = false
 
     var body: some View {
         Form {
@@ -42,8 +45,36 @@ struct EditProspectView: View {
             }
             .pickerStyle(.menu)
 
-            // MARK: - Knock History Section
-            KnockingHistoryView(prospect: prospect)
+            // MARK: - Knock History Section (Expandable)
+            Section {
+                DisclosureGroup(isExpanded: $showKnockHistory) {
+                    KnockingHistoryView(prospect: prospect)
+                } label: {
+                    Text("Knock History")
+                        .fontWeight(.semibold)
+                }
+            }
+
+            // MARK: - Notes Section (Expandable)
+            Section {
+                DisclosureGroup(isExpanded: $showNotes) {
+                    ForEach(prospect.notes.sorted(by: { $0.date > $1.date }), id: \.date) { note in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(note.content)
+                                .font(.body)
+                            Text("— \(note.authorEmail), \(note.date.formatted(.dateTime.month().day().hour().minute()))")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                        .padding(.vertical, 4)
+                    }
+
+                    AddNoteView(prospect: prospect)
+                } label: {
+                    Text("Notes")
+                        .fontWeight(.semibold)
+                }
+            }
         }
         .navigationTitle("Edit Prospect")
         .toolbar {

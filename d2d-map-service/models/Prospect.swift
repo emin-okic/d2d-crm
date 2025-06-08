@@ -30,6 +30,9 @@ class Prospect {
     
     /// The email of the user who created or owns this prospect.
     var userEmail: String
+    
+    // Add this to your Prospect class:
+    var notes: [Note] = []
 
     /// Initializes a new prospect.
     /// - Parameters:
