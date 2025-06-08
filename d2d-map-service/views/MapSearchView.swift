@@ -46,6 +46,10 @@ struct MapSearchView: View {
 
     /// SwiftData context for model updates.
     @Environment(\.modelContext) private var modelContext
+    
+    @State private var showNoteInput = false
+    @State private var newNoteText = ""
+    @State private var prospectToNote: Prospect? = nil
 
     // MARK: - Init
 
@@ -124,19 +128,51 @@ struct MapSearchView: View {
                isPresented: $showOutcomePrompt,
                actions: {
             Button("Answered") {
-                if let addr = pendingAddress {
-                    saveKnock(address: addr, status: "Answered")
-                }
+                handleKnockAndPromptNote(status: "Answered")
             }
             Button("Not Answered") {
-                if let addr = pendingAddress {
-                    saveKnock(address: addr, status: "Not Answered")
-                }
+                handleKnockAndPromptNote(status: "Not Answered")
             }
             Button("Cancel", role: .cancel) {}
         }, message: {
             Text("Did someone answer at \(pendingAddress ?? "this address")?")
         })
+        .sheet(isPresented: $showNoteInput) {
+            NavigationView {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Add a note about the knock")
+                        .font(.headline)
+
+                    TextEditor(text: $newNoteText)
+                        .frame(height: 120)
+                        .border(Color.secondary)
+
+                    HStack {
+                        Spacer()
+                        Button("Save") {
+                            if let prospect = prospectToNote {
+                                let note = Note(content: newNoteText, authorEmail: userEmail)
+                                prospect.notes.append(note)
+                                try? modelContext.save()
+                            }
+                            newNoteText = ""
+                            showNoteInput = false
+                        }
+                        .disabled(newNoteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                }
+                .padding()
+                .navigationTitle("New Note")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            newNoteText = ""
+                            showNoteInput = false
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // MARK: - Methods
@@ -156,7 +192,8 @@ struct MapSearchView: View {
     }
 
     /// Saves a knock for the given address and outcome status. Adds a new prospect if necessary.
-    private func saveKnock(address: String, status: String) {
+    @discardableResult
+    private func saveKnock(address: String, status: String) -> Prospect {
         let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         let now = Date()
         let location = LocationManager.shared.currentLocation
@@ -164,12 +201,16 @@ struct MapSearchView: View {
         let lon = location?.longitude ?? 0.0
 
         var prospectId: Int64?
+        var updatedProspect: Prospect
 
         if let existing = prospects.first(where: {
             $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
         }) {
             existing.count += 1
-            existing.knockHistory.append(Knock(date: now, status: status, latitude: lat, longitude: lon, userEmail: userEmail))
+            existing.knockHistory.append(
+                Knock(date: now, status: status, latitude: lat, longitude: lon, userEmail: userEmail)
+            )
+            updatedProspect = existing
         } else {
             let newProspect = Prospect(
                 fullName: "New Prospect",
@@ -178,10 +219,12 @@ struct MapSearchView: View {
                 list: "Prospects",
                 userEmail: userEmail
             )
-            newProspect.knockHistory = [Knock(date: now, status: status, latitude: lat, longitude: lon, userEmail: userEmail)]
+            newProspect.knockHistory = [
+                Knock(date: now, status: status, latitude: lat, longitude: lon, userEmail: userEmail)
+            ]
             modelContext.insert(newProspect)
+            updatedProspect = newProspect
 
-            // Also insert into SQLite DB
             if let newId = DatabaseController.shared.addProspect(name: newProspect.fullName, addr: newProspect.address) {
                 prospectId = newId
             }
@@ -199,5 +242,16 @@ struct MapSearchView: View {
         }
 
         controller.performSearch(query: address)
+        try? modelContext.save()
+
+        return updatedProspect
+    }
+    
+    private func handleKnockAndPromptNote(status: String) {
+        if let addr = pendingAddress {
+            let prospect = saveKnock(address: addr, status: status)
+            prospectToNote = prospect
+            showNoteInput = true
+        }
     }
 }
