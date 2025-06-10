@@ -108,8 +108,18 @@ struct MapSearchView: View {
 
             Spacer()
         }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    centerMapOnUserLocation()
+                } label: {
+                    Image(systemName: "location.fill")
+                }
+            }
+        }
         // MARK: Map Marker Updates
         .onAppear {
+            updateMarkers()
             updateMarkers()
         }
         .onChange(of: prospects) { _ in updateMarkers() }
@@ -253,4 +263,24 @@ struct MapSearchView: View {
             showNoteInput = true
         }
     }
+    
+    private func centerMapOnUserLocation() {
+        guard let userLocation = LocationManager.shared.currentLocation else { return }
+
+        controller.region = MKCoordinateRegion(
+            center: userLocation,
+            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+        )
+
+        // Remove any previous user markers
+        controller.markers.removeAll { $0.address == "My Location" }
+
+        let userMarker = IdentifiablePlace(
+            address: "My Location",
+            location: userLocation,
+            count: 0
+        )
+        controller.markers.append(userMarker)
+    }
+    
 }
