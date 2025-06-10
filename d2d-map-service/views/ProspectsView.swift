@@ -49,8 +49,38 @@ struct ProspectsView: View {
     var body: some View {
         NavigationView {
             ZStack(alignment: .topTrailing) {
+                
+                // Floating dropdown button (change list)
+                Menu {
+                    Button("Prospects") { selectedList = "Prospects" }
+                    Button("Customers") { selectedList = "Customers" }
+                } label: {
+                    Text(selectedList)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(10)
+                        .shadow(radius: 2)
+                }
+                .padding(.top, 12)
+                .padding(.bottom, 12)
+                .padding(.trailing, 16)
+                .navigationTitle("Your \(selectedList)")
+                
                 // Main list view
                 List {
+                    
+                    // Add a transparent spacer section to push records down into the safe zone
+                    Section {
+                        EmptyView()
+                        EmptyView()
+                    }
+                    .frame(height: 60) // Adjust spacing here
+                    .listRowInsets(EdgeInsets()) // Prevent padding around the spacer
+                    .listRowSeparator(.hidden) // Hide any separator line
+                    
                     let filteredProspects = prospects.filter { $0.list == selectedList }
 
                     ForEach(filteredProspects, id: \.persistentModelID) { prospect in
@@ -76,24 +106,6 @@ struct ProspectsView: View {
                 }
                 .padding(.top, 60) // Add this to push content below the floating menu
                 
-                // Floating dropdown button (change list)
-                Menu {
-                    Button("Prospects") { selectedList = "Prospects" }
-                    Button("Customers") { selectedList = "Customers" }
-                } label: {
-                    Text(selectedList)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(10)
-                        .shadow(radius: 2)
-                }
-                .padding(.top, 12)
-                .padding(.bottom, 12)
-                .padding(.trailing, 16)
-                .navigationTitle("Your \(selectedList)")
                 .toolbar {
                     // MARK: - Add Prospect Button
                     ToolbarItem(placement: .navigationBarTrailing) {
