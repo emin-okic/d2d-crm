@@ -14,96 +14,116 @@ import SwiftData
 struct ProspectsView: View {
     /// Access to the model context for database operations.
     @Environment(\.modelContext) private var modelContext
-
+    
     /// The currently selected list filter (e.g., "Prospects" or "Customers").
     @Binding var selectedList: String
-
+    
     /// Closure to call when a new prospect is added or changes are saved.
     var onSave: () -> Void
-
+    
     /// Email of the current user, used to filter prospects.
     var userEmail: String
-
+    
     /// Stores the ID of the selected prospect to support navigation.
     @State private var selectedProspectID: PersistentIdentifier?
-
+    
     /// Controls whether the "New Prospect" sheet is shown.
     @State private var showingAddProspect = false
-
+    
     /// The available list types to filter prospects by.
     let availableLists = ["Prospects", "Customers"]
-
+    
     /// A query that fetches all prospects owned by the current user.
     @Query var prospects: [Prospect]
-
+    
     /// Custom initializer that injects dynamic user-specific filtering into the query.
     init(selectedList: Binding<String>, userEmail: String, onSave: @escaping () -> Void) {
         _selectedList = selectedList
         self.userEmail = userEmail
         self.onSave = onSave
-
+        
         // Only fetch prospects created by the current user
         _prospects = Query(filter: #Predicate<Prospect> { $0.userEmail == userEmail })
     }
-
+    
     var body: some View {
         NavigationView {
-            List {
-                // MARK: - List Filter Picker
-                Section {
-                    Picker("Select List", selection: $selectedList) {
-                        ForEach(availableLists, id: \.self) { Text($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.vertical, 4)
+            ZStack(alignment: .topTrailing) {
+                
+                // Floating dropdown button (change list)
+                Menu {
+                    Button("Prospects") { selectedList = "Prospects" }
+                    Button("Customers") { selectedList = "Customers" }
+                } label: {
+                    Text(selectedList)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(10)
+                        .shadow(radius: 2)
                 }
+                .padding(.top, 12)
+                .padding(.bottom, 12)
+                .padding(.trailing, 16)
+                .navigationTitle("Your \(selectedList)")
+                
+                // Main list view
+                List {
+                    
+                    // Add a transparent spacer section to push records down into the safe zone
+                    Section {
+                        EmptyView()
+                        EmptyView()
+                    }
+                    .frame(height: 60) // Adjust spacing here
+                    .listRowInsets(EdgeInsets()) // Prevent padding around the spacer
+                    .listRowSeparator(.hidden) // Hide any separator line
+                    
+                    let filteredProspects = prospects.filter { $0.list == selectedList }
 
-                // MARK: - Filtered List of Prospects
-                let filteredProspects = selectedList == "All"
-                    ? prospects
-                    : prospects.filter { $0.list == selectedList }
-
-                ForEach(filteredProspects, id: \.persistentModelID) { prospect in
-                    Button {
-                        selectedProspectID = prospect.persistentModelID
-                    } label: {
-                        VStack(alignment: .leading) {
-                            Text(prospect.fullName)
-                            Text(prospect.address)
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
+                    ForEach(filteredProspects, id: \.persistentModelID) { prospect in
+                        Button {
+                            selectedProspectID = prospect.persistentModelID
+                        } label: {
+                            VStack(alignment: .leading) {
+                                Text(prospect.fullName)
+                                Text(prospect.address)
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                        .background(
+                            NavigationLink(
+                                destination: EditProspectView(prospect: prospect),
+                                tag: prospect.persistentModelID,
+                                selection: $selectedProspectID
+                            ) { EmptyView() }
+                            .hidden()
+                        )
+                    }
+                }
+                .padding(.top, 60) // Add this to push content below the floating menu
+                
+                .toolbar {
+                    // MARK: - Add Prospect Button
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button { showingAddProspect = true } label: {
+                            Image(systemName: "plus")
                         }
                     }
-                    // Hidden navigation link for editing the selected prospect
-                    .background(
-                        NavigationLink(
-                            destination: EditProspectView(prospect: prospect),
-                            tag: prospect.persistentModelID,
-                            selection: $selectedProspectID
-                        ) { EmptyView() }
-                        .hidden()
+                }
+                .sheet(isPresented: $showingAddProspect) {
+                    NewProspectView(
+                        selectedList: $selectedList,
+                        onSave: {
+                            showingAddProspect = false
+                            onSave()
+                        },
+                        userEmail: userEmail
                     )
                 }
-            }
-            .navigationTitle(selectedList)
-            .toolbar {
-                // MARK: - Add Prospect Button
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button { showingAddProspect = true } label: {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
-            // MARK: - Add Prospect Sheet
-            .sheet(isPresented: $showingAddProspect) {
-                NewProspectView(
-                    selectedList: $selectedList,
-                    onSave: {
-                        showingAddProspect = false
-                        onSave()
-                    },
-                    userEmail: userEmail
-                )
             }
         }
     }
