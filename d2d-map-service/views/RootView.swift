@@ -25,10 +25,7 @@ struct RootView: View {
     @Environment(\.modelContext) private var modelContext
 
     /// The region displayed on the map, initially centered on San Francisco.
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
-        span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
-    )
+    @State private var region: MKCoordinateRegion? = nil
 
     /// The currently selected list filter (e.g., "Prospects" or "Customers").
     @State private var selectedList: String = "Prospects"
@@ -37,36 +34,52 @@ struct RootView: View {
     @State private var showingAddProspect = false
 
     var body: some View {
-        TabView {
-            // MARK: - Map Tab
-            MapSearchView(
-                region: $region,
-                selectedList: $selectedList,
-                userEmail: userEmail
-            )
-            .tabItem {
-                Label("Map", systemImage: "map.fill")
-            }
+        if let region = region {
+            TabView {
+                MapSearchView(
+                    region: Binding(get: { region }, set: { self.region = $0 }),
+                    selectedList: $selectedList,
+                    userEmail: userEmail
+                )
+                .tabItem {
+                    Label("Map", systemImage: "map.fill")
+                }
 
-            // MARK: - Prospects Tab
-            ProspectsView(
-                selectedList: $selectedList,
-                userEmail: userEmail
-            ) {
-                showingAddProspect = false
-            }
-            .tabItem {
-                Label("Prospects", systemImage: "person.3.fill")
-            }
+                ProspectsView(
+                    selectedList: $selectedList,
+                    userEmail: userEmail
+                ) {
+                    showingAddProspect = false
+                }
+                .tabItem {
+                    Label("Prospects", systemImage: "person.3.fill")
+                }
 
-            // MARK: - Profile Tab
-            ProfileView(
-                isLoggedIn: $isLoggedIn,
-                userEmail: userEmail
-            )
-            .tabItem {
-                Label("Profile", systemImage: "person.crop.circle")
+                ProfileView(
+                    isLoggedIn: $isLoggedIn,
+                    userEmail: userEmail
+                )
+                .tabItem {
+                    Label("Profile", systemImage: "person.crop.circle")
+                }
             }
+        } else {
+            ProgressView("Loading your location...")
+                .onAppear {
+                    if let loc = LocationManager.shared.currentLocation {
+                        region = MKCoordinateRegion(
+                            center: loc,
+                            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                        )
+                    } else {
+                        // fallback if user denies location
+                        region = MKCoordinateRegion(
+                            center: CLLocationCoordinate2D(latitude: 41.5868, longitude: -93.6250), // Des Moines
+                            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+                        )
+                    }
+                }
         }
+        
     }
 }
