@@ -67,17 +67,29 @@ struct MapSearchView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            
+            // MARK: List Selector
+            Picker("List", selection: $selectedList) {
+                Text("Prospects").tag("Prospects")
+                Text("Customers").tag("Customers")
+            }
+            .pickerStyle(SegmentedPickerStyle())
+            .padding()
+            
             // MARK: Map with markers
             Map(coordinateRegion: $controller.region,
                 annotationItems: controller.markers) { place in
                 MapAnnotation(coordinate: place.location) {
+                    let color = place.markerColor
+                    let address = place.address
+
                     Circle()
-                        .fill(place.markerColor)
+                        .fill(color)
                         .frame(width: 20, height: 20)
                         .overlay(Circle().stroke(Color.black, lineWidth: 1))
                         .contentShape(Rectangle()) // Ensures full tap target
                         .onTapGesture {
-                            pendingAddress = place.address
+                            pendingAddress = address
                             showOutcomePrompt = true
                         }
                 }
