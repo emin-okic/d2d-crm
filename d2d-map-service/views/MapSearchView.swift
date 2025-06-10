@@ -64,62 +64,71 @@ struct MapSearchView: View {
     }
 
     // MARK: - Body
-
     var body: some View {
-        VStack(spacing: 0) {
-            
-            // MARK: List Selector
-            Picker("List", selection: $selectedList) {
-                Text("Prospects").tag("Prospects")
-                Text("Customers").tag("Customers")
-            }
-            .pickerStyle(SegmentedPickerStyle())
-            .padding()
-            
-            // MARK: Map with markers
-            Map(coordinateRegion: $controller.region,
-                annotationItems: controller.markers) { place in
-                MapAnnotation(coordinate: place.location) {
-                    let color = place.markerColor
-                    let address = place.address
+        ZStack(alignment: .topTrailing) {
+            VStack(spacing: 0) {
+                // MARK: Map with markers
+                Map(coordinateRegion: $controller.region,
+                    annotationItems: controller.markers) { place in
+                    MapAnnotation(coordinate: place.location) {
+                        let color = place.markerColor
+                        let address = place.address
 
-                    Circle()
-                        .fill(color)
-                        .frame(width: 20, height: 20)
-                        .overlay(Circle().stroke(Color.black, lineWidth: 1))
-                        .contentShape(Rectangle()) // Ensures full tap target
-                        .onTapGesture {
-                            pendingAddress = address
-                            showOutcomePrompt = true
-                        }
+                        Circle()
+                            .fill(color)
+                            .frame(width: 20, height: 20)
+                            .overlay(Circle().stroke(Color.black, lineWidth: 1))
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                pendingAddress = address
+                                showOutcomePrompt = true
+                            }
+                    }
                 }
-            }
-            .frame(maxHeight: .infinity)
-            .edgesIgnoringSafeArea(.horizontal)
+                .frame(maxHeight: .infinity)
+                .edgesIgnoringSafeArea(.horizontal)
 
-            // MARK: Search bar
-            HStack {
+                // MARK: Search bar
                 HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
-                    TextField("Enter a knock here…", text: $searchText, onCommit: {
-                        let trimmed = searchText.trimmingCharacters(in: .whitespaces)
-                        guard !trimmed.isEmpty else { return }
-                        handleSearch(query: trimmed)
-                    })
-                    .foregroundColor(.primary)
-                    .autocapitalization(.words)
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.gray)
+                        TextField("Enter a knock here…", text: $searchText, onCommit: {
+                            let trimmed = searchText.trimmingCharacters(in: .whitespaces)
+                            guard !trimmed.isEmpty else { return }
+                            handleSearch(query: trimmed)
+                        })
+                        .foregroundColor(.primary)
+                        .autocapitalization(.words)
+                    }
+                    .padding(12)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(12)
+                    .shadow(radius: 3, x: 0, y: 2)
                 }
-                .padding(12)
-                .background(.ultraThinMaterial)
-                .cornerRadius(12)
-                .shadow(radius: 3, x: 0, y: 2)
-            }
-            .padding(.horizontal)
-            .padding(.top, 12)
+                .padding(.horizontal)
+                .padding(.top, 12)
 
-            Spacer()
+                Spacer()
+            }
+
+            // MARK: Floating List Selector
+            Menu {
+                Button("Prospects") { selectedList = "Prospects" }
+                Button("Customers") { selectedList = "Customers" }
+            } label: {
+                Text(selectedList)
+                    .fontWeight(.semibold)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(10)
+                    .shadow(radius: 2)
+            }
+            .padding(.top, 16)
+            .padding(.trailing, 16)
         }
+
         // MARK: Map Marker Updates
         .onAppear {
             updateMarkers()
