@@ -7,29 +7,16 @@
 
 import SwiftUI
 
-/// A form-based view for adding a new prospect to the app.
-///
-/// This view collects a prospect's name and address, assigns them to a selected list,
-/// and associates them with the current user. When the user taps "Save", the new
-/// `Prospect` is added to the SwiftData context and passed to the parent via a callback.
 struct NewProspectView: View {
-    /// The SwiftData model context used to persist new prospects.
     @Environment(\.modelContext) private var modelContext
-
-    /// The currently selected list ("Prospects", "Customers", etc.).
     @Binding var selectedList: String
-
-    /// A closure that gets called when the view is dismissed (whether by saving or cancelling).
     var onSave: () -> Void
-
-    /// The email of the current user, used to associate the new prospect.
     var userEmail: String
 
-    /// The input field for the prospect’s name.
     @State private var fullName = ""
-
-    /// The input field for the prospect’s address.
     @State private var address = ""
+    @State private var contactPhone = ""
+    @State private var contactEmail = ""
 
     var body: some View {
         NavigationView {
@@ -37,14 +24,17 @@ struct NewProspectView: View {
                 Section(header: Text("New Prospect Info")) {
                     TextField("Full Name", text: $fullName)
                     TextField("Address", text: $address)
+                    TextField("Phone (Optional)", text: $contactPhone)
+                        .keyboardType(.phonePad)
+                    TextField("Email (Optional)", text: $contactEmail)
+                        .keyboardType(.emailAddress)
+                        .autocapitalization(.none)
                 }
             }
             .navigationTitle("Add Prospect")
             .toolbar {
-                // Save button
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        // Create and insert new prospect
                         let newProspect = Prospect(
                             fullName: fullName,
                             address: address,
@@ -52,12 +42,14 @@ struct NewProspectView: View {
                             list: selectedList,
                             userEmail: userEmail
                         )
+                        newProspect.contactPhone = contactPhone
+                        newProspect.contactEmail = contactEmail
                         modelContext.insert(newProspect)
                         onSave()
                     }
+                    .disabled(fullName.isEmpty || address.isEmpty)
                 }
 
-                // Cancel button
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
                         onSave()

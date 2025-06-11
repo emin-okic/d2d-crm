@@ -28,6 +28,10 @@ struct EditProspectView: View {
     
     @State private var showKnockHistory = false
     @State private var showNotes = false
+    
+    @State private var showConversionSheet = false
+    @State private var tempPhone: String = ""
+    @State private var tempEmail: String = ""
 
     var body: some View {
         Form {
@@ -35,15 +39,9 @@ struct EditProspectView: View {
             Section(header: Text("Prospect Details")) {
                 TextField("Full Name", text: $prospect.fullName)
                 TextField("Address", text: $prospect.address)
+                TextField("Phone", text: $prospect.contactPhone)
+                TextField("Email", text: $prospect.contactEmail)
             }
-
-            // MARK: - List Selector
-            Picker("Current List", selection: $prospect.list) {
-                ForEach(allLists, id: \.self) { listName in
-                    Text(listName)
-                }
-            }
-            .pickerStyle(.menu)
 
             // MARK: - Knock History Section (Expandable)
             Section {
@@ -75,19 +73,75 @@ struct EditProspectView: View {
                         .fontWeight(.semibold)
                 }
             }
+            
+            if prospect.list == "Prospects" {
+                Section {
+                    Button("Sign Up") {
+                        tempPhone = prospect.contactPhone
+                        tempEmail = prospect.contactEmail
+                        showConversionSheet = true
+                    }
+                    .foregroundColor(.blue)
+                }
+                Section {
+
+                    Button("Delete Prospect 🗑️") {
+                        deleteProspect()
+                    }
+                    .foregroundColor(.red)
+                    
+                }
+            }
+            
+            if prospect.list == "Customers" {
+                Section {
+
+                    Button("Delete Prospect 🗑️") {
+                        deleteProspect()
+                    }
+                    .foregroundColor(.red)
+                    
+                }
+            }
         }
-        .navigationTitle("Edit Prospect")
+        .navigationTitle("Edit Contact")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") {
                     presentationMode.wrappedValue.dismiss()
                 }
             }
-            ToolbarItem(placement: .destructiveAction) {
-                Button(role: .destructive) {
-                    deleteProspect()
-                } label: {
-                    Label("Delete", systemImage: "trash")
+        }
+        .sheet(isPresented: $showConversionSheet) {
+            NavigationView {
+                Form {
+                    Section(header: Text("Confirm Customer Info")) {
+                        TextField("Full Name", text: $prospect.fullName)
+                        TextField("Address", text: $prospect.address)
+                        TextField("Phone", text: $tempPhone)
+                        TextField("Email", text: $tempEmail)
+                    }
+
+                    Section {
+                        Button("Confirm Sign Up") {
+                            prospect.list = "Customers"
+                            prospect.contactPhone = tempPhone
+                            prospect.contactEmail = tempEmail
+                            try? modelContext.save()
+                            showConversionSheet = false
+                            presentationMode.wrappedValue.dismiss()
+                        }
+                        .disabled(prospect.fullName.isEmpty || prospect.address.isEmpty)
+                    }
+                }
+                .navigationTitle("Convert to Customer")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            showConversionSheet = false
+                        }
+                    }
                 }
             }
         }
