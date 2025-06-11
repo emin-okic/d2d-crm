@@ -81,6 +81,20 @@ struct ProspectsView: View {
                     .listRowInsets(EdgeInsets()) // Prevent padding around the spacer
                     .listRowSeparator(.hidden) // Hide any separator line
                     
+                    Section {
+                        Button {
+                            showingAddProspect = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                Text("Add Prospect")
+                                    .fontWeight(.semibold)
+                            }
+                            .foregroundColor(.blue)
+                            .padding(.vertical, 4)
+                        }
+                    }
+                    
                     let filteredProspects = prospects.filter { $0.list == selectedList }
 
                     ForEach(filteredProspects, id: \.persistentModelID) { prospect in
@@ -96,7 +110,7 @@ struct ProspectsView: View {
                                     .foregroundColor(.gray)
 
                                 if !prospect.contactPhone.isEmpty {
-                                    Text("📞 \(prospect.contactPhone)")
+                                    Text("📞 \(formatPhoneNumber(prospect.contactPhone))")
                                         .font(.subheadline)
                                         .foregroundColor(.blue)
                                 }
@@ -120,15 +134,6 @@ struct ProspectsView: View {
                     }
                 }
                 .padding(.top, 60) // Add this to push content below the floating menu
-                
-                .toolbar {
-                    // MARK: - Add Prospect Button
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button { showingAddProspect = true } label: {
-                            Image(systemName: "plus")
-                        }
-                    }
-                }
                 .sheet(isPresented: $showingAddProspect) {
                     NewProspectView(
                         selectedList: $selectedList,
@@ -140,6 +145,19 @@ struct ProspectsView: View {
                     )
                 }
             }
+        }
+    }
+    
+    private func formatPhoneNumber(_ raw: String) -> String {
+        let digits = raw.filter { $0.isNumber }
+        
+        if digits.count == 10 {
+            let area = digits.prefix(3)
+            let middle = digits.dropFirst(3).prefix(3)
+            let last = digits.suffix(4)
+            return "\(area)-\(middle)-\(last)"
+        } else {
+            return raw // fallback for incomplete/invalid numbers
         }
     }
 }
