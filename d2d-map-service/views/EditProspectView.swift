@@ -43,14 +43,6 @@ struct EditProspectView: View {
                 TextField("Email", text: $prospect.contactEmail)
             }
 
-            // MARK: - List Selector
-            Picker("Current List", selection: $prospect.list) {
-                ForEach(allLists, id: \.self) { listName in
-                    Text(listName)
-                }
-            }
-            .pickerStyle(.menu)
-
             // MARK: - Knock History Section (Expandable)
             Section {
                 DisclosureGroup(isExpanded: $showKnockHistory) {
@@ -58,17 +50,6 @@ struct EditProspectView: View {
                 } label: {
                     Text("Knock History")
                         .fontWeight(.semibold)
-                }
-            }
-            
-            if prospect.list == "Prospects" {
-                Section {
-                    Button("Sign Up") {
-                        tempPhone = prospect.contactPhone
-                        tempEmail = prospect.contactEmail
-                        showConversionSheet = true
-                    }
-                    .foregroundColor(.blue)
                 }
             }
 
@@ -90,6 +71,17 @@ struct EditProspectView: View {
                 } label: {
                     Text("Notes")
                         .fontWeight(.semibold)
+                }
+            }
+            
+            if prospect.list == "Prospects" {
+                Section {
+                    Button("Sign Up") {
+                        tempPhone = prospect.contactPhone
+                        tempEmail = prospect.contactEmail
+                        showConversionSheet = true
+                    }
+                    .foregroundColor(.blue)
                 }
             }
         }
