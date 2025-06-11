@@ -33,6 +33,9 @@ class Prospect {
     
     // Add this to your Prospect class:
     var notes: [Note] = []
+    
+    var contactEmail: String = ""
+    var contactPhone: String = ""
 
     /// Initializes a new prospect.
     /// - Parameters:

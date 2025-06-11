@@ -28,6 +28,10 @@ struct EditProspectView: View {
     
     @State private var showKnockHistory = false
     @State private var showNotes = false
+    
+    @State private var showConversionSheet = false
+    @State private var tempPhone: String = ""
+    @State private var tempEmail: String = ""
 
     var body: some View {
         Form {
@@ -52,6 +56,17 @@ struct EditProspectView: View {
                 } label: {
                     Text("Knock History")
                         .fontWeight(.semibold)
+                }
+            }
+            
+            if prospect.list == "Prospects" {
+                Section {
+                    Button("Sign Up") {
+                        tempPhone = prospect.contactPhone
+                        tempEmail = prospect.contactEmail
+                        showConversionSheet = true
+                    }
+                    .foregroundColor(.blue)
                 }
             }
 
@@ -88,6 +103,39 @@ struct EditProspectView: View {
                     deleteProspect()
                 } label: {
                     Label("Delete", systemImage: "trash")
+                }
+            }
+        }
+        .sheet(isPresented: $showConversionSheet) {
+            NavigationView {
+                Form {
+                    Section(header: Text("Confirm Customer Info")) {
+                        TextField("Full Name", text: $prospect.fullName)
+                        TextField("Address", text: $prospect.address)
+                        TextField("Phone", text: $tempPhone)
+                        TextField("Email", text: $tempEmail)
+                    }
+
+                    Section {
+                        Button("Confirm Sign Up") {
+                            prospect.list = "Customers"
+                            prospect.contactPhone = tempPhone
+                            prospect.contactEmail = tempEmail
+                            try? modelContext.save()
+                            showConversionSheet = false
+                            presentationMode.wrappedValue.dismiss()
+                        }
+                        .disabled(prospect.fullName.isEmpty || prospect.address.isEmpty)
+                    }
+                }
+                .navigationTitle("Convert to Customer")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            showConversionSheet = false
+                        }
+                    }
                 }
             }
         }
