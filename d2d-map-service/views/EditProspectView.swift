@@ -39,6 +39,8 @@ struct EditProspectView: View {
             Section(header: Text("Prospect Details")) {
                 TextField("Full Name", text: $prospect.fullName)
                 TextField("Address", text: $prospect.address)
+                TextField("Phone", text: $prospect.contactPhone)
+                TextField("Email", text: $prospect.contactEmail)
             }
 
             // MARK: - List Selector

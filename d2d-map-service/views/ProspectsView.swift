@@ -87,12 +87,27 @@ struct ProspectsView: View {
                         Button {
                             selectedProspectID = prospect.persistentModelID
                         } label: {
-                            VStack(alignment: .leading) {
+                            VStack(alignment: .leading, spacing: 4) {
                                 Text(prospect.fullName)
+                                    .font(.headline)
+
                                 Text(prospect.address)
                                     .font(.subheadline)
                                     .foregroundColor(.gray)
+
+                                if !prospect.contactPhone.isEmpty {
+                                    Text("📞 \(prospect.contactPhone)")
+                                        .font(.subheadline)
+                                        .foregroundColor(.blue)
+                                }
+
+                                if !prospect.contactEmail.isEmpty {
+                                    Text("✉️ \(prospect.contactEmail)")
+                                        .font(.subheadline)
+                                        .foregroundColor(.blue)
+                                }
                             }
+                            .padding(.vertical, 4)
                         }
                         .background(
                             NavigationLink(
