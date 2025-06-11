@@ -83,6 +83,25 @@ struct EditProspectView: View {
                     }
                     .foregroundColor(.blue)
                 }
+                Section {
+
+                    Button("Delete Prospect 🗑️") {
+                        deleteProspect()
+                    }
+                    .foregroundColor(.red)
+                    
+                }
+            }
+            
+            if prospect.list == "Customers" {
+                Section {
+
+                    Button("Delete Prospect 🗑️") {
+                        deleteProspect()
+                    }
+                    .foregroundColor(.red)
+                    
+                }
             }
         }
         .navigationTitle("Edit Prospect")
@@ -90,13 +109,6 @@ struct EditProspectView: View {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") {
                     presentationMode.wrappedValue.dismiss()
-                }
-            }
-            ToolbarItem(placement: .destructiveAction) {
-                Button(role: .destructive) {
-                    deleteProspect()
-                } label: {
-                    Label("Delete", systemImage: "trash")
                 }
             }
         }
