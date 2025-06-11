@@ -104,7 +104,7 @@ struct EditProspectView: View {
                 }
             }
         }
-        .navigationTitle("Edit Prospect")
+        .navigationTitle("Edit Contact")
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") {
