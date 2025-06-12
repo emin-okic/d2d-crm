@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C5126AE82DFAFE7C0044F401 /* MongoSwift in Frameworks */ = {isa = PBXBuildFile; productRef = C5126AE72DFAFE7C0044F401 /* MongoSwift */; };
+		C5126AEA2DFAFE7C0044F401 /* MongoSwiftSync in Frameworks */ = {isa = PBXBuildFile; productRef = C5126AE92DFAFE7C0044F401 /* MongoSwiftSync */; };
 		C53F34042DE9E60900372BEE /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = C53F34032DE9E60900372BEE /* SQLite */; };
 		C54048442DF4B32A00721D49 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = C54048432DF4B32A00721D49 /* README.md */; };
 		C5855D892DF073A700B479AE /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = C5855D882DF073A300B479AE /* .gitignore */; };
@@ -78,6 +80,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				C53F34042DE9E60900372BEE /* SQLite in Frameworks */,
+				C5126AE82DFAFE7C0044F401 /* MongoSwift in Frameworks */,
+				C5126AEA2DFAFE7C0044F401 /* MongoSwiftSync in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -142,6 +146,8 @@
 			name = "d2d-map-service";
 			packageProductDependencies = (
 				C53F34032DE9E60900372BEE /* SQLite */,
+				C5126AE72DFAFE7C0044F401 /* MongoSwift */,
+				C5126AE92DFAFE7C0044F401 /* MongoSwiftSync */,
 			);
 			productName = "d2d-map-service";
 			productReference = C5BE4B342DE7CC9E005C37B1 /* d2d-map-service.app */;
@@ -227,6 +233,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				C53F34022DE9E5D900372BEE /* XCRemoteSwiftPackageReference "SQLite" */,
+				C5126AE62DFAFE7C0044F401 /* XCRemoteSwiftPackageReference "mongo-swift-driver" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C5BE4B352DE7CC9E005C37B1 /* Products */;
@@ -597,6 +604,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		C5126AE62DFAFE7C0044F401 /* XCRemoteSwiftPackageReference "mongo-swift-driver" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mongodb/mongo-swift-driver.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		C53F34022DE9E5D900372BEE /* XCRemoteSwiftPackageReference "SQLite" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/stephencelis/SQLite.swift";
@@ -608,6 +623,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		C5126AE72DFAFE7C0044F401 /* MongoSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5126AE62DFAFE7C0044F401 /* XCRemoteSwiftPackageReference "mongo-swift-driver" */;
+			productName = MongoSwift;
+		};
+		C5126AE92DFAFE7C0044F401 /* MongoSwiftSync */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5126AE62DFAFE7C0044F401 /* XCRemoteSwiftPackageReference "mongo-swift-driver" */;
+			productName = MongoSwiftSync;
+		};
 		C53F34032DE9E60900372BEE /* SQLite */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = C53F34022DE9E5D900372BEE /* XCRemoteSwiftPackageReference "SQLite" */;
