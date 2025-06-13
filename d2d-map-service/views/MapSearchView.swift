@@ -121,22 +121,6 @@ struct MapSearchView: View {
 
                 Spacer()
             }
-
-            // MARK: Floating List Selector
-            Menu {
-                Button("Prospects") { selectedList = "Prospects" }
-                Button("Customers") { selectedList = "Customers" }
-            } label: {
-                Text(selectedList)
-                    .fontWeight(.semibold)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(10)
-                    .shadow(radius: 2)
-            }
-            .padding(.top, 16)
-            .padding(.trailing, 16)
         }
 
         // MARK: Map Marker Updates
@@ -209,8 +193,7 @@ struct MapSearchView: View {
 
     /// Updates the visible map markers based on the current list and user scope.
     private func updateMarkers() {
-        let filtered = prospects.filter { $0.list == selectedList }
-        controller.setMarkers(for: filtered)
+        controller.setMarkers(for: prospects) // show both "Prospects" and "Customers"
     }
 
     /// Triggers the outcome prompt when a user types an address into the search bar.
