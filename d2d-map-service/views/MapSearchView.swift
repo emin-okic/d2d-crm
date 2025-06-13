@@ -50,6 +50,8 @@ struct MapSearchView: View {
     @State private var showNoteInput = false
     @State private var newNoteText = ""
     @State private var prospectToNote: Prospect? = nil
+    
+    @Query private var customers: [Customer]
 
     // MARK: - Init
 
@@ -193,7 +195,7 @@ struct MapSearchView: View {
 
     /// Updates the visible map markers based on the current list and user scope.
     private func updateMarkers() {
-        controller.setMarkers(for: prospects) // show both "Prospects" and "Customers"
+        controller.setMarkers(prospects: prospects, customers: customers) // show both "Prospects" and "Customers"
     }
 
     /// Triggers the outcome prompt when a user types an address into the search bar.

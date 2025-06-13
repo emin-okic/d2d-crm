@@ -104,30 +104,36 @@ class MapController: ObservableObject {
     
     /// Replaces existing markers with those derived from the provided list of prospects.
     /// - Parameter prospects: Array of `Prospect` objects to display.
-    func setMarkers(for prospects: [Prospect]) {
+    func setMarkers(prospects: [Prospect], customers: [Customer]) {
         clearMarkers()
         
-        for prospect in prospects {
-            let address = prospect.address
-            let geocoder = CLGeocoder()
-            
-            geocoder.geocodeAddressString(address) { [weak self] placemarks, error in
-                guard let self = self else { return }
-                guard let placemark = placemarks?.first,
-                      let location = placemark.location else {
-                    return
-                }
-                
-                DispatchQueue.main.async {
-                    let newPlace = IdentifiablePlace(
-                        address: address,
-                        location: location.coordinate,
-                        count: prospect.count,
-                        list: prospect.list
-                    )
-                    self.markers.append(newPlace)
-                    self.updateRegionToFitAllMarkers()
-                }
+        let all: [(String, Int, String)] =
+            prospects.map { ($0.address, $0.count, $0.list) } +
+            customers.map { ($0.address, $0.count, "Customers") }
+
+        for (address, count, list) in all {
+            geocodeAndAdd(address: address, count: count, list: list)
+        }
+    }
+    
+    private func geocodeAndAdd(address: String, count: Int, list: String) {
+        let geocoder = CLGeocoder()
+        geocoder.geocodeAddressString(address) { [weak self] placemarks, error in
+            guard let self = self else { return }
+            guard let placemark = placemarks?.first,
+                  let location = placemark.location else {
+                return
+            }
+
+            DispatchQueue.main.async {
+                let newPlace = IdentifiablePlace(
+                    address: address,
+                    location: location.coordinate,
+                    count: count,
+                    list: list
+                )
+                self.markers.append(newPlace)
+                self.updateRegionToFitAllMarkers()
             }
         }
     }
