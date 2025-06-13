@@ -50,6 +50,8 @@ struct MapSearchView: View {
     @State private var showNoteInput = false
     @State private var newNoteText = ""
     @State private var prospectToNote: Prospect? = nil
+    
+    @Query private var customers: [Customer]
 
     // MARK: - Init
 
@@ -71,18 +73,28 @@ struct MapSearchView: View {
                 Map(coordinateRegion: $controller.region,
                     annotationItems: controller.markers) { place in
                     MapAnnotation(coordinate: place.location) {
-                        let color = place.markerColor
-                        let address = place.address
-
-                        Circle()
-                            .fill(color)
-                            .frame(width: 20, height: 20)
-                            .overlay(Circle().stroke(Color.black, lineWidth: 1))
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                pendingAddress = address
-                                showOutcomePrompt = true
-                            }
+                        if place.list == "Customers" {
+                            // Show special customer icon
+                            Image(systemName: "star.circle.fill")
+                                .resizable()
+                                .frame(width: 24, height: 24)
+                                .foregroundColor(.blue)
+                                .onTapGesture {
+                                    pendingAddress = place.address
+                                    showOutcomePrompt = true
+                                }
+                        } else {
+                            // Regular prospect marker
+                            Circle()
+                                .fill(place.markerColor)
+                                .frame(width: 20, height: 20)
+                                .overlay(Circle().stroke(Color.black, lineWidth: 1))
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    pendingAddress = place.address
+                                    showOutcomePrompt = true
+                                }
+                        }
                     }
                 }
                 .frame(maxHeight: .infinity)
@@ -111,22 +123,6 @@ struct MapSearchView: View {
 
                 Spacer()
             }
-
-            // MARK: Floating List Selector
-            Menu {
-                Button("Prospects") { selectedList = "Prospects" }
-                Button("Customers") { selectedList = "Customers" }
-            } label: {
-                Text(selectedList)
-                    .fontWeight(.semibold)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(10)
-                    .shadow(radius: 2)
-            }
-            .padding(.top, 16)
-            .padding(.trailing, 16)
         }
 
         // MARK: Map Marker Updates
@@ -199,8 +195,7 @@ struct MapSearchView: View {
 
     /// Updates the visible map markers based on the current list and user scope.
     private func updateMarkers() {
-        let filtered = prospects.filter { $0.list == selectedList }
-        controller.setMarkers(for: filtered)
+        controller.setMarkers(prospects: prospects, customers: customers) // show both "Prospects" and "Customers"
     }
 
     /// Triggers the outcome prompt when a user types an address into the search bar.

@@ -9,12 +9,12 @@ import SwiftUI
 import CoreLocation
 import MapKit
 
-/// A class representing a point of interest on the map, used for placing markers.
+/// A struct representing a point of interest on the map, used for placing markers.
 ///
 /// `IdentifiablePlace` is used to represent geocoded locations (addresses) on a map,
 /// with a color-coded marker indicating how frequently the address has been knocked.
 /// It conforms to `Identifiable` so it can be used in SwiftUI lists and `MapAnnotation`s.
-class IdentifiablePlace: NSObject, Identifiable {
+struct IdentifiablePlace: Identifiable {
     
     /// Unique identifier for the marker.
     let id = UUID()
@@ -27,6 +27,9 @@ class IdentifiablePlace: NSObject, Identifiable {
     
     /// The number of times this address has been knocked.
     var count: Int
+
+    /// The type of list the place belongs to ("Prospects" or "Customers").
+    let list: String
 
     /// A computed property returning a marker color based on `count`.
     ///
@@ -53,9 +56,11 @@ class IdentifiablePlace: NSObject, Identifiable {
     ///   - address: A string representing the human-readable address.
     ///   - location: The geographic coordinates of the place.
     ///   - count: Optional initial knock count (defaults to `1`).
-    init(address: String, location: CLLocationCoordinate2D, count: Int = 1) {
+    ///   - list: The category of this place (e.g., "Customers", "Prospects").
+    init(address: String, location: CLLocationCoordinate2D, count: Int = 1, list: String = "Prospects") {
         self.address = address
         self.location = location
         self.count = count
+        self.list = list
     }
 }

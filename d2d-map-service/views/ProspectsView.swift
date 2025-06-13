@@ -81,17 +81,19 @@ struct ProspectsView: View {
                     .listRowInsets(EdgeInsets()) // Prevent padding around the spacer
                     .listRowSeparator(.hidden) // Hide any separator line
                     
-                    Section {
-                        Button {
-                            showingAddProspect = true
-                        } label: {
-                            HStack {
-                                Image(systemName: "plus.circle.fill")
-                                Text("Add Prospect")
-                                    .fontWeight(.semibold)
+                    if selectedList == "Prospects" {
+                        Section {
+                            Button {
+                                showingAddProspect = true
+                            } label: {
+                                HStack {
+                                    Image(systemName: "plus.circle.fill")
+                                    Text("Add Prospect")
+                                        .fontWeight(.semibold)
+                                }
+                                .foregroundColor(.blue)
+                                .padding(.vertical, 4)
                             }
-                            .foregroundColor(.blue)
-                            .padding(.vertical, 4)
                         }
                     }
                     
