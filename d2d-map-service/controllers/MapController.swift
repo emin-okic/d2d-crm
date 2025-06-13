@@ -122,7 +122,8 @@ class MapController: ObservableObject {
                     let newPlace = IdentifiablePlace(
                         address: address,
                         location: location.coordinate,
-                        count: prospect.count
+                        count: prospect.count,
+                        list: prospect.list
                     )
                     self.markers.append(newPlace)
                     self.updateRegionToFitAllMarkers()

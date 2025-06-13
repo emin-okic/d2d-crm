@@ -27,6 +27,8 @@ class IdentifiablePlace: NSObject, Identifiable {
     
     /// The number of times this address has been knocked.
     var count: Int
+    
+    let list: String
 
     /// A computed property returning a marker color based on `count`.
     ///
@@ -53,9 +55,10 @@ class IdentifiablePlace: NSObject, Identifiable {
     ///   - address: A string representing the human-readable address.
     ///   - location: The geographic coordinates of the place.
     ///   - count: Optional initial knock count (defaults to `1`).
-    init(address: String, location: CLLocationCoordinate2D, count: Int = 1) {
+    init(address: String, location: CLLocationCoordinate2D, count: Int = 1, list: String = "Prospects") {
         self.address = address
         self.location = location
         self.count = count
+        self.list = list
     }
 }

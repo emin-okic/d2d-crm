@@ -71,18 +71,28 @@ struct MapSearchView: View {
                 Map(coordinateRegion: $controller.region,
                     annotationItems: controller.markers) { place in
                     MapAnnotation(coordinate: place.location) {
-                        let color = place.markerColor
-                        let address = place.address
-
-                        Circle()
-                            .fill(color)
-                            .frame(width: 20, height: 20)
-                            .overlay(Circle().stroke(Color.black, lineWidth: 1))
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                pendingAddress = address
-                                showOutcomePrompt = true
-                            }
+                        if place.list == "Customers" {
+                            // Show special customer icon
+                            Image(systemName: "star.circle.fill")
+                                .resizable()
+                                .frame(width: 24, height: 24)
+                                .foregroundColor(.blue)
+                                .onTapGesture {
+                                    pendingAddress = place.address
+                                    showOutcomePrompt = true
+                                }
+                        } else {
+                            // Regular prospect marker
+                            Circle()
+                                .fill(place.markerColor)
+                                .frame(width: 20, height: 20)
+                                .overlay(Circle().stroke(Color.black, lineWidth: 1))
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    pendingAddress = place.address
+                                    showOutcomePrompt = true
+                                }
+                        }
                     }
                 }
                 .frame(maxHeight: .infinity)
