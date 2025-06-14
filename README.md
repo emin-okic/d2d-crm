@@ -114,8 +114,30 @@ Below is a preview of the login screen used to access the CRM.
 
 ---
 
-## Getting Started
+## Contributor's Guide
+
+### Clone the Repository
 
 1. Clone the repository:
    ```bash
    git clone https://github.com/yourusername/d2d-crm-ios.git
+```
+
+### Run UI Test for Screenshots
+
+Before pushing to main, make sure the login screen screenshot is up to date.
+
+    1.    Open the Xcode project (.xcodeproj or .xcworkspace).
+    2.    Select the scheme: d2d-map-serviceUITests.
+    3.    Choose a compatible iOS 18.4+ simulator (e.g., iPhone 16 Pro).
+    4.    Run the UI test named testLoginScreenScreenshot in d2d_map_serviceUITests.swift.
+    5.    After the test completes, check that the following file was updated: media/login-screen-screenshot.png
+    6.    Commit the screenshot 
+    
+## How To Commit To The D2D CRM
+
+```
+git add media/login-screen-screenshot.png
+git commit -m "📸 Update login screen screenshot"
+git push origin your-branch
+```
