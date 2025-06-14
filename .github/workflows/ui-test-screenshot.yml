@@ -8,7 +8,7 @@ name: Run UI Test & Save Screenshot
 
 on:
   push:
-    branches: [main]
+    branches: ['**']
 
 jobs:
   ui-tests:
