@@ -14,25 +14,24 @@ final class d2d_map_serviceUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        // Wait a second for the login UI to settle
-        sleep(1)
+        sleep(1) // Wait for UI to settle
 
-        // Take screenshot of the current screen (login view)
         let screenshot = XCUIScreen.main.screenshot()
-
-        // Save it to Media/LoginScreen.png
-        saveScreenshot(screenshot, named: "LoginScreen")
+        saveScreenshot(screenshot, screenName: "login-screen")
     }
 
-    /// Saves a screenshot PNG file to the Media directory in your project
-    private func saveScreenshot(_ screenshot: XCUIScreenshot, named name: String) {
+    /// Saves a screenshot using the format: x-screen-screenshot.png (overwrite mode)
+    private func saveScreenshot(_ screenshot: XCUIScreenshot, screenName: String) {
         let mediaPath = "/Users/eminokic/Documents/Dev/d2d-crm/d2d-map-service/media"
         let mediaURL = URL(fileURLWithPath: mediaPath)
 
-        // Create folder if it doesn't exist
+        // Ensure the media folder exists
         try? FileManager.default.createDirectory(at: mediaURL, withIntermediateDirectories: true)
 
-        let fileURL = mediaURL.appendingPathComponent("\(name).png")
+        // Static file name: login-screen-screenshot.png
+        let fileName = "\(screenName)-screenshot.png"
+        let fileURL = mediaURL.appendingPathComponent(fileName)
+
         do {
             try screenshot.pngRepresentation.write(to: fileURL)
             print("📸 Screenshot saved to: \(fileURL.path)")
