@@ -134,6 +134,27 @@ struct ProspectsView: View {
                             .hidden()
                         )
                     }
+                    
+                    // Add this after your ForEach(filteredProspects, ...)
+                    if selectedList == "Prospects" {
+                        Section {
+                            HStack(alignment: .top, spacing: 12) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Suggested Neighbor")
+                                        .font(.headline)
+                                        .foregroundColor(.gray)
+                                    Text("125 Main St") // You could dynamically pass the actual suggestion
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+                                }
+                                Spacer()
+                            }
+                            .padding(.vertical, 8)
+                            .background(Color.gray.opacity(0.1))
+                            .cornerRadius(8)
+                        }
+                    }
+                    
                 }
                 .padding(.top, 60) // Add this to push content below the floating menu
                 .sheet(isPresented: $showingAddProspect) {
