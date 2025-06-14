@@ -52,6 +52,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		C5A6D5FA2DFE1B7700E180B6 /* .github */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = .github;
+			sourceTree = "<group>";
+		};
 		C5BE4B362DE7CC9E005C37B1 /* d2d-map-service */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -101,6 +106,7 @@
 		C5BE4B2B2DE7CC9E005C37B1 = {
 			isa = PBXGroup;
 			children = (
+				C5A6D5FA2DFE1B7700E180B6 /* .github */,
 				C54048432DF4B32A00721D49 /* README.md */,
 				C5855D882DF073A300B479AE /* .gitignore */,
 				C5E9F14F2DEB6CAB000A771B /* d2d-map-service.xctestplan */,
@@ -137,6 +143,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				C5A6D5FA2DFE1B7700E180B6 /* .github */,
 				C5BE4B362DE7CC9E005C37B1 /* d2d-map-service */,
 			);
 			name = "d2d-map-service";

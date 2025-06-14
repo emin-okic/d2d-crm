@@ -1,0 +1,44 @@
+#
+#  ui-test-screenshot.yml
+#  d2d-map-service
+#
+#  Created by Emin Okic on 6/14/25.
+
+name: Run UI Test & Save Screenshot
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  ui-tests:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.3.app
+
+      - name: Run UI Test
+        run: |
+          xcodebuild \
+            -scheme d2d-map-service \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -only-testing:d2d_map_serviceUITests/testLoginScreenScreenshot \
+            test
+
+      - name: Commit screenshot if updated
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add media/*.png
+          git diff --quiet && git diff --staged --quiet || git commit -m "🤖 Update login screen screenshot"
+        env:
+          GIT_AUTHOR_NAME: github-actions
+          GIT_AUTHOR_EMAIL: github-actions@github.com
+
+      - name: Push updated screenshot
+        if: success()
+        run: git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git HEAD:main
