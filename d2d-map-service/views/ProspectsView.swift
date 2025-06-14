@@ -20,6 +20,7 @@ struct ProspectsView: View {
     @State private var selectedProspectID: PersistentIdentifier?
     @State private var showingAddProspect = false
     @State private var suggestedProspect: Prospect?
+    @State private var suggestionSourceIndex = 0 // Track which customer we’re pulling from
 
     let availableLists = ["Prospects", "Customers"]
     @Query var prospects: [Prospect]
@@ -124,6 +125,11 @@ struct ProspectsView: View {
                                         modelContext.insert(suggestion)
                                         suggestedProspect = nil
                                         onSave()
+
+                                        // Immediately pull the next suggestion from the next customer in the list
+                                        Task {
+                                            await fetchNextSuggestedNeighbor()
+                                        }
                                     }
                                     .buttonStyle(.borderedProminent)
                                     .padding(.top, 4)
@@ -148,10 +154,8 @@ struct ProspectsView: View {
                     )
                 }
                 .task {
-                    if selectedList == "Prospects",
-                       let customer = prospects.first(where: { $0.list == "Customers" }),
-                       suggestedProspect == nil {
-                        await fetchSuggestedNeighbor(from: customer)
+                    if selectedList == "Prospects", suggestedProspect == nil {
+                        await fetchNextSuggestedNeighbor()
                     }
                 }
             }
@@ -184,5 +188,47 @@ struct ProspectsView: View {
         if let neighbor = neighbor {
             suggestedProspect = neighbor
         }
+    }
+    
+    func fetchNextSuggestedNeighbor() async {
+        let controller = DatabaseController.shared
+        let customerProspects = prospects.filter { $0.list == "Customers" }
+        guard !customerProspects.isEmpty else { return }
+
+        var attemptIndex = suggestionSourceIndex
+        var found: Prospect?
+
+        for _ in 0..<customerProspects.count {
+            let customer = customerProspects[attemptIndex]
+
+            let result = await withCheckedContinuation { (continuation: CheckedContinuation<Prospect?, Never>) in
+                controller.geocodeAndSuggestNeighbor(from: customer.address, for: userEmail) { address in
+                    // NEW: Check SwiftData for duplicates
+                    if let addr = address,
+                       !prospects.contains(where: { $0.address.caseInsensitiveCompare(addr) == .orderedSame }) {
+                        let suggested = Prospect(
+                            fullName: "Suggested Neighbor",
+                            address: addr,
+                            count: 0,
+                            list: "Prospects",
+                            userEmail: userEmail
+                        )
+                        continuation.resume(returning: suggested)
+                    } else {
+                        continuation.resume(returning: nil)
+                    }
+                }
+            }
+
+            if let valid = result {
+                found = valid
+                suggestionSourceIndex = (attemptIndex + 1) % customerProspects.count
+                break
+            }
+
+            attemptIndex = (attemptIndex + 1) % customerProspects.count
+        }
+
+        suggestedProspect = found
     }
 }
