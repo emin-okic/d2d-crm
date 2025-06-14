@@ -95,6 +95,16 @@ This CRM is designed with mobile-first principles to support reps in the field, 
 
 ---
 
+## Screenshots
+
+Below is a preview of the login screen used to access the CRM.
+
+<p align="center">
+  <img src="media/login-screen-screenshot.png" alt="Login Screen" width="250"/>
+</p>
+
+---
+
 ## Requirements
 
 - iOS 18 or later
