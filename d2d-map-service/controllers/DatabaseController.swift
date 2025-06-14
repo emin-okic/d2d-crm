@@ -7,6 +7,7 @@
 
 import SQLite
 import Foundation
+import CoreLocation
 
 /// A singleton class that manages all SQLite operations for the D2D CRM app.
 ///
@@ -211,5 +212,124 @@ class DatabaseController {
         }
 
         return results
+    }
+}
+
+extension DatabaseController {
+    /// Suggests a neighboring prospect based on a newly converted customer.
+    /// - Parameters:
+    ///   - customerAddress: The address of the new customer.
+    ///   - userEmail: The email of the user to associate with the suggested prospect.
+    func suggestNeighborProspect(from customerAddress: String, for userEmail: String) {
+        let geocoder = CLGeocoder()
+
+        // Step 1: Geocode customer address
+        geocoder.geocodeAddressString(customerAddress) { placemarks, error in
+            guard let location = placemarks?.first?.location?.coordinate else {
+                print("❌ Could not geocode customer address: \(error?.localizedDescription ?? "Unknown error")")
+                return
+            }
+
+            // Step 2: Slightly offset coordinates to simulate neighbor
+            let neighborCoord = CLLocationCoordinate2D(
+                latitude: location.latitude + 0.0001,
+                longitude: location.longitude + 0.0001
+            )
+
+            // Step 3: Reverse geocode neighbor address
+            let neighborLocation = CLLocation(latitude: neighborCoord.latitude, longitude: neighborCoord.longitude)
+
+            geocoder.reverseGeocodeLocation(neighborLocation) { neighborPlacemarks, error in
+                guard let placemark = neighborPlacemarks?.first else {
+                    print("❌ Could not reverse geocode neighbor location")
+                    return
+                }
+
+                let components = [
+                    placemark.subThoroughfare,
+                    placemark.thoroughfare,
+                    placemark.locality
+                ].compactMap { $0 }
+
+                let joinedAddress = components.joined(separator: " ")
+
+                guard let neighborAddress = joinedAddress.nilIfEmpty else {
+                    print("❌ Neighbor address could not be constructed")
+                    return
+                }
+
+                // Step 4: Check if prospect already exists at that address
+                do {
+                    if let db = self.db {
+                        let prospectQuery = self.prospects.filter(self.address == neighborAddress)
+                        let count = try db.scalar(prospectQuery.count)
+
+                        guard count == 0 else {
+                            print("ℹ️ Neighbor already exists in database: \(neighborAddress)")
+                            return
+                        }
+
+                        // Step 5: Insert new suggested prospect
+                        let insert = self.prospects.insert(
+                            self.fullName <- "Suggested Neighbor",
+                            self.address <- neighborAddress,
+                            self.list <- "Prospects"
+                        )
+                        try db.run(insert)
+                        print("✅ Suggested neighbor added: \(neighborAddress)")
+                    }
+                } catch {
+                    print("❌ Failed to check or insert neighbor: \(error)")
+                }
+            }
+        }
+    }
+    
+    func geocodeAndSuggestNeighbor(from customerAddress: String, for userEmail: String, completion: @escaping (String?) -> Void) {
+        // Parse street number and the rest of the address
+        let components = customerAddress.components(separatedBy: " ")
+        guard let first = components.first,
+              let baseNumber = Int(first) else {
+            completion(nil)
+            return
+        }
+
+        let streetRemainder = components.dropFirst().joined(separator: " ")
+
+        // Try multiple offsets: +1, +2, +3...
+        let maxAttempts = 10
+        let existingAddresses = getAllProspects().map { $0.1.lowercased() }
+
+        let geocoder = CLGeocoder()
+        func tryOffset(_ offset: Int) {
+            let newAddress = "\(baseNumber + offset) \(streetRemainder)"
+            if existingAddresses.contains(newAddress.lowercased()) {
+                if offset < maxAttempts {
+                    tryOffset(offset + 1)
+                } else {
+                    completion(nil)
+                }
+                return
+            }
+
+            geocoder.geocodeAddressString(newAddress) { placemarks, error in
+                if placemarks?.first?.location != nil {
+                    print("✅ Valid neighbor: \(newAddress)")
+                    completion(newAddress)
+                } else if offset < maxAttempts {
+                    tryOffset(offset + 1)
+                } else {
+                    completion(nil)
+                }
+            }
+        }
+
+        tryOffset(1)
+    }
+}
+
+extension String {
+    var nilIfEmpty: String? {
+        isEmpty ? nil : self
     }
 }
