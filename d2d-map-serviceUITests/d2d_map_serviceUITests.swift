@@ -22,13 +22,17 @@ final class d2d_map_serviceUITests: XCTestCase {
 
     /// Saves a screenshot using the format: x-screen-screenshot.png (overwrite mode)
     private func saveScreenshot(_ screenshot: XCUIScreenshot, screenName: String) {
-        let mediaPath = "/Users/eminokic/Documents/Dev/d2d-crm/d2d-map-service/media"
-        let mediaURL = URL(fileURLWithPath: mediaPath)
+        // Get project root by walking up 2 directories from test bundle location
+        let testBundlePath = Bundle(for: Self.self).bundlePath
+        let projectRoot = URL(fileURLWithPath: testBundlePath)
+            .deletingLastPathComponent() // d2d-map-serviceUITests.xctest
+            .deletingLastPathComponent() // d2d-map-service
 
-        // Ensure the media folder exists
+        let mediaURL = projectRoot.appendingPathComponent("media", isDirectory: true)
+
+        // Ensure the media directory exists
         try? FileManager.default.createDirectory(at: mediaURL, withIntermediateDirectories: true)
 
-        // Static file name: login-screen-screenshot.png
         let fileName = "\(screenName)-screenshot.png"
         let fileURL = mediaURL.appendingPathComponent(fileName)
 

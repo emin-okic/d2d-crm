@@ -10,6 +10,7 @@
 		C53F34042DE9E60900372BEE /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = C53F34032DE9E60900372BEE /* SQLite */; };
 		C54048442DF4B32A00721D49 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = C54048432DF4B32A00721D49 /* README.md */; };
 		C5855D892DF073A700B479AE /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = C5855D882DF073A300B479AE /* .gitignore */; };
+		C5A6D64D2DFE219900E180B6 /* login-screen-screenshot.png in Resources */ = {isa = PBXBuildFile; fileRef = C5A6D64B2DFE219900E180B6 /* login-screen-screenshot.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +33,7 @@
 /* Begin PBXFileReference section */
 		C54048432DF4B32A00721D49 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		C5855D882DF073A300B479AE /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		C5A6D64B2DFE219900E180B6 /* login-screen-screenshot.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "login-screen-screenshot.png"; sourceTree = "<group>"; };
 		C5BE4B342DE7CC9E005C37B1 /* d2d-map-service.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "d2d-map-service.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C5BE4B412DE7CC9F005C37B1 /* d2d-map-serviceTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "d2d-map-serviceTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C5BE4B4B2DE7CC9F005C37B1 /* d2d-map-serviceUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "d2d-map-serviceUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -98,9 +100,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		C5A6D64C2DFE219900E180B6 /* media */ = {
+			isa = PBXGroup;
+			children = (
+				C5A6D64B2DFE219900E180B6 /* login-screen-screenshot.png */,
+			);
+			path = media;
+			sourceTree = "<group>";
+		};
 		C5BE4B2B2DE7CC9E005C37B1 = {
 			isa = PBXGroup;
 			children = (
+				C5A6D64C2DFE219900E180B6 /* media */,
 				C54048432DF4B32A00721D49 /* README.md */,
 				C5855D882DF073A300B479AE /* .gitignore */,
 				C5E9F14F2DEB6CAB000A771B /* d2d-map-service.xctestplan */,
@@ -247,6 +258,7 @@
 			files = (
 				C54048442DF4B32A00721D49 /* README.md in Resources */,
 				C5855D892DF073A700B479AE /* .gitignore in Resources */,
+				C5A6D64D2DFE219900E180B6 /* login-screen-screenshot.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
