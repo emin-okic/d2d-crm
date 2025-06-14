@@ -193,7 +193,10 @@ struct ProspectsView: View {
     func fetchNextSuggestedNeighbor() async {
         let controller = DatabaseController.shared
         let customerProspects = prospects.filter { $0.list == "Customers" }
-        guard !customerProspects.isEmpty else { return }
+        guard !customerProspects.isEmpty else {
+            suggestedProspect = nil
+            return
+        }
 
         var attemptIndex = suggestionSourceIndex
         var found: Prospect?

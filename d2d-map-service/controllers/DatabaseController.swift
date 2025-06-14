@@ -286,48 +286,45 @@ extension DatabaseController {
     }
     
     func geocodeAndSuggestNeighbor(from customerAddress: String, for userEmail: String, completion: @escaping (String?) -> Void) {
-        // Step 1: Parse address and increment house number
+        // Parse street number and the rest of the address
         let components = customerAddress.components(separatedBy: " ")
         guard let first = components.first,
-              let number = Int(first) else {
+              let baseNumber = Int(first) else {
             completion(nil)
             return
         }
 
-        // Step 2: Create new address with incremented house number
-        let incrementedNumber = number + 1
-        let remaining = components.dropFirst().joined(separator: " ")
-        let neighborAddress = "\(incrementedNumber) \(remaining)"
+        let streetRemainder = components.dropFirst().joined(separator: " ")
 
-        // Step 3: Check if prospect already exists
-        do {
-            if let db = self.db {
-                let existsQuery = self.prospects.filter(self.address == neighborAddress)
-                let count = try db.scalar(existsQuery.count)
-                if count > 0 {
-                    print("ℹ️ Neighbor already exists in DB: \(neighborAddress)")
-                    completion(nil)
-                    return
-                }
-            }
-        } catch {
-            print("❌ DB check failed: \(error)")
-            completion(nil)
-            return
-        }
+        // Try multiple offsets: +1, +2, +3...
+        let maxAttempts = 10
+        let existingAddresses = getAllProspects().map { $0.1.lowercased() }
 
-        // Step 4: Geocode to verify it's a real address
         let geocoder = CLGeocoder()
-        geocoder.geocodeAddressString(neighborAddress) { placemarks, error in
-            guard placemarks?.first?.location != nil else {
-                print("❌ Geocoding failed for: \(neighborAddress)")
-                completion(nil)
+        func tryOffset(_ offset: Int) {
+            let newAddress = "\(baseNumber + offset) \(streetRemainder)"
+            if existingAddresses.contains(newAddress.lowercased()) {
+                if offset < maxAttempts {
+                    tryOffset(offset + 1)
+                } else {
+                    completion(nil)
+                }
                 return
             }
 
-            print("✅ Valid neighbor: \(neighborAddress)")
-            completion(neighborAddress)
+            geocoder.geocodeAddressString(newAddress) { placemarks, error in
+                if placemarks?.first?.location != nil {
+                    print("✅ Valid neighbor: \(newAddress)")
+                    completion(newAddress)
+                } else if offset < maxAttempts {
+                    tryOffset(offset + 1)
+                } else {
+                    completion(nil)
+                }
+            }
         }
+
+        tryOffset(1)
     }
 }
 
