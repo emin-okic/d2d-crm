@@ -117,11 +117,8 @@ Below is a preview of the login screen used to access the CRM.
 ## Contributor's Guide
 
 ### Clone the Repository
-
-1. Clone the repository:
    ```bash
    git clone https://github.com/yourusername/d2d-crm-ios.git
-```
 
 ### Run UI Test for Screenshots
 
@@ -140,4 +137,3 @@ Before pushing to main, make sure the login screen screenshot is up to date.
 git add media/login-screen-screenshot.png
 git commit -m "📸 Update login screen screenshot"
 git push origin your-branch
-```
