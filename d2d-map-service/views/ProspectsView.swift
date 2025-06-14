@@ -113,32 +113,36 @@ struct ProspectsView: View {
 
                     if selectedList == "Prospects", let suggestion = suggestedProspect {
                         Section {
-                            HStack(alignment: .top, spacing: 12) {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(suggestion.fullName)
-                                        .font(.headline)
-                                        .foregroundColor(.gray)
-                                    Text(suggestion.address)
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
-                                    Button("Add This Prospect") {
-                                        modelContext.insert(suggestion)
-                                        suggestedProspect = nil
-                                        onSave()
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Suggested Neighbor")
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
 
-                                        // Immediately pull the next suggestion from the next customer in the list
-                                        Task {
-                                            await fetchNextSuggestedNeighbor()
-                                        }
-                                    }
-                                    .buttonStyle(.borderedProminent)
-                                    .padding(.top, 4)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Label(suggestion.fullName, systemImage: "person.fill")
+                                        .foregroundStyle(.secondary)
+                                    Label(suggestion.address, systemImage: "mappin.and.ellipse")
+                                        .foregroundStyle(.secondary)
                                 }
-                                Spacer()
+
+                                Button {
+                                    modelContext.insert(suggestion)
+                                    suggestedProspect = nil
+                                    onSave()
+
+                                    Task {
+                                        await fetchNextSuggestedNeighbor()
+                                    }
+                                } label: {
+                                    Label("Add This Prospect", systemImage: "plus.circle.fill")
+                                        .font(.headline)
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .tint(.blue)
                             }
                             .padding(.vertical, 8)
-                            .background(Color.gray.opacity(0.1))
-                            .cornerRadius(8)
+                            .padding(.horizontal, 4)
                         }
                     }
                 }
