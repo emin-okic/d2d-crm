@@ -12,45 +12,28 @@ import SwiftData
 /// Users can filter by list type (e.g., "Prospects", "Customers"), add new prospects, and tap
 /// a prospect to edit its details.
 struct ProspectsView: View {
-    /// Access to the model context for database operations.
     @Environment(\.modelContext) private var modelContext
-    
-    /// The currently selected list filter (e.g., "Prospects" or "Customers").
     @Binding var selectedList: String
-    
-    /// Closure to call when a new prospect is added or changes are saved.
     var onSave: () -> Void
-    
-    /// Email of the current user, used to filter prospects.
     var userEmail: String
-    
-    /// Stores the ID of the selected prospect to support navigation.
+
     @State private var selectedProspectID: PersistentIdentifier?
-    
-    /// Controls whether the "New Prospect" sheet is shown.
     @State private var showingAddProspect = false
-    
-    /// The available list types to filter prospects by.
+    @State private var suggestedProspect: Prospect?
+
     let availableLists = ["Prospects", "Customers"]
-    
-    /// A query that fetches all prospects owned by the current user.
     @Query var prospects: [Prospect]
-    
-    /// Custom initializer that injects dynamic user-specific filtering into the query.
+
     init(selectedList: Binding<String>, userEmail: String, onSave: @escaping () -> Void) {
         _selectedList = selectedList
         self.userEmail = userEmail
         self.onSave = onSave
-        
-        // Only fetch prospects created by the current user
         _prospects = Query(filter: #Predicate<Prospect> { $0.userEmail == userEmail })
     }
-    
+
     var body: some View {
         NavigationView {
             ZStack(alignment: .topTrailing) {
-                
-                // Floating dropdown button (change list)
                 Menu {
                     Button("Prospects") { selectedList = "Prospects" }
                     Button("Customers") { selectedList = "Customers" }
@@ -65,22 +48,17 @@ struct ProspectsView: View {
                         .shadow(radius: 2)
                 }
                 .padding(.top, 12)
-                .padding(.bottom, 12)
                 .padding(.trailing, 16)
                 .navigationTitle("Your \(selectedList)")
-                
-                // Main list view
+
                 List {
-                    
-                    // Add a transparent spacer section to push records down into the safe zone
                     Section {
                         EmptyView()
-                        EmptyView()
                     }
-                    .frame(height: 60) // Adjust spacing here
-                    .listRowInsets(EdgeInsets()) // Prevent padding around the spacer
-                    .listRowSeparator(.hidden) // Hide any separator line
-                    
+                    .frame(height: 60)
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
+
                     if selectedList == "Prospects" {
                         Section {
                             Button {
@@ -96,7 +74,7 @@ struct ProspectsView: View {
                             }
                         }
                     }
-                    
+
                     let filteredProspects = prospects.filter { $0.list == selectedList }
 
                     ForEach(filteredProspects, id: \.persistentModelID) { prospect in
@@ -106,17 +84,14 @@ struct ProspectsView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(prospect.fullName)
                                     .font(.headline)
-
                                 Text(prospect.address)
                                     .font(.subheadline)
                                     .foregroundColor(.gray)
-
                                 if !prospect.contactPhone.isEmpty {
                                     Text("📞 \(formatPhoneNumber(prospect.contactPhone))")
                                         .font(.subheadline)
                                         .foregroundColor(.blue)
                                 }
-
                                 if !prospect.contactEmail.isEmpty {
                                     Text("✉️ \(prospect.contactEmail)")
                                         .font(.subheadline)
@@ -134,18 +109,24 @@ struct ProspectsView: View {
                             .hidden()
                         )
                     }
-                    
-                    // Add this after your ForEach(filteredProspects, ...)
-                    if selectedList == "Prospects" {
+
+                    if selectedList == "Prospects", let suggestion = suggestedProspect {
                         Section {
                             HStack(alignment: .top, spacing: 12) {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text("Suggested Neighbor")
+                                    Text(suggestion.fullName)
                                         .font(.headline)
                                         .foregroundColor(.gray)
-                                    Text("125 Main St") // You could dynamically pass the actual suggestion
+                                    Text(suggestion.address)
                                         .font(.subheadline)
                                         .foregroundColor(.gray)
+                                    Button("Add This Prospect") {
+                                        modelContext.insert(suggestion)
+                                        suggestedProspect = nil
+                                        onSave()
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .padding(.top, 4)
                                 }
                                 Spacer()
                             }
@@ -154,9 +135,8 @@ struct ProspectsView: View {
                             .cornerRadius(8)
                         }
                     }
-                    
                 }
-                .padding(.top, 60) // Add this to push content below the floating menu
+                .padding(.top, 60)
                 .sheet(isPresented: $showingAddProspect) {
                     NewProspectView(
                         selectedList: $selectedList,
@@ -167,20 +147,42 @@ struct ProspectsView: View {
                         userEmail: userEmail
                     )
                 }
+                .task {
+                    if selectedList == "Prospects",
+                       let customer = prospects.first(where: { $0.list == "Customers" }),
+                       suggestedProspect == nil {
+                        await fetchSuggestedNeighbor(from: customer)
+                    }
+                }
             }
         }
     }
-    
+
     private func formatPhoneNumber(_ raw: String) -> String {
         let digits = raw.filter { $0.isNumber }
-        
         if digits.count == 10 {
-            let area = digits.prefix(3)
-            let middle = digits.dropFirst(3).prefix(3)
-            let last = digits.suffix(4)
-            return "\(area)-\(middle)-\(last)"
+            return "\(digits.prefix(3))-\(digits.dropFirst(3).prefix(3))-\(digits.suffix(4))"
         } else {
-            return raw // fallback for incomplete/invalid numbers
+            return raw
+        }
+    }
+
+    func fetchSuggestedNeighbor(from customer: Prospect) async {
+        let controller = DatabaseController.shared
+
+        let neighbor = await withCheckedContinuation { (continuation: CheckedContinuation<Prospect?, Never>) in
+            controller.geocodeAndSuggestNeighbor(from: customer.address, for: userEmail) { address in
+                if let addr = address {
+                    let suggested = Prospect(fullName: "Suggested Neighbor", address: addr, count: 0, list: "Prospects", userEmail: userEmail)
+                    continuation.resume(returning: suggested)
+                } else {
+                    continuation.resume(returning: nil)
+                }
+            }
+        }
+
+        if let neighbor = neighbor {
+            suggestedProspect = neighbor
         }
     }
 }
