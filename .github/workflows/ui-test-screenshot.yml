@@ -27,7 +27,7 @@ jobs:
       - name: Run UI Test
         run: |
           xcodebuild \
-            -scheme d2d-map-service \
+            -scheme d2d-map-serviceUITests \
             -destination 'platform=iOS Simulator,name=iPhone 15' \
             -only-testing:d2d_map_serviceUITests/testLoginScreenScreenshot \
             test
