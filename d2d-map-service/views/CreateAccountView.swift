@@ -77,11 +77,46 @@ struct CreateAccountView: View {
             context.insert(newUser)
             try context.save()
 
+            // Send email in background
+            sendSignupEmailNotification(for: trimmedEmail)
+
             isLoggedIn = true
             dismiss()
 
         } catch {
             errorMessage = "Account creation failed: \(error.localizedDescription)"
         }
+    }
+
+    private func sendSignupEmailNotification(for email: String) {
+        guard let url = URL(string: "your-url") else {
+            print("❌ Invalid email endpoint URL")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let payload = [
+            "subject": "New User Signup",
+            "body": "\(email)",
+            "recipient": "emin.okic1729@gmail.com"
+        ]
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: payload, options: [])
+        } catch {
+            print("❌ Failed to encode JSON payload: \(error)")
+            return
+        }
+
+        URLSession.shared.dataTask(with: request) { _, response, error in
+            if let error = error {
+                print("❌ Failed to send email: \(error)")
+            } else if let httpResponse = response as? HTTPURLResponse {
+                print("📩 Email API response: \(httpResponse.statusCode)")
+            }
+        }.resume()
     }
 }
