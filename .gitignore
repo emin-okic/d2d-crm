@@ -70,3 +70,6 @@ fastlane/test_output
 
 # Ignore Xcode build folder
 build/
+
+# Ignore Config Files
+.config

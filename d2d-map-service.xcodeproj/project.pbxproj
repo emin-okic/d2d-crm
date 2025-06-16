@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		C53F34042DE9E60900372BEE /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = C53F34032DE9E60900372BEE /* SQLite */; };
 		C54048442DF4B32A00721D49 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = C54048432DF4B32A00721D49 /* README.md */; };
+		C55D4CCE2DFFC012006E41A0 /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C55D4CCD2DFFC012006E41A0 /* Secrets.xcconfig */; };
 		C5855D892DF073A700B479AE /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = C5855D882DF073A300B479AE /* .gitignore */; };
 		C5A6D64D2DFE219900E180B6 /* login-screen-screenshot.png in Resources */ = {isa = PBXBuildFile; fileRef = C5A6D64B2DFE219900E180B6 /* login-screen-screenshot.png */; };
 /* End PBXBuildFile section */
@@ -32,6 +33,7 @@
 
 /* Begin PBXFileReference section */
 		C54048432DF4B32A00721D49 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		C55D4CCD2DFFC012006E41A0 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		C5855D882DF073A300B479AE /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		C5A6D64B2DFE219900E180B6 /* login-screen-screenshot.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "login-screen-screenshot.png"; sourceTree = "<group>"; };
 		C5BE4B342DE7CC9E005C37B1 /* d2d-map-service.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "d2d-map-service.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -111,6 +113,7 @@
 		C5BE4B2B2DE7CC9E005C37B1 = {
 			isa = PBXGroup;
 			children = (
+				C55D4CCD2DFFC012006E41A0 /* Secrets.xcconfig */,
 				C5A6D64C2DFE219900E180B6 /* media */,
 				C54048432DF4B32A00721D49 /* README.md */,
 				C5855D882DF073A300B479AE /* .gitignore */,
@@ -256,6 +259,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C55D4CCE2DFFC012006E41A0 /* Secrets.xcconfig in Resources */,
 				C54048442DF4B32A00721D49 /* README.md in Resources */,
 				C5855D892DF073A700B479AE /* .gitignore in Resources */,
 				C5A6D64D2DFE219900E180B6 /* login-screen-screenshot.png in Resources */,
