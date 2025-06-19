@@ -11,6 +11,7 @@ enum TripFilter: String, CaseIterable, Identifiable {
     case day = "Day"
     case week = "Week"
     case month = "Month"
+    case year = "Year"
 
     var id: String { self.rawValue }
 }
@@ -45,9 +46,13 @@ struct TripsView: View {
             case .month:
                 guard let monthAgo = calendar.date(byAdding: .month, value: -1, to: now) else { return false }
                 return trip.date >= monthAgo
+            case .year:
+                guard let yearAgo = calendar.date(byAdding: .year, value: -1, to: now) else { return false }
+                return trip.date >= yearAgo
+                
             }
         }
-        .sorted(by: { $0.date > $1.date })
+        .sorted(by: { $0.date < $1.date })
     }
 
     var body: some View {
