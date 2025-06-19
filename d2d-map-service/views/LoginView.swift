@@ -103,24 +103,43 @@ struct LoginView: View {
     private func login() {
         let trimmedEmail = emailInput.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedPassword = passwordInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        let hashedInput = PasswordController.hash(trimmedPassword)
 
-        do {
-            let descriptor = FetchDescriptor<User>(
-                predicate: #Predicate {
-                    $0.email == trimmedEmail && $0.password == hashedInput
+        Task {
+            do {
+                let success = try await loginRequest(email: trimmedEmail, password: trimmedPassword)
+                if success {
+                    isLoggedIn = true
+                } else {
+                    errorMessage = "Invalid email or password"
                 }
-            )
-            let results = try context.fetch(descriptor)
-
-            if results.first != nil {
-                isLoggedIn = true
-            } else {
-                errorMessage = "Invalid email or password"
+            } catch {
+                errorMessage = "Login failed: \(error.localizedDescription)"
             }
-
-        } catch {
-            errorMessage = "Login failed: \(error.localizedDescription)"
         }
+    }
+
+    func loginRequest(email: String, password: String) async throws -> Bool {
+        guard let url = URL(string: "http://127.0.0.1:5000/login") else { return false }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let payload = ["email": email, "password": password]
+        request.httpBody = try JSONEncoder().encode(payload)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        if let httpResponse = response as? HTTPURLResponse {
+            if httpResponse.statusCode == 200 {
+                print("✅ Login successful")
+                return true
+            } else {
+                let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
+                print("❌ Login failed: \(errorMessage)")
+            }
+        }
+
+        return false
     }
 }

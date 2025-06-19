@@ -61,27 +61,36 @@ struct CreateAccountView: View {
             return
         }
 
-        do {
-            let descriptor = FetchDescriptor<User>(
-                predicate: #Predicate { $0.email == trimmedEmail }
-            )
-            let existingUsers = try context.fetch(descriptor)
-
-            if !existingUsers.isEmpty {
-                errorMessage = "An account with this email already exists"
-                return
+        Task {
+            do {
+                try await createAccountRequest(email: trimmedEmail, password: trimmedPassword)
+                isLoggedIn = true
+                dismiss()
+            } catch {
+                errorMessage = "Account creation failed: \(error.localizedDescription)"
             }
+        }
+    }
 
-            let hashedPassword = PasswordController.hash(trimmedPassword)
-            let newUser = User(email: trimmedEmail, password: hashedPassword)
-            context.insert(newUser)
-            try context.save()
+    func createAccountRequest(email: String, password: String) async throws {
+        guard let url = URL(string: "http://127.0.0.1:5000/signup") else { return }
 
-            isLoggedIn = true
-            dismiss()
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        } catch {
-            errorMessage = "Account creation failed: \(error.localizedDescription)"
+        let payload = ["email": email, "password": password]
+        request.httpBody = try JSONEncoder().encode(payload)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        if let httpResponse = response as? HTTPURLResponse {
+            if httpResponse.statusCode == 201 {
+                print("✅ Account created successfully")
+            } else {
+                let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
+                throw NSError(domain: "", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorMessage])
+            }
         }
     }
 }
