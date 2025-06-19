@@ -52,17 +52,22 @@ struct MapSearchView: View {
     @State private var prospectToNote: Prospect? = nil
     
     @Query private var customers: [Customer]
+    
+    @Binding var addressToCenter: String?
 
     // MARK: - Init
 
     init(region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
-         userEmail: String) {
+         userEmail: String,
+         addressToCenter: Binding<String?>) {
+        
         _region = region
         _selectedList = selectedList
         self.userEmail = userEmail
         _controller = StateObject(wrappedValue: MapController(region: region.wrappedValue))
         _prospects = Query(filter: #Predicate<Prospect> { $0.userEmail == userEmail })
+        _addressToCenter = addressToCenter
     }
 
     // MARK: - Body
@@ -131,6 +136,23 @@ struct MapSearchView: View {
         }
         .onChange(of: prospects) { _ in updateMarkers() }
         .onChange(of: selectedList) { _ in updateMarkers() }
+        .onChange(of: addressToCenter) { newAddress in
+            if let query = newAddress {
+                Task {
+                    if let coordinate = await controller.geocodeAddress(query) {
+                        withAnimation {
+                            // ✅ Update controller.region instead of region
+                            controller.region = MKCoordinateRegion(
+                                center: coordinate,
+                                latitudinalMeters: 804.67 * 2,
+                                longitudinalMeters: 804.67 * 2
+                            )
+                        }
+                    }
+                    addressToCenter = nil
+                }
+            }
+        }
 
         // Dismisses keyboard when tapping outside
         .onTapGesture {

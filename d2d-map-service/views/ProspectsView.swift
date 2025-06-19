@@ -24,11 +24,19 @@ struct ProspectsView: View {
 
     let availableLists = ["Prospects", "Customers"]
     @Query var prospects: [Prospect]
+    
+    var onDoubleTap: ((Prospect) -> Void)? = nil
 
-    init(selectedList: Binding<String>, userEmail: String, onSave: @escaping () -> Void) {
+    init(
+        selectedList: Binding<String>,
+        userEmail: String,
+        onSave: @escaping () -> Void,
+        onDoubleTap: ((Prospect) -> Void)? = nil
+    ) {
         _selectedList = selectedList
         self.userEmail = userEmail
         self.onSave = onSave
+        self.onDoubleTap = onDoubleTap
         _prospects = Query(filter: #Predicate<Prospect> { $0.userEmail == userEmail })
     }
 
@@ -60,6 +68,28 @@ struct ProspectsView: View {
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.hidden)
 
+                    let filteredProspects = prospects.filter { $0.list == selectedList }
+
+                    ForEach(filteredProspects, id: \.persistentModelID) { prospect in
+                        ProspectRowView(
+                            prospect: prospect,
+                            onTap: {
+                                selectedProspectID = prospect.persistentModelID
+                            },
+                            onDoubleTap: {
+                                onDoubleTap?(prospect)
+                            }
+                        )
+                        .background(
+                            NavigationLink(
+                                destination: EditProspectView(prospect: prospect),
+                                tag: prospect.persistentModelID,
+                                selection: $selectedProspectID
+                            ) { EmptyView() }
+                            .hidden()
+                        )
+                    }
+                    
                     if selectedList == "Prospects" {
                         Section {
                             Button {
@@ -74,41 +104,6 @@ struct ProspectsView: View {
                                 .padding(.vertical, 4)
                             }
                         }
-                    }
-
-                    let filteredProspects = prospects.filter { $0.list == selectedList }
-
-                    ForEach(filteredProspects, id: \.persistentModelID) { prospect in
-                        Button {
-                            selectedProspectID = prospect.persistentModelID
-                        } label: {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(prospect.fullName)
-                                    .font(.headline)
-                                Text(prospect.address)
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
-                                if !prospect.contactPhone.isEmpty {
-                                    Text("📞 \(formatPhoneNumber(prospect.contactPhone))")
-                                        .font(.subheadline)
-                                        .foregroundColor(.blue)
-                                }
-                                if !prospect.contactEmail.isEmpty {
-                                    Text("✉️ \(prospect.contactEmail)")
-                                        .font(.subheadline)
-                                        .foregroundColor(.blue)
-                                }
-                            }
-                            .padding(.vertical, 4)
-                        }
-                        .background(
-                            NavigationLink(
-                                destination: EditProspectView(prospect: prospect),
-                                tag: prospect.persistentModelID,
-                                selection: $selectedProspectID
-                            ) { EmptyView() }
-                            .hidden()
-                        )
                     }
 
                     if selectedList == "Prospects", let suggestion = suggestedProspect {

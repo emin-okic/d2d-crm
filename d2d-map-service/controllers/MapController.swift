@@ -138,3 +138,18 @@ class MapController: ObservableObject {
         }
     }
 }
+
+extension MapController {
+    func geocodeAddress(_ address: String) async -> CLLocationCoordinate2D? {
+        return await withCheckedContinuation { continuation in
+            let geocoder = CLGeocoder()
+            geocoder.geocodeAddressString(address) { placemarks, error in
+                if let coordinate = placemarks?.first?.location?.coordinate {
+                    continuation.resume(returning: coordinate)
+                } else {
+                    continuation.resume(returning: nil)
+                }
+            }
+        }
+    }
+}
