@@ -22,7 +22,7 @@ struct TripsView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 12) {
+                VStack(spacing: 16) {
                     ForEach(trips, id: \.persistentModelID) { trip in
                         VStack(alignment: .leading, spacing: 8) {
                             Text(trip.date.formatted(.dateTime.month().day().year()))
@@ -31,22 +31,18 @@ struct TripsView: View {
 
                             VStack(alignment: .leading, spacing: 6) {
                                 Label(trip.startAddress, systemImage: "circle.fill")
-                                    .font(.subheadline)
-                                    .foregroundColor(.primary)
-
                                 Label(trip.endAddress, systemImage: "mappin.circle.fill")
-                                    .font(.subheadline)
-                                    .foregroundColor(.primary)
-
                                 HStack {
                                     Image(systemName: "car.fill")
                                         .foregroundColor(.blue)
                                     Text("\(trip.miles, specifier: "%.1f") miles")
-                                        .font(.subheadline)
                                 }
                             }
+                            .font(.subheadline)
+                            .foregroundColor(.primary)
                         }
                         .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .background(.ultraThinMaterial)
                         .cornerRadius(12)
                         .shadow(radius: 1)
@@ -63,19 +59,24 @@ struct TripsView: View {
                         )
                     }
 
-                    Button {
-                        showingAddTrip = true
-                    } label: {
-                        Label("Add Trip", systemImage: "plus.circle.fill")
-                            .font(.headline)
-                            .padding()
-                            .frame(maxWidth: .infinity)
+                    // Add Trip Button Section
+                    VStack {
+                        Button {
+                            showingAddTrip = true
+                        } label: {
+                            Label("Add Trip", systemImage: "plus.circle.fill")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.blue)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.blue)
-                    .padding(.top, 10)
+                    .padding(.top, 24)
                 }
-                .padding()
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, 40)
             }
             .navigationTitle("Activity")
             .sheet(isPresented: $showingAddTrip) {
