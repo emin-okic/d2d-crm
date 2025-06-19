@@ -66,6 +66,12 @@ struct RootView: View {
             }
             .tag(1)
 
+            TripsView(userEmail: userEmail)
+                .tabItem {
+                    Label("Activity", systemImage: "car.fill")
+                }
+                .tag(2)
+            
             ProfileView(
                 isLoggedIn: $isLoggedIn,
                 userEmail: userEmail
