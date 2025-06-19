@@ -71,37 +71,15 @@ struct ProspectsView: View {
                     let filteredProspects = prospects.filter { $0.list == selectedList }
 
                     ForEach(filteredProspects, id: \.persistentModelID) { prospect in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(prospect.fullName)
-                                .font(.headline)
-                            Text(prospect.address)
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                            
-                            if !prospect.contactPhone.isEmpty {
-                                Text("📞 \(formatPhoneNumber(prospect.contactPhone))")
-                                    .font(.subheadline)
-                                    .foregroundColor(.blue)
+                        ProspectRowView(
+                            prospect: prospect,
+                            onTap: {
+                                selectedProspectID = prospect.persistentModelID
+                            },
+                            onDoubleTap: {
+                                onDoubleTap?(prospect)
                             }
-                            
-                            if !prospect.contactEmail.isEmpty {
-                                Text("✉️ \(prospect.contactEmail)")
-                                    .font(.subheadline)
-                                    .foregroundColor(.blue)
-                            }
-                            
-                            if !prospect.sortedKnocks.isEmpty {
-                                KnockDotsView(knocks: prospect.sortedKnocks)
-                            }
-                        }
-                        .padding(.vertical, 4)
-                        .contentShape(Rectangle()) // Makes the whole row tappable
-                        .onTapGesture(count: 1) {
-                            selectedProspectID = prospect.persistentModelID
-                        }
-                        .onTapGesture(count: 2) {
-                            onDoubleTap?(prospect)
-                        }
+                        )
                         .background(
                             NavigationLink(
                                 destination: EditProspectView(prospect: prospect),
