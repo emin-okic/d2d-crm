@@ -31,18 +31,20 @@ struct EditTripView: View {
                 Section(header: Text("Trip Details")) {
                     TextField("Start Address", text: $startAddress)
                     TextField("End Address", text: $endAddress)
-                    TextField("Miles", text: $miles)
-                        .keyboardType(.decimalPad)
                 }
 
                 Section {
                     Button("Save Changes") {
-                        if let milesDouble = Double(miles) {
-                            trip.startAddress = startAddress
-                            trip.endAddress = endAddress
-                            trip.miles = milesDouble
-                            try? context.save()
-                            dismiss()
+                        Task {
+                            let distance = await TripsController.shared.calculateMiles(from: startAddress, to: endAddress)
+
+                            await MainActor.run {
+                                trip.startAddress = startAddress
+                                trip.endAddress = endAddress
+                                trip.miles = distance
+                                try? context.save()
+                                dismiss()
+                            }
                         }
                     }
                     .buttonStyle(.borderedProminent)

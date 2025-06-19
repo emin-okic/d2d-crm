@@ -23,18 +23,30 @@ struct NewTripView: View {
             Form {
                 TextField("Start Address", text: $startAddress)
                 TextField("End Address", text: $endAddress)
-                TextField("Miles", text: $miles)
-                    .keyboardType(.decimalPad)
 
                 Button("Save Trip") {
-                    if let milesDouble = Double(miles) {
-                        let trip = Trip(userEmail: userEmail, startAddress: startAddress, endAddress: endAddress, miles: milesDouble)
-                        context.insert(trip)
-                        try? context.save()
-                        onSave()
-                        dismiss()
+                    guard !startAddress.isEmpty && !endAddress.isEmpty else { return }
+
+                    Task {
+                        let distance = await TripsController.shared.calculateMiles(from: startAddress, to: endAddress)
+                        print("🧭 Calculated distance: \(distance)")
+
+                        guard !distance.isNaN else {
+                            print("❌ Invalid distance. Trip not saved.")
+                            return
+                        }
+
+                        let trip = Trip(userEmail: userEmail, startAddress: startAddress, endAddress: endAddress, miles: distance)
+
+                        await MainActor.run {
+                            context.insert(trip)
+                            try? context.save()
+                            onSave()
+                            dismiss()
+                        }
                     }
                 }
+                .disabled(startAddress.isEmpty || endAddress.isEmpty)
             }
             .navigationTitle("New Trip")
         }
