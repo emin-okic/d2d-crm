@@ -7,23 +7,54 @@
 import SwiftUI
 import SwiftData
 
+enum TripFilter: String, CaseIterable, Identifiable {
+    case day = "Day"
+    case week = "Week"
+    case month = "Month"
+
+    var id: String { self.rawValue }
+}
+
 struct TripsView: View {
     @Environment(\.modelContext) private var modelContext
     let userEmail: String
+
     @State private var selectedTripID: PersistentIdentifier?
     @State private var showingAddTrip = false
-    @Query var trips: [Trip]
+    @State private var filter: TripFilter = .day
+
+    @Query private var allTrips: [Trip]
 
     init(userEmail: String) {
         self.userEmail = userEmail
-        _trips = Query(filter: #Predicate<Trip> { $0.userEmail == userEmail })
+        _allTrips = Query(filter: #Predicate<Trip> { $0.userEmail == userEmail })
+    }
+
+    // MARK: - Date Filtering
+    private var filteredTrips: [Trip] {
+        let calendar = Calendar.current
+        let now = Date()
+
+        return allTrips.filter { trip in
+            switch filter {
+            case .day:
+                return calendar.isDate(trip.date, inSameDayAs: now)
+            case .week:
+                guard let weekAgo = calendar.date(byAdding: .day, value: -7, to: now) else { return false }
+                return trip.date >= weekAgo
+            case .month:
+                guard let monthAgo = calendar.date(byAdding: .month, value: -1, to: now) else { return false }
+                return trip.date >= monthAgo
+            }
+        }
+        .sorted(by: { $0.date > $1.date })
     }
 
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 16) {
-                    ForEach(trips, id: \.persistentModelID) { trip in
+                    ForEach(filteredTrips, id: \.persistentModelID) { trip in
                         VStack(alignment: .leading, spacing: 8) {
                             Text(trip.date.formatted(.dateTime.month().day().year()))
                                 .font(.caption)
@@ -59,19 +90,16 @@ struct TripsView: View {
                         )
                     }
 
-                    // Add Trip Button Section
-                    VStack {
-                        Button {
-                            showingAddTrip = true
-                        } label: {
-                            Label("Add Trip", systemImage: "plus.circle.fill")
-                                .font(.headline)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.blue)
+                    Button {
+                        showingAddTrip = true
+                    } label: {
+                        Label("Add Trip", systemImage: "plus.circle.fill")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
                     }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.blue)
                     .padding(.top, 24)
                 }
                 .padding(.horizontal, 20)
@@ -79,6 +107,19 @@ struct TripsView: View {
                 .padding(.bottom, 40)
             }
             .navigationTitle("Activity")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        Picker("Filter", selection: $filter) {
+                            ForEach(TripFilter.allCases) { option in
+                                Text(option.rawValue).tag(option)
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                    }
+                }
+            }
             .sheet(isPresented: $showingAddTrip) {
                 NewTripView(userEmail: userEmail) {
                     showingAddTrip = false
