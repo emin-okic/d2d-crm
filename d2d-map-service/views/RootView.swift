@@ -35,31 +35,37 @@ struct RootView: View {
 
     /// Controls the presentation of the Add Prospect sheet (used in child view).
     @State private var showingAddProspect = false
+    
+    @State private var selectedTab = 0
+    @State private var addressToCenter: String? = nil
 
     var body: some View {
-        TabView {
-            // MARK: - Map Tab
+        TabView(selection: $selectedTab) {
             MapSearchView(
                 region: $region,
                 selectedList: $selectedList,
-                userEmail: userEmail
+                userEmail: userEmail,
+                addressToCenter: $addressToCenter
             )
             .tabItem {
                 Label("Map", systemImage: "map.fill")
             }
+            .tag(0)
 
-            // MARK: - Prospects Tab
             ProspectsView(
                 selectedList: $selectedList,
-                userEmail: userEmail
-            ) {
-                showingAddProspect = false
-            }
+                userEmail: userEmail,
+                onSave: { showingAddProspect = false },
+                onDoubleTap: { prospect in
+                    selectedTab = 0
+                    addressToCenter = prospect.address
+                }
+            )
             .tabItem {
                 Label("Prospects", systemImage: "person.3.fill")
             }
+            .tag(1)
 
-            // MARK: - Profile Tab
             ProfileView(
                 isLoggedIn: $isLoggedIn,
                 userEmail: userEmail
@@ -67,6 +73,7 @@ struct RootView: View {
             .tabItem {
                 Label("Profile", systemImage: "person.crop.circle")
             }
+            .tag(2)
         }
     }
 }

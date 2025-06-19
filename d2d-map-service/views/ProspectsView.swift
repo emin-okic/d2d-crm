@@ -24,11 +24,19 @@ struct ProspectsView: View {
 
     let availableLists = ["Prospects", "Customers"]
     @Query var prospects: [Prospect]
+    
+    var onDoubleTap: ((Prospect) -> Void)? = nil
 
-    init(selectedList: Binding<String>, userEmail: String, onSave: @escaping () -> Void) {
+    init(
+        selectedList: Binding<String>,
+        userEmail: String,
+        onSave: @escaping () -> Void,
+        onDoubleTap: ((Prospect) -> Void)? = nil
+    ) {
         _selectedList = selectedList
         self.userEmail = userEmail
         self.onSave = onSave
+        self.onDoubleTap = onDoubleTap
         _prospects = Query(filter: #Predicate<Prospect> { $0.userEmail == userEmail })
     }
 
@@ -63,34 +71,36 @@ struct ProspectsView: View {
                     let filteredProspects = prospects.filter { $0.list == selectedList }
 
                     ForEach(filteredProspects, id: \.persistentModelID) { prospect in
-                        Button {
-                            selectedProspectID = prospect.persistentModelID
-                        } label: {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(prospect.fullName)
-                                    .font(.headline)
-                                Text(prospect.address)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(prospect.fullName)
+                                .font(.headline)
+                            Text(prospect.address)
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                            
+                            if !prospect.contactPhone.isEmpty {
+                                Text("📞 \(formatPhoneNumber(prospect.contactPhone))")
                                     .font(.subheadline)
-                                    .foregroundColor(.gray)
-                                
-                                if !prospect.contactPhone.isEmpty {
-                                    Text("📞 \(formatPhoneNumber(prospect.contactPhone))")
-                                        .font(.subheadline)
-                                        .foregroundColor(.blue)
-                                }
-                                
-                                if !prospect.contactEmail.isEmpty {
-                                    Text("✉️ \(prospect.contactEmail)")
-                                        .font(.subheadline)
-                                        .foregroundColor(.blue)
-                                }
-                                
-                                if !prospect.sortedKnocks.isEmpty {
-                                        KnockDotsView(knocks: prospect.sortedKnocks)
-                                }
-                                
+                                    .foregroundColor(.blue)
                             }
-                            .padding(.vertical, 4)
+                            
+                            if !prospect.contactEmail.isEmpty {
+                                Text("✉️ \(prospect.contactEmail)")
+                                    .font(.subheadline)
+                                    .foregroundColor(.blue)
+                            }
+                            
+                            if !prospect.sortedKnocks.isEmpty {
+                                KnockDotsView(knocks: prospect.sortedKnocks)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                        .contentShape(Rectangle()) // Makes the whole row tappable
+                        .onTapGesture(count: 1) {
+                            selectedProspectID = prospect.persistentModelID
+                        }
+                        .onTapGesture(count: 2) {
+                            onDoubleTap?(prospect)
                         }
                         .background(
                             NavigationLink(
