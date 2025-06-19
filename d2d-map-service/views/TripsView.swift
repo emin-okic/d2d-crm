@@ -61,7 +61,12 @@ struct TripsView: View {
                 VStack(spacing: 16) {
                     ForEach(filteredTrips, id: \.persistentModelID) { trip in
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(trip.date.formatted(.dateTime.month().day().year()))
+                            Text(trip.date.formatted(.dateTime
+                                .month(.wide)
+                                .day(.defaultDigits)
+                                .year()
+                                .hour(.defaultDigits(amPM: .wide))
+                                .minute()))
                                 .font(.caption)
                                 .foregroundColor(.gray)
 
