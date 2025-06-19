@@ -4,7 +4,6 @@
 //
 //  Created by Emin Okic on 6/19/25.
 //
-
 import SwiftUI
 import SwiftData
 
@@ -22,38 +21,61 @@ struct TripsView: View {
 
     var body: some View {
         NavigationView {
-            List {
-                ForEach(trips, id: \.persistentModelID) { trip in
-                    VStack(alignment: .leading) {
-                        Text("Trip ID: \(trip.id.uuidString.prefix(8))")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        Text("📍 \(trip.startAddress) → \(trip.endAddress)")
-                        Text("🛣️ \(trip.miles, specifier: "%.1f") miles")
-                        Text("📅 \(trip.date.formatted(.dateTime.month().day().year()))")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        selectedTripID = trip.persistentModelID
-                    }
-                    .background(
-                        NavigationLink(
-                            destination: EditTripView(trip: trip),
-                            tag: trip.persistentModelID,
-                            selection: $selectedTripID
-                        ) { EmptyView() }
-                        .hidden()
-                    )
-                }
+            ScrollView {
+                VStack(spacing: 12) {
+                    ForEach(trips, id: \.persistentModelID) { trip in
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(trip.date.formatted(.dateTime.month().day().year()))
+                                .font(.caption)
+                                .foregroundColor(.gray)
 
-                Button {
-                    showingAddTrip = true
-                } label: {
-                    Label("Add Trip", systemImage: "plus.circle.fill")
-                        .font(.headline)
+                            VStack(alignment: .leading, spacing: 6) {
+                                Label(trip.startAddress, systemImage: "circle.fill")
+                                    .font(.subheadline)
+                                    .foregroundColor(.primary)
+
+                                Label(trip.endAddress, systemImage: "mappin.circle.fill")
+                                    .font(.subheadline)
+                                    .foregroundColor(.primary)
+
+                                HStack {
+                                    Image(systemName: "car.fill")
+                                        .foregroundColor(.blue)
+                                    Text("\(trip.miles, specifier: "%.1f") miles")
+                                        .font(.subheadline)
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(12)
+                        .shadow(radius: 1)
+                        .onTapGesture {
+                            selectedTripID = trip.persistentModelID
+                        }
+                        .background(
+                            NavigationLink(
+                                destination: EditTripView(trip: trip),
+                                tag: trip.persistentModelID,
+                                selection: $selectedTripID
+                            ) { EmptyView() }
+                            .hidden()
+                        )
+                    }
+
+                    Button {
+                        showingAddTrip = true
+                    } label: {
+                        Label("Add Trip", systemImage: "plus.circle.fill")
+                            .font(.headline)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.blue)
+                    .padding(.top, 10)
                 }
+                .padding()
             }
             .navigationTitle("Activity")
             .sheet(isPresented: $showingAddTrip) {
