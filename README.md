@@ -136,3 +136,17 @@ Before pushing to main, make sure the login screen screenshot is up to date.
 `git add media/login-screen-screenshot.png`
 `git commit -m "📸 Update login screen screenshot"`
 `git push origin your-branch`
+
+## How To Set Up Your Secrets File
+ 
+//
+//  Secrets.xcconfig
+//  d2d-map-service
+//
+
+// Configuration settings file format documentation can be found at:
+// https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project
+
+SIGNUP_EMAIL_ENDPOINT=YOUR_API_URL
+ANALYTICS_ENABLED=true
+
