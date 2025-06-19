@@ -60,22 +60,6 @@ struct ProspectsView: View {
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.hidden)
 
-                    if selectedList == "Prospects" {
-                        Section {
-                            Button {
-                                showingAddProspect = true
-                            } label: {
-                                HStack {
-                                    Image(systemName: "plus.circle.fill")
-                                    Text("Add Prospect")
-                                        .fontWeight(.semibold)
-                                }
-                                .foregroundColor(.blue)
-                                .padding(.vertical, 4)
-                            }
-                        }
-                    }
-
                     let filteredProspects = prospects.filter { $0.list == selectedList }
 
                     ForEach(filteredProspects, id: \.persistentModelID) { prospect in
@@ -116,6 +100,22 @@ struct ProspectsView: View {
                             ) { EmptyView() }
                             .hidden()
                         )
+                    }
+                    
+                    if selectedList == "Prospects" {
+                        Section {
+                            Button {
+                                showingAddProspect = true
+                            } label: {
+                                HStack {
+                                    Image(systemName: "plus.circle.fill")
+                                    Text("Add Prospect")
+                                        .fontWeight(.semibold)
+                                }
+                                .foregroundColor(.blue)
+                                .padding(.vertical, 4)
+                            }
+                        }
                     }
 
                     if selectedList == "Prospects", let suggestion = suggestedProspect {
