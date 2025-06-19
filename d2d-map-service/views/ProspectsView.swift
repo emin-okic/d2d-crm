@@ -88,16 +88,23 @@ struct ProspectsView: View {
                                 Text(prospect.address)
                                     .font(.subheadline)
                                     .foregroundColor(.gray)
+                                
                                 if !prospect.contactPhone.isEmpty {
                                     Text("📞 \(formatPhoneNumber(prospect.contactPhone))")
                                         .font(.subheadline)
                                         .foregroundColor(.blue)
                                 }
+                                
                                 if !prospect.contactEmail.isEmpty {
                                     Text("✉️ \(prospect.contactEmail)")
                                         .font(.subheadline)
                                         .foregroundColor(.blue)
                                 }
+                                
+                                if !prospect.sortedKnocks.isEmpty {
+                                        KnockDotsView(knocks: prospect.sortedKnocks)
+                                }
+                                
                             }
                             .padding(.vertical, 4)
                         }
