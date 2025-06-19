@@ -58,7 +58,10 @@ let sharedModelContainer: ModelContainer = {
 
     do {
         // Load the model container for the specified model types
-        return try ModelContainer(for: Prospect.self, Knock.self, User.self, configurations: config)
+        return try ModelContainer(
+                    for: Prospect.self, Knock.self, User.self, Trip.self,  // ✅ include Trip here
+                    configurations: config
+                )
     } catch {
         fatalError("Failed to load ModelContainer: \(error)")
     }

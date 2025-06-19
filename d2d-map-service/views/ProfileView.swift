@@ -23,6 +23,8 @@ struct ProfileView: View {
     /// A query that fetches all `Prospect` records associated with the current user.
     @Query private var prospects: [Prospect]
     @Query private var allProspects: [Prospect]        // Global
+    
+    @Query private var trips: [Trip]
 
     /// Initializes the profile view with a login state binding and user email.
     /// Filters prospects to only include those associated with the current user.
@@ -30,8 +32,9 @@ struct ProfileView: View {
         self._isLoggedIn = isLoggedIn
         self.userEmail = userEmail
 
-        // Filter the query to only show prospects for this user
+        // Fetch prospects and trips for this user
         _prospects = Query(filter: #Predicate<Prospect> { $0.userEmail == userEmail })
+        _trips = Query(filter: #Predicate<Trip> { $0.userEmail == userEmail })
     }
 
     var body: some View {
@@ -56,19 +59,6 @@ struct ProfileView: View {
                     .padding(.vertical, 8)
                 }
 
-                // MARK: Knocks Grouped by List
-                Section(header: Text("Knocks by List")) {
-                    Chart {
-                        ForEach(knocksByList.sorted(by: { $0.key < $1.key }), id: \.key) { list, total in
-                            BarMark(
-                                x: .value("List", list),
-                                y: .value("Knocks", total)
-                            )
-                        }
-                    }
-                    .frame(height: 120)
-                }
-
                 // MARK: Answered vs Not Answered Chart
                 Section(header: Text("Answered vs Unanswered")) {
                     Chart {
@@ -83,6 +73,26 @@ struct ProfileView: View {
                     }
                     .frame(height: 120)
                 }
+                
+                // MARK: Mileage by Day (Past 7 Days)
+                Section(header: Text("Mileage This Week")) {
+                    Chart {
+                        ForEach(milesByDay, id: \.date) { item in
+                            BarMark(
+                                x: .value("Date", item.date, unit: .day),
+                                y: .value("Miles", item.miles)
+                            )
+                            .foregroundStyle(Color.green)
+                        }
+                    }
+                    .chartXAxis {
+                        AxisMarks(values: .stride(by: .day)) { value in
+                            AxisGridLine()
+                            AxisValueLabel(format: .dateTime.weekday(.narrow)) // M, T, W...
+                        }
+                    }
+                    .frame(height: 160)
+                }
 
                 // MARK: Log Out Button
                 Section {
@@ -96,5 +106,40 @@ struct ProfileView: View {
             }
             .navigationTitle("Profile")
         }
+    }
+    
+    private var milesByDay: [(date: Date, miles: Double)] {
+        let calendar = Calendar.current
+        let now = Date()
+
+        // Step 1: Get start of the current week (Monday)
+        let startOfToday = calendar.startOfDay(for: now)
+        let weekday = calendar.component(.weekday, from: startOfToday) // 1 = Sunday, 2 = Monday, ...
+        let daysFromMonday = (weekday + 5) % 7 // shift so Monday = 0
+        guard let startOfWeek = calendar.date(byAdding: .day, value: -daysFromMonday, to: startOfToday) else { return [] }
+
+        // Step 2: Create Mon–Sun placeholder with 0 miles
+        var result: [Date: Double] = [:]
+        for i in 0..<7 {
+            if let day = calendar.date(byAdding: .day, value: i, to: startOfWeek) {
+                result[calendar.startOfDay(for: day)] = 0
+            }
+        }
+
+        // Step 3: Group trips by start-of-day and sum mileage
+        let grouped = Dictionary(grouping: trips) { trip in
+            calendar.startOfDay(for: trip.date)
+        }
+
+        for (day, tripsOnDay) in grouped {
+            if result[day] != nil {
+                result[day]! += tripsOnDay.reduce(0) { $0 + $1.miles }
+            }
+        }
+
+        // Step 4: Return sorted list of 7 entries
+        return result
+            .map { ($0.key, $0.value) }
+            .sorted { $0.0 < $1.0 }
     }
 }
