@@ -99,28 +99,61 @@ struct LoginView: View {
             ForgotPasswordView()
         }
     }
-
     private func login() {
         let trimmedEmail = emailInput.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedPassword = passwordInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        let hashedInput = PasswordController.hash(trimmedPassword)
 
-        do {
-            let descriptor = FetchDescriptor<User>(
-                predicate: #Predicate {
-                    $0.email == trimmedEmail && $0.password == hashedInput
-                }
-            )
-            let results = try context.fetch(descriptor)
+        // 🔒 Hash the password like in signup
+        let hashedPassword = PasswordController.hash(trimmedPassword)
 
-            if results.first != nil {
-                isLoggedIn = true
-            } else {
-                errorMessage = "Invalid email or password"
-            }
-
-        } catch {
-            errorMessage = "Login failed: \(error.localizedDescription)"
+        guard let url = URL(string: "http://127.0.0.1:5000/login") else {
+            errorMessage = "Invalid URL"
+            return
         }
+
+        let payload = [
+            "email": trimmedEmail,
+            "password": hashedPassword
+        ]
+
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: payload) else {
+            errorMessage = "Failed to encode credentials"
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = jsonData
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self.errorMessage = "Network error: \(error.localizedDescription)"
+                    return
+                }
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    self.errorMessage = "Invalid response"
+                    return
+                }
+
+                guard let data = data else {
+                    self.errorMessage = "No response data"
+                    return
+                }
+
+                if httpResponse.statusCode == 200 {
+                    self.isLoggedIn = true
+                } else {
+                    if let decoded = try? JSONDecoder().decode([String: String].self, from: data),
+                       let msg = decoded["message"] {
+                        self.errorMessage = msg
+                    } else {
+                        self.errorMessage = "Login failed with status code \(httpResponse.statusCode)"
+                    }
+                }
+            }
+        }.resume()
     }
 }

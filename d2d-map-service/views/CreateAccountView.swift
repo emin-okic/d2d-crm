@@ -9,14 +9,12 @@ import SwiftUI
 import SwiftData
 
 struct CreateAccountView: View {
-    @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
     @Binding var isLoggedIn: Bool
     @Binding var emailInput: String
 
     @State private var password: String = ""
-    @State private var confirmPassword: String = ""
     @State private var errorMessage: String?
 
     var body: some View {
@@ -61,27 +59,50 @@ struct CreateAccountView: View {
             return
         }
 
+        let hashedPassword = PasswordController.hash(trimmedPassword)
+
+        let url = URL(string: "http://127.0.0.1:5000/signup")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let payload = [
+            "email": trimmedEmail,
+            "password": hashedPassword
+        ]
+
         do {
-            let descriptor = FetchDescriptor<User>(
-                predicate: #Predicate { $0.email == trimmedEmail }
-            )
-            let existingUsers = try context.fetch(descriptor)
-
-            if !existingUsers.isEmpty {
-                errorMessage = "An account with this email already exists"
-                return
-            }
-
-            let hashedPassword = PasswordController.hash(trimmedPassword)
-            let newUser = User(email: trimmedEmail, password: hashedPassword)
-            context.insert(newUser)
-            try context.save()
-
-            isLoggedIn = true
-            dismiss()
-
+            request.httpBody = try JSONSerialization.data(withJSONObject: payload, options: [])
         } catch {
-            errorMessage = "Account creation failed: \(error.localizedDescription)"
+            errorMessage = "Failed to encode request"
+            return
         }
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self.errorMessage = "Network error: \(error.localizedDescription)"
+                    return
+                }
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    self.errorMessage = "Invalid response"
+                    return
+                }
+
+                if httpResponse.statusCode == 201 {
+                    self.isLoggedIn = true
+                    self.dismiss()
+                } else {
+                    if let data = data,
+                       let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+                       let message = json["message"] as? String {
+                        self.errorMessage = message
+                    } else {
+                        self.errorMessage = "Signup failed with status code \(httpResponse.statusCode)"
+                    }
+                }
+            }
+        }.resume()
     }
 }
