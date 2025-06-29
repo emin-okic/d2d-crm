@@ -27,7 +27,7 @@ struct d2d_map_serviceApp: App {
 
 /// A shared SwiftData `ModelContainer` configured to store app data in a custom folder.
 ///
-/// This container supports models for `Prospect`, `Knock`, and `User`.
+/// This container supports models for `Prospect`, and`Knock`
 /// It persists data in a file located at: `ApplicationSupport/d2d-map-service/database/prospects.sqlite`
 let sharedModelContainer: ModelContainer = {
     // Determine the path to the database file

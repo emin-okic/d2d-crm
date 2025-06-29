@@ -15,7 +15,6 @@ struct ProspectsView: View {
     @Environment(\.modelContext) private var modelContext
     @Binding var selectedList: String
     var onSave: () -> Void
-    var userEmail = "Emin"
 
     @State private var selectedProspectID: PersistentIdentifier?
     @State private var showingAddProspect = false
