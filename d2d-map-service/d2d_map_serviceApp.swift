@@ -48,7 +48,7 @@ let sharedModelContainer: ModelContainer = {
     do {
         // Load the model container for the specified model types
         return try ModelContainer(
-                    for: Prospect.self, Knock.self, User.self, Trip.self,  // ✅ include Trip here
+                    for: Prospect.self, Knock.self, Trip.self,
                     configurations: config
                 )
     } catch {
