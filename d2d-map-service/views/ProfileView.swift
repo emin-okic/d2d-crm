@@ -11,6 +11,9 @@ import SwiftData
 struct ProfileView: View {
     @Query private var prospects: [Prospect]
     @Query private var trips: [Trip]
+    
+    @State private var selectedObjection: Objection?
+    @State private var showingAddObjection = false
 
     var body: some View {
         let totalKnocks = ProfileController.totalKnocks(from: prospects)
@@ -93,6 +96,14 @@ struct ProfileView: View {
                         .frame(height: 160)
                         .padding(.horizontal, 20)
                     }
+                    
+                    Spacer()
+                    
+                    // MARK: - Objections Table
+                    NavigationView {
+                        ObjectionsSectionView()
+                    }
+                    
 
                     Spacer()
                 }

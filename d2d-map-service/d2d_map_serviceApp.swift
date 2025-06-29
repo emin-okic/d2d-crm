@@ -30,27 +30,27 @@ struct d2d_map_serviceApp: App {
 /// This container supports models for `Prospect`, and`Knock`
 /// It persists data in a file located at: `ApplicationSupport/d2d-map-service/database/prospects.sqlite`
 let sharedModelContainer: ModelContainer = {
-    // Determine the path to the database file
     let url = FileManager.default
         .urls(for: .applicationSupportDirectory, in: .userDomainMask)
         .first!
         .appendingPathComponent("d2d-map-service/database/prospects.sqlite")
 
-    // Ensure the directory exists
     try? FileManager.default.createDirectory(
         at: url.deletingLastPathComponent(),
         withIntermediateDirectories: true
     )
 
-    // Configure the model container with a custom URL
-    let config = ModelConfiguration(url: url)
+    let schema = Schema([
+        Prospect.self,
+        Knock.self,
+        Trip.self,
+        Objection.self
+    ])
+
+    let config = ModelConfiguration(schema: schema, url: url)
 
     do {
-        // Load the model container for the specified model types
-        return try ModelContainer(
-                    for: Prospect.self, Knock.self, Trip.self,
-                    configurations: config
-                )
+        return try ModelContainer(for: schema, configurations: [config])
     } catch {
         fatalError("Failed to load ModelContainer: \(error)")
     }
