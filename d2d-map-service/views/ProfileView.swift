@@ -22,21 +22,15 @@ struct ProfileView: View {
     var body: some View {
         // Calculate stats
         let totalKnocks = ProfileController.totalKnocks(from: prospects)
-        let knocksByList = ProfileController.knocksByList(from: prospects)
         let answeredVsUnanswered = ProfileController.knocksAnsweredVsUnanswered(from: prospects)
 
         NavigationView {
             Form {
-                
-                // Get personal and global knock counts
-                let yourKnocks = ProfileController.totalKnocks(from: prospects)
-                let globalKnocks = ProfileController.totalKnocks(from: prospects)
 
                 // MARK: Total Knocks Summary
                 Section(header: Text("Summary")) {
                     HStack(spacing: 12) {
-                        LeaderboardCardView(title: "You", count: yourKnocks)
-                        LeaderboardCardView(title: "Global", count: globalKnocks)
+                        LeaderboardCardView(title: "Total Knocks", count: totalKnocks)
                     }
                     .padding(.vertical, 8)
                 }
