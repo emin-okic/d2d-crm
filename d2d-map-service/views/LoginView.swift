@@ -75,12 +75,6 @@ struct LoginView: View {
 
                 // MARK: - Secondary Actions
                 VStack(spacing: 12) {
-                    Button("Create Account") {
-                        showCreateAccount = true
-                    }
-                    .font(.footnote)
-                    .foregroundColor(.blue)
-                    .padding(.bottom, 4)
 
                     Button("Forgot Password?") {
                         showForgotPassword = true
@@ -91,9 +85,6 @@ struct LoginView: View {
                 }
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
-        }
-        .sheet(isPresented: $showCreateAccount) {
-            CreateAccountView(isLoggedIn: $isLoggedIn, emailInput: $emailInput)
         }
         .sheet(isPresented: $showForgotPassword) {
             ForgotPasswordView()
