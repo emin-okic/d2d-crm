@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 
-/// A view that displays and manages a list of prospects associated with the logged-in user.
+/// A view that displays and manages a list of prospects
 /// Users can filter by list type (e.g., "Prospects", "Customers"), add new prospects, and tap
 /// a prospect to edit its details.
 struct ProspectsView: View {
@@ -146,8 +146,7 @@ struct ProspectsView: View {
                         onSave: {
                             showingAddProspect = false
                             onSave()
-                        },
-                        userEmail: userEmail
+                        }
                     )
                 }
                 .task {

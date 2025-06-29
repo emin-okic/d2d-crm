@@ -9,14 +9,12 @@ import Foundation
 
 /// A utility struct that provides analytics and summaries based on a collection of `Prospect` objects.
 ///
-/// These functions support filtering by `userEmail` to isolate data per user when needed.
 struct ProfileController {
     
     /// Computes the total number of knocks recorded across all prospects.
     ///
     /// - Parameters:
     ///   - prospects: An array of `Prospect` objects.
-    ///   - userEmail: Optional filter to only count knocks made by a specific user.
     /// - Returns: Total knock count.
     static func totalKnocks(from prospects: [Prospect]) -> Int {
         prospects.reduce(0) { sum, prospect in
@@ -28,7 +26,6 @@ struct ProfileController {
     ///
     /// - Parameters:
     ///   - prospects: An array of `Prospect` objects.
-    ///   - userEmail: Optional filter to only count knocks made by a specific user.
     /// - Returns: Dictionary mapping list names to total knocks.
     static func knocksByList(from prospects: [Prospect]) -> [String: Int] {
         var result: [String: Int] = [:]
@@ -42,7 +39,6 @@ struct ProfileController {
     ///
     /// - Parameters:
     ///   - prospects: An array of `Prospect` objects.
-    ///   - userEmail: Optional filter to only count knocks made by a specific user.
     /// - Returns: A tuple containing counts of answered and not answered knocks.
     static func knocksAnsweredVsUnanswered(from prospects: [Prospect]) -> (answered: Int, unanswered: Int) {
         var answered = 0, unanswered = 0

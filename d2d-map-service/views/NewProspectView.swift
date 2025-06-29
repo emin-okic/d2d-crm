@@ -4,14 +4,12 @@
 //
 //  Created by Emin Okic on 5/30/25.
 //
-
 import SwiftUI
 
 struct NewProspectView: View {
     @Environment(\.modelContext) private var modelContext
     @Binding var selectedList: String
     var onSave: () -> Void
-    var userEmail: String
 
     @State private var fullName = ""
     @State private var address = ""
