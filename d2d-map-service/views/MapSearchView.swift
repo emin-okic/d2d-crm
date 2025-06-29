@@ -24,6 +24,11 @@ struct MapSearchView: View {
     @State private var showNoteInput = false
     @State private var newNoteText = ""
     @State private var prospectToNote: Prospect?
+    
+    @State private var showObjectionPicker = false
+    @State private var objectionOptions: [Objection] = []
+    @State private var selectedObjection: Objection?
+    @Query private var objections: [Objection]
 
     @Environment(\.modelContext) private var modelContext
 
@@ -115,10 +120,43 @@ struct MapSearchView: View {
         .alert("Knock Outcome", isPresented: $showOutcomePrompt, actions: {
             Button("Answered") { handleKnockAndPromptNote(status: "Answered") }
             Button("Not Answered") { handleKnockAndPromptNote(status: "Not Answered") }
+            Button("Not Enough Interest") { handleKnockAndPromptObjection(status: "Not Enough Interest") }
             Button("Cancel", role: .cancel) {}
         }, message: {
             Text("Did someone answer at \(pendingAddress ?? "this address")?")
         })
+        .sheet(isPresented: $showObjectionPicker) {
+            NavigationView {
+                List(objectionOptions) { obj in
+                    Button(action: {
+                        selectedObjection = obj
+                        obj.timesHeard += 1
+                        try? modelContext.save()
+                        showObjectionPicker = false
+                        showNoteInput = true
+                    }) {
+                        VStack(alignment: .leading) {
+                            Text(obj.text)
+                                .font(.headline)
+                            if !obj.response.isEmpty {
+                                Text(obj.response)
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+                .navigationTitle("Why not interested?")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            showObjectionPicker = false
+                        }
+                    }
+                }
+            }
+        }
         .sheet(isPresented: $showNoteInput) {
             NavigationView {
                 Form {
@@ -203,6 +241,15 @@ struct MapSearchView: View {
             let prospect = saveKnock(address: addr, status: status)
             prospectToNote = prospect
             showNoteInput = true
+        }
+    }
+    
+    private func handleKnockAndPromptObjection(status: String) {
+        if let addr = pendingAddress {
+            let prospect = saveKnock(address: addr, status: status)
+            prospectToNote = prospect
+            objectionOptions = objections
+            showObjectionPicker = true
         }
     }
 }
