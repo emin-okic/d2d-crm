@@ -16,20 +16,9 @@ import Foundation
 @main
 struct d2d_map_serviceApp: App {
 
-    /// Tracks whether the user is currently logged in.
-    @State private var isLoggedIn = false
-
-    /// Stores the current user's email input, used for filtering user-specific data.
-    @State private var emailInput: String = ""
-
     var body: some Scene {
         WindowGroup {
-            // Conditional rendering based on login state
-            if isLoggedIn {
-                RootView(isLoggedIn: $isLoggedIn, userEmail: emailInput)
-            } else {
-                LoginView(isLoggedIn: $isLoggedIn, emailInput: $emailInput)
-            }
+            RootView()
         }
         // Inject a shared model container for SwiftData persistence
         .modelContainer(sharedModelContainer)

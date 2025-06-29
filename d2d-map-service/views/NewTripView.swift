@@ -10,8 +10,7 @@ import SwiftData
 struct NewTripView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-
-    let userEmail: String
+    
     var onSave: () -> Void
 
     @State private var startAddress = ""
@@ -36,7 +35,7 @@ struct NewTripView: View {
                             return
                         }
 
-                        let trip = Trip(userEmail: userEmail, startAddress: startAddress, endAddress: endAddress, miles: distance)
+                        let trip = Trip(startAddress: startAddress, endAddress: endAddress, miles: distance)
 
                         await MainActor.run {
                             context.insert(trip)

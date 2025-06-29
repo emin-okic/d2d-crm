@@ -14,41 +14,23 @@ import SwiftData
 ///
 /// The profile also includes a logout button, which resets the app's login state.
 struct ProfileView: View {
-    /// Whether the user is currently logged in.
-    @Binding var isLoggedIn: Bool
-
-    /// The logged-in user's email address, used to filter their data.
-    let userEmail: String
 
     /// A query that fetches all `Prospect` records associated with the current user.
     @Query private var prospects: [Prospect]
-    @Query private var allProspects: [Prospect]        // Global
-    
     @Query private var trips: [Trip]
-
-    /// Initializes the profile view with a login state binding and user email.
-    /// Filters prospects to only include those associated with the current user.
-    init(isLoggedIn: Binding<Bool>, userEmail: String) {
-        self._isLoggedIn = isLoggedIn
-        self.userEmail = userEmail
-
-        // Fetch prospects and trips for this user
-        _prospects = Query(filter: #Predicate<Prospect> { $0.userEmail == userEmail })
-        _trips = Query(filter: #Predicate<Trip> { $0.userEmail == userEmail })
-    }
 
     var body: some View {
         // Calculate stats
-        let totalKnocks = ProfileController.totalKnocks(from: prospects, userEmail: userEmail)
-        let knocksByList = ProfileController.knocksByList(from: prospects, userEmail: userEmail)
-        let answeredVsUnanswered = ProfileController.knocksAnsweredVsUnanswered(from: prospects, userEmail: userEmail)
+        let totalKnocks = ProfileController.totalKnocks(from: prospects)
+        let knocksByList = ProfileController.knocksByList(from: prospects)
+        let answeredVsUnanswered = ProfileController.knocksAnsweredVsUnanswered(from: prospects)
 
         NavigationView {
             Form {
                 
                 // Get personal and global knock counts
-                let yourKnocks = ProfileController.totalKnocks(from: prospects, userEmail: userEmail)
-                let globalKnocks = ProfileController.totalKnocks(from: allProspects)
+                let yourKnocks = ProfileController.totalKnocks(from: prospects)
+                let globalKnocks = ProfileController.totalKnocks(from: prospects)
 
                 // MARK: Total Knocks Summary
                 Section(header: Text("Summary")) {
@@ -94,15 +76,6 @@ struct ProfileView: View {
                     .frame(height: 160)
                 }
 
-                // MARK: Log Out Button
-                Section {
-                    Button(role: .destructive) {
-                        isLoggedIn = false
-                    } label: {
-                        Text("Log Out")
-                            .frame(maxWidth: .infinity, alignment: .center)
-                    }
-                }
             }
             .navigationTitle("Profile")
         }

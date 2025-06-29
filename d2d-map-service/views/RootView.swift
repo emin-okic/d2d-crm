@@ -15,11 +15,6 @@ import MapKit
 /// This view is only shown after a user logs in, and it passes the user's email to
 /// all child views to filter data appropriately.
 struct RootView: View {
-    /// Tracks the logged-in state of the user. If set to `false`, the app shows the login screen again.
-    @Binding var isLoggedIn: Bool
-
-    /// The logged-in user's email, used for filtering user-specific data.
-    let userEmail: String
 
     /// The model context environment for managing SwiftData operations.
     @Environment(\.modelContext) private var modelContext
@@ -44,7 +39,6 @@ struct RootView: View {
             MapSearchView(
                 region: $region,
                 selectedList: $selectedList,
-                userEmail: userEmail,
                 addressToCenter: $addressToCenter
             )
             .tabItem {
@@ -54,7 +48,6 @@ struct RootView: View {
 
             ProspectsView(
                 selectedList: $selectedList,
-                userEmail: userEmail,
                 onSave: { showingAddProspect = false },
                 onDoubleTap: { prospect in
                     selectedTab = 0
@@ -66,15 +59,13 @@ struct RootView: View {
             }
             .tag(1)
 
-            TripsView(userEmail: userEmail)
+            TripsView()
                 .tabItem {
                     Label("Activity", systemImage: "car.fill")
                 }
                 .tag(2)
             
             ProfileView(
-                isLoggedIn: $isLoggedIn,
-                userEmail: userEmail
             )
             .tabItem {
                 Label("Profile", systemImage: "person.crop.circle")

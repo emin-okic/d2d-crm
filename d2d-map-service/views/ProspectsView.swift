@@ -15,7 +15,7 @@ struct ProspectsView: View {
     @Environment(\.modelContext) private var modelContext
     @Binding var selectedList: String
     var onSave: () -> Void
-    var userEmail: String
+    var userEmail = "Emin"
 
     @State private var selectedProspectID: PersistentIdentifier?
     @State private var showingAddProspect = false
@@ -29,15 +29,13 @@ struct ProspectsView: View {
 
     init(
         selectedList: Binding<String>,
-        userEmail: String,
         onSave: @escaping () -> Void,
         onDoubleTap: ((Prospect) -> Void)? = nil
     ) {
         _selectedList = selectedList
-        self.userEmail = userEmail
         self.onSave = onSave
         self.onDoubleTap = onDoubleTap
-        _prospects = Query(filter: #Predicate<Prospect> { $0.userEmail == userEmail })
+        _prospects = Query()
     }
 
     var body: some View {
@@ -176,7 +174,7 @@ struct ProspectsView: View {
         let neighbor = await withCheckedContinuation { (continuation: CheckedContinuation<Prospect?, Never>) in
             controller.geocodeAndSuggestNeighbor(from: customer.address, for: userEmail) { address in
                 if let addr = address {
-                    let suggested = Prospect(fullName: "Suggested Neighbor", address: addr, count: 0, list: "Prospects", userEmail: userEmail)
+                    let suggested = Prospect(fullName: "Suggested Neighbor", address: addr, count: 0, list: "Prospects")
                     continuation.resume(returning: suggested)
                 } else {
                     continuation.resume(returning: nil)
@@ -212,8 +210,7 @@ struct ProspectsView: View {
                             fullName: "Suggested Neighbor",
                             address: addr,
                             count: 0,
-                            list: "Prospects",
-                            userEmail: userEmail
+                            list: "Prospects"
                         )
                         continuation.resume(returning: suggested)
                     } else {

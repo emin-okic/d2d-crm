@@ -39,8 +39,7 @@ struct NewProspectView: View {
                             fullName: fullName,
                             address: address,
                             count: 0,
-                            list: selectedList,
-                            userEmail: userEmail
+                            list: selectedList
                         )
                         newProspect.contactPhone = contactPhone
                         newProspect.contactEmail = contactEmail

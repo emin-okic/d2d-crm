@@ -155,7 +155,7 @@ class DatabaseController {
     ///   - latitude: Latitude of the knock location.
     ///   - longitude: Longitude of the knock location.
     ///   - userEmailValue: The user who recorded the knock.
-    func addKnock(for prospectIdValue: Int64, date: Date, status: String, latitude: Double, longitude: Double, userEmailValue: String) {
+    func addKnock(for prospectIdValue: Int64, date: Date, status: String, latitude: Double, longitude: Double) {
         let lat = Expression<Double>("latitude")
         let lon = Expression<Double>("longitude")
 
@@ -165,8 +165,7 @@ class DatabaseController {
                 knockDate <- date,
                 knockStatus <- status,
                 lat <- latitude,
-                lon <- longitude,
-                userEmail <- userEmailValue
+                lon <- longitude
             )
             try db?.run(insert)
         } catch {
@@ -198,12 +197,12 @@ class DatabaseController {
                     let lat = knockRow[Expression<Double>("latitude")]
                     let lon = knockRow[Expression<Double>("longitude")]
                     let user = knockRow[userEmail]
-                    let knock = Knock(date: dateVal, status: statusVal, latitude: lat, longitude: lon, userEmail: user)
+                    let knock = Knock(date: dateVal, status: statusVal, latitude: lat, longitude: lon)
                     knocksArray.append(knock)
                 }
 
                 let count = knocksArray.count
-                let prospect = Prospect(fullName: name, address: addr, count: count, list: listName, userEmail: userEmailValue ?? "")
+                let prospect = Prospect(fullName: name, address: addr, count: count, list: listName)
                 prospect.knockHistory = knocksArray
                 results.append(prospect)
             }

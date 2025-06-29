@@ -18,18 +18,11 @@ enum TripFilter: String, CaseIterable, Identifiable {
 
 struct TripsView: View {
     @Environment(\.modelContext) private var modelContext
-    let userEmail: String
-
     @State private var selectedTripID: PersistentIdentifier?
     @State private var showingAddTrip = false
     @State private var filter: TripFilter = .day
 
     @Query private var allTrips: [Trip]
-
-    init(userEmail: String) {
-        self.userEmail = userEmail
-        _allTrips = Query(filter: #Predicate<Trip> { $0.userEmail == userEmail })
-    }
 
     // MARK: - Date Filtering
     private var filteredTrips: [Trip] {
@@ -131,7 +124,7 @@ struct TripsView: View {
                 }
             }
             .sheet(isPresented: $showingAddTrip) {
-                NewTripView(userEmail: userEmail) {
+                NewTripView {
                     showingAddTrip = false
                 }
             }

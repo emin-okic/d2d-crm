@@ -56,11 +56,15 @@ struct EditProspectView: View {
             // MARK: - Notes Section (Expandable)
             Section {
                 DisclosureGroup(isExpanded: $showNotes) {
-                    ForEach(prospect.notes.sorted(by: { $0.date > $1.date }), id: \.date) { note in
+                    let sortedNotes = prospect.notes.sorted { a, b in
+                        a.date > b.date
+                    }
+
+                    ForEach(sortedNotes, id: \.date) { note in
                         VStack(alignment: .leading, spacing: 4) {
                             Text(note.content)
                                 .font(.body)
-                            Text("— \(note.authorEmail), \(note.date.formatted(.dateTime.month().day().hour().minute()))")
+                            Text("— \(note.date.formatted(.dateTime.month().day().hour().minute()))")
                                 .font(.caption)
                                 .foregroundColor(.gray)
                         }

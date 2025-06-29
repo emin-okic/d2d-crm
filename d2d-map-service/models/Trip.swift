@@ -11,15 +11,13 @@ import SwiftData
 @Model
 class Trip {
     var id: UUID
-    var userEmail: String
     var startAddress: String
     var endAddress: String
     var miles: Double
     var date: Date
 
-    init(userEmail: String, startAddress: String, endAddress: String, miles: Double, date: Date = .now, id: UUID = UUID()) {
+    init(startAddress: String, endAddress: String, miles: Double, date: Date = .now, id: UUID = UUID()) {
         self.id = id
-        self.userEmail = userEmail
         self.startAddress = startAddress
         self.endAddress = endAddress
         self.miles = miles
