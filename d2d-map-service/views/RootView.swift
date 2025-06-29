@@ -59,6 +59,11 @@ struct RootView: View {
             }
             .tag(1)
             
+            RecordingsView()
+                .tabItem {
+                    Label("Recordings", systemImage: "waveform")
+                }
+            
             ProfileView(
             )
             .tabItem {

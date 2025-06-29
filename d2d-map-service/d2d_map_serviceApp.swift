@@ -44,7 +44,8 @@ let sharedModelContainer: ModelContainer = {
         Prospect.self,
         Knock.self,
         Trip.self,
-        Objection.self
+        Objection.self,
+        Recording.self
     ])
 
     let config = ModelConfiguration(schema: schema, url: url)
