@@ -16,7 +16,6 @@ struct ProfileView: View {
         let totalKnocks = ProfileController.totalKnocks(from: prospects)
         let answeredVsUnanswered = ProfileController.knocksAnsweredVsUnanswered(from: prospects)
 
-        // New summary stats
         let totalProspects = prospects.count
         let totalCustomers = prospects.filter { $0.list == "Customers" }.count
         let averageKnocksPerCustomer: Double = {
@@ -28,57 +27,79 @@ struct ProfileView: View {
         }()
 
         NavigationView {
-            Form {
-
-                // MARK: Total Summary
-                Section(header: Text("Summary")) {
-                    HStack(alignment: .center, spacing: 10) {
-                        LeaderboardCardView(title: "Prospects", count: totalProspects)
-                        LeaderboardCardView(title: "Customers", count: totalCustomers)
-                        LeaderboardCardView(
-                            title: "Knocks Per Sale",
-                            count: Int(averageKnocksPerCustomer.rounded())
-                        )
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    // MARK: - Custom Header
+                    HStack {
+                        Text("Profile")
+                            .font(.title)
+                            .fontWeight(.bold)
+                        Spacer()
                     }
-                    .padding(.vertical, 8)
-                }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
 
-                // MARK: Answered vs Not Answered Chart
-                Section(header: Text("Prospecting Activity")) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Spacer()
+                    // MARK: - Summary Cards
+                    VStack(spacing: 12) {
+                        HStack(spacing: 12) {
+                            LeaderboardCardView(title: "Prospects", count: totalProspects)
+                            LeaderboardCardView(title: "Customers", count: totalCustomers)
+                            LeaderboardCardView(
+                                title: "Knocks Per Sale",
+                                count: Int(averageKnocksPerCustomer.rounded())
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 20)
+
+                    // MARK: - Knock Activity
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Prospecting Activity")
+                            .font(.headline)
+                            .padding(.horizontal, 20)
+
                         LeaderboardCardView(title: "Total Knocks", count: totalKnocks)
-                        Spacer()
+                            .padding(.horizontal, 20)
+
                         Chart {
                             BarMark(x: .value("Status", "Answered"), y: .value("Count", answeredVsUnanswered.answered))
                             BarMark(x: .value("Status", "Not Answered"), y: .value("Count", answeredVsUnanswered.unanswered))
                         }
                         .frame(height: 120)
+                        .padding(.horizontal, 20)
                     }
-                }
 
-                // MARK: Mileage by Day (Past 7 Days)
-                Section(header: Text("Mileage This Week")) {
-                    Chart {
-                        ForEach(milesByDay, id: \.date) { item in
-                            BarMark(
-                                x: .value("Date", item.date, unit: .day),
-                                y: .value("Miles", item.miles)
-                            )
-                            .foregroundStyle(Color.green)
-                        }
-                    }
-                    .chartXAxis {
-                        AxisMarks(values: .stride(by: .day)) { value in
-                            AxisGridLine()
-                            AxisValueLabel(format: .dateTime.weekday(.narrow))
-                        }
-                    }
-                    .frame(height: 160)
-                }
+                    // MARK: - Mileage Chart
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Mileage This Week")
+                            .font(.headline)
+                            .padding(.horizontal, 20)
 
+                        Chart {
+                            ForEach(milesByDay, id: \.date) { item in
+                                BarMark(
+                                    x: .value("Date", item.date, unit: .day),
+                                    y: .value("Miles", item.miles)
+                                )
+                                .foregroundStyle(Color.green)
+                            }
+                        }
+                        .chartXAxis {
+                            AxisMarks(values: .stride(by: .day)) { value in
+                                AxisGridLine()
+                                AxisValueLabel(format: .dateTime.weekday(.narrow))
+                            }
+                        }
+                        .frame(height: 160)
+                        .padding(.horizontal, 20)
+                    }
+
+                    Spacer()
+                }
+                .padding(.bottom, 40)
             }
-            .navigationTitle("Profile")
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 
