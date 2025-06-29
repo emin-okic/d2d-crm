@@ -4,52 +4,57 @@
 //
 //  Created by Emin Okic on 5/31/25.
 //
-
 import SwiftUI
 import Charts
 import SwiftData
 
-/// A view that displays summary analytics about the current user's knocking activity,
-/// including total knocks, knocks grouped by list, and answered vs. not answered statistics.
-///
-/// The profile also includes a logout button, which resets the app's login state.
 struct ProfileView: View {
-
-    /// A query that fetches all `Prospect` records associated with the current user.
     @Query private var prospects: [Prospect]
     @Query private var trips: [Trip]
 
     var body: some View {
-        // Calculate stats
         let totalKnocks = ProfileController.totalKnocks(from: prospects)
         let answeredVsUnanswered = ProfileController.knocksAnsweredVsUnanswered(from: prospects)
+
+        // New summary stats
+        let totalProspects = prospects.count
+        let totalCustomers = prospects.filter { $0.list == "Customers" }.count
+        let averageKnocksPerCustomer: Double = {
+            let customerKnocks = prospects
+                .filter { $0.list == "Customers" }
+                .map { $0.knockHistory.count }
+            guard !customerKnocks.isEmpty else { return 0 }
+            return Double(customerKnocks.reduce(0, +)) / Double(customerKnocks.count)
+        }()
 
         NavigationView {
             Form {
 
-                // MARK: Total Knocks Summary
+                // MARK: Total Summary
                 Section(header: Text("Summary")) {
-                    HStack(spacing: 12) {
-                        LeaderboardCardView(title: "Total Knocks", count: totalKnocks)
+                    HStack(alignment: .center, spacing: 10) {
+                        LeaderboardCardView(title: "Prospects", count: totalProspects)
+                        LeaderboardCardView(title: "Customers", count: totalCustomers)
+                        LeaderboardCardView(
+                            title: "Avg Knocks/Customer",
+                            count: Int(averageKnocksPerCustomer.rounded())
+                        )
                     }
                     .padding(.vertical, 8)
                 }
 
                 // MARK: Answered vs Not Answered Chart
-                Section(header: Text("Answered vs Unanswered")) {
-                    Chart {
-                        BarMark(
-                            x: .value("Status", "Answered"),
-                            y: .value("Count", answeredVsUnanswered.answered)
-                        )
-                        BarMark(
-                            x: .value("Status", "Not Answered"),
-                            y: .value("Count", answeredVsUnanswered.unanswered)
-                        )
+                Section(header: Text("Prospecting Activity")) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        LeaderboardCardView(title: "Total Knocks", count: totalKnocks)
+                        Chart {
+                            BarMark(x: .value("Status", "Answered"), y: .value("Count", answeredVsUnanswered.answered))
+                            BarMark(x: .value("Status", "Not Answered"), y: .value("Count", answeredVsUnanswered.unanswered))
+                        }
+                        .frame(height: 120)
                     }
-                    .frame(height: 120)
                 }
-                
+
                 // MARK: Mileage by Day (Past 7 Days)
                 Section(header: Text("Mileage This Week")) {
                     Chart {
@@ -64,7 +69,7 @@ struct ProfileView: View {
                     .chartXAxis {
                         AxisMarks(values: .stride(by: .day)) { value in
                             AxisGridLine()
-                            AxisValueLabel(format: .dateTime.weekday(.narrow)) // M, T, W...
+                            AxisValueLabel(format: .dateTime.weekday(.narrow))
                         }
                     }
                     .frame(height: 160)
@@ -74,18 +79,16 @@ struct ProfileView: View {
             .navigationTitle("Profile")
         }
     }
-    
+
     private var milesByDay: [(date: Date, miles: Double)] {
         let calendar = Calendar.current
         let now = Date()
 
-        // Step 1: Get start of the current week (Monday)
         let startOfToday = calendar.startOfDay(for: now)
-        let weekday = calendar.component(.weekday, from: startOfToday) // 1 = Sunday, 2 = Monday, ...
-        let daysFromMonday = (weekday + 5) % 7 // shift so Monday = 0
+        let weekday = calendar.component(.weekday, from: startOfToday)
+        let daysFromMonday = (weekday + 5) % 7
         guard let startOfWeek = calendar.date(byAdding: .day, value: -daysFromMonday, to: startOfToday) else { return [] }
 
-        // Step 2: Create Mon–Sun placeholder with 0 miles
         var result: [Date: Double] = [:]
         for i in 0..<7 {
             if let day = calendar.date(byAdding: .day, value: i, to: startOfWeek) {
@@ -93,10 +96,7 @@ struct ProfileView: View {
             }
         }
 
-        // Step 3: Group trips by start-of-day and sum mileage
-        let grouped = Dictionary(grouping: trips) { trip in
-            calendar.startOfDay(for: trip.date)
-        }
+        let grouped = Dictionary(grouping: trips) { calendar.startOfDay(for: $0.date) }
 
         for (day, tripsOnDay) in grouped {
             if result[day] != nil {
@@ -104,9 +104,6 @@ struct ProfileView: View {
             }
         }
 
-        // Step 4: Return sorted list of 7 entries
-        return result
-            .map { ($0.key, $0.value) }
-            .sorted { $0.0 < $1.0 }
+        return result.map { ($0.key, $0.value) }.sorted { $0.0 < $1.0 }
     }
 }
