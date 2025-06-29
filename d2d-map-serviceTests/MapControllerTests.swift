@@ -15,8 +15,8 @@ final class MapControllerTests: XCTestCase {
         // Force release your controller if needed
     }
 
-    func makeProspect(id: UUID = UUID(), name: String, address: String, list: String, knockHistory: [Knock] = []) -> Prospect {
-        Prospect(id: id, fullName: name, address: address, count: 0, list: list, knockHistory: knockHistory)
+    func makeProspect(name: String, address: String, list: String) -> Prospect {
+        Prospect(fullName: name, address: address, count: 0, list: list)
     }
 
 }
