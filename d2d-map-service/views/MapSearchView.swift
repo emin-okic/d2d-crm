@@ -179,7 +179,7 @@ struct MapSearchView: View {
                                 } else if let addr = pendingAddress,
                                           prospect.knockHistory.last?.status == "Not Answered" {
                                     noteContent = """
-                                    Not Answer
+                                    No Answer
                                     
                                     \(newNoteText)
                                     """
