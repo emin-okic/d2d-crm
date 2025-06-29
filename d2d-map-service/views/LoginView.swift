@@ -72,22 +72,8 @@ struct LoginView: View {
                 .padding(.horizontal)
                 
                 Spacer()
-
-                // MARK: - Secondary Actions
-                VStack(spacing: 12) {
-
-                    Button("Forgot Password?") {
-                        showForgotPassword = true
-                    }
-                    .font(.footnote)
-                    .foregroundColor(.gray)
-                    .padding(.bottom, 36)
-                }
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
-        }
-        .sheet(isPresented: $showForgotPassword) {
-            ForgotPasswordView()
         }
     }
 
