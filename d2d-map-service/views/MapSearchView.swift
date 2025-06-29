@@ -24,6 +24,14 @@ struct MapSearchView: View {
     @State private var showNoteInput = false
     @State private var newNoteText = ""
     @State private var prospectToNote: Prospect?
+    
+    @State private var showObjectionPicker = false
+    @State private var objectionOptions: [Objection] = []
+    @State private var selectedObjection: Objection?
+    @Query private var objections: [Objection]
+    
+    @State private var showConversionSheet = false
+    @State private var prospectToConvert: Prospect?
 
     @Environment(\.modelContext) private var modelContext
 
@@ -113,12 +121,56 @@ struct MapSearchView: View {
                                             to: nil, from: nil, for: nil)
         }
         .alert("Knock Outcome", isPresented: $showOutcomePrompt, actions: {
-            Button("Answered") { handleKnockAndPromptNote(status: "Answered") }
+            
+            Button("Signed Up") {
+                handleKnockAndConvertToCustomer(status: "Signed Up")
+            }
+            
             Button("Not Answered") { handleKnockAndPromptNote(status: "Not Answered") }
+            
+            Button("Not Enough Interest") { handleKnockAndPromptObjection(status: "Not Enough Interest") }
+            
             Button("Cancel", role: .cancel) {}
         }, message: {
             Text("Did someone answer at \(pendingAddress ?? "this address")?")
         })
+        .sheet(isPresented: $showObjectionPicker) {
+            NavigationView {
+                List(objectionOptions) { obj in
+                    Button(action: {
+                        selectedObjection = obj
+                        obj.timesHeard += 1
+                        try? modelContext.save()
+                        showObjectionPicker = false
+                        showNoteInput = true
+                    }) {
+                        VStack(alignment: .leading) {
+                            Text(obj.text)
+                                .font(.headline)
+                            if !obj.response.isEmpty {
+                                Text(obj.response)
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+                .navigationTitle("Why not interested?")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            showObjectionPicker = false
+                        }
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showConversionSheet) {
+            if let prospect = prospectToConvert {
+                SignUpPopupView(prospect: prospect, isPresented: $showConversionSheet)
+            }
+        }
         .sheet(isPresented: $showNoteInput) {
             NavigationView {
                 Form {
@@ -130,13 +182,36 @@ struct MapSearchView: View {
                     Section {
                         Button("Save Note") {
                             if let prospect = prospectToNote {
-                                let note = Note(content: newNoteText)
+                                let noteContent: String
+
+                                if let objection = selectedObjection {
+                                    noteContent = """
+                                    Not Enough Interest: \(objection.text)
+                                    
+                                    \(newNoteText)
+                                    """
+                                } else if let addr = pendingAddress,
+                                          prospect.knockHistory.last?.status == "Not Answered" {
+                                    noteContent = """
+                                    No Answer
+                                    
+                                    \(newNoteText)
+                                    """
+                                } else {
+                                    noteContent = newNoteText
+                                }
+
+                                let note = Note(content: noteContent)
                                 prospect.notes.append(note)
                                 try? modelContext.save()
                             }
+                            
+                            // Reset state
                             newNoteText = ""
+                            selectedObjection = nil
                             showNoteInput = false
                         }
+                        .disabled(newNoteText.trimmingCharacters(in: .whitespaces).isEmpty)
                         .disabled(newNoteText.trimmingCharacters(in: .whitespaces).isEmpty)
                     }
                 }
@@ -204,5 +279,21 @@ struct MapSearchView: View {
             prospectToNote = prospect
             showNoteInput = true
         }
+    }
+    
+    private func handleKnockAndPromptObjection(status: String) {
+        if let addr = pendingAddress {
+            let prospect = saveKnock(address: addr, status: status)
+            prospectToNote = prospect
+            objectionOptions = objections
+            showObjectionPicker = true
+        }
+    }
+    
+    private func handleKnockAndConvertToCustomer(status: String) {
+        guard let addr = pendingAddress else { return }
+        let prospect = saveKnock(address: addr, status: status)
+        prospectToConvert = prospect
+        showConversionSheet = true
     }
 }
