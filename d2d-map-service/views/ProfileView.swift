@@ -36,7 +36,7 @@ struct ProfileView: View {
                         LeaderboardCardView(title: "Prospects", count: totalProspects)
                         LeaderboardCardView(title: "Customers", count: totalCustomers)
                         LeaderboardCardView(
-                            title: "Avg Knocks/Customer",
+                            title: "Knocks Per Sale",
                             count: Int(averageKnocksPerCustomer.rounded())
                         )
                     }
@@ -46,7 +46,9 @@ struct ProfileView: View {
                 // MARK: Answered vs Not Answered Chart
                 Section(header: Text("Prospecting Activity")) {
                     VStack(alignment: .leading, spacing: 10) {
+                        Spacer()
                         LeaderboardCardView(title: "Total Knocks", count: totalKnocks)
+                        Spacer()
                         Chart {
                             BarMark(x: .value("Status", "Answered"), y: .value("Count", answeredVsUnanswered.answered))
                             BarMark(x: .value("Status", "Not Answered"), y: .value("Count", answeredVsUnanswered.unanswered))
