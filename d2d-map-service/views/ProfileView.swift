@@ -71,33 +71,10 @@ struct ProfileView: View {
                         .frame(height: 120)
                         .padding(.horizontal, 20)
                     }
-
-                    // MARK: - Mileage Chart
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Mileage This Week")
-                            .font(.headline)
-                            .padding(.horizontal, 20)
-
-                        Chart {
-                            ForEach(milesByDay, id: \.date) { item in
-                                BarMark(
-                                    x: .value("Date", item.date, unit: .day),
-                                    y: .value("Miles", item.miles)
-                                )
-                                .foregroundStyle(Color.green)
-                            }
-                        }
-                        .chartXAxis {
-                            AxisMarks(values: .stride(by: .day)) { value in
-                                AxisGridLine()
-                                AxisValueLabel(format: .dateTime.weekday(.narrow))
-                            }
-                        }
-                        .frame(height: 160)
-                        .padding(.horizontal, 20)
-                    }
                     
-                    Spacer()
+                    NavigationView {
+                        TripsSectionView()
+                    }
                     
                     // MARK: - Objections Table
                     NavigationView {
