@@ -40,22 +40,38 @@ struct ProspectsView: View {
     var body: some View {
         NavigationView {
             ZStack(alignment: .topTrailing) {
-                Menu {
-                    Button("Prospects") { selectedList = "Prospects" }
-                    Button("Customers") { selectedList = "Customers" }
-                } label: {
-                    Text(selectedList)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(10)
-                        .shadow(radius: 2)
+                Spacer()
+                // MARK: - Custom Header
+                HStack {
+                    Text("Your \(selectedList)")
+                        .font(.title)
+                        .fontWeight(.bold)
+
+                    Spacer()
+
+                    Menu {
+                        Button("Prospects") { selectedList = "Prospects" }
+                        Button("Customers") { selectedList = "Customers" }
+                    } label: {
+                        Text(selectedList)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(.ultraThinMaterial)
+                            .cornerRadius(10)
+                            .shadow(radius: 2)
+                    }
+                    .padding(.top, 12)
+                    .padding(.trailing, 16)
+                    
                 }
-                .padding(.top, 12)
-                .padding(.trailing, 16)
-                .navigationTitle("Your \(selectedList)")
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                
+                .navigationTitle("")
+                
+                Spacer()
 
                 List {
                     Section {
