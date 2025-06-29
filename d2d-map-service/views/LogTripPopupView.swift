@@ -14,8 +14,12 @@ struct LogTripPopupView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var startAddress: String = ""
-    @State private var endAddress: String = ""
+    @State private var endAddress: String
     @State private var date: Date = .now
+
+    init(endAddress: String) {
+        _endAddress = State(initialValue: endAddress)
+    }
 
     var body: some View {
         NavigationView {

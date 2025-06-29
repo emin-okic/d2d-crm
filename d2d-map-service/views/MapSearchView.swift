@@ -179,7 +179,9 @@ struct MapSearchView: View {
             Button("No", role: .cancel) {}
         }
         .sheet(isPresented: $showTripPopup) {
-            LogTripPopupView()
+            if let addr = pendingAddress {
+                LogTripPopupView(endAddress: addr)
+            }
         }
         .sheet(isPresented: $showNoteInput) {
             NavigationView {
