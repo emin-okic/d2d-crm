@@ -172,7 +172,7 @@ struct ProspectsView: View {
         let controller = DatabaseController.shared
 
         let neighbor = await withCheckedContinuation { (continuation: CheckedContinuation<Prospect?, Never>) in
-            controller.geocodeAndSuggestNeighbor(from: customer.address, for: userEmail) { address in
+            controller.geocodeAndSuggestNeighbor(from: customer.address) { address in
                 if let addr = address {
                     let suggested = Prospect(fullName: "Suggested Neighbor", address: addr, count: 0, list: "Prospects")
                     continuation.resume(returning: suggested)
@@ -202,7 +202,7 @@ struct ProspectsView: View {
             let customer = customerProspects[attemptIndex]
 
             let result = await withCheckedContinuation { (continuation: CheckedContinuation<Prospect?, Never>) in
-                controller.geocodeAndSuggestNeighbor(from: customer.address, for: userEmail) { address in
+                controller.geocodeAndSuggestNeighbor(from: customer.address) { address in
                     // NEW: Check SwiftData for duplicates
                     if let addr = address,
                        !prospects.contains(where: { $0.address.caseInsensitiveCompare(addr) == .orderedSame }) {

@@ -4,7 +4,6 @@
 //
 //  Created by Emin Okic on 5/30/25.
 //
-
 import SQLite
 import Foundation
 import CoreLocation
@@ -34,7 +33,6 @@ class DatabaseController {
     private let prospectId = Expression<Int64>("prospect_id")
     private let knockDate = Expression<Date>("date")
     private let knockStatus = Expression<String>("status")
-    private let userEmail = Expression<String>("user_email")
 
     // MARK: - Initializers
 
@@ -83,7 +81,6 @@ class DatabaseController {
                 t.column(knockStatus)
                 t.column(Expression<Double>("latitude"))
                 t.column(Expression<Double>("longitude"))
-                t.column(userEmail)
             })
 
         } catch {
@@ -93,11 +90,6 @@ class DatabaseController {
 
     // MARK: - Prospect Operations
 
-    /// Inserts a new prospect into the `prospects` table.
-    /// - Parameters:
-    ///   - name: Full name of the prospect.
-    ///   - addr: Address of the prospect.
-    /// - Returns: The SQLite row ID of the inserted prospect.
     func addProspect(name: String, addr: String) -> Int64? {
         do {
             let insert = prospects.insert(fullName <- name, address <- addr, list <- "Prospects")
@@ -108,8 +100,6 @@ class DatabaseController {
         }
     }
 
-    /// Updates a prospect's full name, address, and list value.
-    /// - Parameter prospect: The `Prospect` object with updated values.
     func updateProspect(_ prospect: Prospect) {
         guard let db = db else { return }
 
@@ -131,8 +121,6 @@ class DatabaseController {
         }
     }
 
-    /// Retrieves all prospects from the database.
-    /// - Returns: A list of tuples with each prospect's name, address, and list.
     func getAllProspects() -> [(String, String, String)] {
         var result: [(String, String, String)] = []
         do {
@@ -147,14 +135,6 @@ class DatabaseController {
 
     // MARK: - Knock Operations
 
-    /// Inserts a knock associated with a prospect.
-    /// - Parameters:
-    ///   - prospectIdValue: ID of the associated prospect.
-    ///   - date: Date the knock occurred.
-    ///   - status: Status of the knock ("Answered", "Not Answered").
-    ///   - latitude: Latitude of the knock location.
-    ///   - longitude: Longitude of the knock location.
-    ///   - userEmailValue: The user who recorded the knock.
     func addKnock(for prospectIdValue: Int64, date: Date, status: String, latitude: Double, longitude: Double) {
         let lat = Expression<Double>("latitude")
         let lon = Expression<Double>("longitude")
@@ -173,10 +153,7 @@ class DatabaseController {
         }
     }
 
-    /// Retrieves all prospects and their associated knocks from the database.
-    /// - Parameter userEmailValue: If provided, only knocks recorded by this user will be returned.
-    /// - Returns: An array of `Prospect` objects with their knock history included.
-    func getProspectsWithKnocks(for userEmailValue: String? = nil) -> [Prospect] {
+    func getProspectsWithKnocks() -> [Prospect] {
         var results: [Prospect] = []
 
         do {
@@ -187,16 +164,13 @@ class DatabaseController {
                 let listName = row[list]
 
                 var knocksArray: [Knock] = []
-                let knockQuery = userEmailValue == nil
-                    ? knocks.filter(prospectId == pId)
-                    : knocks.filter(prospectId == pId && userEmail == userEmailValue!)
+                let knockQuery = knocks.filter(prospectId == pId)
 
                 for knockRow in try db!.prepare(knockQuery) {
                     let dateVal = knockRow[knockDate]
                     let statusVal = knockRow[knockStatus]
                     let lat = knockRow[Expression<Double>("latitude")]
                     let lon = knockRow[Expression<Double>("longitude")]
-                    let user = knockRow[userEmail]
                     let knock = Knock(date: dateVal, status: statusVal, latitude: lat, longitude: lon)
                     knocksArray.append(knock)
                 }
@@ -215,27 +189,20 @@ class DatabaseController {
 }
 
 extension DatabaseController {
-    /// Suggests a neighboring prospect based on a newly converted customer.
-    /// - Parameters:
-    ///   - customerAddress: The address of the new customer.
-    ///   - userEmail: The email of the user to associate with the suggested prospect.
-    func suggestNeighborProspect(from customerAddress: String, for userEmail: String) {
+    func suggestNeighborProspect(from customerAddress: String) {
         let geocoder = CLGeocoder()
 
-        // Step 1: Geocode customer address
         geocoder.geocodeAddressString(customerAddress) { placemarks, error in
             guard let location = placemarks?.first?.location?.coordinate else {
                 print("❌ Could not geocode customer address: \(error?.localizedDescription ?? "Unknown error")")
                 return
             }
 
-            // Step 2: Slightly offset coordinates to simulate neighbor
             let neighborCoord = CLLocationCoordinate2D(
                 latitude: location.latitude + 0.0001,
                 longitude: location.longitude + 0.0001
             )
 
-            // Step 3: Reverse geocode neighbor address
             let neighborLocation = CLLocation(latitude: neighborCoord.latitude, longitude: neighborCoord.longitude)
 
             geocoder.reverseGeocodeLocation(neighborLocation) { neighborPlacemarks, error in
@@ -257,7 +224,6 @@ extension DatabaseController {
                     return
                 }
 
-                // Step 4: Check if prospect already exists at that address
                 do {
                     if let db = self.db {
                         let prospectQuery = self.prospects.filter(self.address == neighborAddress)
@@ -268,7 +234,6 @@ extension DatabaseController {
                             return
                         }
 
-                        // Step 5: Insert new suggested prospect
                         let insert = self.prospects.insert(
                             self.fullName <- "Suggested Neighbor",
                             self.address <- neighborAddress,
@@ -283,9 +248,8 @@ extension DatabaseController {
             }
         }
     }
-    
-    func geocodeAndSuggestNeighbor(from customerAddress: String, for userEmail: String, completion: @escaping (String?) -> Void) {
-        // Parse street number and the rest of the address
+
+    func geocodeAndSuggestNeighbor(from customerAddress: String, completion: @escaping (String?) -> Void) {
         let components = customerAddress.components(separatedBy: " ")
         guard let first = components.first,
               let baseNumber = Int(first) else {
@@ -295,7 +259,6 @@ extension DatabaseController {
 
         let streetRemainder = components.dropFirst().joined(separator: " ")
 
-        // Try multiple offsets: +1, +2, +3...
         let maxAttempts = 10
         let existingAddresses = getAllProspects().map { $0.1.lowercased() }
 
