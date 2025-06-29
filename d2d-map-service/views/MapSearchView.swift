@@ -32,6 +32,9 @@ struct MapSearchView: View {
     
     @State private var showConversionSheet = false
     @State private var prospectToConvert: Prospect?
+    
+    @State private var showTripPrompt = false
+    @State private var showTripPopup = false
 
     @Environment(\.modelContext) private var modelContext
 
@@ -171,6 +174,15 @@ struct MapSearchView: View {
                 SignUpPopupView(prospect: prospect, isPresented: $showConversionSheet)
             }
         }
+        .alert("Do you want to log a trip?", isPresented: $showTripPrompt) {
+            Button("Yes") { showTripPopup = true }
+            Button("No", role: .cancel) {}
+        }
+        .sheet(isPresented: $showTripPopup) {
+            if let addr = pendingAddress {
+                LogTripPopupView(endAddress: addr)
+            }
+        }
         .sheet(isPresented: $showNoteInput) {
             NavigationView {
                 Form {
@@ -210,6 +222,9 @@ struct MapSearchView: View {
                             newNoteText = ""
                             selectedObjection = nil
                             showNoteInput = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                showTripPrompt = true
+                            }
                         }
                         .disabled(newNoteText.trimmingCharacters(in: .whitespaces).isEmpty)
                         .disabled(newNoteText.trimmingCharacters(in: .whitespaces).isEmpty)
