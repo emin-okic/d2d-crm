@@ -15,11 +15,9 @@ import SwiftData
 class Note {
     var date: Date
     var content: String
-    var authorEmail: String
 
-    init(content: String, authorEmail: String, date: Date = Date()) {
+    init(content: String, date: Date = Date()) {
         self.date = date
         self.content = content
-        self.authorEmail = authorEmail
     }
 }

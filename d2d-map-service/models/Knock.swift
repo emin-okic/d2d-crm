@@ -24,9 +24,6 @@ class Knock {
     
     /// The longitude coordinate of where the knock occurred.
     var longitude: Double
-    
-    /// The email of the user who performed the knock.
-    var userEmail: String
 
     /// Initializes a new knock record.
     /// - Parameters:
@@ -34,12 +31,10 @@ class Knock {
     ///   - status: The status of the knock (e.g., "Answered").
     ///   - latitude: The latitude coordinate of the knock.
     ///   - longitude: The longitude coordinate of the knock.
-    ///   - userEmail: The email address of the user who performed the knock.
-    init(date: Date, status: String, latitude: Double, longitude: Double, userEmail: String) {
+    init(date: Date, status: String, latitude: Double, longitude: Double) {
         self.date = date
         self.status = status
         self.latitude = latitude
         self.longitude = longitude
-        self.userEmail = userEmail
     }
 }

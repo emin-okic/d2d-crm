@@ -8,14 +8,13 @@
 import SwiftUI
 import SwiftData
 
-/// A view that displays and manages a list of prospects associated with the logged-in user.
+/// A view that displays and manages a list of prospects
 /// Users can filter by list type (e.g., "Prospects", "Customers"), add new prospects, and tap
 /// a prospect to edit its details.
 struct ProspectsView: View {
     @Environment(\.modelContext) private var modelContext
     @Binding var selectedList: String
     var onSave: () -> Void
-    var userEmail: String
 
     @State private var selectedProspectID: PersistentIdentifier?
     @State private var showingAddProspect = false
@@ -29,36 +28,50 @@ struct ProspectsView: View {
 
     init(
         selectedList: Binding<String>,
-        userEmail: String,
         onSave: @escaping () -> Void,
         onDoubleTap: ((Prospect) -> Void)? = nil
     ) {
         _selectedList = selectedList
-        self.userEmail = userEmail
         self.onSave = onSave
         self.onDoubleTap = onDoubleTap
-        _prospects = Query(filter: #Predicate<Prospect> { $0.userEmail == userEmail })
+        _prospects = Query()
     }
 
     var body: some View {
         NavigationView {
             ZStack(alignment: .topTrailing) {
-                Menu {
-                    Button("Prospects") { selectedList = "Prospects" }
-                    Button("Customers") { selectedList = "Customers" }
-                } label: {
-                    Text(selectedList)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(10)
-                        .shadow(radius: 2)
+                Spacer()
+                // MARK: - Custom Header
+                HStack {
+                    Text("Your \(selectedList)")
+                        .font(.title)
+                        .fontWeight(.bold)
+
+                    Spacer()
+
+                    Menu {
+                        Button("Prospects") { selectedList = "Prospects" }
+                        Button("Customers") { selectedList = "Customers" }
+                    } label: {
+                        Text(selectedList)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(.ultraThinMaterial)
+                            .cornerRadius(10)
+                            .shadow(radius: 2)
+                    }
+                    .padding(.top, 12)
+                    .padding(.trailing, 16)
+                    
                 }
-                .padding(.top, 12)
-                .padding(.trailing, 16)
-                .navigationTitle("Your \(selectedList)")
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                
+                .navigationTitle("")
+                
+                Spacer()
 
                 List {
                     Section {
@@ -148,8 +161,7 @@ struct ProspectsView: View {
                         onSave: {
                             showingAddProspect = false
                             onSave()
-                        },
-                        userEmail: userEmail
+                        }
                     )
                 }
                 .task {
@@ -174,9 +186,9 @@ struct ProspectsView: View {
         let controller = DatabaseController.shared
 
         let neighbor = await withCheckedContinuation { (continuation: CheckedContinuation<Prospect?, Never>) in
-            controller.geocodeAndSuggestNeighbor(from: customer.address, for: userEmail) { address in
+            controller.geocodeAndSuggestNeighbor(from: customer.address) { address in
                 if let addr = address {
-                    let suggested = Prospect(fullName: "Suggested Neighbor", address: addr, count: 0, list: "Prospects", userEmail: userEmail)
+                    let suggested = Prospect(fullName: "Suggested Neighbor", address: addr, count: 0, list: "Prospects")
                     continuation.resume(returning: suggested)
                 } else {
                     continuation.resume(returning: nil)
@@ -204,7 +216,7 @@ struct ProspectsView: View {
             let customer = customerProspects[attemptIndex]
 
             let result = await withCheckedContinuation { (continuation: CheckedContinuation<Prospect?, Never>) in
-                controller.geocodeAndSuggestNeighbor(from: customer.address, for: userEmail) { address in
+                controller.geocodeAndSuggestNeighbor(from: customer.address) { address in
                     // NEW: Check SwiftData for duplicates
                     if let addr = address,
                        !prospects.contains(where: { $0.address.caseInsensitiveCompare(addr) == .orderedSame }) {
@@ -212,8 +224,7 @@ struct ProspectsView: View {
                             fullName: "Suggested Neighbor",
                             address: addr,
                             count: 0,
-                            list: "Prospects",
-                            userEmail: userEmail
+                            list: "Prospects"
                         )
                         continuation.resume(returning: suggested)
                     } else {

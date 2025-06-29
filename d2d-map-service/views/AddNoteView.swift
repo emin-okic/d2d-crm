@@ -43,7 +43,7 @@ struct AddNoteView: View {
             HStack {
                 Spacer()
                 Button {
-                    let note = Note(content: newNoteText, authorEmail: prospect.userEmail)
+                    let note = Note(content: newNoteText)
                     prospect.notes.append(note)
                     newNoteText = ""
                     isFocused = false

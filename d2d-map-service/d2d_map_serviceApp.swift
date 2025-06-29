@@ -16,20 +16,9 @@ import Foundation
 @main
 struct d2d_map_serviceApp: App {
 
-    /// Tracks whether the user is currently logged in.
-    @State private var isLoggedIn = false
-
-    /// Stores the current user's email input, used for filtering user-specific data.
-    @State private var emailInput: String = ""
-
     var body: some Scene {
         WindowGroup {
-            // Conditional rendering based on login state
-            if isLoggedIn {
-                RootView(isLoggedIn: $isLoggedIn, userEmail: emailInput)
-            } else {
-                LoginView(isLoggedIn: $isLoggedIn, emailInput: $emailInput)
-            }
+            RootView()
         }
         // Inject a shared model container for SwiftData persistence
         .modelContainer(sharedModelContainer)
@@ -38,7 +27,7 @@ struct d2d_map_serviceApp: App {
 
 /// A shared SwiftData `ModelContainer` configured to store app data in a custom folder.
 ///
-/// This container supports models for `Prospect`, `Knock`, and `User`.
+/// This container supports models for `Prospect`, and`Knock`
 /// It persists data in a file located at: `ApplicationSupport/d2d-map-service/database/prospects.sqlite`
 let sharedModelContainer: ModelContainer = {
     // Determine the path to the database file
@@ -59,7 +48,7 @@ let sharedModelContainer: ModelContainer = {
     do {
         // Load the model container for the specified model types
         return try ModelContainer(
-                    for: Prospect.self, Knock.self, User.self, Trip.self,  // ✅ include Trip here
+                    for: Prospect.self, Knock.self, Trip.self,
                     configurations: config
                 )
     } catch {

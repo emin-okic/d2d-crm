@@ -28,12 +28,10 @@ class Prospect {
     /// A history of knock attempts related to this prospect.
     var knockHistory: [Knock]
     
-    /// The email of the user who created or owns this prospect.
-    var userEmail: String
-    
-    // Add this to your Prospect class:
+    /// Notes related to the prospect.
     var notes: [Note] = []
     
+    /// Optional contact info.
     var contactEmail: String = ""
     var contactPhone: String = ""
 
@@ -43,14 +41,12 @@ class Prospect {
     ///   - address: The physical address of the prospect.
     ///   - count: The initial count of knock attempts. Defaults to 0.
     ///   - list: The list name to categorize this prospect. Defaults to "Prospects".
-    ///   - userEmail: The email address of the associated user.
-    init(fullName: String, address: String, count: Int = 0, list: String = "Prospects", userEmail: String) {
+    init(fullName: String, address: String, count: Int = 0, list: String = "Prospects") {
         self.fullName = fullName
         self.address = address
         self.count = count
         self.list = list
         self.knockHistory = []
-        self.userEmail = userEmail
     }
 }
 

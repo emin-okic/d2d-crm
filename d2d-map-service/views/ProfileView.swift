@@ -4,121 +4,114 @@
 //
 //  Created by Emin Okic on 5/31/25.
 //
-
 import SwiftUI
 import Charts
 import SwiftData
 
-/// A view that displays summary analytics about the current user's knocking activity,
-/// including total knocks, knocks grouped by list, and answered vs. not answered statistics.
-///
-/// The profile also includes a logout button, which resets the app's login state.
 struct ProfileView: View {
-    /// Whether the user is currently logged in.
-    @Binding var isLoggedIn: Bool
-
-    /// The logged-in user's email address, used to filter their data.
-    let userEmail: String
-
-    /// A query that fetches all `Prospect` records associated with the current user.
     @Query private var prospects: [Prospect]
-    @Query private var allProspects: [Prospect]        // Global
-    
     @Query private var trips: [Trip]
 
-    /// Initializes the profile view with a login state binding and user email.
-    /// Filters prospects to only include those associated with the current user.
-    init(isLoggedIn: Binding<Bool>, userEmail: String) {
-        self._isLoggedIn = isLoggedIn
-        self.userEmail = userEmail
-
-        // Fetch prospects and trips for this user
-        _prospects = Query(filter: #Predicate<Prospect> { $0.userEmail == userEmail })
-        _trips = Query(filter: #Predicate<Trip> { $0.userEmail == userEmail })
-    }
-
     var body: some View {
-        // Calculate stats
-        let totalKnocks = ProfileController.totalKnocks(from: prospects, userEmail: userEmail)
-        let knocksByList = ProfileController.knocksByList(from: prospects, userEmail: userEmail)
-        let answeredVsUnanswered = ProfileController.knocksAnsweredVsUnanswered(from: prospects, userEmail: userEmail)
+        let totalKnocks = ProfileController.totalKnocks(from: prospects)
+        let answeredVsUnanswered = ProfileController.knocksAnsweredVsUnanswered(from: prospects)
+
+        let totalProspects = prospects.count
+        let totalCustomers = prospects.filter { $0.list == "Customers" }.count
+        let averageKnocksPerCustomer: Double = {
+            let customerKnocks = prospects
+                .filter { $0.list == "Customers" }
+                .map { $0.knockHistory.count }
+            guard !customerKnocks.isEmpty else { return 0 }
+            return Double(customerKnocks.reduce(0, +)) / Double(customerKnocks.count)
+        }()
 
         NavigationView {
-            Form {
-                
-                // Get personal and global knock counts
-                let yourKnocks = ProfileController.totalKnocks(from: prospects, userEmail: userEmail)
-                let globalKnocks = ProfileController.totalKnocks(from: allProspects)
-
-                // MARK: Total Knocks Summary
-                Section(header: Text("Summary")) {
-                    HStack(spacing: 12) {
-                        LeaderboardCardView(title: "You", count: yourKnocks)
-                        LeaderboardCardView(title: "Global", count: globalKnocks)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    // MARK: - Custom Header
+                    HStack {
+                        Text("Profile")
+                            .font(.title)
+                            .fontWeight(.bold)
+                        Spacer()
                     }
-                    .padding(.vertical, 8)
-                }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
 
-                // MARK: Answered vs Not Answered Chart
-                Section(header: Text("Answered vs Unanswered")) {
-                    Chart {
-                        BarMark(
-                            x: .value("Status", "Answered"),
-                            y: .value("Count", answeredVsUnanswered.answered)
-                        )
-                        BarMark(
-                            x: .value("Status", "Not Answered"),
-                            y: .value("Count", answeredVsUnanswered.unanswered)
-                        )
-                    }
-                    .frame(height: 120)
-                }
-                
-                // MARK: Mileage by Day (Past 7 Days)
-                Section(header: Text("Mileage This Week")) {
-                    Chart {
-                        ForEach(milesByDay, id: \.date) { item in
-                            BarMark(
-                                x: .value("Date", item.date, unit: .day),
-                                y: .value("Miles", item.miles)
+                    // MARK: - Summary Cards
+                    VStack(spacing: 12) {
+                        HStack(spacing: 12) {
+                            LeaderboardCardView(title: "Prospects", count: totalProspects)
+                            LeaderboardCardView(title: "Customers", count: totalCustomers)
+                            LeaderboardCardView(
+                                title: "Knocks Per Sale",
+                                count: Int(averageKnocksPerCustomer.rounded())
                             )
-                            .foregroundStyle(Color.green)
                         }
                     }
-                    .chartXAxis {
-                        AxisMarks(values: .stride(by: .day)) { value in
-                            AxisGridLine()
-                            AxisValueLabel(format: .dateTime.weekday(.narrow)) // M, T, W...
-                        }
-                    }
-                    .frame(height: 160)
-                }
+                    .padding(.horizontal, 20)
 
-                // MARK: Log Out Button
-                Section {
-                    Button(role: .destructive) {
-                        isLoggedIn = false
-                    } label: {
-                        Text("Log Out")
-                            .frame(maxWidth: .infinity, alignment: .center)
+                    // MARK: - Knock Activity
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Prospecting Activity")
+                            .font(.headline)
+                            .padding(.horizontal, 20)
+
+                        LeaderboardCardView(title: "Total Knocks", count: totalKnocks)
+                            .padding(.horizontal, 20)
+
+                        Chart {
+                            BarMark(x: .value("Status", "Answered"), y: .value("Count", answeredVsUnanswered.answered))
+                            BarMark(x: .value("Status", "Not Answered"), y: .value("Count", answeredVsUnanswered.unanswered))
+                        }
+                        .frame(height: 120)
+                        .padding(.horizontal, 20)
                     }
+
+                    // MARK: - Mileage Chart
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Mileage This Week")
+                            .font(.headline)
+                            .padding(.horizontal, 20)
+
+                        Chart {
+                            ForEach(milesByDay, id: \.date) { item in
+                                BarMark(
+                                    x: .value("Date", item.date, unit: .day),
+                                    y: .value("Miles", item.miles)
+                                )
+                                .foregroundStyle(Color.green)
+                            }
+                        }
+                        .chartXAxis {
+                            AxisMarks(values: .stride(by: .day)) { value in
+                                AxisGridLine()
+                                AxisValueLabel(format: .dateTime.weekday(.narrow))
+                            }
+                        }
+                        .frame(height: 160)
+                        .padding(.horizontal, 20)
+                    }
+
+                    Spacer()
                 }
+                .padding(.bottom, 40)
             }
-            .navigationTitle("Profile")
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
-    
+
     private var milesByDay: [(date: Date, miles: Double)] {
         let calendar = Calendar.current
         let now = Date()
 
-        // Step 1: Get start of the current week (Monday)
         let startOfToday = calendar.startOfDay(for: now)
-        let weekday = calendar.component(.weekday, from: startOfToday) // 1 = Sunday, 2 = Monday, ...
-        let daysFromMonday = (weekday + 5) % 7 // shift so Monday = 0
+        let weekday = calendar.component(.weekday, from: startOfToday)
+        let daysFromMonday = (weekday + 5) % 7
         guard let startOfWeek = calendar.date(byAdding: .day, value: -daysFromMonday, to: startOfToday) else { return [] }
 
-        // Step 2: Create Mon–Sun placeholder with 0 miles
         var result: [Date: Double] = [:]
         for i in 0..<7 {
             if let day = calendar.date(byAdding: .day, value: i, to: startOfWeek) {
@@ -126,10 +119,7 @@ struct ProfileView: View {
             }
         }
 
-        // Step 3: Group trips by start-of-day and sum mileage
-        let grouped = Dictionary(grouping: trips) { trip in
-            calendar.startOfDay(for: trip.date)
-        }
+        let grouped = Dictionary(grouping: trips) { calendar.startOfDay(for: $0.date) }
 
         for (day, tripsOnDay) in grouped {
             if result[day] != nil {
@@ -137,9 +127,6 @@ struct ProfileView: View {
             }
         }
 
-        // Step 4: Return sorted list of 7 entries
-        return result
-            .map { ($0.key, $0.value) }
-            .sorted { $0.0 < $1.0 }
+        return result.map { ($0.key, $0.value) }.sorted { $0.0 < $1.0 }
     }
 }
