@@ -13,17 +13,15 @@ class Customer {
     var address: String
     var count: Int
     var knockHistory: [Knock]
-    var userEmail: String
     var notes: [Note] = []
     var contactEmail: String = ""
     var contactPhone: String = ""
 
-    init(fullName: String, address: String, count: Int = 0, userEmail: String) {
+    init(fullName: String, address: String, count: Int = 0) {
         self.fullName = fullName
         self.address = address
         self.count = count
         self.knockHistory = []
-        self.userEmail = userEmail
     }
 }
 
