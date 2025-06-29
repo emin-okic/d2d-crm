@@ -168,13 +168,36 @@ struct MapSearchView: View {
                     Section {
                         Button("Save Note") {
                             if let prospect = prospectToNote {
-                                let note = Note(content: newNoteText)
+                                let noteContent: String
+
+                                if let objection = selectedObjection {
+                                    noteContent = """
+                                    Not Enough Interest: \(objection.text)
+                                    
+                                    \(newNoteText)
+                                    """
+                                } else if let addr = pendingAddress,
+                                          prospect.knockHistory.last?.status == "Not Answered" {
+                                    noteContent = """
+                                    Not Answer
+                                    
+                                    \(newNoteText)
+                                    """
+                                } else {
+                                    noteContent = newNoteText
+                                }
+
+                                let note = Note(content: noteContent)
                                 prospect.notes.append(note)
                                 try? modelContext.save()
                             }
+                            
+                            // Reset state
                             newNoteText = ""
+                            selectedObjection = nil
                             showNoteInput = false
                         }
+                        .disabled(newNoteText.trimmingCharacters(in: .whitespaces).isEmpty)
                         .disabled(newNoteText.trimmingCharacters(in: .whitespaces).isEmpty)
                     }
                 }
