@@ -58,12 +58,6 @@ struct RootView: View {
                 Label("Prospects", systemImage: "person.3.fill")
             }
             .tag(1)
-
-            TripsView()
-                .tabItem {
-                    Label("Activity", systemImage: "car.fill")
-                }
-                .tag(2)
             
             ProfileView(
             )
