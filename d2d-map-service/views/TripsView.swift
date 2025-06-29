@@ -52,6 +52,31 @@ struct TripsView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 16) {
+                    Spacer()
+                    // MARK: - Custom Header
+                    HStack {
+                        Text("Activity")
+                            .font(.title)
+                            .fontWeight(.bold)
+
+                        Spacer()
+
+                        Menu {
+                            Picker("Filter", selection: $filter) {
+                                ForEach(TripFilter.allCases) { option in
+                                    Text(option.rawValue).tag(option)
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "line.3.horizontal.decrease.circle")
+                                .font(.title3)
+                                .foregroundColor(.blue)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+
+                    // MARK: - Trip Cards
                     ForEach(filteredTrips, id: \.persistentModelID) { trip in
                         VStack(alignment: .leading, spacing: 8) {
                             Text(trip.date.formatted(.dateTime
@@ -106,23 +131,9 @@ struct TripsView: View {
                     .padding(.top, 24)
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 16)
                 .padding(.bottom, 40)
             }
-            .navigationTitle("Activity")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        Picker("Filter", selection: $filter) {
-                            ForEach(TripFilter.allCases) { option in
-                                Text(option.rawValue).tag(option)
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                    }
-                }
-            }
+            .navigationTitle("") // Hide default title
             .sheet(isPresented: $showingAddTrip) {
                 NewTripView {
                     showingAddTrip = false
