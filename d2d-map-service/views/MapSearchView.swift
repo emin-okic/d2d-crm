@@ -29,6 +29,9 @@ struct MapSearchView: View {
     @State private var objectionOptions: [Objection] = []
     @State private var selectedObjection: Objection?
     @Query private var objections: [Objection]
+    
+    @State private var showConversionSheet = false
+    @State private var prospectToConvert: Prospect?
 
     @Environment(\.modelContext) private var modelContext
 
@@ -118,9 +121,15 @@ struct MapSearchView: View {
                                             to: nil, from: nil, for: nil)
         }
         .alert("Knock Outcome", isPresented: $showOutcomePrompt, actions: {
-            Button("Answered") { handleKnockAndPromptNote(status: "Answered") }
+            
+            Button("Signed Up") {
+                handleKnockAndConvertToCustomer(status: "Signed Up")
+            }
+            
             Button("Not Answered") { handleKnockAndPromptNote(status: "Not Answered") }
+            
             Button("Not Enough Interest") { handleKnockAndPromptObjection(status: "Not Enough Interest") }
+            
             Button("Cancel", role: .cancel) {}
         }, message: {
             Text("Did someone answer at \(pendingAddress ?? "this address")?")
@@ -155,6 +164,11 @@ struct MapSearchView: View {
                         }
                     }
                 }
+            }
+        }
+        .sheet(isPresented: $showConversionSheet) {
+            if let prospect = prospectToConvert {
+                SignUpPopupView(prospect: prospect, isPresented: $showConversionSheet)
             }
         }
         .sheet(isPresented: $showNoteInput) {
@@ -274,5 +288,12 @@ struct MapSearchView: View {
             objectionOptions = objections
             showObjectionPicker = true
         }
+    }
+    
+    private func handleKnockAndConvertToCustomer(status: String) {
+        guard let addr = pendingAddress else { return }
+        let prospect = saveKnock(address: addr, status: status)
+        prospectToConvert = prospect
+        showConversionSheet = true
     }
 }
