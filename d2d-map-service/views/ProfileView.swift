@@ -75,12 +75,6 @@ struct ProfileView: View {
                     NavigationView {
                         TripsSectionView()
                     }
-                    
-                    // MARK: - Objections Table
-                    NavigationView {
-                        ObjectionsSectionView()
-                    }
-                    
 
                     Spacer()
                 }

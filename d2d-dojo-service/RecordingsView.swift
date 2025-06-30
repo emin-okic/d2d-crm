@@ -33,8 +33,15 @@ struct RecordingsView: View {
     private let scorer = PitchAnalyzer()
 
     var body: some View {
+        
         NavigationView {
             VStack(spacing: 16) {
+                Spacer()
+                
+                ObjectionsSectionView()
+                
+                Spacer()
+                
                 header
 
                 if isRecording {
@@ -102,10 +109,8 @@ struct RecordingsView: View {
     private var header: some View {
         HStack {
             Text("Recordings")
-                .font(.largeTitle.bold())
+                .font(.headline)
             Spacer()
-
-            // Always visible trash icon
             Button {
                 isEditing.toggle()
                 if !isEditing {
@@ -113,39 +118,27 @@ struct RecordingsView: View {
                 }
             } label: {
                 Image(systemName: isEditing ? "xmark.circle.fill" : "trash")
-                    .font(.title2)
-                    .padding(8)
-                    .background(isEditing ? Color.gray.opacity(0.1) : Color.red.opacity(0.1))
-                    .clipShape(Circle())
-                    .foregroundColor(isEditing ? .gray : .red)
+                    .font(.title3)
             }
 
-            // Only shows delete if editing is active
             if isEditing {
                 Button {
                     deleteSelected()
                 } label: {
                     Image(systemName: "trash.fill")
-                        .font(.title2)
-                        .padding(8)
-                        .background(Color.red.opacity(0.1))
-                        .clipShape(Circle())
+                        .font(.title3)
                 }
                 .disabled(selectedRecordings.isEmpty)
             }
 
-            // Add button
             Button {
                 showingObjectionPicker = true
             } label: {
-                Image(systemName: "plus")
-                    .font(.title2)
-                    .padding(8)
-                    .background(Color.blue.opacity(0.1))
-                    .clipShape(Circle())
+                Image(systemName: "plus.circle.fill")
+                    .font(.title3)
             }
         }
-        .padding(.horizontal)
+        .padding(.horizontal, 20)
     }
 
     private var recordingIndicator: some View {
