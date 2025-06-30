@@ -35,58 +35,69 @@ struct RecordingsView: View {
     var body: some View {
         
         NavigationView {
-            VStack(spacing: 16) {
-                Spacer()
-                
-                ObjectionsSectionView()
-                
-                Spacer()
-                
-                header
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
 
-                if isRecording {
-                    recordingIndicator
-                }
+                    ObjectionsSectionView()
+                    
+                    Spacer()
 
-                List {
-                    ForEach(recordings) { recording in
-                        HStack {
-                            if isEditing {
-                                Image(systemName: selectedRecordings.contains(recording) ? "checkmark.circle.fill" : "circle")
-                                    .foregroundColor(.blue)
-                                    .onTapGesture {
-                                        toggleSelection(for: recording)
-                                    }
-                            }
+                    header
 
-                            RecordingRowView(
-                                recording: recording,
-                                isEditing: editingRecording?.id == recording.id,
-                                editedFileName: $editedFileName,
-                                onRename: { newName in
-                                    if newName.isEmpty {
-                                        editingRecording = recording
-                                    } else {
-                                        recorder.rename(recording: recording, to: newName)
-                                        editingRecording = nil
-                                    }
-                                },
-                                onPlayToggle: {
-                                    playback.toggle(fileName: recording.fileName, currentlyPlayingFile: $currentlyPlayingFile)
-                                },
-                                isPlaying: currentlyPlayingFile == recording.fileName,
-                                onSelect: {
+                    if isRecording {
+                        recordingIndicator
+                    }
+
+                    if recordings.isEmpty {
+                        Text("No recordings yet.")
+                            .foregroundColor(.gray)
+                            .font(.caption)
+                            .padding(.horizontal, 20)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        VStack(spacing: 12) {
+                            ForEach(recordings) { recording in
+                                HStack {
                                     if isEditing {
-                                        toggleSelection(for: recording)
-                                    } else {
-                                        selectedRecording = recording
+                                        Image(systemName: selectedRecordings.contains(recording) ? "checkmark.circle.fill" : "circle")
+                                            .foregroundColor(.blue)
+                                            .onTapGesture {
+                                                toggleSelection(for: recording)
+                                            }
                                     }
+
+                                    RecordingRowView(
+                                        recording: recording,
+                                        isEditing: editingRecording?.id == recording.id,
+                                        editedFileName: $editedFileName,
+                                        onRename: { newName in
+                                            if newName.isEmpty {
+                                                editingRecording = recording
+                                            } else {
+                                                recorder.rename(recording: recording, to: newName)
+                                                editingRecording = nil
+                                            }
+                                        },
+                                        onPlayToggle: {
+                                            playback.toggle(fileName: recording.fileName, currentlyPlayingFile: $currentlyPlayingFile)
+                                        },
+                                        isPlaying: currentlyPlayingFile == recording.fileName,
+                                        onSelect: {
+                                            if isEditing {
+                                                toggleSelection(for: recording)
+                                            } else {
+                                                selectedRecording = recording
+                                            }
+                                        }
+                                    )
                                 }
-                            )
+                                Divider()
+                            }
                         }
+                        .padding(.horizontal, 20)
                     }
                 }
-                
+                .padding()
             }
             .padding()
             .navigationTitle("")
