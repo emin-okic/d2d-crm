@@ -38,32 +38,35 @@ struct ObjectionsSectionView: View {
                     .enumerated()
                     .map { RankedObjection(rank: $0.offset + 1, objection: $0.element) }
 
-                // In ObjectionsSectionView.swift
-                List(ranked) { ranked in
-                    Button {
-                        selectedObjection = ranked.objection
-                    } label: {
-                        HStack {
-                            Text("#\(ranked.rank)")
-                                .frame(width: 40, alignment: .leading)
-                            VStack(alignment: .leading) {
-                                Text(ranked.objection.text)
-                                    .font(.headline)
-                                if !ranked.objection.response.isEmpty {
-                                    Text(ranked.objection.response)
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
+                VStack(spacing: 0) {
+                    ForEach(ranked) { ranked in
+                        Button {
+                            selectedObjection = ranked.objection
+                        } label: {
+                            HStack {
+                                Text("#\(ranked.rank)")
+                                    .frame(width: 40, alignment: .leading)
+                                VStack(alignment: .leading) {
+                                    Text(ranked.objection.text)
+                                        .font(.headline)
+                                    if !ranked.objection.response.isEmpty {
+                                        Text(ranked.objection.response)
+                                            .font(.subheadline)
+                                            .foregroundColor(.gray)
+                                    }
                                 }
+                                Spacer()
+                                Text("×\(ranked.objection.timesHeard)")
+                                    .foregroundColor(.secondary)
                             }
-                            Spacer()
-                            Text("×\(ranked.objection.timesHeard)")
-                                .foregroundColor(.secondary)
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, 20)
                         }
-                        .padding(.vertical, 4)
+
+                        Divider()
+                            .padding(.leading, 60) // aligns with text stack
                     }
                 }
-                .listStyle(.plain)
-                .padding(.horizontal, 20)
             }
         }
         .sheet(item: $selectedObjection) { obj in

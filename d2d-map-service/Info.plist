@@ -19,5 +19,7 @@
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>&quot;This app needs access to your location to show it on the map.&quot;</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>We use your voice to improve sales objection handling.</string>
 </dict>
 </plist>

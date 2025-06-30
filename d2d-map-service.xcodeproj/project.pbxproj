@@ -54,6 +54,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		C5AF70BA2E1205E200754997 /* d2d-dojo-service */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "d2d-dojo-service";
+			sourceTree = "<group>";
+		};
 		C5BE4B362DE7CC9E005C37B1 /* d2d-map-service */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -116,6 +121,7 @@
 				C5855D882DF073A300B479AE /* .gitignore */,
 				C5E9F14F2DEB6CAB000A771B /* d2d-map-service.xctestplan */,
 				C5BE4B362DE7CC9E005C37B1 /* d2d-map-service */,
+				C5AF70BA2E1205E200754997 /* d2d-dojo-service */,
 				C5BE4B442DE7CC9F005C37B1 /* d2d-map-serviceTests */,
 				C5BE4B4E2DE7CC9F005C37B1 /* d2d-map-serviceUITests */,
 				C5BE4B352DE7CC9E005C37B1 /* Products */,
@@ -148,6 +154,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				C5AF70BA2E1205E200754997 /* d2d-dojo-service */,
 				C5BE4B362DE7CC9E005C37B1 /* d2d-map-service */,
 			);
 			name = "d2d-map-service";

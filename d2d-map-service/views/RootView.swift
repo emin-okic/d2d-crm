@@ -55,9 +55,14 @@ struct RootView: View {
                 }
             )
             .tabItem {
-                Label("Prospects", systemImage: "person.3.fill")
+                Label("CRM", systemImage: "person.3.fill")
             }
             .tag(1)
+            
+            RecordingsView()
+                .tabItem {
+                    Label("Studio", systemImage: "waveform")
+                }
             
             ProfileView(
             )
