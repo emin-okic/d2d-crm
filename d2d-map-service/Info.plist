@@ -2,6 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Required for document support -->
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -11,15 +12,23 @@
 			<array>
 				<string>com.apple.maps.directionsrequest</string>
 			</array>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
 		</dict>
 	</array>
+
+	<!-- Required for document-based apps -->
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+
+	<!-- Directions support -->
 	<key>MKDirectionsApplicationSupportedModes</key>
 	<array>
 		<string>MKDirectionsModeCar</string>
 	</array>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>&quot;This app needs access to your location to show it on the map.&quot;</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>We use your voice to improve sales objection handling.</string>
+
+	<!-- Encryption usage declaration -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
