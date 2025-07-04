@@ -15,12 +15,23 @@ import Foundation
 /// It determines whether to show the `LoginView` or the main `RootView` depending on login state.
 @main
 struct d2d_map_serviceApp: App {
+    @State private var showSplash = true
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            if showSplash {
+                SplashView()
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+                            withAnimation {
+                                showSplash = false
+                            }
+                        }
+                    }
+            } else {
+                RootView()
+            }
         }
-        // Inject a shared model container for SwiftData persistence
         .modelContainer(sharedModelContainer)
     }
 }

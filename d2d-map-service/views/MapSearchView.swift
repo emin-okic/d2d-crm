@@ -37,6 +37,8 @@ struct MapSearchView: View {
     @State private var showTripPopup = false
 
     @Environment(\.modelContext) private var modelContext
+    
+    @State private var showOnboarding = false
 
     init(region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
@@ -99,7 +101,22 @@ struct MapSearchView: View {
 
                 Spacer()
             }
+            
+            Button {
+                showOnboarding = true
+            } label: {
+                Image(systemName: "questionmark.circle.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(.white)
+                    .padding(8)
+                    .background(Circle().fill(Color.blue.opacity(0.8)))
+            }
+            .padding()
+            .contentShape(Circle()) // Ensures the entire visual area is tappable
         }
+        .fullScreenCover(isPresented: $showOnboarding) {
+            OnboardingFlowView(isPresented: $showOnboarding)
+          }
         .onAppear { updateMarkers() }
         .onChange(of: prospects) { _ in updateMarkers() }
         .onChange(of: selectedList) { _ in updateMarkers() }
