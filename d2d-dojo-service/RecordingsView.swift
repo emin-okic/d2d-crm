@@ -37,6 +37,10 @@ struct RecordingsView: View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    
+                    RecordingStatsView(total: totalRecordings, avg: averageScore)
+                    
+                    Spacer()
 
                     ObjectionsSectionView()
                     
@@ -115,6 +119,16 @@ struct RecordingsView: View {
                 }
             }
         }
+    }
+    
+    private var totalRecordings: Int {
+        recordings.count
+    }
+
+    private var averageScore: Double {
+        let scores = recordings.compactMap { Double($0.rating ?? 0) }
+        guard !scores.isEmpty else { return 0 }
+        return scores.reduce(0, +) / Double(scores.count)
     }
 
     private var header: some View {
