@@ -133,7 +133,7 @@ struct MapSearchView: View {
                 .cornerRadius(12)
                 .shadow(radius: 3, x: 0, y: 2)
                 .padding(.horizontal)
-                .padding(.bottom, 32) // Adjust this to float higher or lower
+                .padding(.bottom, 56) // Adjust this to float higher or lower
             }
             
         }
