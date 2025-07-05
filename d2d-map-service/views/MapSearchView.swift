@@ -81,35 +81,22 @@ struct MapSearchView: View {
                 .frame(maxHeight: .infinity)
                 .edgesIgnoringSafeArea(.horizontal)
 
-                HStack {
-                    HStack {
-                        Image(systemName: "magnifyingglass").foregroundColor(.gray)
-                        TextField("Enter a knock here…", text: $searchText, onCommit: {
-                            let trimmed = searchText.trimmingCharacters(in: .whitespaces)
-                            guard !trimmed.isEmpty else { return }
-                            handleSearch(query: trimmed)
-                        })
-                        .foregroundColor(.primary)
-                        .autocapitalization(.words)
-                    }
-                    .padding(12)
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(12)
-                    .shadow(radius: 3, x: 0, y: 2)
-                }
-                .padding(.horizontal)
-                .padding(.top, 12)
-
                 Spacer()
             }
             
-            HStack {
-                
+            VStack {
                 RejectionTrackerView(count: totalRejectionsSinceLastSignup)
                     .background(.ultraThinMaterial)
                     .cornerRadius(16)
                     .shadow(radius: 4)
-                    .padding(.horizontal)
+                    .padding(.top, 10)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                
+                Spacer()
+            }
+            .zIndex(1) // Make sure it stays on top
+            
+            HStack {
                 
                 Button {
                     showOnboarding = true
@@ -120,12 +107,35 @@ struct MapSearchView: View {
                         .padding(8)
                         .background(Circle().fill(Color.blue.opacity(0.8)))
                 }
-                .padding()
+                .padding(20)
                 .contentShape(Circle()) // Ensures the entire visual area is tappable
                 
             }
             .transition(.move(edge: .top).combined(with: .opacity))
             .animation(.spring(), value: totalRejectionsSinceLastSignup)
+            
+            VStack {
+                Spacer()
+                
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.gray)
+                    TextField("Enter a knock here…", text: $searchText, onCommit: {
+                        let trimmed = searchText.trimmingCharacters(in: .whitespaces)
+                        guard !trimmed.isEmpty else { return }
+                        handleSearch(query: trimmed)
+                    })
+                    .foregroundColor(.primary)
+                    .autocapitalization(.words)
+                }
+                .padding(12)
+                .background(.ultraThinMaterial)
+                .cornerRadius(12)
+                .shadow(radius: 3, x: 0, y: 2)
+                .padding(.horizontal)
+                .padding(.bottom, 32) // Adjust this to float higher or lower
+            }
+            
         }
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingFlowView(isPresented: $showOnboarding)
