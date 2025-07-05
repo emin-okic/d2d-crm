@@ -14,7 +14,7 @@ import Foundation
 /// This struct defines the app's lifecycle using SwiftUI's `App` protocol.
 /// It determines whether to show the `LoginView` or the main `RootView` depending on login state.
 @main
-struct d2d_map_serviceApp: App {
+struct d2d_studioApp: App {
     @State private var showSplash = true
 
     var body: some Scene {
@@ -44,7 +44,7 @@ let sharedModelContainer: ModelContainer = {
     let url = FileManager.default
         .urls(for: .applicationSupportDirectory, in: .userDomainMask)
         .first!
-        .appendingPathComponent("d2d-map-service/database/prospects.sqlite")
+        .appendingPathComponent("d2d-studio/database/prospects.sqlite")
 
     try? FileManager.default.createDirectory(
         at: url.deletingLastPathComponent(),

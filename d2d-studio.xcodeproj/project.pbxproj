@@ -8,10 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		C53F34042DE9E60900372BEE /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = C53F34032DE9E60900372BEE /* SQLite */; };
-		C54048442DF4B32A00721D49 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = C54048432DF4B32A00721D49 /* README.md */; };
 		C5855D892DF073A700B479AE /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = C5855D882DF073A300B479AE /* .gitignore */; };
-		C5A6D64D2DFE219900E180B6 /* login-screen-screenshot.png in Resources */ = {isa = PBXBuildFile; fileRef = C5A6D64B2DFE219900E180B6 /* login-screen-screenshot.png */; };
-		C5CDA5B32E15A65300FD96B7 /* PRIVACYPOLICY.md in Resources */ = {isa = PBXBuildFile; fileRef = C5CDA5B22E15A65300FD96B7 /* PRIVACYPOLICY.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,7 +32,7 @@
 		C54048432DF4B32A00721D49 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		C5855D882DF073A300B479AE /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		C5A6D64B2DFE219900E180B6 /* login-screen-screenshot.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "login-screen-screenshot.png"; sourceTree = "<group>"; };
-		C5BE4B342DE7CC9E005C37B1 /* d2d-map-service.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "d2d-map-service.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C5BE4B342DE7CC9E005C37B1 /* d2d-studio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "d2d-studio.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C5BE4B412DE7CC9F005C37B1 /* d2d-map-serviceTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "d2d-map-serviceTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C5BE4B4B2DE7CC9F005C37B1 /* d2d-map-serviceUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "d2d-map-serviceUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C5CDA5B22E15A65300FD96B7 /* PRIVACYPOLICY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PRIVACYPOLICY.md; sourceTree = "<group>"; };
@@ -43,7 +40,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		C59F0F852DE7CEAB00D186C5 /* Exceptions for "d2d-map-service" folder in "d2d-map-service" target */ = {
+		C56CD3832E19929D00232EF7 /* Exceptions for "d2d-studio" folder in "d2d-studio" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				controllers/README.md,
@@ -51,7 +48,7 @@
 				models/README.md,
 				views/README.md,
 			);
-			target = C5BE4B332DE7CC9E005C37B1 /* d2d-map-service */;
+			target = C5BE4B332DE7CC9E005C37B1 /* d2d-studio */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -66,12 +63,12 @@
 			path = "d2d-dojo-service";
 			sourceTree = "<group>";
 		};
-		C5BE4B362DE7CC9E005C37B1 /* d2d-map-service */ = {
+		C5BE4B362DE7CC9E005C37B1 /* d2d-studio */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				C59F0F852DE7CEAB00D186C5 /* Exceptions for "d2d-map-service" folder in "d2d-map-service" target */,
+				C56CD3832E19929D00232EF7 /* Exceptions for "d2d-studio" folder in "d2d-studio" target */,
 			);
-			path = "d2d-map-service";
+			path = "d2d-studio";
 			sourceTree = "<group>";
 		};
 		C5BE4B442DE7CC9F005C37B1 /* d2d-map-serviceTests */ = {
@@ -129,7 +126,7 @@
 				C5855D882DF073A300B479AE /* .gitignore */,
 				C5E9F14F2DEB6CAB000A771B /* d2d-map-service.xctestplan */,
 				C59705F92E198214006C3B55 /* d2d-rolodex-service */,
-				C5BE4B362DE7CC9E005C37B1 /* d2d-map-service */,
+				C5BE4B362DE7CC9E005C37B1 /* d2d-studio */,
 				C5AF70BA2E1205E200754997 /* d2d-dojo-service */,
 				C5BE4B442DE7CC9F005C37B1 /* d2d-map-serviceTests */,
 				C5BE4B4E2DE7CC9F005C37B1 /* d2d-map-serviceUITests */,
@@ -140,7 +137,7 @@
 		C5BE4B352DE7CC9E005C37B1 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C5BE4B342DE7CC9E005C37B1 /* d2d-map-service.app */,
+				C5BE4B342DE7CC9E005C37B1 /* d2d-studio.app */,
 				C5BE4B412DE7CC9F005C37B1 /* d2d-map-serviceTests.xctest */,
 				C5BE4B4B2DE7CC9F005C37B1 /* d2d-map-serviceUITests.xctest */,
 			);
@@ -150,9 +147,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		C5BE4B332DE7CC9E005C37B1 /* d2d-map-service */ = {
+		C5BE4B332DE7CC9E005C37B1 /* d2d-studio */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C5BE4B552DE7CC9F005C37B1 /* Build configuration list for PBXNativeTarget "d2d-map-service" */;
+			buildConfigurationList = C5BE4B552DE7CC9F005C37B1 /* Build configuration list for PBXNativeTarget "d2d-studio" */;
 			buildPhases = (
 				C5BE4B302DE7CC9E005C37B1 /* Sources */,
 				C5BE4B312DE7CC9E005C37B1 /* Frameworks */,
@@ -165,14 +162,14 @@
 			fileSystemSynchronizedGroups = (
 				C59705F92E198214006C3B55 /* d2d-rolodex-service */,
 				C5AF70BA2E1205E200754997 /* d2d-dojo-service */,
-				C5BE4B362DE7CC9E005C37B1 /* d2d-map-service */,
+				C5BE4B362DE7CC9E005C37B1 /* d2d-studio */,
 			);
-			name = "d2d-map-service";
+			name = "d2d-studio";
 			packageProductDependencies = (
 				C53F34032DE9E60900372BEE /* SQLite */,
 			);
 			productName = "d2d-map-service";
-			productReference = C5BE4B342DE7CC9E005C37B1 /* d2d-map-service.app */;
+			productReference = C5BE4B342DE7CC9E005C37B1 /* d2d-studio.app */;
 			productType = "com.apple.product-type.application";
 		};
 		C5BE4B402DE7CC9F005C37B1 /* d2d-map-serviceTests */ = {
@@ -244,7 +241,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C5BE4B2F2DE7CC9E005C37B1 /* Build configuration list for PBXProject "d2d-map-service" */;
+			buildConfigurationList = C5BE4B2F2DE7CC9E005C37B1 /* Build configuration list for PBXProject "d2d-studio" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -261,7 +258,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				C5BE4B332DE7CC9E005C37B1 /* d2d-map-service */,
+				C5BE4B332DE7CC9E005C37B1 /* d2d-studio */,
 				C5BE4B402DE7CC9F005C37B1 /* d2d-map-serviceTests */,
 				C5BE4B4A2DE7CC9F005C37B1 /* d2d-map-serviceUITests */,
 			);
@@ -273,10 +270,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C5CDA5B32E15A65300FD96B7 /* PRIVACYPOLICY.md in Resources */,
-				C54048442DF4B32A00721D49 /* README.md in Resources */,
 				C5855D892DF073A700B479AE /* .gitignore in Resources */,
-				C5A6D64D2DFE219900E180B6 /* login-screen-screenshot.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -323,12 +317,12 @@
 /* Begin PBXTargetDependency section */
 		C5BE4B432DE7CC9F005C37B1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C5BE4B332DE7CC9E005C37B1 /* d2d-map-service */;
+			target = C5BE4B332DE7CC9E005C37B1 /* d2d-studio */;
 			targetProxy = C5BE4B422DE7CC9F005C37B1 /* PBXContainerItemProxy */;
 		};
 		C5BE4B4D2DE7CC9F005C37B1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C5BE4B332DE7CC9E005C37B1 /* d2d-map-service */;
+			target = C5BE4B332DE7CC9E005C37B1 /* d2d-studio */;
 			targetProxy = C5BE4B4C2DE7CC9F005C37B1 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -468,7 +462,7 @@
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = Y3JJD7DBP3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "d2d-map-service/Info.plist";
+				INFOPLIST_FILE = "d2d-studio/Info.plist";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "\"This app needs access to your location to show it on the map.\"";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "We use your voice to improve sales objection handling.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -508,7 +502,7 @@
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = Y3JJD7DBP3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "d2d-map-service/Info.plist";
+				INFOPLIST_FILE = "d2d-studio/Info.plist";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "\"This app needs access to your location to show it on the map.\"";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "We use your voice to improve sales objection handling.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -610,7 +604,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C5BE4B2F2DE7CC9E005C37B1 /* Build configuration list for PBXProject "d2d-map-service" */ = {
+		C5BE4B2F2DE7CC9E005C37B1 /* Build configuration list for PBXProject "d2d-studio" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C5BE4B532DE7CC9F005C37B1 /* Debug */,
@@ -619,7 +613,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C5BE4B552DE7CC9F005C37B1 /* Build configuration list for PBXNativeTarget "d2d-map-service" */ = {
+		C5BE4B552DE7CC9F005C37B1 /* Build configuration list for PBXNativeTarget "d2d-studio" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C5BE4B562DE7CC9F005C37B1 /* Debug */,
