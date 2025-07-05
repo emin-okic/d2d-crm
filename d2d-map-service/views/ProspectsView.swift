@@ -51,8 +51,19 @@ struct ProspectsView: View {
                 
                 // Summary cards at the top
                 HStack(spacing: 12) {
-                    SummaryCardView(title: "Total Prospects", count: totalProspects)
-                    SummaryCardView(title: "Total Customers", count: totalCustomers)
+                    Button {
+                        selectedList = "Prospects"
+                    } label: {
+                        SummaryCardView(title: "Total Prospects", count: totalProspects)
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        selectedList = "Customers"
+                    } label: {
+                        SummaryCardView(title: "Total Customers", count: totalCustomers)
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
@@ -62,22 +73,6 @@ struct ProspectsView: View {
                     Text("Your \(selectedList)")
                         .font(.title)
                         .fontWeight(.bold)
-
-                    Spacer()
-
-                    Menu {
-                        Button("Prospects") { selectedList = "Prospects" }
-                        Button("Customers") { selectedList = "Customers" }
-                    } label: {
-                        Text(selectedList)
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(.ultraThinMaterial)
-                            .cornerRadius(10)
-                            .shadow(radius: 2)
-                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 20)
