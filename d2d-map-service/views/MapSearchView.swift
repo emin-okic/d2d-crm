@@ -51,7 +51,8 @@ struct MapSearchView: View {
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            VStack(spacing: 0) {
+            VStack(spacing: 12) {
+                
                 Map(coordinateRegion: $controller.region,
                     annotationItems: controller.markers) { place in
                     MapAnnotation(coordinate: place.location) {
@@ -80,39 +81,61 @@ struct MapSearchView: View {
                 .frame(maxHeight: .infinity)
                 .edgesIgnoringSafeArea(.horizontal)
 
-                HStack {
-                    HStack {
-                        Image(systemName: "magnifyingglass").foregroundColor(.gray)
-                        TextField("Enter a knock here…", text: $searchText, onCommit: {
-                            let trimmed = searchText.trimmingCharacters(in: .whitespaces)
-                            guard !trimmed.isEmpty else { return }
-                            handleSearch(query: trimmed)
-                        })
-                        .foregroundColor(.primary)
-                        .autocapitalization(.words)
-                    }
-                    .padding(12)
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(12)
-                    .shadow(radius: 3, x: 0, y: 2)
-                }
-                .padding(.horizontal)
-                .padding(.top, 12)
-
                 Spacer()
             }
             
-            Button {
-                showOnboarding = true
-            } label: {
-                Image(systemName: "questionmark.circle.fill")
-                    .font(.system(size: 20))
-                    .foregroundColor(.white)
-                    .padding(8)
-                    .background(Circle().fill(Color.blue.opacity(0.8)))
+            VStack {
+                RejectionTrackerView(count: totalRejectionsSinceLastSignup)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(16)
+                    .shadow(radius: 4)
+                    .padding(.top, 10)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                
+                Spacer()
             }
-            .padding()
-            .contentShape(Circle()) // Ensures the entire visual area is tappable
+            .zIndex(1) // Make sure it stays on top
+            
+            HStack {
+                
+                Button {
+                    showOnboarding = true
+                } label: {
+                    Image(systemName: "questionmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(Circle().fill(Color.blue.opacity(0.8)))
+                }
+                .padding(20)
+                .contentShape(Circle()) // Ensures the entire visual area is tappable
+                
+            }
+            .transition(.move(edge: .top).combined(with: .opacity))
+            .animation(.spring(), value: totalRejectionsSinceLastSignup)
+            
+            VStack {
+                Spacer()
+                
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.gray)
+                    TextField("Enter a knock here…", text: $searchText, onCommit: {
+                        let trimmed = searchText.trimmingCharacters(in: .whitespaces)
+                        guard !trimmed.isEmpty else { return }
+                        handleSearch(query: trimmed)
+                    })
+                    .foregroundColor(.primary)
+                    .autocapitalization(.words)
+                }
+                .padding(12)
+                .background(.ultraThinMaterial)
+                .cornerRadius(12)
+                .shadow(radius: 3, x: 0, y: 2)
+                .padding(.horizontal)
+                .padding(.bottom, 32) // Adjust this to float higher or lower
+            }
+            
         }
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingFlowView(isPresented: $showOnboarding)
@@ -258,6 +281,20 @@ struct MapSearchView: View {
                 }
             }
         }
+    }
+    
+    private var totalRejectionsSinceLastSignup: Int {
+        let allKnocks = prospects.flatMap { $0.knockHistory }
+            .sorted(by: { $0.date > $1.date })
+
+        var count = 0
+        for knock in allKnocks {
+            if knock.status == "Signed Up" { break }
+            if knock.status == "Not Answered" || knock.status == "Not Enough Interest" {
+                count += 1
+            }
+        }
+        return count
     }
 
     private func updateMarkers() {
