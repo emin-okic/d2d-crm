@@ -51,7 +51,8 @@ struct MapSearchView: View {
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            VStack(spacing: 0) {
+            VStack(spacing: 12) {
+                
                 Map(coordinateRegion: $controller.region,
                     annotationItems: controller.markers) { place in
                     MapAnnotation(coordinate: place.location) {
@@ -102,17 +103,29 @@ struct MapSearchView: View {
                 Spacer()
             }
             
-            Button {
-                showOnboarding = true
-            } label: {
-                Image(systemName: "questionmark.circle.fill")
-                    .font(.system(size: 20))
-                    .foregroundColor(.white)
-                    .padding(8)
-                    .background(Circle().fill(Color.blue.opacity(0.8)))
+            HStack {
+                
+                RejectionTrackerView(count: totalRejectionsSinceLastSignup)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(16)
+                    .shadow(radius: 4)
+                    .padding(.horizontal)
+                
+                Button {
+                    showOnboarding = true
+                } label: {
+                    Image(systemName: "questionmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(Circle().fill(Color.blue.opacity(0.8)))
+                }
+                .padding()
+                .contentShape(Circle()) // Ensures the entire visual area is tappable
+                
             }
-            .padding()
-            .contentShape(Circle()) // Ensures the entire visual area is tappable
+            .transition(.move(edge: .top).combined(with: .opacity))
+            .animation(.spring(), value: totalRejectionsSinceLastSignup)
         }
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingFlowView(isPresented: $showOnboarding)
@@ -258,6 +271,20 @@ struct MapSearchView: View {
                 }
             }
         }
+    }
+    
+    private var totalRejectionsSinceLastSignup: Int {
+        let allKnocks = prospects.flatMap { $0.knockHistory }
+            .sorted(by: { $0.date > $1.date })
+
+        var count = 0
+        for knock in allKnocks {
+            if knock.status == "Signed Up" { break }
+            if knock.status == "Not Answered" || knock.status == "Not Enough Interest" {
+                count += 1
+            }
+        }
+        return count
     }
 
     private func updateMarkers() {
