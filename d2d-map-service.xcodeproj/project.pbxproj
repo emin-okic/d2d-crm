@@ -56,6 +56,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		C59705F92E198214006C3B55 /* d2d-rolodex-service */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "d2d-rolodex-service";
+			sourceTree = "<group>";
+		};
 		C5AF70BA2E1205E200754997 /* d2d-dojo-service */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "d2d-dojo-service";
@@ -123,6 +128,7 @@
 				C54048432DF4B32A00721D49 /* README.md */,
 				C5855D882DF073A300B479AE /* .gitignore */,
 				C5E9F14F2DEB6CAB000A771B /* d2d-map-service.xctestplan */,
+				C59705F92E198214006C3B55 /* d2d-rolodex-service */,
 				C5BE4B362DE7CC9E005C37B1 /* d2d-map-service */,
 				C5AF70BA2E1205E200754997 /* d2d-dojo-service */,
 				C5BE4B442DE7CC9F005C37B1 /* d2d-map-serviceTests */,
@@ -157,6 +163,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				C59705F92E198214006C3B55 /* d2d-rolodex-service */,
 				C5AF70BA2E1205E200754997 /* d2d-dojo-service */,
 				C5BE4B362DE7CC9E005C37B1 /* d2d-map-service */,
 			);
