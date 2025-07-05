@@ -14,6 +14,8 @@ struct ProfileView: View {
     
     @State private var selectedObjection: Objection?
     @State private var showingAddObjection = false
+    
+    @State private var showActivityOnboarding = false
 
     var body: some View {
         let totalKnocks = ProfileController.totalKnocks(from: prospects)
@@ -78,6 +80,24 @@ struct ProfileView: View {
             }
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
+            .overlay(alignment: .bottomTrailing) {
+                Button(action: {
+                    showActivityOnboarding = true
+                }) {
+                    Image(systemName: "questionmark.circle.fill")
+                        .font(.system(size: 22))
+                        .padding(14)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .clipShape(Circle())
+                        .shadow(radius: 4)
+                }
+                .padding(.trailing, 20)
+                .padding(.bottom, 30)
+            }
+            .fullScreenCover(isPresented: $showActivityOnboarding) {
+                OnboardingFlowView(isPresented: $showActivityOnboarding)
+            }
         }
     }
 
