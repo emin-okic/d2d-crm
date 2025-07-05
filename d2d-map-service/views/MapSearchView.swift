@@ -345,8 +345,17 @@ struct MapSearchView: View {
     private func handleKnockAndPromptNote(status: String) {
         if let addr = pendingAddress {
             let prospect = saveKnock(address: addr, status: status)
-            prospectToNote = prospect
-            showNoteInput = true
+
+            // Only show note popup for statuses other than "Not Answered"
+            if status != "Not Answered" {
+                prospectToNote = prospect
+                showNoteInput = true
+            } else {
+                // Optionally prompt to log a trip even if no note is added
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    showTripPrompt = true
+                }
+            }
         }
     }
     
