@@ -5,8 +5,6 @@
 //  Created by Emin Okic on 6/8/25.
 //
 
-
-// AddNoteView.swift
 import SwiftUI
 import SwiftData
 
