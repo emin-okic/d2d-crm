@@ -20,6 +20,8 @@ struct ProspectsView: View {
     @State private var showingAddProspect = false
     @State private var suggestedProspect: Prospect?
     @State private var suggestionSourceIndex = 0 // Track which customer we’re pulling from
+    
+    @State private var showActivityOnboarding = false
 
     let availableLists = ["Prospects", "Customers"]
     @Query var prospects: [Prospect]
@@ -36,51 +38,50 @@ struct ProspectsView: View {
         self.onDoubleTap = onDoubleTap
         _prospects = Query()
     }
+    
+    private var totalProspects: Int {
+        prospects.filter { $0.list == "Prospects" }.count
+    }
+
+    private var totalCustomers: Int {
+        prospects.filter { $0.list == "Customers" }.count
+    }
 
     var body: some View {
         NavigationView {
-            ZStack(alignment: .topTrailing) {
-                Spacer()
-                // MARK: - Custom Header
+            VStack(spacing: 12) {
+                
+                // Summary cards at the top
+                HStack(spacing: 12) {
+                    Button {
+                        selectedList = "Prospects"
+                    } label: {
+                        SummaryCardView(title: "Total Prospects", count: totalProspects)
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        selectedList = "Customers"
+                    } label: {
+                        SummaryCardView(title: "Total Customers", count: totalCustomers)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                
+                // Title and list type selector
                 HStack {
                     Text("Your \(selectedList)")
                         .font(.title)
                         .fontWeight(.bold)
-
-                    Spacer()
-
-                    Menu {
-                        Button("Prospects") { selectedList = "Prospects" }
-                        Button("Customers") { selectedList = "Customers" }
-                    } label: {
-                        Text(selectedList)
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(.ultraThinMaterial)
-                            .cornerRadius(10)
-                            .shadow(radius: 2)
-                    }
-                    .padding(.top, 12)
-                    .padding(.trailing, 16)
-                    
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 8)
-                
-                .navigationTitle("")
-                
-                Spacer()
+                .padding(.vertical, 20)
 
+                // Main list of prospects
+                // Main list of prospects
                 List {
-                    Section {
-                        EmptyView()
-                    }
-                    .frame(height: 60)
-                    .listRowInsets(EdgeInsets())
-                    .listRowSeparator(.hidden)
-
                     let filteredProspects = prospects.filter { $0.list == selectedList }
 
                     ForEach(filteredProspects, id: \.persistentModelID) { prospect in
@@ -102,7 +103,7 @@ struct ProspectsView: View {
                             .hidden()
                         )
                     }
-                    
+
                     if selectedList == "Prospects" {
                         Section {
                             Button {
@@ -117,6 +118,7 @@ struct ProspectsView: View {
                                 .padding(.vertical, 4)
                             }
                         }
+                        .padding(10)
                     }
 
                     if selectedList == "Prospects", let suggestion = suggestedProspect {
@@ -124,14 +126,12 @@ struct ProspectsView: View {
                             VStack(alignment: .leading, spacing: 10) {
                                 Text("Suggested Neighbor")
                                     .font(.headline)
-                                    .foregroundStyle(.primary)
 
                                 VStack(alignment: .leading, spacing: 4) {
                                     Label(suggestion.fullName, systemImage: "person.fill")
-                                        .foregroundStyle(.secondary)
                                     Label(suggestion.address, systemImage: "mappin.and.ellipse")
-                                        .foregroundStyle(.secondary)
                                 }
+                                .foregroundStyle(.secondary)
 
                                 Button {
                                     modelContext.insert(suggestion)
@@ -154,22 +154,43 @@ struct ProspectsView: View {
                         }
                     }
                 }
-                .padding(.top, 60)
-                .sheet(isPresented: $showingAddProspect) {
-                    NewProspectView(
-                        selectedList: $selectedList,
-                        onSave: {
-                            showingAddProspect = false
-                            onSave()
-                        }
-                    )
-                }
-                .task {
-                    if selectedList == "Prospects", suggestedProspect == nil {
-                        await fetchNextSuggestedNeighbor()
+                .listStyle(.plain)
+                .padding(.top, 8) // <-- this is to separate from the header area
+                
+            }
+            .navigationTitle("")
+            .sheet(isPresented: $showingAddProspect) {
+                NewProspectView(
+                    selectedList: $selectedList,
+                    onSave: {
+                        showingAddProspect = false
+                        onSave()
                     }
+                )
+            }
+            .task {
+                if selectedList == "Prospects", suggestedProspect == nil {
+                    await fetchNextSuggestedNeighbor()
                 }
             }
+        }
+        .overlay(alignment: .bottomTrailing) {
+            Button(action: {
+                showActivityOnboarding = true
+            }) {
+                Image(systemName: "chart.bar.xaxis")
+                    .font(.system(size: 22))
+                    .padding(14)
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .clipShape(Circle())
+                    .shadow(radius: 4)
+            }
+            .padding(.trailing, 20)
+            .padding(.bottom, 30)
+        }
+        .fullScreenCover(isPresented: $showActivityOnboarding) {
+            ActivityOnboardingFlowView(isPresented: $showActivityOnboarding)
         }
     }
 

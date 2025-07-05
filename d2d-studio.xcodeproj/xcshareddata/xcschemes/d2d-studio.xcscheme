@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1630"
+   LastUpgradeVersion = "1640"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C5BE4B332DE7CC9E005C37B1"
-               BuildableName = "d2d-map-service.app"
-               BlueprintName = "d2d-map-service"
-               ReferencedContainer = "container:d2d-map-service.xcodeproj">
+               BuildableName = "d2d-studio.app"
+               BlueprintName = "d2d-studio"
+               ReferencedContainer = "container:d2d-studio.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C5BE4B332DE7CC9E005C37B1"
-            BuildableName = "d2d-map-service.app"
-            BlueprintName = "d2d-map-service"
-            ReferencedContainer = "container:d2d-map-service.xcodeproj">
+            BuildableName = "d2d-studio.app"
+            BlueprintName = "d2d-studio"
+            ReferencedContainer = "container:d2d-studio.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C5BE4B332DE7CC9E005C37B1"
-            BuildableName = "d2d-map-service.app"
-            BlueprintName = "d2d-map-service"
-            ReferencedContainer = "container:d2d-map-service.xcodeproj">
+            BuildableName = "d2d-studio.app"
+            BlueprintName = "d2d-studio"
+            ReferencedContainer = "container:d2d-studio.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

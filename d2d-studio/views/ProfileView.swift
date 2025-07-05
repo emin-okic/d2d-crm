@@ -14,6 +14,8 @@ struct ProfileView: View {
     
     @State private var selectedObjection: Objection?
     @State private var showingAddObjection = false
+    
+    @State private var showActivityOnboarding = false
 
     var body: some View {
         let totalKnocks = ProfileController.totalKnocks(from: prospects)
@@ -21,6 +23,10 @@ struct ProfileView: View {
 
         let totalProspects = prospects.count
         let totalCustomers = prospects.filter { $0.list == "Customers" }.count
+        
+        let totalMiles = trips.reduce(0) { $0 + $1.miles }
+        let totalTrips = trips.count
+        
         let averageKnocksPerCustomer: Double = {
             let customerKnocks = prospects
                 .filter { $0.list == "Customers" }
@@ -52,25 +58,17 @@ struct ProfileView: View {
                                 count: Int(averageKnocksPerCustomer.rounded())
                             )
                         }
+
+                        HStack(spacing: 12) {
+                            LeaderboardCardView(
+                                title: "Total Miles",
+                                count: Int(totalMiles.rounded())
+                            )
+                            LeaderboardCardView(title: "Trips", count: totalTrips)
+                            
+                        }
                     }
                     .padding(.horizontal, 20)
-
-                    // MARK: - Knock Activity
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Prospecting Activity")
-                            .font(.headline)
-                            .padding(.horizontal, 20)
-
-                        LeaderboardCardView(title: "Total Knocks", count: totalKnocks)
-                            .padding(.horizontal, 20)
-
-                        Chart {
-                            BarMark(x: .value("Status", "Answered"), y: .value("Count", answeredVsUnanswered.answered))
-                            BarMark(x: .value("Status", "Not Answered"), y: .value("Count", answeredVsUnanswered.unanswered))
-                        }
-                        .frame(height: 120)
-                        .padding(.horizontal, 20)
-                    }
                     
                     NavigationView {
                         TripsSectionView()
@@ -82,6 +80,24 @@ struct ProfileView: View {
             }
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
+            .overlay(alignment: .bottomTrailing) {
+                Button(action: {
+                    showActivityOnboarding = true
+                }) {
+                    Image(systemName: "questionmark.circle.fill")
+                        .font(.system(size: 22))
+                        .padding(14)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .clipShape(Circle())
+                        .shadow(radius: 4)
+                }
+                .padding(.trailing, 20)
+                .padding(.bottom, 30)
+            }
+            .fullScreenCover(isPresented: $showActivityOnboarding) {
+                OnboardingFlowView(isPresented: $showActivityOnboarding)
+            }
         }
     }
 

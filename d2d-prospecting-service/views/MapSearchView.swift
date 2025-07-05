@@ -38,7 +38,13 @@ struct MapSearchView: View {
 
     @Environment(\.modelContext) private var modelContext
     
-    @State private var showOnboarding = false
+    private var averageKnocksPerCustomer: Int {
+        let customerKnocks = prospects
+            .filter { $0.list == "Customers" }
+            .map { $0.knockHistory.count }
+        guard !customerKnocks.isEmpty else { return 0 }
+        return Int(Double(customerKnocks.reduce(0, +)) / Double(customerKnocks.count))
+    }
 
     init(region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
@@ -84,35 +90,15 @@ struct MapSearchView: View {
                 Spacer()
             }
             
-            VStack {
+            HStack(spacing: 12) {
                 RejectionTrackerView(count: totalRejectionsSinceLastSignup)
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(16)
-                    .shadow(radius: 4)
-                    .padding(.top, 10)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                
-                Spacer()
+                KnocksPerSaleView(count: averageKnocksPerCustomer)
             }
+            .cornerRadius(16)
+            .shadow(radius: 4)
+            .padding(.top, 10)
+            .frame(maxWidth: .infinity, alignment: .center)
             .zIndex(1) // Make sure it stays on top
-            
-            HStack {
-                
-                Button {
-                    showOnboarding = true
-                } label: {
-                    Image(systemName: "questionmark.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(.white)
-                        .padding(8)
-                        .background(Circle().fill(Color.blue.opacity(0.8)))
-                }
-                .padding(20)
-                .contentShape(Circle()) // Ensures the entire visual area is tappable
-                
-            }
-            .transition(.move(edge: .top).combined(with: .opacity))
-            .animation(.spring(), value: totalRejectionsSinceLastSignup)
             
             VStack {
                 Spacer()
@@ -137,9 +123,6 @@ struct MapSearchView: View {
             }
             
         }
-        .fullScreenCover(isPresented: $showOnboarding) {
-            OnboardingFlowView(isPresented: $showOnboarding)
-          }
         .onAppear { updateMarkers() }
         .onChange(of: prospects) { _ in updateMarkers() }
         .onChange(of: selectedList) { _ in updateMarkers() }
@@ -345,8 +328,17 @@ struct MapSearchView: View {
     private func handleKnockAndPromptNote(status: String) {
         if let addr = pendingAddress {
             let prospect = saveKnock(address: addr, status: status)
-            prospectToNote = prospect
-            showNoteInput = true
+
+            // Only show note popup for statuses other than "Not Answered"
+            if status != "Not Answered" {
+                prospectToNote = prospect
+                showNoteInput = true
+            } else {
+                // Optionally prompt to log a trip even if no note is added
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    showTripPrompt = true
+                }
+            }
         }
     }
     
