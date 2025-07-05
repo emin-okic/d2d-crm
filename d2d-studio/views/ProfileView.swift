@@ -21,6 +21,10 @@ struct ProfileView: View {
 
         let totalProspects = prospects.count
         let totalCustomers = prospects.filter { $0.list == "Customers" }.count
+        
+        let totalMiles = trips.reduce(0) { $0 + $1.miles }
+        let totalTrips = trips.count
+        
         let averageKnocksPerCustomer: Double = {
             let customerKnocks = prospects
                 .filter { $0.list == "Customers" }
@@ -51,6 +55,15 @@ struct ProfileView: View {
                                 title: "Knocks Per Sale",
                                 count: Int(averageKnocksPerCustomer.rounded())
                             )
+                        }
+
+                        HStack(spacing: 12) {
+                            LeaderboardCardView(
+                                title: "Total Miles",
+                                count: Int(totalMiles.rounded())
+                            )
+                            LeaderboardCardView(title: "Trips", count: totalTrips)
+                            
                         }
                     }
                     .padding(.horizontal, 20)
