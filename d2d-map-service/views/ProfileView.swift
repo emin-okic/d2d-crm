@@ -54,23 +54,6 @@ struct ProfileView: View {
                         }
                     }
                     .padding(.horizontal, 20)
-
-                    // MARK: - Knock Activity
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Prospecting Activity")
-                            .font(.headline)
-                            .padding(.horizontal, 20)
-
-                        LeaderboardCardView(title: "Total Knocks", count: totalKnocks)
-                            .padding(.horizontal, 20)
-
-                        Chart {
-                            BarMark(x: .value("Status", "Answered"), y: .value("Count", answeredVsUnanswered.answered))
-                            BarMark(x: .value("Status", "Not Answered"), y: .value("Count", answeredVsUnanswered.unanswered))
-                        }
-                        .frame(height: 120)
-                        .padding(.horizontal, 20)
-                    }
                     
                     NavigationView {
                         TripsSectionView()

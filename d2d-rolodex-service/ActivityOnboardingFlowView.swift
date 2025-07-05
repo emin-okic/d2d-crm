@@ -13,25 +13,44 @@ struct ActivityOnboardingFlowView: View {
     @Query private var prospects: [Prospect]
     @State private var currentPage = 0
 
+    private var now: Date { Date() }
+    private var calendar: Calendar { .current }
+
+    private var knocks: [Knock] {
+        prospects.flatMap(\.knockHistory)
+    }
+
     private var hourlyKnocks: [(Int, Int)] {
-        var hourlyCounts = Array(repeating: 0, count: 24)
-        for knock in prospects.flatMap(\.knockHistory) {
-            let hour = Calendar.current.component(.hour, from: knock.date)
-            hourlyCounts[hour] += 1
+        var counts = Array(repeating: 0, count: 24)
+        for knock in knocks {
+            let hour = calendar.component(.hour, from: knock.date)
+            counts[hour] += 1
         }
-        return hourlyCounts.enumerated().map { ($0.offset, $0.element) }
+        return counts.enumerated().map { ($0.offset, $0.element) }
+    }
+
+    private var knocksThisHour: Int {
+        let hour = calendar.component(.hour, from: now)
+        return hourlyKnocks.first(where: { $0.0 == hour })?.1 ?? 0
     }
 
     private var dailyKnocks: [(Date, Int)] {
         var result: [Date: Int] = [:]
-        let calendar = Calendar.current
-
-        for knock in prospects.flatMap(\.knockHistory) {
+        for knock in knocks {
             let day = calendar.startOfDay(for: knock.date)
             result[day, default: 0] += 1
         }
-
         return result.map { ($0.key, $0.value) }.sorted { $0.0 < $1.0 }
+    }
+
+    private var knocksToday: Int {
+        let today = calendar.startOfDay(for: now)
+        return dailyKnocks.first(where: { calendar.isDate($0.0, inSameDayAs: today) })?.1 ?? 0
+    }
+
+    private var knocksThisWeek: Int {
+        let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: now))!
+        return knocks.filter { $0.date >= weekStart }.count
     }
 
     var body: some View {
@@ -41,13 +60,24 @@ struct ActivityOnboardingFlowView: View {
                 VStack(spacing: 16) {
                     Text("Hourly Activity")
                         .font(.title).bold()
+
+                    HStack(spacing: 12) {
+                        LeaderboardCardView(title: "This Hour", count: knocksThisHour)
+                        LeaderboardCardView(title: "Today", count: knocksToday)
+                        LeaderboardCardView(title: "This Week", count: knocksThisWeek)
+                    }
+                    .padding(.horizontal, 20)
+
                     Chart {
                         ForEach(hourlyKnocks, id: \.0) { hour, count in
-                            BarMark(x: .value("Hour", hour),
-                                    y: .value("Knocks", count))
+                            BarMark(
+                                x: .value("Hour", hour),
+                                y: .value("Knocks", count)
+                            )
                         }
                     }
                     .frame(height: 180)
+                    .padding(.top, 8)
                 }
                 .tag(0)
                 .padding()
@@ -56,13 +86,23 @@ struct ActivityOnboardingFlowView: View {
                 VStack(spacing: 16) {
                     Text("Daily Activity")
                         .font(.title).bold()
+
+                    HStack(spacing: 12) {
+                        LeaderboardCardView(title: "Today", count: knocksToday)
+                        LeaderboardCardView(title: "This Week", count: knocksThisWeek)
+                    }
+                    .padding(.horizontal, 20)
+
                     Chart {
                         ForEach(dailyKnocks, id: \.0) { date, count in
-                            BarMark(x: .value("Day", date, unit: .day),
-                                    y: .value("Knocks", count))
+                            BarMark(
+                                x: .value("Day", date, unit: .day),
+                                y: .value("Knocks", count)
+                            )
                         }
                     }
                     .frame(height: 180)
+                    .padding(.top, 8)
                 }
                 .tag(1)
                 .padding()
@@ -71,9 +111,12 @@ struct ActivityOnboardingFlowView: View {
                 VStack(spacing: 16) {
                     Text("Weekly Summary")
                         .font(.title).bold()
-                    let total = dailyKnocks.map(\.1).reduce(0, +)
-                    Text("Total knocks this week: \(total)")
-                        .font(.headline)
+
+                    LeaderboardCardView(title: "Knocks This Week", count: knocksThisWeek)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 12)
+
+                    Spacer()
                 }
                 .tag(2)
                 .padding()
