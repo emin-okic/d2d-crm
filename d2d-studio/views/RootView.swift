@@ -46,7 +46,7 @@ struct RootView: View {
             }
             .tag(0)
 
-            ProspectsView(
+            RolodexView(
                 selectedList: $selectedList,
                 onSave: { showingAddProspect = false },
                 onDoubleTap: { prospect in
@@ -64,10 +64,10 @@ struct RootView: View {
                     Label("Studio", systemImage: "waveform")
                 }
             
-            ProfileView(
+            FollowUpAssistantView(
             )
             .tabItem {
-                Label("Profile", systemImage: "person.crop.circle")
+                Label("Calendar", systemImage: "calendar")
             }
             .tag(2)
         }

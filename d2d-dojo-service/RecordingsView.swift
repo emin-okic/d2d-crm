@@ -36,7 +36,17 @@ struct RecordingsView: View {
         
         NavigationView {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 24) {
+                    
+                    // MARK: - Custom Header
+                    HStack {
+                        Text("The Virtual Sales Studio")
+                            .font(.title)
+                            .fontWeight(.bold)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 0)
+                    .padding(.top, 20)
                     
                     RecordingStatsView(total: totalRecordings, avg: averageScore)
                     

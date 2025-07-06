@@ -8,7 +8,7 @@ import SwiftUI
 import Charts
 import SwiftData
 
-struct ProfileView: View {
+struct FollowUpAssistantView: View {
     @Query private var prospects: [Prospect]
     @Query private var trips: [Trip]
     
@@ -16,10 +16,26 @@ struct ProfileView: View {
     @State private var showingAddObjection = false
     
     @State private var showActivityOnboarding = false
+    
+    @Query private var appointments: [Appointment]
+    
+    private var appointmentsToday: Int {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        return appointments.filter { calendar.isDate($0.date, inSameDayAs: today) }.count
+    }
+
+    private var appointmentsThisWeek: Int {
+        let calendar = Calendar.current
+        let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date()))!
+        let endOfWeek = calendar.date(byAdding: .day, value: 7, to: startOfWeek)!
+
+        return appointments.filter { $0.date >= startOfWeek && $0.date < endOfWeek }.count
+    }
 
     var body: some View {
-        let totalKnocks = ProfileController.totalKnocks(from: prospects)
-        let answeredVsUnanswered = ProfileController.knocksAnsweredVsUnanswered(from: prospects)
+        let totalKnocks = FollowUpAssistantController.totalKnocks(from: prospects)
+        let answeredVsUnanswered = FollowUpAssistantController.knocksAnsweredVsUnanswered(from: prospects)
 
         let totalProspects = prospects.count
         let totalCustomers = prospects.filter { $0.list == "Customers" }.count
@@ -38,37 +54,31 @@ struct ProfileView: View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
+                    
                     // MARK: - Custom Header
                     HStack {
-                        Text("Profile")
+                        Text("The Follow-Up Assistant")
                             .font(.title)
                             .fontWeight(.bold)
                         Spacer()
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 8)
-
+                    .padding(.top, 20)
+                    
                     // MARK: - Summary Cards
                     VStack(spacing: 12) {
+                        // Appointments Scorecards
                         HStack(spacing: 12) {
-                            LeaderboardCardView(title: "Prospects", count: totalProspects)
-                            LeaderboardCardView(title: "Customers", count: totalCustomers)
-                            LeaderboardCardView(
-                                title: "Knocks Per Sale",
-                                count: Int(averageKnocksPerCustomer.rounded())
-                            )
-                        }
-
-                        HStack(spacing: 12) {
-                            LeaderboardCardView(
-                                title: "Total Miles",
-                                count: Int(totalMiles.rounded())
-                            )
-                            LeaderboardCardView(title: "Trips", count: totalTrips)
-                            
+                            LeaderboardCardView(title: "Appointments Today", count: appointmentsToday)
+                            LeaderboardCardView(title: "Appointments This Week", count: appointmentsThisWeek)
+                            LeaderboardCardView(title: "Trips Made This Week", count: totalTrips)
                         }
                     }
                     .padding(.horizontal, 20)
+                    
+                    NavigationView {
+                        AppointmentsSectionView()
+                    }
                     
                     NavigationView {
                         TripsSectionView()

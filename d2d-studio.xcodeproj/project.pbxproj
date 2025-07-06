@@ -44,13 +44,17 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				views/README.md,
 			);
 			target = C5BE4B332DE7CC9E005C37B1 /* d2d-studio */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		C5328C812E1B1D180057F68E /* d2d-follow-up-service */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "d2d-follow-up-service";
+			sourceTree = "<group>";
+		};
 		C56CD3852E1993CB00232EF7 /* d2d-prospecting-service */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "d2d-prospecting-service";
@@ -131,6 +135,7 @@
 				C5BE4B362DE7CC9E005C37B1 /* d2d-studio */,
 				C59705F92E198214006C3B55 /* d2d-rolodex-service */,
 				C56CD3852E1993CB00232EF7 /* d2d-prospecting-service */,
+				C5328C812E1B1D180057F68E /* d2d-follow-up-service */,
 				C5AF70BA2E1205E200754997 /* d2d-dojo-service */,
 				C5BE4B442DE7CC9F005C37B1 /* d2d-map-serviceTests */,
 				C5BE4B4E2DE7CC9F005C37B1 /* d2d-map-serviceUITests */,
@@ -164,6 +169,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				C5328C812E1B1D180057F68E /* d2d-follow-up-service */,
 				C56CD3852E1993CB00232EF7 /* d2d-prospecting-service */,
 				C59705F92E198214006C3B55 /* d2d-rolodex-service */,
 				C5AF70BA2E1205E200754997 /* d2d-dojo-service */,
