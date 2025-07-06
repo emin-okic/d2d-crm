@@ -64,7 +64,7 @@ struct RootView: View {
                     Label("Studio", systemImage: "waveform")
                 }
             
-            ProfileView(
+            FollowUpAssistantView(
             )
             .tabItem {
                 Label("Calendar", systemImage: "calendar")

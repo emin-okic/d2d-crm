@@ -9,7 +9,7 @@ import Foundation
 
 /// A utility struct that provides analytics and summaries based on a collection of `Prospect` objects.
 ///
-struct ProfileController {
+struct FollowUpAssistantController {
     
     /// Computes the total number of knocks recorded across all prospects.
     ///

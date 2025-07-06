@@ -8,7 +8,7 @@ import SwiftUI
 import Charts
 import SwiftData
 
-struct ProfileView: View {
+struct FollowUpAssistantView: View {
     @Query private var prospects: [Prospect]
     @Query private var trips: [Trip]
     
@@ -34,8 +34,8 @@ struct ProfileView: View {
     }
 
     var body: some View {
-        let totalKnocks = ProfileController.totalKnocks(from: prospects)
-        let answeredVsUnanswered = ProfileController.knocksAnsweredVsUnanswered(from: prospects)
+        let totalKnocks = FollowUpAssistantController.totalKnocks(from: prospects)
+        let answeredVsUnanswered = FollowUpAssistantController.knocksAnsweredVsUnanswered(from: prospects)
 
         let totalProspects = prospects.count
         let totalCustomers = prospects.filter { $0.list == "Customers" }.count
