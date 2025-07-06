@@ -50,14 +50,6 @@ struct ProfileView: View {
 
                     // MARK: - Summary Cards
                     VStack(spacing: 12) {
-                        HStack(spacing: 12) {
-                            LeaderboardCardView(title: "Prospects", count: totalProspects)
-                            LeaderboardCardView(title: "Customers", count: totalCustomers)
-                            LeaderboardCardView(
-                                title: "Knocks Per Sale",
-                                count: Int(averageKnocksPerCustomer.rounded())
-                            )
-                        }
 
                         HStack(spacing: 12) {
                             LeaderboardCardView(
@@ -69,6 +61,10 @@ struct ProfileView: View {
                         }
                     }
                     .padding(.horizontal, 20)
+                    
+                    NavigationView {
+                        AppointmentsSectionView()
+                    }
                     
                     NavigationView {
                         TripsSectionView()
