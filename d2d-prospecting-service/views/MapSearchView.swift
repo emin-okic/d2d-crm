@@ -35,6 +35,13 @@ struct MapSearchView: View {
     
     @State private var showTripPrompt = false
     @State private var showTripPopup = false
+    
+    @State private var showFollowUpSheet = false
+    @State private var followUpAddress: String = ""
+    @State private var followUpProspectName: String = ""
+    @State private var showFollowUpPrompt = false
+    
+    @State private var shouldAskForTripAfterFollowUp = false
 
     @Environment(\.modelContext) private var modelContext
     
@@ -197,6 +204,20 @@ struct MapSearchView: View {
                 SignUpPopupView(prospect: prospect, isPresented: $showConversionSheet)
             }
         }
+        .alert("Schedule Follow-Up?", isPresented: $showFollowUpPrompt) {
+            Button("Yes") {
+                shouldAskForTripAfterFollowUp = true
+                showFollowUpSheet = true
+            }
+            Button("No", role: .cancel) {
+                showTripPrompt = true
+            }
+        } message: {
+            Text("Would you like to schedule a follow-up for \(followUpProspectName)?")
+        }
+        .sheet(isPresented: $showFollowUpSheet) {
+            FollowUpScheduleView(address: followUpAddress, prospectName: followUpProspectName)
+        }
         .alert("Do you want to log a trip?", isPresented: $showTripPrompt) {
             Button("Yes") { showTripPopup = true }
             Button("No", role: .cancel) {}
@@ -222,14 +243,14 @@ struct MapSearchView: View {
                                 if let objection = selectedObjection {
                                     noteContent = """
                                     Not Enough Interest: \(objection.text)
-                                    
+
                                     \(newNoteText)
                                     """
                                 } else if let addr = pendingAddress,
                                           prospect.knockHistory.last?.status == "Not Answered" {
                                     noteContent = """
                                     No Answer
-                                    
+
                                     \(newNoteText)
                                     """
                                 } else {
@@ -239,14 +260,19 @@ struct MapSearchView: View {
                                 let note = Note(content: noteContent)
                                 prospect.notes.append(note)
                                 try? modelContext.save()
+
+                                // Prepare for follow-up
+                                followUpAddress = prospect.address
+                                followUpProspectName = prospect.fullName
                             }
-                            
+
                             // Reset state
                             newNoteText = ""
                             selectedObjection = nil
                             showNoteInput = false
+
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                showTripPrompt = true
+                                showFollowUpPrompt = true
                             }
                         }
                         .disabled(newNoteText.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -261,6 +287,21 @@ struct MapSearchView: View {
                             showNoteInput = false
                         }
                     }
+                }
+            }
+        }
+        .onChange(of: showFollowUpSheet) { isShowing in
+            if !isShowing && showFollowUpPrompt {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    showTripPrompt = true
+                }
+            }
+        }
+        .onChange(of: showFollowUpSheet) { isShowing in
+            if !isShowing && shouldAskForTripAfterFollowUp {
+                shouldAskForTripAfterFollowUp = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    showTripPrompt = true
                 }
             }
         }
