@@ -46,7 +46,7 @@ struct RootView: View {
             }
             .tag(0)
 
-            ProspectsView(
+            RolodexView(
                 selectedList: $selectedList,
                 onSave: { showingAddProspect = false },
                 onDoubleTap: { prospect in

@@ -11,7 +11,7 @@ import SwiftData
 /// A view that displays and manages a list of prospects
 /// Users can filter by list type (e.g., "Prospects", "Customers"), add new prospects, and tap
 /// a prospect to edit its details.
-struct ProspectsView: View {
+struct RolodexView: View {
     @Environment(\.modelContext) private var modelContext
     @Binding var selectedList: String
     var onSave: () -> Void
@@ -49,7 +49,17 @@ struct ProspectsView: View {
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 24) {
+                
+                // MARK: - Custom Header
+                HStack {
+                    Text("The Rolodex")
+                        .font(.title)
+                        .fontWeight(.bold)
+                    Spacer()
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
                 
                 // Summary cards at the top
                 HStack(spacing: 12) {
