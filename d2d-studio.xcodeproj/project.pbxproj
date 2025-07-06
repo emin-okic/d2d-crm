@@ -44,7 +44,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				views/README.md,
 			);
 			target = C5BE4B332DE7CC9E005C37B1 /* d2d-studio */;
 		};

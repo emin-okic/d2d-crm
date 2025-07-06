@@ -67,7 +67,7 @@ struct RootView: View {
             ProfileView(
             )
             .tabItem {
-                Label("Profile", systemImage: "person.crop.circle")
+                Label("Calendar", systemImage: "calendar")
             }
             .tag(2)
         }
