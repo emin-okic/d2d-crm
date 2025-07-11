@@ -56,7 +56,6 @@ let sharedModelContainer: ModelContainer = {
         Knock.self,
         Trip.self,
         Objection.self,
-        Recording.self,
         Appointment.self
     ])
 
