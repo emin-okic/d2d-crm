@@ -7,6 +7,9 @@
 import SwiftUI
 import SwiftData
 
+import StoreKit
+
+
 struct SignUpPopupView: View {
     @Bindable var prospect: Prospect
     @Binding var isPresented: Bool
@@ -40,6 +43,16 @@ struct SignUpPopupView: View {
                         prospect.contactEmail = tempEmail
                         try? modelContext.save()
                         isPresented = false
+
+                        // Ask for review only if not already done
+                        if !UserDefaults.standard.hasLeftReview {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                                    SKStoreReviewController.requestReview(in: scene)
+                                    UserDefaults.standard.hasLeftReview = true
+                                }
+                            }
+                        }
                     }
                     .disabled(prospect.fullName.isEmpty || prospect.address.isEmpty)
                 }
