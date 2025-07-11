@@ -42,6 +42,10 @@ struct MapSearchView: View {
     @State private var showFollowUpPrompt = false
     
     @State private var shouldAskForTripAfterFollowUp = false
+    
+    @State private var tappedCoordinate: CLLocationCoordinate2D?
+    @State private var tappedAddress: String = ""
+    @State private var showAddAddressPrompt = false
 
     @Environment(\.modelContext) private var modelContext
     
@@ -66,8 +70,7 @@ struct MapSearchView: View {
         ZStack(alignment: .topTrailing) {
             VStack(spacing: 12) {
                 
-                Map(coordinateRegion: $controller.region,
-                    annotationItems: controller.markers) { place in
+                Map(coordinateRegion: $controller.region, annotationItems: controller.markers) { place in
                     MapAnnotation(coordinate: place.location) {
                         if place.list == "Customers" {
                             Image(systemName: "star.circle.fill")
@@ -91,6 +94,14 @@ struct MapSearchView: View {
                         }
                     }
                 }
+                .gesture(
+                    TapGesture()
+                        .onEnded {
+                            let center = controller.region.center
+                            tappedCoordinate = center
+                            reverseGeocode(center)
+                        }
+                )
                 .frame(maxHeight: .infinity)
                 .edgesIgnoringSafeArea(.horizontal)
 
@@ -153,6 +164,14 @@ struct MapSearchView: View {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
                                             to: nil, from: nil, for: nil)
         }
+        .alert("Add This Prospect?", isPresented: $showAddAddressPrompt, actions: {
+            Button("Yes") {
+                handleKnockAndPromptNote(status: "Not Answered")
+            }
+            Button("No", role: .cancel) {}
+        }, message: {
+            Text("Do you want to add \(tappedAddress)?")
+        })
         .alert("Knock Outcome", isPresented: $showOutcomePrompt, actions: {
             
             Button("Signed Up") {
@@ -303,6 +322,20 @@ struct MapSearchView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     showTripPrompt = true
                 }
+            }
+        }
+    }
+    
+    private func reverseGeocode(_ coordinate: CLLocationCoordinate2D) {
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        CLGeocoder().reverseGeocodeLocation(location) { placemarks, error in
+            if let placemark = placemarks?.first {
+                let addr = [placemark.subThoroughfare,
+                            placemark.thoroughfare,
+                            placemark.locality].compactMap { $0 }.joined(separator: " ")
+                tappedAddress = addr
+                pendingAddress = addr
+                showAddAddressPrompt = true
             }
         }
     }
