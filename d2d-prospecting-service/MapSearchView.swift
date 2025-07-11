@@ -43,9 +43,7 @@ struct MapSearchView: View {
     
     @State private var shouldAskForTripAfterFollowUp = false
     
-    @State private var tappedCoordinate: CLLocationCoordinate2D?
-    @State private var tappedAddress: String = ""
-    @State private var showAddAddressPrompt = false
+    @StateObject private var tapManager = MapTapAddressManager()
 
     @Environment(\.modelContext) private var modelContext
     
@@ -98,8 +96,7 @@ struct MapSearchView: View {
                     TapGesture()
                         .onEnded {
                             let center = controller.region.center
-                            tappedCoordinate = center
-                            reverseGeocode(center)
+                            tapManager.handleTap(at: center)
                         }
                 )
                 .frame(maxHeight: .infinity)
@@ -164,13 +161,14 @@ struct MapSearchView: View {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
                                             to: nil, from: nil, for: nil)
         }
-        .alert("Add This Prospect?", isPresented: $showAddAddressPrompt, actions: {
+        .alert("Add This Prospect?", isPresented: $tapManager.showAddPrompt, actions: {
             Button("Yes") {
+                pendingAddress = tapManager.tappedAddress
                 handleKnockAndPromptNote(status: "Not Answered")
             }
             Button("No", role: .cancel) {}
         }, message: {
-            Text("Do you want to add \(tappedAddress)?")
+            Text("Do you want to add \(tapManager.tappedAddress)?")
         })
         .alert("Knock Outcome", isPresented: $showOutcomePrompt, actions: {
             
@@ -322,20 +320,6 @@ struct MapSearchView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     showTripPrompt = true
                 }
-            }
-        }
-    }
-    
-    private func reverseGeocode(_ coordinate: CLLocationCoordinate2D) {
-        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-        CLGeocoder().reverseGeocodeLocation(location) { placemarks, error in
-            if let placemark = placemarks?.first {
-                let addr = [placemark.subThoroughfare,
-                            placemark.thoroughfare,
-                            placemark.locality].compactMap { $0 }.joined(separator: " ")
-                tappedAddress = addr
-                pendingAddress = addr
-                showAddAddressPrompt = true
             }
         }
     }
