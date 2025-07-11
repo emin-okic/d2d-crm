@@ -59,11 +59,6 @@ struct RootView: View {
             }
             .tag(1)
             
-            RecordingsView()
-                .tabItem {
-                    Label("Studio", systemImage: "waveform")
-                }
-            
             FollowUpAssistantView(
             )
             .tabItem {
