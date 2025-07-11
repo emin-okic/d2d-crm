@@ -76,6 +76,8 @@ struct FollowUpAssistantView: View {
                     }
                     .padding(.horizontal, 20)
                     
+                    ObjectionsSectionView()
+                    
                     NavigationView {
                         AppointmentsSectionView()
                     }
