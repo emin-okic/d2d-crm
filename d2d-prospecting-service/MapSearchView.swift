@@ -42,6 +42,8 @@ struct MapSearchView: View {
     @State private var showFollowUpPrompt = false
     
     @State private var shouldAskForTripAfterFollowUp = false
+    
+    @StateObject private var tapManager = MapTapAddressManager()
 
     @Environment(\.modelContext) private var modelContext
     
@@ -66,8 +68,7 @@ struct MapSearchView: View {
         ZStack(alignment: .topTrailing) {
             VStack(spacing: 12) {
                 
-                Map(coordinateRegion: $controller.region,
-                    annotationItems: controller.markers) { place in
+                Map(coordinateRegion: $controller.region, annotationItems: controller.markers) { place in
                     MapAnnotation(coordinate: place.location) {
                         if place.list == "Customers" {
                             Image(systemName: "star.circle.fill")
@@ -91,6 +92,21 @@ struct MapSearchView: View {
                         }
                     }
                 }
+                .gesture(
+                    TapGesture()
+                        .onEnded {
+                            let center = controller.region.center
+                            tapManager.handleTap(at: center)
+
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                                let tapped = tapManager.tappedAddress
+                                if prospectExists(at: tapped) {
+                                    pendingAddress = tapped
+                                    showOutcomePrompt = true
+                                }
+                            }
+                        }
+                )
                 .frame(maxHeight: .infinity)
                 .edgesIgnoringSafeArea(.horizontal)
 
@@ -153,6 +169,19 @@ struct MapSearchView: View {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
                                             to: nil, from: nil, for: nil)
         }
+        .alert("Add This Prospect?", isPresented: $tapManager.showAddPrompt, actions: {
+            Button("Yes") {
+                pendingAddress = tapManager.tappedAddress
+                // Force a marker update and simulate tapping on a new prospect marker
+                let _ = saveKnock(address: tapManager.tappedAddress, status: "Not Answered")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    showOutcomePrompt = true
+                }
+            }
+            Button("No", role: .cancel) {}
+        }, message: {
+            Text("Do you want to add \(tapManager.tappedAddress)?")
+        })
         .alert("Knock Outcome", isPresented: $showOutcomePrompt, actions: {
             
             Button("Signed Up") {
@@ -228,66 +257,18 @@ struct MapSearchView: View {
             }
         }
         .sheet(isPresented: $showNoteInput) {
-            NavigationView {
-                Form {
-                    Section(header: Text("Note Details")) {
-                        TextEditor(text: $newNoteText)
-                            .frame(minHeight: 100)
-                            .padding(.vertical, 4)
+            if let prospect = prospectToNote {
+                LogNoteView(
+                    prospect: prospect,
+                    objection: selectedObjection,
+                    pendingAddress: pendingAddress,
+                    onComplete: {
+                        followUpAddress = prospect.address
+                        followUpProspectName = prospect.fullName
+                        selectedObjection = nil
+                        showFollowUpPrompt = true
                     }
-                    Section {
-                        Button("Save Note") {
-                            if let prospect = prospectToNote {
-                                let noteContent: String
-
-                                if let objection = selectedObjection {
-                                    noteContent = """
-                                    Not Enough Interest: \(objection.text)
-
-                                    \(newNoteText)
-                                    """
-                                } else if let addr = pendingAddress,
-                                          prospect.knockHistory.last?.status == "Not Answered" {
-                                    noteContent = """
-                                    No Answer
-
-                                    \(newNoteText)
-                                    """
-                                } else {
-                                    noteContent = newNoteText
-                                }
-
-                                let note = Note(content: noteContent)
-                                prospect.notes.append(note)
-                                try? modelContext.save()
-
-                                // Prepare for follow-up
-                                followUpAddress = prospect.address
-                                followUpProspectName = prospect.fullName
-                            }
-
-                            // Reset state
-                            newNoteText = ""
-                            selectedObjection = nil
-                            showNoteInput = false
-
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                showFollowUpPrompt = true
-                            }
-                        }
-                        .disabled(newNoteText.trimmingCharacters(in: .whitespaces).isEmpty)
-                        .disabled(newNoteText.trimmingCharacters(in: .whitespaces).isEmpty)
-                    }
-                }
-                .navigationTitle("New Note")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            newNoteText = ""
-                            showNoteInput = false
-                        }
-                    }
-                }
+                )
             }
         }
         .onChange(of: showFollowUpSheet) { isShowing in
@@ -319,6 +300,12 @@ struct MapSearchView: View {
             }
         }
         return count
+    }
+    
+    private func prospectExists(at address: String) -> Bool {
+        let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        return prospects.contains { $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized } ||
+               customers.contains { $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized }
     }
 
     private func updateMarkers() {
