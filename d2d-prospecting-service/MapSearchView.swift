@@ -97,6 +97,14 @@ struct MapSearchView: View {
                         .onEnded {
                             let center = controller.region.center
                             tapManager.handleTap(at: center)
+
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                                let tapped = tapManager.tappedAddress
+                                if prospectExists(at: tapped) {
+                                    pendingAddress = tapped
+                                    showOutcomePrompt = true
+                                }
+                            }
                         }
                 )
                 .frame(maxHeight: .infinity)
@@ -164,7 +172,11 @@ struct MapSearchView: View {
         .alert("Add This Prospect?", isPresented: $tapManager.showAddPrompt, actions: {
             Button("Yes") {
                 pendingAddress = tapManager.tappedAddress
-                handleKnockAndPromptNote(status: "Not Answered")
+                // Force a marker update and simulate tapping on a new prospect marker
+                let _ = saveKnock(address: tapManager.tappedAddress, status: "Not Answered")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    showOutcomePrompt = true
+                }
             }
             Button("No", role: .cancel) {}
         }, message: {
@@ -288,6 +300,12 @@ struct MapSearchView: View {
             }
         }
         return count
+    }
+    
+    private func prospectExists(at address: String) -> Bool {
+        let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        return prospects.contains { $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized } ||
+               customers.contains { $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized }
     }
 
     private func updateMarkers() {
