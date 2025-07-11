@@ -44,6 +44,8 @@ struct MapSearchView: View {
     @State private var shouldAskForTripAfterFollowUp = false
     
     @StateObject private var tapManager = MapTapAddressManager()
+    
+    @State private var showingAddObjection = false
 
     @Environment(\.modelContext) private var modelContext
     
@@ -228,6 +230,9 @@ struct MapSearchView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingAddObjection) {
+            AddObjectionView()
+        }
         .sheet(isPresented: $showConversionSheet) {
             if let prospect = prospectToConvert {
                 SignUpPopupView(prospect: prospect, isPresented: $showConversionSheet)
@@ -371,9 +376,19 @@ struct MapSearchView: View {
     }
     
     private func handleKnockAndPromptObjection(status: String) {
-        if let addr = pendingAddress {
-            let prospect = saveKnock(address: addr, status: status)
-            prospectToNote = prospect
+        guard let addr = pendingAddress else { return }
+
+        let prospect = saveKnock(address: addr, status: status)
+        prospectToNote = prospect
+
+        if objections.isEmpty {
+            // Redirect user to create a new objection before proceeding
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                selectedObjection = nil
+                showNoteInput = false
+                showingAddObjection = true  // <-- triggers AddObjectionView sheet
+            }
+        } else {
             objectionOptions = objections
             showObjectionPicker = true
         }
