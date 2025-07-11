@@ -245,66 +245,18 @@ struct MapSearchView: View {
             }
         }
         .sheet(isPresented: $showNoteInput) {
-            NavigationView {
-                Form {
-                    Section(header: Text("Note Details")) {
-                        TextEditor(text: $newNoteText)
-                            .frame(minHeight: 100)
-                            .padding(.vertical, 4)
+            if let prospect = prospectToNote {
+                LogNoteView(
+                    prospect: prospect,
+                    objection: selectedObjection,
+                    pendingAddress: pendingAddress,
+                    onComplete: {
+                        followUpAddress = prospect.address
+                        followUpProspectName = prospect.fullName
+                        selectedObjection = nil
+                        showFollowUpPrompt = true
                     }
-                    Section {
-                        Button("Save Note") {
-                            if let prospect = prospectToNote {
-                                let noteContent: String
-
-                                if let objection = selectedObjection {
-                                    noteContent = """
-                                    Not Enough Interest: \(objection.text)
-
-                                    \(newNoteText)
-                                    """
-                                } else if let addr = pendingAddress,
-                                          prospect.knockHistory.last?.status == "Not Answered" {
-                                    noteContent = """
-                                    No Answer
-
-                                    \(newNoteText)
-                                    """
-                                } else {
-                                    noteContent = newNoteText
-                                }
-
-                                let note = Note(content: noteContent)
-                                prospect.notes.append(note)
-                                try? modelContext.save()
-
-                                // Prepare for follow-up
-                                followUpAddress = prospect.address
-                                followUpProspectName = prospect.fullName
-                            }
-
-                            // Reset state
-                            newNoteText = ""
-                            selectedObjection = nil
-                            showNoteInput = false
-
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                showFollowUpPrompt = true
-                            }
-                        }
-                        .disabled(newNoteText.trimmingCharacters(in: .whitespaces).isEmpty)
-                        .disabled(newNoteText.trimmingCharacters(in: .whitespaces).isEmpty)
-                    }
-                }
-                .navigationTitle("New Note")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            newNoteText = ""
-                            showNoteInput = false
-                        }
-                    }
-                }
+                )
             }
         }
         .onChange(of: showFollowUpSheet) { isShowing in
