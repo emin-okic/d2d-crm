@@ -19,6 +19,10 @@ struct FollowUpAssistantView: View {
     
     @Query private var appointments: [Appointment]
     
+    @State private var showTripsSheet = false
+    
+    @State private var showTodaysAppointmentsSheet = false
+    
     private var appointmentsToday: Int {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
@@ -69,9 +73,19 @@ struct FollowUpAssistantView: View {
                     VStack(spacing: 12) {
                         // Appointments Scorecards
                         HStack(spacing: 12) {
-                            LeaderboardCardView(title: "Appointments Today", count: appointmentsToday)
-                            LeaderboardCardView(title: "Appointments This Week", count: appointmentsThisWeek)
-                            LeaderboardCardView(title: "Trips Made This Week", count: totalTrips)
+                            Button {
+                                showTodaysAppointmentsSheet = true
+                            } label: {
+                                LeaderboardCardView(title: "Appointments Today", count: appointmentsToday)
+                            }
+                            .buttonStyle(.plain)
+
+                            Button {
+                                showTripsSheet = true
+                            } label: {
+                                LeaderboardCardView(title: "Trips Made This Week", count: totalTrips)
+                            }
+                            .buttonStyle(.plain) // So it looks like a card, not a button
                         }
                     }
                     .padding(.horizontal, 20)
@@ -81,14 +95,9 @@ struct FollowUpAssistantView: View {
                     NavigationView {
                         AppointmentsSectionView()
                     }
-                    
-                    NavigationView {
-                        TripsSectionView()
-                    }
 
-                    Spacer()
                 }
-                .padding(.bottom, 40)
+                .padding(.bottom, 20)
             }
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
@@ -109,6 +118,34 @@ struct FollowUpAssistantView: View {
             }
             .fullScreenCover(isPresented: $showActivityOnboarding) {
                 OnboardingFlowView(isPresented: $showActivityOnboarding)
+            }
+            .sheet(isPresented: $showTripsSheet) {
+                NavigationView {
+                    TripsSectionView()
+                        .navigationTitle("Trips")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("Done") {
+                                    showTripsSheet = false
+                                }
+                            }
+                        }
+                }
+            }
+            .sheet(isPresented: $showTodaysAppointmentsSheet) {
+                NavigationStack {
+                    TodaysAppointmentsView()
+                        .navigationTitle("Today's Appointments")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("Done") {
+                                    showTodaysAppointmentsSheet = false
+                                }
+                            }
+                        }
+                }
             }
         }
     }
