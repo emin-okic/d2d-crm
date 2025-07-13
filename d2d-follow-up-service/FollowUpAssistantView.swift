@@ -72,7 +72,7 @@ struct FollowUpAssistantView: View {
                         // Appointments Scorecards
                         HStack(spacing: 12) {
                             LeaderboardCardView(title: "Appointments Today", count: appointmentsToday)
-                            LeaderboardCardView(title: "Appointments This Week", count: appointmentsThisWeek)
+
                             Button {
                                 showTripsSheet = true
                             } label: {
