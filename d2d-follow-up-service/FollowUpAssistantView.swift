@@ -96,9 +96,8 @@ struct FollowUpAssistantView: View {
                         AppointmentsSectionView()
                     }
 
-                    Spacer()
                 }
-                .padding(.bottom, 40)
+                .padding(.bottom, 20)
             }
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
