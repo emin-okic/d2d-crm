@@ -45,10 +45,19 @@ struct EditProspectView: View {
             
             // Appointments Section
             Section(header: Text("Appointments")) {
-                ForEach(prospect.appointments.sorted { $0.date < $1.date }) { appt in
-                    Text(appt.title + " at " + appt.date.formatted())
+                let upcomingAppointments = prospect.appointments
+                    .filter { $0.date >= Date() }
+                    .sorted { $0.date < $1.date }
+                    .prefix(3) // Show at most 3
+
+                if upcomingAppointments.isEmpty {
+                    Text("No upcoming follow-ups.")
+                        .foregroundColor(.gray)
+                } else {
+                    ForEach(upcomingAppointments) { appt in
+                        Text(appt.title + " at " + appt.date.formatted(date: .abbreviated, time: .shortened))
+                    }
                 }
-                
             }
 
             // MARK: - Knock History Section (Expandable)
