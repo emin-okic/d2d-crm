@@ -258,8 +258,7 @@ struct MapSearchView: View {
                         obj.timesHeard += 1
                         try? modelContext.save()
                         showObjectionPicker = false
-                        showNoteInput = false
-                        showFollowUpPrompt = true
+                        showNoteInput = true
                     }) {
                         VStack(alignment: .leading) {
                             Text(obj.text)
@@ -293,7 +292,6 @@ struct MapSearchView: View {
         }
         .alert("Schedule Follow-Up?", isPresented: $showFollowUpPrompt) {
             Button("Yes") {
-                shouldAskForTripAfterFollowUp = true
                 showFollowUpSheet = true
             }
             Button("No", role: .cancel) {
@@ -303,8 +301,8 @@ struct MapSearchView: View {
             Text("Would you like to schedule a follow-up for \(followUpProspectName)?")
         }
         .sheet(isPresented: $showFollowUpSheet, onDismiss: {
-            if let prospect = prospectToNote {
-                showNoteInput = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                showTripPrompt = true
             }
         }) {
             FollowUpScheduleView(address: followUpAddress, prospectName: followUpProspectName)
@@ -331,29 +329,6 @@ struct MapSearchView: View {
                         showFollowUpPrompt = true
                     }
                 )
-            }
-        }
-        .onChange(of: showFollowUpSheet) { isShowing in
-            if !isShowing && showFollowUpPrompt {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    showTripPrompt = true
-                }
-            }
-        }
-        .onChange(of: showFollowUpSheet) { isShowing in
-            if !isShowing && shouldAskForTripAfterFollowUp {
-                shouldAskForTripAfterFollowUp = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    showTripPrompt = true
-                }
-            }
-        }
-        
-        .onChange(of: showTripPrompt) { isShowing in
-            if !isShowing && !hasSeenKnockTutorial {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    showKnockTutorial = true
-                }
             }
         }
     }
