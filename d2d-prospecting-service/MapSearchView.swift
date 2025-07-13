@@ -47,6 +47,9 @@ struct MapSearchView: View {
     
     @State private var showingAddObjection = false
     
+    @AppStorage("hasSeenKnockTutorial") private var hasSeenKnockTutorial: Bool = false
+    @State private var showKnockTutorial = false
+    
     private var hasSignedUp: Bool {
         prospects
             .flatMap { $0.knockHistory }
@@ -77,87 +80,123 @@ struct MapSearchView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            VStack(spacing: 12) {
-                
-                Map(coordinateRegion: $controller.region, annotationItems: controller.markers) { place in
-                    MapAnnotation(coordinate: place.location) {
-                        if place.list == "Customers" {
-                            Image(systemName: "star.circle.fill")
-                                .resizable()
-                                .frame(width: 24, height: 24)
-                                .foregroundColor(.blue)
-                                .onTapGesture {
-                                    pendingAddress = place.address
-                                    showOutcomePrompt = true
-                                }
-                        } else {
-                            Circle()
-                                .fill(place.markerColor)
-                                .frame(width: 20, height: 20)
-                                .overlay(Circle().stroke(Color.black, lineWidth: 1))
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    pendingAddress = place.address
-                                    showOutcomePrompt = true
-                                }
-                        }
-                    }
-                }
-                .gesture(
-                    TapGesture()
-                        .onEnded {
-                            let center = controller.region.center
-                            tapManager.handleTap(at: center)
-
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                                let tapped = tapManager.tappedAddress
-                                if prospectExists(at: tapped) {
-                                    pendingAddress = tapped
-                                    showOutcomePrompt = true
-                                }
+        ZStack {
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 12) {
+                    
+                    Map(coordinateRegion: $controller.region, annotationItems: controller.markers) { place in
+                        MapAnnotation(coordinate: place.location) {
+                            if place.list == "Customers" {
+                                Image(systemName: "star.circle.fill")
+                                    .resizable()
+                                    .frame(width: 24, height: 24)
+                                    .foregroundColor(.blue)
+                                    .onTapGesture {
+                                        pendingAddress = place.address
+                                        showOutcomePrompt = true
+                                    }
+                            } else {
+                                Circle()
+                                    .fill(place.markerColor)
+                                    .frame(width: 20, height: 20)
+                                    .overlay(Circle().stroke(Color.black, lineWidth: 1))
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        pendingAddress = place.address
+                                        showOutcomePrompt = true
+                                    }
                             }
                         }
-                )
-                .frame(maxHeight: .infinity)
-                .edgesIgnoringSafeArea(.horizontal)
-
-                Spacer()
-            }
-            
-            HStack(spacing: 12) {
-                RejectionTrackerView(count: totalKnocks)
-                
-                if hasSignedUp {
-                    KnocksPerSaleView(count: averageKnocksPerCustomer, hasFirstSignup: true)
+                    }
+                    .gesture(
+                        TapGesture()
+                            .onEnded {
+                                let center = controller.region.center
+                                tapManager.handleTap(at: center)
+                                
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                                    let tapped = tapManager.tappedAddress
+                                    if prospectExists(at: tapped) {
+                                        pendingAddress = tapped
+                                        showOutcomePrompt = true
+                                    }
+                                }
+                            }
+                    )
+                    .frame(maxHeight: .infinity)
+                    .edgesIgnoringSafeArea(.horizontal)
+                    
+                    Spacer()
                 }
-            }
-            .cornerRadius(16)
-            .shadow(radius: 4)
-            .padding(.top, 10)
-            .frame(maxWidth: .infinity, alignment: .center)
-            .zIndex(1) // Make sure it stays on top
-            
-            VStack {
-                Spacer()
                 
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
-                    TextField("Enter a knock here…", text: $searchText, onCommit: {
-                        let trimmed = searchText.trimmingCharacters(in: .whitespaces)
-                        guard !trimmed.isEmpty else { return }
-                        handleSearch(query: trimmed)
-                    })
-                    .foregroundColor(.primary)
-                    .autocapitalization(.words)
+                HStack(spacing: 12) {
+                    RejectionTrackerView(count: totalKnocks)
+                    
+                    if hasSignedUp {
+                        KnocksPerSaleView(count: averageKnocksPerCustomer, hasFirstSignup: true)
+                    }
                 }
-                .padding(12)
-                .background(.ultraThinMaterial)
-                .cornerRadius(12)
-                .shadow(radius: 3, x: 0, y: 2)
-                .padding(.horizontal)
-                .padding(.bottom, 56) // Adjust this to float higher or lower
+                .cornerRadius(16)
+                .shadow(radius: 4)
+                .padding(.top, 10)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .zIndex(1) // Make sure it stays on top
+                
+                VStack {
+                    Spacer()
+                    
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.gray)
+                        TextField("Enter a knock here…", text: $searchText, onCommit: {
+                            let trimmed = searchText.trimmingCharacters(in: .whitespaces)
+                            guard !trimmed.isEmpty else { return }
+                            handleSearch(query: trimmed)
+                        })
+                        .foregroundColor(.primary)
+                        .autocapitalization(.words)
+                    }
+                    .padding(12)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(12)
+                    .shadow(radius: 3, x: 0, y: 2)
+                    .padding(.horizontal)
+                    .padding(.bottom, 56) // Adjust this to float higher or lower
+                }
+                
+            }
+            if showKnockTutorial {
+                Color.black.opacity(0.6)
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 16) {
+                    Spacer()
+                    RejectionTrackerView(count: totalKnocks)
+                        .scaleEffect(1.1)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color.yellow, lineWidth: 3)
+                        )
+                    Text("This is your knock counter. Every door matters.\nWatch it grow with every interaction.")
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(12)
+                        .padding(.horizontal)
+                    Button("Got it!") {
+                        withAnimation {
+                            showKnockTutorial = false
+                            hasSeenKnockTutorial = true
+                        }
+                    }
+                    .padding()
+                    .background(Color.white)
+                    .foregroundColor(.blue)
+                    .cornerRadius(10)
+                    .padding(.bottom, 40)
+                }
+                .transition(.scale)
             }
             
         }
@@ -304,6 +343,14 @@ struct MapSearchView: View {
                 }
             }
         }
+        
+        .onChange(of: showTripPrompt) { isShowing in
+            if !isShowing && !hasSeenKnockTutorial {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    showKnockTutorial = true
+                }
+            }
+        }
     }
     
     private var totalRejectionsSinceLastSignup: Int {
@@ -368,6 +415,7 @@ struct MapSearchView: View {
 
         controller.performSearch(query: address)
         try? modelContext.save()
+        
         return updated
     }
 
