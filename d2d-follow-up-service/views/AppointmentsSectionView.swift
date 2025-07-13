@@ -57,13 +57,6 @@ struct AppointmentsSectionView: View {
                                 Text(appointment.title)
                                     .font(.subheadline)
                                     .fontWeight(.medium)
-                                if !appointment.notes.isEmpty {
-                                    ForEach(appointment.notes, id: \.self) { note in
-                                        Text(note)
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
                             }
                         }
                         .padding(.vertical, 4)
