@@ -34,6 +34,8 @@ class Prospect {
     /// Optional contact info.
     var contactEmail: String = ""
     var contactPhone: String = ""
+    
+    var appointments: [Appointment] = []
 
     /// Initializes a new prospect.
     /// - Parameters:

@@ -34,10 +34,10 @@ struct LogNoteView: View {
                         var fullNote = ""
 
                         if let obj = objection {
-                            fullNote = "Not Enough Interest: \(obj.text)\n\n\(noteText)"
+                            fullNote = "Follow Up Later: \(obj.text)\n\n\(noteText)"
                             obj.timesHeard += 1
                         } else if let addr = pendingAddress,
-                                  prospect.knockHistory.last?.status == "Not Answered" {
+                                  prospect.knockHistory.last?.status == "Wasn't Home" {
                             fullNote = "No Answer\n\n\(noteText)"
                         } else {
                             fullNote = noteText

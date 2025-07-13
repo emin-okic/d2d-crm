@@ -53,7 +53,7 @@ struct MapSearchView: View {
     private var hasSignedUp: Bool {
         prospects
             .flatMap { $0.knockHistory }
-            .contains { $0.status == "Signed Up" }
+            .contains { $0.status == "Converted To Sale" }
     }
     
     private var totalKnocks: Int {
@@ -238,13 +238,13 @@ struct MapSearchView: View {
         })
         .alert("Knock Outcome", isPresented: $showOutcomePrompt, actions: {
             
-            Button("Signed Up") {
-                handleKnockAndConvertToCustomer(status: "Signed Up")
+            Button("Converted To Sale") {
+                handleKnockAndConvertToCustomer(status: "Converted To Sale")
             }
-            
-            Button("Not Answered") { handleKnockAndPromptNote(status: "Not Answered") }
-            
-            Button("Not Enough Interest") { handleKnockAndPromptObjection(status: "Not Enough Interest") }
+
+            Button("Wasn't Home") { handleKnockAndPromptNote(status: "Wasn't Home") }
+
+            Button("Follow Up Later") { handleKnockAndPromptObjection(status: "Follow Up Later") }
             
             Button("Cancel", role: .cancel) {}
         }, message: {
@@ -292,7 +292,6 @@ struct MapSearchView: View {
         }
         .alert("Schedule Follow-Up?", isPresented: $showFollowUpPrompt) {
             Button("Yes") {
-                shouldAskForTripAfterFollowUp = true
                 showFollowUpSheet = true
             }
             Button("No", role: .cancel) {
@@ -301,8 +300,14 @@ struct MapSearchView: View {
         } message: {
             Text("Would you like to schedule a follow-up for \(followUpProspectName)?")
         }
-        .sheet(isPresented: $showFollowUpSheet) {
-            FollowUpScheduleView(address: followUpAddress, prospectName: followUpProspectName)
+        .sheet(isPresented: $showFollowUpSheet, onDismiss: {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                showTripPrompt = true
+            }
+        }) {
+            if let prospect = prospectToNote {
+                FollowUpScheduleView(prospect: prospect)
+            }
         }
         .alert("Do you want to log a trip?", isPresented: $showTripPrompt) {
             Button("Yes") { showTripPopup = true }
@@ -328,29 +333,6 @@ struct MapSearchView: View {
                 )
             }
         }
-        .onChange(of: showFollowUpSheet) { isShowing in
-            if !isShowing && showFollowUpPrompt {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    showTripPrompt = true
-                }
-            }
-        }
-        .onChange(of: showFollowUpSheet) { isShowing in
-            if !isShowing && shouldAskForTripAfterFollowUp {
-                shouldAskForTripAfterFollowUp = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    showTripPrompt = true
-                }
-            }
-        }
-        
-        .onChange(of: showTripPrompt) { isShowing in
-            if !isShowing && !hasSeenKnockTutorial {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    showKnockTutorial = true
-                }
-            }
-        }
     }
     
     private var totalRejectionsSinceLastSignup: Int {
@@ -359,8 +341,8 @@ struct MapSearchView: View {
 
         var count = 0
         for knock in allKnocks {
-            if knock.status == "Signed Up" { break }
-            if knock.status == "Not Answered" || knock.status == "Not Enough Interest" {
+            if knock.status == "Converted To Sale" { break }
+            if knock.status == "Wasn't Home" || knock.status == "Follow Up Later" {
                 count += 1
             }
         }
@@ -441,6 +423,8 @@ struct MapSearchView: View {
 
         let prospect = saveKnock(address: addr, status: status)
         prospectToNote = prospect
+        followUpAddress = prospect.address
+        followUpProspectName = prospect.fullName
 
         if objections.isEmpty {
             // Redirect user to create a new objection before proceeding
@@ -452,6 +436,7 @@ struct MapSearchView: View {
         } else {
             objectionOptions = objections
             showObjectionPicker = true
+            shouldAskForTripAfterFollowUp = true // carry trip flag if needed
         }
     }
     

@@ -10,8 +10,7 @@ import SwiftUI
 import SwiftData
 
 struct FollowUpScheduleView: View {
-    let address: String
-    let prospectName: String
+    let prospect: Prospect
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var context
 
@@ -22,8 +21,8 @@ struct FollowUpScheduleView: View {
         NavigationView {
             Form {
                 Section(header: Text("Schedule Follow-Up")) {
-                    Text("Prospect: \(prospectName)")
-                    Text("Address: \(address)")
+                    Text("Prospect: \(prospect.fullName)")
+                    Text("Address: \(prospect.address)")
                     DatePicker("Follow-Up Date", selection: $followUpDate, displayedComponents: [.date, .hourAndMinute])
                     TextField("Note", text: $note)
                 }
@@ -31,16 +30,17 @@ struct FollowUpScheduleView: View {
                 Button("Save Follow-Up") {
                     let appt = Appointment(
                         title: "Follow-Up",
-                        location: address,
-                        clientName: prospectName,
+                        location: prospect.address,
+                        clientName: prospect.fullName,
                         date: followUpDate,
                         type: "Follow-Up",
-                        notes: note
+                        notes: prospect.notes.map { $0.content },
+                        prospect: prospect
                     )
                     context.insert(appt)
                     dismiss()
                 }
-                .disabled(prospectName.isEmpty || address.isEmpty)
+                .disabled(prospect.fullName.isEmpty || prospect.address.isEmpty)
             }
             .navigationTitle("Follow-Up")
             .toolbar {

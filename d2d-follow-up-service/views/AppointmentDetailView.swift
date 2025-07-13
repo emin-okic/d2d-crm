@@ -17,7 +17,7 @@ struct AppointmentDetailView: View {
             Text("\(appointment.clientName)")
             Text("\(appointment.type)")
             Text("\(appointment.date.formatted(date: .complete, time: .shortened))")
-            Text("Notes: \(appointment.notes ?? "None")")
+            Text("Notes: \(appointment.notes.isEmpty ? "None" : appointment.notes.joined(separator: "; "))")
         }
         .navigationTitle("Details")
     }
