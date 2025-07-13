@@ -305,7 +305,9 @@ struct MapSearchView: View {
                 showTripPrompt = true
             }
         }) {
-            FollowUpScheduleView(address: followUpAddress, prospectName: followUpProspectName)
+            if let prospect = prospectToNote {
+                FollowUpScheduleView(prospect: prospect)
+            }
         }
         .alert("Do you want to log a trip?", isPresented: $showTripPrompt) {
             Button("Yes") { showTripPopup = true }

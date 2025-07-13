@@ -13,6 +13,8 @@ struct ScheduleAppointmentView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var context
 
+    let prospect: Prospect
+
     @State private var title = ""
     @State private var location = ""
     @State private var clientName = ""
@@ -30,7 +32,15 @@ struct ScheduleAppointmentView: View {
             TextField("Notes", text: $notes)
 
             Button("Save Appointment") {
-                let appointment = Appointment(title: title, location: location, clientName: clientName, date: date, type: type, notes: notes)
+                let appointment = Appointment(
+                    title: title,
+                    location: location,
+                    clientName: clientName,
+                    date: date,
+                    type: type,
+                    notes: notes,
+                    prospect: prospect // ✅ pass the required prospect here
+                )
                 context.insert(appointment)
                 dismiss()
             }

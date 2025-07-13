@@ -16,8 +16,12 @@ class Note {
     var date: Date
     var content: String
 
-    init(content: String, date: Date = Date()) {
+    @Relationship(inverse: \Prospect.notes)
+    var prospect: Prospect?
+
+    init(content: String, date: Date = Date(), prospect: Prospect? = nil) {
         self.date = date
         self.content = content
+        self.prospect = prospect
     }
 }

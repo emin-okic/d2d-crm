@@ -11,7 +11,10 @@ import SwiftData
 
 struct AppointmentsSectionView: View {
     @Query private var appointments: [Appointment]
-    @State private var showingAddAppointment = false
+    @Query private var prospects: [Prospect]
+
+    @State private var showingProspectPicker = false
+    @State private var selectedProspect: Prospect?
     @State private var selectedAppointment: Appointment?
 
     private var upcomingAppointments: [Appointment] {
@@ -27,7 +30,7 @@ struct AppointmentsSectionView: View {
                     .font(.headline)
                 Spacer()
                 Button {
-                    showingAddAppointment = true
+                    showingProspectPicker = true
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .font(.title3)
@@ -68,8 +71,26 @@ struct AppointmentsSectionView: View {
                 .padding(.horizontal, 20)
             }
         }
-        .sheet(isPresented: $showingAddAppointment) {
-            ScheduleAppointmentView()
+        .sheet(isPresented: $showingProspectPicker) {
+            NavigationStack {
+                List(prospects) { prospect in
+                    Button {
+                        selectedProspect = prospect
+                        showingProspectPicker = false
+                    } label: {
+                        VStack(alignment: .leading) {
+                            Text(prospect.fullName)
+                            Text(prospect.address)
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
+                .navigationTitle("Choose Prospect")
+            }
+        }
+        .sheet(item: $selectedProspect) { prospect in
+            ScheduleAppointmentView(prospect: prospect)
         }
         .sheet(item: $selectedAppointment) { appt in
             CancelAppointmentView(appointment: appt)

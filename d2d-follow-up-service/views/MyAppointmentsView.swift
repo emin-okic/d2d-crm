@@ -11,6 +11,8 @@ import SwiftData
 
 struct MyAppointmentsView: View {
     @Query(sort: \Appointment.date) var appointments: [Appointment]
+    @State private var showProspectPicker = false
+    @State private var selectedProspect: Prospect?
 
     var body: some View {
         NavigationStack {
@@ -28,9 +30,21 @@ struct MyAppointmentsView: View {
             }
             .navigationTitle("Appointments")
             .toolbar {
-                NavigationLink(destination: ScheduleAppointmentView()) {
+                Button {
+                    showProspectPicker = true
+                } label: {
                     Label("New", systemImage: "plus")
                 }
+            }
+            .sheet(isPresented: $showProspectPicker) {
+                NavigationStack {
+                    ProspectPickerView { prospect in
+                        selectedProspect = prospect
+                    }
+                }
+            }
+            .sheet(item: $selectedProspect) { prospect in
+                ScheduleAppointmentView(prospect: prospect)
             }
         }
     }

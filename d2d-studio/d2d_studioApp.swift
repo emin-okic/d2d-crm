@@ -56,7 +56,8 @@ let sharedModelContainer: ModelContainer = {
         Knock.self,
         Trip.self,
         Objection.self,
-        Appointment.self
+        Appointment.self,
+        Note.self
     ])
 
     let config = ModelConfiguration(schema: schema, url: url)

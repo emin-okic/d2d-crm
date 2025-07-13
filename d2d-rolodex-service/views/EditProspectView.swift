@@ -42,6 +42,14 @@ struct EditProspectView: View {
                 TextField("Phone", text: $prospect.contactPhone)
                 TextField("Email", text: $prospect.contactEmail)
             }
+            
+            // Appointments Section
+            Section(header: Text("Appointments")) {
+                ForEach(prospect.appointments.sorted { $0.date < $1.date }) { appt in
+                    Text(appt.title + " at " + appt.date.formatted())
+                }
+                
+            }
 
             // MARK: - Knock History Section (Expandable)
             Section {

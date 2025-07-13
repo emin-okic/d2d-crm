@@ -18,7 +18,18 @@ class Appointment: Identifiable {
     var notes: String?
     var createdAt: Date
 
-    init(title: String, location: String, clientName: String, date: Date, type: String, notes: String? = nil) {
+    @Relationship(inverse: \Prospect.appointments)
+    var prospect: Prospect?
+
+    init(
+        title: String,
+        location: String,
+        clientName: String,
+        date: Date,
+        type: String,
+        notes: String? = nil,
+        prospect: Prospect
+    ) {
         self.id = UUID()
         self.title = title
         self.location = location
@@ -27,5 +38,6 @@ class Appointment: Identifiable {
         self.type = type
         self.notes = notes
         self.createdAt = .now
+        self.prospect = prospect
     }
 }

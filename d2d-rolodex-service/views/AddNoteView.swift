@@ -41,8 +41,8 @@ struct AddNoteView: View {
             HStack {
                 Spacer()
                 Button {
-                    let note = Note(content: newNoteText)
-                    prospect.notes.append(note)
+                    let note = Note(content: newNoteText, prospect: prospect)
+                    prospect.notes.append(note) // This is optional now; SwiftData infers it from the inverse
                     newNoteText = ""
                     isFocused = false
                     try? context.save()
