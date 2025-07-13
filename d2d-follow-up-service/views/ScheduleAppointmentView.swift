@@ -38,8 +38,8 @@ struct ScheduleAppointmentView: View {
                     clientName: clientName,
                     date: date,
                     type: type,
-                    notes: notes,
-                    prospect: prospect // ✅ pass the required prospect here
+                    notes: prospect.notes.map { $0.content },
+                    prospect: prospect
                 )
                 context.insert(appointment)
                 dismiss()

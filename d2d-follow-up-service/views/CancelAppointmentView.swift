@@ -17,11 +17,27 @@ struct CancelAppointmentView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("Cancel this appointment?")
+            Text("Your Appointment Details")
                 .font(.title2)
 
             Text(appointment.title)
             Text(appointment.date.formatted(date: .abbreviated, time: .shortened))
+
+            if !appointment.notes.isEmpty {
+                Divider()
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Notes at Time of Scheduling:")
+                        .font(.headline)
+
+                    ForEach(appointment.notes, id: \.self) { note in
+                        Text("• \(note)")
+                            .font(.body)
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                .padding()
+            }
 
             Button(role: .destructive) {
                 context.delete(appointment)

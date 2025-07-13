@@ -57,10 +57,12 @@ struct AppointmentsSectionView: View {
                                 Text(appointment.title)
                                     .font(.subheadline)
                                     .fontWeight(.medium)
-                                if let note = appointment.notes {
-                                    Text(note)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
+                                if !appointment.notes.isEmpty {
+                                    ForEach(appointment.notes, id: \.self) { note in
+                                        Text(note)
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
                                 }
                             }
                         }

@@ -15,7 +15,7 @@ class Appointment: Identifiable {
     var clientName: String
     var date: Date
     var type: String
-    var notes: String?
+    var notes: [String] = []
     var createdAt: Date
 
     @Relationship(inverse: \Prospect.appointments)
@@ -27,7 +27,7 @@ class Appointment: Identifiable {
         clientName: String,
         date: Date,
         type: String,
-        notes: String? = nil,
+        notes: [String] = [],
         prospect: Prospect
     ) {
         self.id = UUID()

@@ -34,7 +34,7 @@ struct FollowUpScheduleView: View {
                         clientName: prospect.fullName,
                         date: followUpDate,
                         type: "Follow-Up",
-                        notes: note,
+                        notes: prospect.notes.map { $0.content },
                         prospect: prospect
                     )
                     context.insert(appt)
