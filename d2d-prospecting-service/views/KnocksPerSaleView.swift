@@ -8,11 +8,10 @@ import SwiftUI
 
 struct KnocksPerSaleView: View {
     let count: Int
+    let hasFirstSignup: Bool
 
     var body: some View {
-        Button(action: {
-            // Optional: handle tap
-        }) {
+        Button(action: {}) {
             HStack(spacing: 12) {
                 Image(systemName: "hand.tap")
                     .foregroundColor(.blue)
@@ -20,7 +19,7 @@ struct KnocksPerSaleView: View {
                     Text("Knocks Per Sale")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    Text("\(count)")
+                    Text(hasFirstSignup ? "\(count)" : "–")
                         .font(.title2)
                         .bold()
                         .foregroundColor(.primary)
