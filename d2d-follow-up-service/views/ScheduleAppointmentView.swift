@@ -15,21 +15,35 @@ struct ScheduleAppointmentView: View {
 
     let prospect: Prospect
 
-    @State private var title = ""
+    @State private var title = "Follow-Up"
     @State private var location = ""
     @State private var clientName = ""
     @State private var date = Date()
-    @State private var type = ""
+    @State private var type = "Follow-Up"
     @State private var notes = ""
 
     var body: some View {
         Form {
-            TextField("Title", text: $title)
-            TextField("Location", text: $location)
-            TextField("Client Name", text: $clientName)
+            Section(header: Text("Prospect Info")) {
+                HStack {
+                    Text("Client Name")
+                    Spacer()
+                    Text(clientName)
+                        .foregroundColor(.secondary)
+                }
+
+                HStack {
+                    Text("Location")
+                    Spacer()
+                    Text(location)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.trailing)
+                }
+            }
+
             DatePicker("Date", selection: $date, displayedComponents: [.date, .hourAndMinute])
-            TextField("Type", text: $type)
-            TextField("Notes", text: $notes)
+
+            TextField("Additional Notes", text: $notes)
 
             Button("Save Appointment") {
                 let appointment = Appointment(
@@ -45,6 +59,10 @@ struct ScheduleAppointmentView: View {
                 dismiss()
             }
             .disabled(title.isEmpty || clientName.isEmpty)
+        }
+        .onAppear {
+            clientName = prospect.fullName
+            location = prospect.address
         }
         .navigationTitle("New Appointment")
     }
