@@ -46,6 +46,16 @@ struct MapSearchView: View {
     @StateObject private var tapManager = MapTapAddressManager()
     
     @State private var showingAddObjection = false
+    
+    private var hasSignedUp: Bool {
+        prospects
+            .flatMap { $0.knockHistory }
+            .contains { $0.status == "Signed Up" }
+    }
+    
+    private var totalKnocks: Int {
+        prospects.flatMap { $0.knockHistory }.count
+    }
 
     @Environment(\.modelContext) private var modelContext
     
@@ -116,8 +126,11 @@ struct MapSearchView: View {
             }
             
             HStack(spacing: 12) {
-                RejectionTrackerView(count: totalRejectionsSinceLastSignup)
-                KnocksPerSaleView(count: averageKnocksPerCustomer)
+                RejectionTrackerView(count: totalKnocks)
+                
+                if hasSignedUp {
+                    KnocksPerSaleView(count: averageKnocksPerCustomer, hasFirstSignup: true)
+                }
             }
             .cornerRadius(16)
             .shadow(radius: 4)

@@ -10,14 +10,12 @@ struct RejectionTrackerView: View {
     let count: Int
 
     var body: some View {
-        Button(action: {
-            // Optional: show a popup, detail view, etc.
-        }) {
+        Button(action: {}) {
             HStack(spacing: 12) {
-                Image(systemName: "xmark.circle")
-                    .foregroundColor(.red)
+                Image(systemName: "person.fill.viewfinder")
+                    .foregroundColor(.blue)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Total Rejections")
+                    Text("Total Knocks")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Text("\(count)")
@@ -33,6 +31,5 @@ struct RejectionTrackerView: View {
             .shadow(radius: 4)
         }
         .buttonStyle(.plain)
-        // The frame is only applied to the button content; no padding outside
     }
 }
