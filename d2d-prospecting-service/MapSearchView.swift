@@ -53,7 +53,7 @@ struct MapSearchView: View {
     private var hasSignedUp: Bool {
         prospects
             .flatMap { $0.knockHistory }
-            .contains { $0.status == "Signed Up" }
+            .contains { $0.status == "Converted To Sale" }
     }
     
     private var totalKnocks: Int {
@@ -238,13 +238,13 @@ struct MapSearchView: View {
         })
         .alert("Knock Outcome", isPresented: $showOutcomePrompt, actions: {
             
-            Button("Signed Up") {
-                handleKnockAndConvertToCustomer(status: "Signed Up")
+            Button("Converted To Sale") {
+                handleKnockAndConvertToCustomer(status: "Converted To Sale")
             }
-            
-            Button("Not Answered") { handleKnockAndPromptNote(status: "Not Answered") }
-            
-            Button("Not Enough Interest") { handleKnockAndPromptObjection(status: "Not Enough Interest") }
+
+            Button("Wasn't Home") { handleKnockAndPromptNote(status: "Wasn't Home") }
+
+            Button("Follow Up Later") { handleKnockAndPromptObjection(status: "Follow Up Later") }
             
             Button("Cancel", role: .cancel) {}
         }, message: {
@@ -258,7 +258,8 @@ struct MapSearchView: View {
                         obj.timesHeard += 1
                         try? modelContext.save()
                         showObjectionPicker = false
-                        showNoteInput = true
+                        showNoteInput = false
+                        showFollowUpPrompt = true
                     }) {
                         VStack(alignment: .leading) {
                             Text(obj.text)
@@ -301,7 +302,11 @@ struct MapSearchView: View {
         } message: {
             Text("Would you like to schedule a follow-up for \(followUpProspectName)?")
         }
-        .sheet(isPresented: $showFollowUpSheet) {
+        .sheet(isPresented: $showFollowUpSheet, onDismiss: {
+            if let prospect = prospectToNote {
+                showNoteInput = true
+            }
+        }) {
             FollowUpScheduleView(address: followUpAddress, prospectName: followUpProspectName)
         }
         .alert("Do you want to log a trip?", isPresented: $showTripPrompt) {
@@ -359,8 +364,8 @@ struct MapSearchView: View {
 
         var count = 0
         for knock in allKnocks {
-            if knock.status == "Signed Up" { break }
-            if knock.status == "Not Answered" || knock.status == "Not Enough Interest" {
+            if knock.status == "Converted To Sale" { break }
+            if knock.status == "Wasn't Home" || knock.status == "Follow Up Later" {
                 count += 1
             }
         }
@@ -441,6 +446,8 @@ struct MapSearchView: View {
 
         let prospect = saveKnock(address: addr, status: status)
         prospectToNote = prospect
+        followUpAddress = prospect.address
+        followUpProspectName = prospect.fullName
 
         if objections.isEmpty {
             // Redirect user to create a new objection before proceeding
@@ -452,6 +459,7 @@ struct MapSearchView: View {
         } else {
             objectionOptions = objections
             showObjectionPicker = true
+            shouldAskForTripAfterFollowUp = true // carry trip flag if needed
         }
     }
     
