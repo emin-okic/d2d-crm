@@ -21,6 +21,8 @@ struct FollowUpAssistantView: View {
     
     @State private var showTripsSheet = false
     
+    @State private var showTodaysAppointmentsSheet = false
+    
     private var appointmentsToday: Int {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
@@ -71,7 +73,12 @@ struct FollowUpAssistantView: View {
                     VStack(spacing: 12) {
                         // Appointments Scorecards
                         HStack(spacing: 12) {
-                            LeaderboardCardView(title: "Appointments Today", count: appointmentsToday)
+                            Button {
+                                showTodaysAppointmentsSheet = true
+                            } label: {
+                                LeaderboardCardView(title: "Appointments Today", count: appointmentsToday)
+                            }
+                            .buttonStyle(.plain)
 
                             Button {
                                 showTripsSheet = true
@@ -122,6 +129,20 @@ struct FollowUpAssistantView: View {
                             ToolbarItem(placement: .cancellationAction) {
                                 Button("Done") {
                                     showTripsSheet = false
+                                }
+                            }
+                        }
+                }
+            }
+            .sheet(isPresented: $showTodaysAppointmentsSheet) {
+                NavigationStack {
+                    TodaysAppointmentsView()
+                        .navigationTitle("Today's Appointments")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("Done") {
+                                    showTodaysAppointmentsSheet = false
                                 }
                             }
                         }
