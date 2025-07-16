@@ -184,24 +184,6 @@ struct RolodexView: View {
                 }
             }
         }
-        .overlay(alignment: .bottomTrailing) {
-            Button(action: {
-                showActivityOnboarding = true
-            }) {
-                Image(systemName: "chart.bar.xaxis")
-                    .font(.system(size: 22))
-                    .padding(14)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .clipShape(Circle())
-                    .shadow(radius: 4)
-            }
-            .padding(.trailing, 20)
-            .padding(.bottom, 30)
-        }
-        .fullScreenCover(isPresented: $showActivityOnboarding) {
-            ActivityOnboardingFlowView(isPresented: $showActivityOnboarding)
-        }
     }
 
     private func formatPhoneNumber(_ raw: String) -> String {
