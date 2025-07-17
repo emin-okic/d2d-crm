@@ -148,20 +148,32 @@ struct MapSearchView: View {
                     HStack {
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(.gray)
+
                         TextField("Enter a knock here…", text: $searchText, onCommit: {
-                            let trimmed = searchText.trimmingCharacters(in: .whitespaces)
-                            guard !trimmed.isEmpty else { return }
-                            handleSearch(query: trimmed)
+                            submitSearch()
                         })
                         .foregroundColor(.primary)
                         .autocapitalization(.words)
+                        .submitLabel(.done)
+
+                        if !searchText.trimmingCharacters(in: .whitespaces).isEmpty {
+                            Button("Done") {
+                                submitSearch()
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 6)
+                            .background(Color.blue.opacity(0.8))
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                            .transition(.opacity)
+                        }
                     }
                     .padding(12)
                     .background(.ultraThinMaterial)
                     .cornerRadius(12)
                     .shadow(radius: 3, x: 0, y: 2)
                     .padding(.horizontal)
-                    .padding(.bottom, 56) // Adjust this to float higher or lower
+                    .padding(.bottom, 56)
                 }
                 
             }
@@ -333,6 +345,13 @@ struct MapSearchView: View {
                 )
             }
         }
+    }
+    
+    private func submitSearch() {
+        let trimmed = searchText.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        handleSearch(query: trimmed)
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
     
     private var totalRejectionsSinceLastSignup: Int {
