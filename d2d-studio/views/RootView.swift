@@ -33,10 +33,13 @@ struct RootView: View {
     
     @State private var selectedTab = 0
     @State private var addressToCenter: String? = nil
+    
+    @State private var searchText: String = ""
 
     var body: some View {
         TabView(selection: $selectedTab) {
             MapSearchView(
+                searchText: $searchText,
                 region: $region,
                 selectedList: $selectedList,
                 addressToCenter: $addressToCenter
