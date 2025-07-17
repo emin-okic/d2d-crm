@@ -8,8 +8,11 @@ import SwiftUI
 import MapKit
 import CoreLocation
 import SwiftData
+import Combine
+import Contacts
 
 struct MapSearchView: View {
+    @Binding var searchText: String
     @Binding var region: MKCoordinateRegion
     @Binding var selectedList: String
     @Binding var addressToCenter: String?
@@ -18,7 +21,7 @@ struct MapSearchView: View {
     @Query private var customers: [Customer]
 
     @StateObject private var controller: MapController
-    @State private var searchText: String = ""
+    // @State private var searchText: String = ""
     @State private var pendingAddress: String?
     @State private var showOutcomePrompt = false
     @State private var showNoteInput = false
@@ -50,6 +53,10 @@ struct MapSearchView: View {
     @AppStorage("hasSeenKnockTutorial") private var hasSeenKnockTutorial: Bool = false
     @State private var showKnockTutorial = false
     
+    @StateObject private var searchVM = SearchCompleterViewModel()
+    
+    @FocusState private var isSearchFocused: Bool
+    
     private var hasSignedUp: Bool {
         prospects
             .flatMap { $0.knockHistory }
@@ -70,9 +77,11 @@ struct MapSearchView: View {
         return Int(Double(customerKnocks.reduce(0, +)) / Double(customerKnocks.count))
     }
 
-    init(region: Binding<MKCoordinateRegion>,
+    init(searchText: Binding<String>,  // <-- ADD THIS
+         region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
          addressToCenter: Binding<String?>) {
+        _searchText = searchText       // <-- ADD THIS
         _region = region
         _selectedList = selectedList
         _addressToCenter = addressToCenter
@@ -142,26 +151,46 @@ struct MapSearchView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
                 .zIndex(1) // Make sure it stays on top
                 
-                VStack {
+                VStack(spacing: 0) {
                     Spacer()
                     
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.gray)
-                        TextField("Enter a knock here…", text: $searchText, onCommit: {
-                            let trimmed = searchText.trimmingCharacters(in: .whitespaces)
-                            guard !trimmed.isEmpty else { return }
-                            handleSearch(query: trimmed)
-                        })
-                        .foregroundColor(.primary)
-                        .autocapitalization(.words)
+                    VStack(spacing: 8) {
+                        HStack {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundColor(.gray)
+
+                            TextField("Enter a knock here…", text: $searchText, onCommit: {
+                                submitSearch()
+                            })
+                            .focused($isSearchFocused)
+                            .foregroundColor(.primary)
+                            .autocapitalization(.words)
+                            .submitLabel(.done)
+
+                            if !searchText.trimmingCharacters(in: .whitespaces).isEmpty {
+                                Button("Done") {
+                                    submitSearch()
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 6)
+                                .background(Color.blue.opacity(0.8))
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                                .transition(.opacity)
+                            }
+                        }
+                        .padding(12)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(12)
+                        .shadow(radius: 3, x: 0, y: 2)
+                        .padding(.horizontal)
+                        
+                        if isSearchFocused && !searchVM.results.isEmpty {
+                            searchSuggestionsList
+                        }
                     }
-                    .padding(12)
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(12)
-                    .shadow(radius: 3, x: 0, y: 2)
-                    .padding(.horizontal)
-                    .padding(.bottom, 56) // Adjust this to float higher or lower
+                    .padding(.bottom, 56)
+                    .animation(.easeInOut(duration: 0.25), value: searchVM.results.count)
                 }
                 
             }
@@ -199,6 +228,9 @@ struct MapSearchView: View {
                 .transition(.scale)
             }
             
+        }
+        .onChange(of: searchText) { newText in
+            searchVM.updateQuery(newText)
         }
         .onAppear { updateMarkers() }
         .onChange(of: prospects) { _ in updateMarkers() }
@@ -333,6 +365,79 @@ struct MapSearchView: View {
                 )
             }
         }
+    }
+    
+    @ViewBuilder
+    private var searchSuggestionsList: some View {
+        if isSearchFocused && !searchVM.results.isEmpty {
+            VStack(spacing: 0) {
+                ForEach(searchVM.results.prefix(3), id: \.self) { result in
+                    Button {
+                        handleCompletionTap(result)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(result.title)
+                                .font(.body)
+                                .bold()
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+
+                            Text(result.subtitle)
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                        }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal)
+                        .frame(maxWidth: .infinity, alignment: .leading) // 👈 Full width
+                        .background(Color.white)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    Divider()
+                }
+            }
+            .background(Color.white)
+            .cornerRadius(12)
+            .padding(.horizontal)
+            .padding(.top, 4)
+            .shadow(radius: 4)
+            .frame(maxWidth: .infinity)
+            .frame(maxHeight: 180)
+            .transition(.opacity)
+            .zIndex(10)
+        }
+    }
+    
+    private func handleCompletionTap(_ result: MKLocalSearchCompletion) {
+        let request = MKLocalSearch.Request(completion: result)
+        let search = MKLocalSearch(request: request)
+        search.start { response, error in
+            guard let mapItem = response?.mapItems.first else { return }
+
+            let titleAddress = mapItem.placemark.title ?? "\(mapItem.placemark.name ?? ""), \(mapItem.placemark.locality ?? "")"
+
+            DispatchQueue.main.async {
+                searchText = titleAddress
+                pendingAddress = titleAddress
+                controller.region = MKCoordinateRegion(
+                    center: mapItem.placemark.coordinate,
+                    latitudinalMeters: 1609.34,
+                    longitudinalMeters: 1609.34
+                )
+                searchVM.results = []
+                isSearchFocused = false // dismiss keyboard and hide dropdown
+            }
+        }
+    }
+    
+    private func submitSearch() {
+        searchVM.results = []
+        let trimmed = searchText.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        handleSearch(query: trimmed)
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
     
     private var totalRejectionsSinceLastSignup: Int {
