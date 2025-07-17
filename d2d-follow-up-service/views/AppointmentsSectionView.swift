@@ -49,15 +49,19 @@ struct AppointmentsSectionView: View {
                         selectedAppointment = appointment
                     } label: {
                         VStack(alignment: .leading, spacing: 4) {
+                            
+                            Text("Follow Up With \(appointment.prospect?.fullName ?? "Unknown")")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+
+                            Text(appointment.prospect?.address ?? "No Address")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                            
                             Text(appointment.date.formatted(date: .abbreviated, time: .shortened))
                                 .font(.caption)
                                 .foregroundColor(.gray)
 
-                            VStack(alignment: .leading) {
-                                Text(appointment.title)
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                            }
                         }
                         .padding(.vertical, 4)
                     }
