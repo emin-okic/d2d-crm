@@ -43,8 +43,6 @@ struct ScheduleAppointmentView: View {
 
             DatePicker("Date", selection: $date, displayedComponents: [.date, .hourAndMinute])
 
-            TextField("Additional Notes", text: $notes)
-
             Button("Save Appointment") {
                 let appointment = Appointment(
                     title: title,
