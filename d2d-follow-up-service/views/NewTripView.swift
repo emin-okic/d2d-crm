@@ -6,6 +6,7 @@
 //
 import SwiftUI
 import SwiftData
+import MapKit
 
 struct NewTripView: View {
     @Environment(\.modelContext) private var context
@@ -16,12 +17,54 @@ struct NewTripView: View {
     @State private var startAddress = ""
     @State private var endAddress = ""
     @State private var miles = ""
+    
+    @StateObject private var searchVM = SearchCompleterViewModel()
+    @FocusState private var focusedField: Field?
 
     var body: some View {
         NavigationView {
             Form {
-                TextField("Start Address", text: $startAddress)
-                TextField("End Address", text: $endAddress)
+                Section(header: Text("Trip Details")) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        TextField("Start Address", text: $startAddress)
+                            .focused($focusedField, equals: .start)
+                            .onChange(of: startAddress) { searchVM.updateQuery($0) }
+
+                        if focusedField == .start && !searchVM.results.isEmpty {
+                            ForEach(searchVM.results.prefix(3), id: \.self) { result in
+                                Button {
+                                    handleSelection(result, for: .start)
+                                } label: {
+                                    VStack(alignment: .leading) {
+                                        Text(result.title).bold()
+                                        Text(result.subtitle).font(.subheadline).foregroundColor(.gray)
+                                    }
+                                    .padding(.vertical, 6)
+                                }
+                            }
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        TextField("End Address", text: $endAddress)
+                            .focused($focusedField, equals: .end)
+                            .onChange(of: endAddress) { searchVM.updateQuery($0) }
+
+                        if focusedField == .end && !searchVM.results.isEmpty {
+                            ForEach(searchVM.results.prefix(3), id: \.self) { result in
+                                Button {
+                                    handleSelection(result, for: .end)
+                                } label: {
+                                    VStack(alignment: .leading) {
+                                        Text(result.title).bold()
+                                        Text(result.subtitle).font(.subheadline).foregroundColor(.gray)
+                                    }
+                                    .padding(.vertical, 6)
+                                }
+                            }
+                        }
+                    }
+                }
 
                 Button("Save Trip") {
                     guard !startAddress.isEmpty && !endAddress.isEmpty else { return }
@@ -50,4 +93,27 @@ struct NewTripView: View {
             .navigationTitle("New Trip")
         }
     }
+    
+    private func handleSelection(_ result: MKLocalSearchCompletion, for field: Field) {
+        let request = MKLocalSearch.Request(completion: result)
+        MKLocalSearch(request: request).start { response, error in
+            guard let item = response?.mapItems.first else { return }
+
+            DispatchQueue.main.async {
+                let selectedAddress = item.placemark.title ?? result.title
+                switch field {
+                case .start:
+                    startAddress = selectedAddress
+                case .end:
+                    endAddress = selectedAddress
+                }
+                searchVM.results = []
+                focusedField = nil
+            }
+        }
+    }
+}
+
+enum Field {
+    case start, end
 }
