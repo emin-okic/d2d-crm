@@ -24,7 +24,6 @@ struct FollowUpScheduleView: View {
                     Text("Prospect: \(prospect.fullName)")
                     Text("Address: \(prospect.address)")
                     DatePicker("Follow-Up Date", selection: $followUpDate, displayedComponents: [.date, .hourAndMinute])
-                    TextField("Note", text: $note)
                 }
 
                 Button("Save Follow-Up") {
