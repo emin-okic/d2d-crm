@@ -20,10 +20,6 @@ struct AddObjectionView: View {
                 Section(header: Text("Objection")) {
                     TextField("e.g. 'Not interested'", text: $text)
                 }
-
-                Section(header: Text("Suggested Response")) {
-                    TextField("e.g. 'Sure, but can I ask why?'", text: $response)
-                }
             }
             .navigationTitle("New Objection")
             .toolbar {
