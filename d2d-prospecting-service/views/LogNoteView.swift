@@ -35,7 +35,7 @@ struct LogNoteView: View {
 
                         if let obj = objection {
                             fullNote = "Follow Up Later: \(obj.text)\n\n\(noteText)"
-                            obj.timesHeard += 1
+                            // Do not increment obj.timesHeard here — it's already done in the picker
                         } else if let addr = pendingAddress,
                                   prospect.knockHistory.last?.status == "Wasn't Home" {
                             fullNote = "No Answer\n\n\(noteText)"

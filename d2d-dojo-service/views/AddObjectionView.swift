@@ -20,17 +20,19 @@ struct AddObjectionView: View {
                 Section(header: Text("Objection")) {
                     TextField("e.g. 'Not interested'", text: $text)
                 }
-
-                Section(header: Text("Suggested Response")) {
-                    TextField("e.g. 'Sure, but can I ask why?'", text: $response)
-                }
             }
             .navigationTitle("New Objection")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        let new = Objection(text: text, response: response)
+                        let new = Objection(text: text)
                         context.insert(new)
+
+                        Task {
+                            new.response = await ResponseGenerator.shared.generate(for: text)
+                            try? context.save()
+                        }
+
                         dismiss()
                     }
                 }
