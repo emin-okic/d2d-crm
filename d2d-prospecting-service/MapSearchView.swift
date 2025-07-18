@@ -57,6 +57,8 @@ struct MapSearchView: View {
     
     @FocusState private var isSearchFocused: Bool
     
+    @State private var isTappedAddressCustomer = false
+    
     private var hasSignedUp: Bool {
         prospects
             .flatMap { $0.knockHistory }
@@ -113,11 +115,17 @@ struct MapSearchView: View {
                                             to: nil, from: nil, for: nil)
         }
         .alert("Knock Outcome", isPresented: $showOutcomePrompt, actions: {
-            Button("Converted To Sale") {
-                handleKnockAndConvertToCustomer(status: "Converted To Sale")
+            if !isTappedAddressCustomer {
+                Button("Converted To Sale") {
+                    handleKnockAndConvertToCustomer(status: "Converted To Sale")
+                }
             }
-            Button("Wasn't Home") { handleKnockAndPromptNote(status: "Wasn't Home") }
-            Button("Follow Up Later") { handleKnockAndPromptObjection(status: "Follow Up Later") }
+            Button("Wasn't Home") {
+                handleKnockAndPromptNote(status: "Wasn't Home")
+            }
+            Button("Follow Up Later") {
+                handleKnockAndPromptObjection(status: "Follow Up Later")
+            }
             Button("Cancel", role: .cancel) {}
         }, message: {
             Text("Did someone answer at \(pendingAddress ?? "this address")?")
@@ -201,6 +209,18 @@ struct MapSearchView: View {
         }
     }
     
+    func normalizedAddress(_ raw: String) -> String {
+        let formatter = CNPostalAddressFormatter()
+        let address = CNMutablePostalAddress()
+        
+        let parts = raw.components(separatedBy: ",")
+        if parts.count > 0 { address.street = parts[0].trimmingCharacters(in: .whitespaces) }
+        if parts.count > 1 { address.city = parts[1].trimmingCharacters(in: .whitespaces) }
+        if parts.count > 2 { address.state = parts[2].trimmingCharacters(in: .whitespaces) }
+        
+        return formatter.string(from: address).lowercased().replacingOccurrences(of: "\n", with: " ")
+    }
+    
     private var mapAndOverlayLayer: some View {
         ZStack(alignment: .topTrailing) {
             VStack(spacing: 12) {
@@ -209,6 +229,7 @@ struct MapSearchView: View {
                     markers: controller.markers,
                     onMarkerTapped: { place in
                         pendingAddress = place.address
+                        isTappedAddressCustomer = place.list == "Customers"
                         showOutcomePrompt = true
                     },
                     onMapTapped: { coordinate in
@@ -217,6 +238,10 @@ struct MapSearchView: View {
                             let tapped = tapManager.tappedAddress
                             if !tapped.isEmpty {
                                 pendingAddress = tapped
+                                isTappedAddressCustomer = customers.contains {
+                                    $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
+                                    tapped.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                                }
                                 showOutcomePrompt = true
                             }
                         }
