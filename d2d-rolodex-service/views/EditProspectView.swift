@@ -117,7 +117,7 @@ struct EditProspectView: View {
             if prospect.list == "Customers" {
                 Section {
 
-                    Button("Delete Prospect 🗑️") {
+                    Button("Delete Customer 🗑️") {
                         deleteProspect()
                     }
                     .foregroundColor(.red)
