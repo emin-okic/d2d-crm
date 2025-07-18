@@ -229,14 +229,40 @@ struct MapSearchView: View {
                 Spacer()
             }
 
+            // Scorecard at top right
             ScorecardBar(
                 totalKnocks: totalKnocks,
                 avgKnocksPerSale: averageKnocksPerCustomer,
                 hasSignedUp: hasSignedUp
             )
 
-            VStack(spacing: 0) {
+            // Search bar + Zoom buttons at bottom
+            VStack {
                 Spacer()
+                HStack {
+                    Spacer()
+
+                    VStack(spacing: 10) {
+                        Button(action: { zoom(by: 0.5) }) {
+                            Image(systemName: "plus.magnifyingglass")
+                                .padding()
+                                .background(Color.white)
+                                .clipShape(Circle())
+                                .shadow(radius: 3)
+                        }
+
+                        Button(action: { zoom(by: 2.0) }) {
+                            Image(systemName: "minus.magnifyingglass")
+                                .padding()
+                                .background(Color.white)
+                                .clipShape(Circle())
+                                .shadow(radius: 3)
+                        }
+                    }
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 20) // 
+                }
+
                 SearchBarView(
                     searchText: $searchText,
                     isFocused: $isSearchFocused,
@@ -246,6 +272,13 @@ struct MapSearchView: View {
                 )
             }
         }
+    }
+    
+    private func zoom(by factor: Double) {
+        let currentSpan = controller.region.span
+        let newSpan = MKCoordinateSpan(latitudeDelta: currentSpan.latitudeDelta * factor,
+                                       longitudeDelta: currentSpan.longitudeDelta * factor)
+        controller.region = MKCoordinateRegion(center: controller.region.center, span: newSpan)
     }
     
     private func handleMapCenterChange(newAddress: String?) {
