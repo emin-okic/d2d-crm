@@ -19,10 +19,11 @@ class ResponseGenerator {
     }
 
     private func runLocalML(prompt: String) async -> String {
-        // Placeholder for ARC/ML model inference logic
-        // You could hook into CreateML, a custom transformer model, or even a remote API
-        return """
-        I totally understand. But many of your neighbors said the same until they saw the benefits. Can I show you one quick thing that'll take 30 seconds?
-        """
+        let templates = [
+            "I get it. Most folks were unsure too—until they saw how much it helped. Can I show you what I mean real quick?",
+            "Totally fair. But just 30 seconds might change your mind. Can I share something fast?",
+            "Of course. You’re not the only one who felt that way initially. But here’s why it might be worth it..."
+        ]
+        return templates.randomElement()!
     }
 }

@@ -28,6 +28,14 @@ struct EditObjectionView: View {
                     Section(header: Text("Times Heard")) {
                         Stepper("\(objection.timesHeard)", value: $objection.timesHeard, in: 0...1000)
                     }
+                    Section {
+                        Button("Regenerate Response") {
+                            Task {
+                                objection.response = await ResponseGenerator.shared.generate(for: objection.text)
+                                try? modelContext.save()
+                            }
+                        }
+                    }
                 }
 
                 Button(role: .destructive) {

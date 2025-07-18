@@ -157,9 +157,6 @@ struct MapSearchView: View {
                     }) {
                         VStack(alignment: .leading) {
                             Text(obj.text).font(.headline)
-                            if !obj.response.isEmpty {
-                                Text(obj.response).font(.subheadline).foregroundColor(.gray)
-                            }
                         }.padding(.vertical, 4)
                     }
                 }
