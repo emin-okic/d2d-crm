@@ -211,9 +211,8 @@ struct MapSearchView: View {
                         pendingAddress = place.address
                         showOutcomePrompt = true
                     },
-                    onMapTapped: {
-                        let center = controller.region.center
-                        tapManager.handleTap(at: center)
+                    onMapTapped: { coordinate in
+                        tapManager.handleTap(at: coordinate)
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                             let tapped = tapManager.tappedAddress
                             if !tapped.isEmpty {
