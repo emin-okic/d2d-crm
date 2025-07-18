@@ -260,7 +260,7 @@ struct MapSearchView: View {
                         }
                     }
                     .padding(.trailing, 20)
-                    .padding(.bottom, 20) // 
+                    .padding(.bottom, 20)
                 }
 
                 SearchBarView(
