@@ -21,6 +21,9 @@ struct MapDisplayView: UIViewRepresentable {
         let mapView = MKMapView()
         mapView.delegate = context.coordinator
         mapView.setRegion(region, animated: false)
+        mapView.isZoomEnabled = true
+        mapView.isScrollEnabled = true
+        mapView.showsUserLocation = false
 
         let tapGesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap(_:)))
         mapView.addGestureRecognizer(tapGesture)
@@ -29,12 +32,23 @@ struct MapDisplayView: UIViewRepresentable {
     }
 
     func updateUIView(_ mapView: MKMapView, context: Context) {
-        mapView.setRegion(region, animated: false)
-        mapView.removeAnnotations(mapView.annotations)
+        if abs(mapView.region.center.latitude - region.center.latitude) > 0.0001 ||
+            abs(mapView.region.center.longitude - region.center.longitude) > 0.0001 ||
+            abs(mapView.region.span.latitudeDelta - region.span.latitudeDelta) > 0.0001 ||
+            abs(mapView.region.span.longitudeDelta - region.span.longitudeDelta) > 0.0001 {
+            mapView.setRegion(region, animated: false)
+        }
 
-        for place in markers {
-            let annotation = IdentifiableAnnotation(place: place)
-            mapView.addAnnotation(annotation)
+        let existing = mapView.annotations.compactMap { $0 as? IdentifiableAnnotation }
+        let existingIds = Set(existing.map { $0.place.id })
+        let newIds = Set(markers.map { $0.id })
+
+        if existingIds != newIds {
+            mapView.removeAnnotations(mapView.annotations)
+            for place in markers {
+                let annotation = IdentifiableAnnotation(place: place)
+                mapView.addAnnotation(annotation)
+            }
         }
     }
 
@@ -54,7 +68,6 @@ struct MapDisplayView: UIViewRepresentable {
             let point = gesture.location(in: mapView)
             let coordinate = mapView.convert(point, toCoordinateFrom: mapView)
 
-            // Ensure tap isn't on a marker
             let tappedAnnotations = mapView.annotations(in: mapView.visibleMapRect).filter {
                 let viewPoint = mapView.convert(($0 as! MKAnnotation).coordinate, toPointTo: mapView)
                 return hypot(viewPoint.x - point.x, viewPoint.y - point.y) < 30
@@ -80,9 +93,7 @@ struct MapDisplayView: UIViewRepresentable {
 
             view?.frame = CGRect(x: 0, y: 0, width: 28, height: 28)
             view?.layer.cornerRadius = 14
-            view?.backgroundColor = UIColor(annotation.place.markerColor)
 
-            // Custom icon if customer
             if annotation.place.list == "Customers" {
                 view?.image = UIImage(systemName: "star.circle.fill")?.withTintColor(.systemBlue, renderingMode: .alwaysOriginal)
             } else {
