@@ -90,198 +90,53 @@ struct MapSearchView: View {
 
     var body: some View {
         ZStack {
-            ZStack(alignment: .topTrailing) {
-                VStack(spacing: 12) {
-                    
-                    Map(coordinateRegion: $controller.region, annotationItems: controller.markers) { place in
-                        MapAnnotation(coordinate: place.location) {
-                            if place.list == "Customers" {
-                                Image(systemName: "star.circle.fill")
-                                    .resizable()
-                                    .frame(width: 24, height: 24)
-                                    .foregroundColor(.blue)
-                                    .onTapGesture {
-                                        pendingAddress = place.address
-                                        showOutcomePrompt = true
-                                    }
-                            } else {
-                                Circle()
-                                    .fill(place.markerColor)
-                                    .frame(width: 20, height: 20)
-                                    .overlay(Circle().stroke(Color.black, lineWidth: 1))
-                                    .contentShape(Rectangle())
-                                    .onTapGesture {
-                                        pendingAddress = place.address
-                                        showOutcomePrompt = true
-                                    }
-                            }
-                        }
-                    }
-                    .gesture(
-                        TapGesture()
-                            .onEnded {
-                                let center = controller.region.center
-                                tapManager.handleTap(at: center)
-                                
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                                    let tapped = tapManager.tappedAddress
-                                    if prospectExists(at: tapped) {
-                                        pendingAddress = tapped
-                                        showOutcomePrompt = true
-                                    }
-                                }
-                            }
-                    )
-                    .frame(maxHeight: .infinity)
-                    .edgesIgnoringSafeArea(.horizontal)
-                    
-                    Spacer()
-                }
-                
-                HStack(spacing: 12) {
-                    RejectionTrackerView(count: totalKnocks)
-                    
-                    if hasSignedUp {
-                        KnocksPerSaleView(count: averageKnocksPerCustomer, hasFirstSignup: true)
-                    }
-                }
-                .cornerRadius(16)
-                .shadow(radius: 4)
-                .padding(.top, 10)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .zIndex(1) // Make sure it stays on top
-                
-                VStack(spacing: 0) {
-                    Spacer()
-                    
-                    VStack(spacing: 8) {
-                        HStack {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundColor(.gray)
-
-                            TextField("Enter a knock here…", text: $searchText, onCommit: {
-                                submitSearch()
-                            })
-                            .focused($isSearchFocused)
-                            .foregroundColor(.primary)
-                            .autocapitalization(.words)
-                            .submitLabel(.done)
-
-                            if !searchText.trimmingCharacters(in: .whitespaces).isEmpty {
-                                Button("Done") {
-                                    submitSearch()
-                                }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 6)
-                                .background(Color.blue.opacity(0.8))
-                                .foregroundColor(.white)
-                                .cornerRadius(8)
-                                .transition(.opacity)
-                            }
-                        }
-                        .padding(12)
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(12)
-                        .shadow(radius: 3, x: 0, y: 2)
-                        .padding(.horizontal)
-                        
-                        if isSearchFocused && !searchVM.results.isEmpty {
-                            searchSuggestionsList
-                        }
-                    }
-                    .padding(.bottom, 56)
-                    .animation(.easeInOut(duration: 0.25), value: searchVM.results.count)
-                }
-                
-            }
+            mapAndOverlayLayer
             if showKnockTutorial {
-                Color.black.opacity(0.6)
-                    .ignoresSafeArea()
-                
-                VStack(spacing: 16) {
-                    Spacer()
-                    RejectionTrackerView(count: totalKnocks)
-                        .scaleEffect(1.1)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color.yellow, lineWidth: 3)
-                        )
-                    Text("This is your knock counter. Every door matters.\nWatch it grow with every interaction.")
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(12)
-                        .padding(.horizontal)
-                    Button("Got it!") {
+                KnockTutorialView(
+                    totalKnocks: totalKnocks,
+                    onDismiss: {
                         withAnimation {
                             showKnockTutorial = false
                             hasSeenKnockTutorial = true
                         }
                     }
-                    .padding()
-                    .background(Color.white)
-                    .foregroundColor(.blue)
-                    .cornerRadius(10)
-                    .padding(.bottom, 40)
-                }
-                .transition(.scale)
+                )
             }
-            
         }
-        .onChange(of: searchText) { newText in
-            searchVM.updateQuery(newText)
-        }
+        .onChange(of: searchText) { searchVM.updateQuery($0) }
         .onAppear { updateMarkers() }
         .onChange(of: prospects) { _ in updateMarkers() }
         .onChange(of: selectedList) { _ in updateMarkers() }
-        .onChange(of: addressToCenter) { newAddress in
-            if let query = newAddress {
-                Task {
-                    if let coordinate = await controller.geocodeAddress(query) {
-                        withAnimation {
-                            controller.region = MKCoordinateRegion(
-                                center: coordinate,
-                                latitudinalMeters: 1609.34,
-                                longitudinalMeters: 1609.34
-                            )
-                        }
-                    }
-                    addressToCenter = nil
-                }
-            }
-        }
+        .onChange(of: addressToCenter) { handleMapCenterChange(newAddress: $0) }
         .onTapGesture {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
                                             to: nil, from: nil, for: nil)
         }
-        .alert("Add This Prospect?", isPresented: $tapManager.showAddPrompt, actions: {
-            Button("Yes") {
-                pendingAddress = tapManager.tappedAddress
-                // Force a marker update and simulate tapping on a new prospect marker
-                let _ = saveKnock(address: tapManager.tappedAddress, status: "Not Answered")
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    showOutcomePrompt = true
-                }
-            }
-            Button("No", role: .cancel) {}
-        }, message: {
-            Text("Do you want to add \(tapManager.tappedAddress)?")
-        })
         .alert("Knock Outcome", isPresented: $showOutcomePrompt, actions: {
-            
             Button("Converted To Sale") {
                 handleKnockAndConvertToCustomer(status: "Converted To Sale")
             }
-
             Button("Wasn't Home") { handleKnockAndPromptNote(status: "Wasn't Home") }
-
             Button("Follow Up Later") { handleKnockAndPromptObjection(status: "Follow Up Later") }
-            
             Button("Cancel", role: .cancel) {}
         }, message: {
             Text("Did someone answer at \(pendingAddress ?? "this address")?")
         })
+        .sheet(isPresented: $showNoteInput) {
+            if let prospect = prospectToNote {
+                LogNoteView(
+                    prospect: prospect,
+                    objection: selectedObjection,
+                    pendingAddress: pendingAddress,
+                    onComplete: {
+                        followUpAddress = prospect.address
+                        followUpProspectName = prospect.fullName
+                        selectedObjection = nil
+                        showFollowUpPrompt = true
+                    }
+                )
+            }
+        }
         .sheet(isPresented: $showObjectionPicker) {
             NavigationView {
                 List(objectionOptions) { obj in
@@ -293,15 +148,11 @@ struct MapSearchView: View {
                         showNoteInput = true
                     }) {
                         VStack(alignment: .leading) {
-                            Text(obj.text)
-                                .font(.headline)
+                            Text(obj.text).font(.headline)
                             if !obj.response.isEmpty {
-                                Text(obj.response)
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
+                                Text(obj.response).font(.subheadline).foregroundColor(.gray)
                             }
-                        }
-                        .padding(.vertical, 4)
+                        }.padding(.vertical, 4)
                     }
                 }
                 .navigationTitle("Why not interested?")
@@ -317,15 +168,8 @@ struct MapSearchView: View {
         .sheet(isPresented: $showingAddObjection) {
             AddObjectionView()
         }
-        .sheet(isPresented: $showConversionSheet) {
-            if let prospect = prospectToConvert {
-                SignUpPopupView(prospect: prospect, isPresented: $showConversionSheet)
-            }
-        }
         .alert("Schedule Follow-Up?", isPresented: $showFollowUpPrompt) {
-            Button("Yes") {
-                showFollowUpSheet = true
-            }
+            Button("Yes") { showFollowUpSheet = true }
             Button("No", role: .cancel) {
                 showTripPrompt = true
             }
@@ -350,20 +194,73 @@ struct MapSearchView: View {
                 LogTripPopupView(endAddress: addr)
             }
         }
-        .sheet(isPresented: $showNoteInput) {
-            if let prospect = prospectToNote {
-                LogNoteView(
-                    prospect: prospect,
-                    objection: selectedObjection,
-                    pendingAddress: pendingAddress,
-                    onComplete: {
-                        followUpAddress = prospect.address
-                        followUpProspectName = prospect.fullName
-                        selectedObjection = nil
-                        showFollowUpPrompt = true
+        .sheet(isPresented: $showConversionSheet) {
+            if let prospect = prospectToConvert {
+                SignUpPopupView(prospect: prospect, isPresented: $showConversionSheet)
+            }
+        }
+    }
+    
+    private var mapAndOverlayLayer: some View {
+        ZStack(alignment: .topTrailing) {
+            VStack(spacing: 12) {
+                MapDisplayView(
+                    region: $controller.region,
+                    markers: controller.markers,
+                    onMarkerTapped: { place in
+                        pendingAddress = place.address
+                        showOutcomePrompt = true
+                    },
+                    onMapTapped: {
+                        let center = controller.region.center
+                        tapManager.handleTap(at: center)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            let tapped = tapManager.tappedAddress
+                            if !tapped.isEmpty {
+                                pendingAddress = tapped
+                                showOutcomePrompt = true
+                            }
+                        }
                     }
                 )
+                .frame(maxHeight: .infinity)
+                .edgesIgnoringSafeArea(.horizontal)
+
+                Spacer()
             }
+
+            ScorecardBar(
+                totalKnocks: totalKnocks,
+                avgKnocksPerSale: averageKnocksPerCustomer,
+                hasSignedUp: hasSignedUp
+            )
+
+            VStack(spacing: 0) {
+                Spacer()
+                SearchBarView(
+                    searchText: $searchText,
+                    isFocused: $isSearchFocused,
+                    viewModel: searchVM,
+                    onSubmit: { submitSearch() },
+                    onSelectResult: { handleCompletionTap($0) }
+                )
+            }
+        }
+    }
+    
+    private func handleMapCenterChange(newAddress: String?) {
+        guard let query = newAddress else { return }
+        Task {
+            if let coordinate = await controller.geocodeAddress(query) {
+                withAnimation {
+                    controller.region = MKCoordinateRegion(
+                        center: coordinate,
+                        latitudinalMeters: 1609.34,
+                        longitudinalMeters: 1609.34
+                    )
+                }
+            }
+            addressToCenter = nil
         }
     }
     
