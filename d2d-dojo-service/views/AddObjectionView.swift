@@ -25,8 +25,14 @@ struct AddObjectionView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        let new = Objection(text: text, response: response)
+                        let new = Objection(text: text)
                         context.insert(new)
+
+                        Task {
+                            new.response = await ResponseGenerator.shared.generate(for: text)
+                            try? context.save()
+                        }
+
                         dismiss()
                     }
                 }

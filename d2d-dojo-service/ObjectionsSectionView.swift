@@ -49,12 +49,8 @@ struct ObjectionsSectionView: View {
                                 VStack(alignment: .leading) {
                                     Text(ranked.objection.text)
                                         .font(.headline)
-                                    if !ranked.objection.response.isEmpty {
-                                        Text(ranked.objection.response)
-                                            .font(.subheadline)
-                                            .foregroundColor(.gray)
-                                    }
                                 }
+                                .padding(.vertical, 10)
                                 Spacer()
                                 Text("×\(ranked.objection.timesHeard)")
                                     .foregroundColor(.secondary)

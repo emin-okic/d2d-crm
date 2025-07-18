@@ -21,7 +21,9 @@ struct EditObjectionView: View {
                         TextField("Objection text", text: $objection.text)
                     }
                     Section(header: Text("Expected Response")) {
-                        TextField("Response", text: $objection.response)
+                        TextEditor(text: $objection.response)
+                            .frame(minHeight: 120)
+                            .padding(.vertical, 4)
                     }
                     Section(header: Text("Times Heard")) {
                         Stepper("\(objection.timesHeard)", value: $objection.timesHeard, in: 0...1000)
