@@ -10,50 +10,38 @@ import SwiftUI
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), emoji: "😀")
+        SimpleEntry(date: Date(), appointmentsToday: 0)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
-        let entry = SimpleEntry(date: Date(), emoji: "😀")
-        completion(entry)
+        let count = UserDefaults(suiteName: "group.okic.d2dcrm")?.integer(forKey: "appointmentsToday") ?? 0
+        completion(SimpleEntry(date: Date(), appointmentsToday: count))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        var entries: [SimpleEntry] = []
-
-        // Generate a timeline consisting of five entries an hour apart, starting from the current date.
-        let currentDate = Date()
-        for hourOffset in 0 ..< 5 {
-            let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate)!
-            let entry = SimpleEntry(date: entryDate, emoji: "😀")
-            entries.append(entry)
-        }
-
-        let timeline = Timeline(entries: entries, policy: .atEnd)
+        let count = UserDefaults(suiteName: "group.okic.d2dcrm")?.integer(forKey: "appointmentsToday") ?? 0
+        let entry = SimpleEntry(date: Date(), appointmentsToday: count)
+        let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(60 * 15)))
         completion(timeline)
     }
-
-//    func relevances() async -> WidgetRelevances<Void> {
-//        // Generate a list containing the contexts this widget is relevant in.
-//    }
 }
 
 struct SimpleEntry: TimelineEntry {
     let date: Date
-    let emoji: String
+    let appointmentsToday: Int
 }
 
-struct d2d_widget_serviceEntryView : View {
+struct d2d_widget_serviceEntryView: View {
     var entry: Provider.Entry
 
     var body: some View {
         VStack {
-            Text("Time:")
-            Text(entry.date, style: .time)
-
-            Text("Emoji:")
-            Text(entry.emoji)
+            Text("Appointments Today")
+                .font(.headline)
+            Text("\(entry.appointmentsToday)")
+                .font(.system(size: 32, weight: .bold))
         }
+        .padding()
     }
 }
 
@@ -74,11 +62,4 @@ struct d2d_widget_service: Widget {
         .configurationDisplayName("My Widget")
         .description("This is an example widget.")
     }
-}
-
-#Preview(as: .systemSmall) {
-    d2d_widget_service()
-} timeline: {
-    SimpleEntry(date: .now, emoji: "😀")
-    SimpleEntry(date: .now, emoji: "🤩")
 }
