@@ -7,6 +7,7 @@
 import SwiftUI
 import Charts
 import SwiftData
+import WidgetKit
 
 struct FollowUpAssistantView: View {
     @Query private var prospects: [Prospect]
@@ -96,6 +97,11 @@ struct FollowUpAssistantView: View {
 
                 }
                 .padding(.bottom, 20)
+            }
+            .onAppear {
+                let defaults = UserDefaults(suiteName: "group.okic.d2dcrm")
+                defaults?.set(appointmentsToday, forKey: "appointmentsToday")
+                WidgetCenter.shared.reloadAllTimelines()
             }
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)

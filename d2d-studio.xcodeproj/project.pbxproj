@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		C53F34042DE9E60900372BEE /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = C53F34032DE9E60900372BEE /* SQLite */; };
 		C5855D892DF073A700B479AE /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = C5855D882DF073A300B479AE /* .gitignore */; };
+		C5E6A7202E2BE6CD00EC05F4 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C5E6A71F2E2BE6CD00EC05F4 /* WidgetKit.framework */; };
+		C5E6A7222E2BE6CD00EC05F4 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C5E6A7212E2BE6CD00EC05F4 /* SwiftUI.framework */; };
+		C5E6A72F2E2BE6CD00EC05F4 /* d2d-widget-serviceExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C5E6A71D2E2BE6CD00EC05F4 /* d2d-widget-serviceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -26,7 +29,28 @@
 			remoteGlobalIDString = C5BE4B332DE7CC9E005C37B1;
 			remoteInfo = "d2d-map-service";
 		};
+		C5E6A72D2E2BE6CD00EC05F4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C5BE4B2C2DE7CC9E005C37B1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C5E6A71C2E2BE6CD00EC05F4;
+			remoteInfo = "d2d-widget-serviceExtension";
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C5E6A7302E2BE6CD00EC05F4 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C5E6A72F2E2BE6CD00EC05F4 /* d2d-widget-serviceExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		C54048432DF4B32A00721D49 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -36,6 +60,10 @@
 		C5BE4B412DE7CC9F005C37B1 /* d2d-map-serviceTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "d2d-map-serviceTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C5BE4B4B2DE7CC9F005C37B1 /* d2d-map-serviceUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "d2d-map-serviceUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C5CDA5B22E15A65300FD96B7 /* PRIVACYPOLICY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PRIVACYPOLICY.md; sourceTree = "<group>"; };
+		C5E6A71D2E2BE6CD00EC05F4 /* d2d-widget-serviceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "d2d-widget-serviceExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C5E6A71F2E2BE6CD00EC05F4 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		C5E6A7212E2BE6CD00EC05F4 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		C5E6A7362E2BEBCF00EC05F4 /* d2d-widget-serviceExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "d2d-widget-serviceExtension.entitlements"; sourceTree = "<group>"; };
 		C5E9F14F2DEB6CAB000A771B /* d2d-map-service.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "d2d-map-service.xctestplan"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -46,6 +74,13 @@
 				Info.plist,
 			);
 			target = C5BE4B332DE7CC9E005C37B1 /* d2d-studio */;
+		};
+		C5E6A7342E2BE6CD00EC05F4 /* Exceptions for "d2d-widget-service" folder in "d2d-widget-serviceExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C5E6A71C2E2BE6CD00EC05F4 /* d2d-widget-serviceExtension */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -88,6 +123,14 @@
 			path = "d2d-map-serviceUITests";
 			sourceTree = "<group>";
 		};
+		C5E6A7232E2BE6CD00EC05F4 /* d2d-widget-service */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C5E6A7342E2BE6CD00EC05F4 /* Exceptions for "d2d-widget-service" folder in "d2d-widget-serviceExtension" target */,
+			);
+			path = "d2d-widget-service";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -113,6 +156,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C5E6A71A2E2BE6CD00EC05F4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C5E6A7222E2BE6CD00EC05F4 /* SwiftUI.framework in Frameworks */,
+				C5E6A7202E2BE6CD00EC05F4 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -127,18 +179,21 @@
 		C5BE4B2B2DE7CC9E005C37B1 = {
 			isa = PBXGroup;
 			children = (
+				C5E6A7362E2BEBCF00EC05F4 /* d2d-widget-serviceExtension.entitlements */,
 				C5CDA5B22E15A65300FD96B7 /* PRIVACYPOLICY.md */,
 				C5A6D64C2DFE219900E180B6 /* media */,
 				C54048432DF4B32A00721D49 /* README.md */,
 				C5855D882DF073A300B479AE /* .gitignore */,
 				C5E9F14F2DEB6CAB000A771B /* d2d-map-service.xctestplan */,
 				C5BE4B362DE7CC9E005C37B1 /* d2d-studio */,
+				C5E6A7232E2BE6CD00EC05F4 /* d2d-widget-service */,
 				C59705F92E198214006C3B55 /* d2d-rolodex-service */,
 				C56CD3852E1993CB00232EF7 /* d2d-prospecting-service */,
 				C5328C812E1B1D180057F68E /* d2d-follow-up-service */,
 				C5AF70BA2E1205E200754997 /* d2d-dojo-service */,
 				C5BE4B442DE7CC9F005C37B1 /* d2d-map-serviceTests */,
 				C5BE4B4E2DE7CC9F005C37B1 /* d2d-map-serviceUITests */,
+				C5E6A71E2E2BE6CD00EC05F4 /* Frameworks */,
 				C5BE4B352DE7CC9E005C37B1 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -149,8 +204,18 @@
 				C5BE4B342DE7CC9E005C37B1 /* d2d-studio.app */,
 				C5BE4B412DE7CC9F005C37B1 /* d2d-map-serviceTests.xctest */,
 				C5BE4B4B2DE7CC9F005C37B1 /* d2d-map-serviceUITests.xctest */,
+				C5E6A71D2E2BE6CD00EC05F4 /* d2d-widget-serviceExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		C5E6A71E2E2BE6CD00EC05F4 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				C5E6A71F2E2BE6CD00EC05F4 /* WidgetKit.framework */,
+				C5E6A7212E2BE6CD00EC05F4 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -163,10 +228,12 @@
 				C5BE4B302DE7CC9E005C37B1 /* Sources */,
 				C5BE4B312DE7CC9E005C37B1 /* Frameworks */,
 				C5BE4B322DE7CC9E005C37B1 /* Resources */,
+				C5E6A7302E2BE6CD00EC05F4 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C5E6A72E2E2BE6CD00EC05F4 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				C5328C812E1B1D180057F68E /* d2d-follow-up-service */,
@@ -229,6 +296,28 @@
 			productReference = C5BE4B4B2DE7CC9F005C37B1 /* d2d-map-serviceUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		C5E6A71C2E2BE6CD00EC05F4 /* d2d-widget-serviceExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C5E6A7332E2BE6CD00EC05F4 /* Build configuration list for PBXNativeTarget "d2d-widget-serviceExtension" */;
+			buildPhases = (
+				C5E6A7192E2BE6CD00EC05F4 /* Sources */,
+				C5E6A71A2E2BE6CD00EC05F4 /* Frameworks */,
+				C5E6A71B2E2BE6CD00EC05F4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C5E6A7232E2BE6CD00EC05F4 /* d2d-widget-service */,
+			);
+			name = "d2d-widget-serviceExtension";
+			packageProductDependencies = (
+			);
+			productName = "d2d-widget-serviceExtension";
+			productReference = C5E6A71D2E2BE6CD00EC05F4 /* d2d-widget-serviceExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -236,7 +325,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1630;
+				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 1630;
 				TargetAttributes = {
 					C5BE4B332DE7CC9E005C37B1 = {
@@ -249,6 +338,9 @@
 					C5BE4B4A2DE7CC9F005C37B1 = {
 						CreatedOnToolsVersion = 16.3;
 						TestTargetID = C5BE4B332DE7CC9E005C37B1;
+					};
+					C5E6A71C2E2BE6CD00EC05F4 = {
+						CreatedOnToolsVersion = 16.4;
 					};
 				};
 			};
@@ -270,6 +362,7 @@
 			projectRoot = "";
 			targets = (
 				C5BE4B332DE7CC9E005C37B1 /* d2d-studio */,
+				C5E6A71C2E2BE6CD00EC05F4 /* d2d-widget-serviceExtension */,
 				C5BE4B402DE7CC9F005C37B1 /* d2d-map-serviceTests */,
 				C5BE4B4A2DE7CC9F005C37B1 /* d2d-map-serviceUITests */,
 			);
@@ -293,6 +386,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C5BE4B492DE7CC9F005C37B1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C5E6A71B2E2BE6CD00EC05F4 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -323,6 +423,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C5E6A7192E2BE6CD00EC05F4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -335,6 +442,11 @@
 			isa = PBXTargetDependency;
 			target = C5BE4B332DE7CC9E005C37B1 /* d2d-studio */;
 			targetProxy = C5BE4B4C2DE7CC9F005C37B1 /* PBXContainerItemProxy */;
+		};
+		C5E6A72E2E2BE6CD00EC05F4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C5E6A71C2E2BE6CD00EC05F4 /* d2d-widget-serviceExtension */;
+			targetProxy = C5E6A72D2E2BE6CD00EC05F4 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -465,10 +577,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "d2d-studio/d2d-studio.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = Y3JJD7DBP3;
 				ENABLE_PREVIEWS = YES;
@@ -491,7 +604,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "okic.d2d-map-service";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Prod Dist Profile 1";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "App Prod Dist 2";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -507,10 +620,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "d2d-studio/d2d-studio.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = Y3JJD7DBP3;
 				ENABLE_PREVIEWS = YES;
@@ -533,7 +647,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "okic.d2d-map-service";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Prod Dist Profile 1";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "App Prod Dist 2";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -616,6 +730,74 @@
 			};
 			name = Release;
 		};
+		C5E6A7312E2BE6CD00EC05F4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = "d2d-widget-serviceExtension.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = Y3JJD7DBP3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "d2d-widget-service/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "d2d-widget-service";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "okic.d2d-map-service.d2d-widget-service";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Widget Prod Dist Profile 1";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C5E6A7322E2BE6CD00EC05F4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = "d2d-widget-serviceExtension.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = Y3JJD7DBP3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "d2d-widget-service/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "d2d-widget-service";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "okic.d2d-map-service.d2d-widget-service";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Widget Prod Dist Profile 1";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -651,6 +833,15 @@
 			buildConfigurations = (
 				C5BE4B5C2DE7CC9F005C37B1 /* Debug */,
 				C5BE4B5D2DE7CC9F005C37B1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C5E6A7332E2BE6CD00EC05F4 /* Build configuration list for PBXNativeTarget "d2d-widget-serviceExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C5E6A7312E2BE6CD00EC05F4 /* Debug */,
+				C5E6A7322E2BE6CD00EC05F4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
