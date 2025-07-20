@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import PhoneNumberKit
+import Contacts
 
 /// A view for editing the details of an existing `Prospect`.
 ///
@@ -110,6 +111,7 @@ struct ProspectDetailsView: View {
                 }
             }
             
+            
             if prospect.list == "Prospects" {
                 Section {
                     Button("Sign Up") {
@@ -118,7 +120,16 @@ struct ProspectDetailsView: View {
                         showConversionSheet = true
                     }
                     .foregroundColor(.blue)
+                    
                 }
+                
+                Section {
+                    Button("Export to Contacts") {
+                        exportToContacts()
+                    }
+                    .foregroundColor(.blue)
+                }
+                
                 Section {
 
                     Button("Delete Prospect 🗑️") {
@@ -130,6 +141,13 @@ struct ProspectDetailsView: View {
             }
             
             if prospect.list == "Customers" {
+                Section {
+                    Button("Export to Contacts") {
+                        exportToContacts()
+                    }
+                    .foregroundColor(.blue)
+                }
+                
                 Section {
 
                     Button("Delete Customer 🗑️") {
@@ -189,6 +207,43 @@ struct ProspectDetailsView: View {
         }
     }
     
+    private func exportToContacts() {
+        let contact = CNMutableContact()
+        contact.givenName = prospect.fullName
+        contact.phoneNumbers = [CNLabeledValue(
+            label: CNLabelPhoneNumberMobile,
+            value: CNPhoneNumber(stringValue: prospect.contactPhone)
+        )]
+
+        contact.emailAddresses = [CNLabeledValue(
+            label: CNLabelHome,
+            value: NSString(string: prospect.contactEmail)
+        )]
+
+        let postal = CNMutablePostalAddress()
+        postal.street = prospect.address
+        contact.postalAddresses = [CNLabeledValue(label: CNLabelHome, value: postal)]
+
+        let saveRequest = CNSaveRequest()
+        saveRequest.add(contact, toContainerWithIdentifier: nil)
+
+        do {
+            let store = CNContactStore()
+            try store.requestAccess(for: .contacts) { granted, error in
+                if granted {
+                    do {
+                        try store.execute(saveRequest)
+                        print("✅ Contact saved")
+                    } catch {
+                        print("❌ Failed to save contact: \(error)")
+                    }
+                } else {
+                    print("❌ Access to contacts denied")
+                }
+            }
+        }
+    }
+    
     @discardableResult
     private func validatePhoneNumber() -> Bool {
         let raw = tempPhone.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -220,5 +275,13 @@ struct ProspectDetailsView: View {
 
         // 2. Dismiss the view
         presentationMode.wrappedValue.dismiss()
+    }
+}
+
+extension CNPostalAddress {
+    func apply(_ modify: (inout CNPostalAddress) -> Void) -> CNPostalAddress {
+        var copy = self
+        modify(&copy)
+        return copy
     }
 }
