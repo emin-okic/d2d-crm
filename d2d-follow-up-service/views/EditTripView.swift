@@ -41,6 +41,13 @@ struct EditTripView: View {
                     TextField("Start Address", text: $startAddress)
                     TextField("End Address", text: $endAddress)
                 }
+                
+                Section(header: Text("Route Details")) {
+                    RouteMapView(startAddress: startAddress, endAddress: endAddress)
+                        .frame(height: 200)
+                        .cornerRadius(12)
+                        .padding(.vertical, 8)
+                }
 
                 Section {
                     Button("Save Changes") {
