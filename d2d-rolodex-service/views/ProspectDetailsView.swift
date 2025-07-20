@@ -14,7 +14,7 @@ import SwiftData
 /// - Update the prospect’s full name and address
 /// - Reassign the prospect to a different list (e.g., "Customers")
 /// - View the full knock history of the prospect
-struct EditProspectView: View {
+struct ProspectDetailsView: View {
     /// The prospect instance to be edited, bound to the form fields.
     @Bindable var prospect: Prospect
     

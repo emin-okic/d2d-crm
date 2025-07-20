@@ -106,7 +106,7 @@ struct RolodexView: View {
                         )
                         .background(
                             NavigationLink(
-                                destination: EditProspectView(prospect: prospect),
+                                destination: ProspectDetailsView(prospect: prospect),
                                 tag: prospect.persistentModelID,
                                 selection: $selectedProspectID
                             ) { EmptyView() }
