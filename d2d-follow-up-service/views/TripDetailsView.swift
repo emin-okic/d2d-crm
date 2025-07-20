@@ -31,9 +31,19 @@ struct TripDetailsView: View {
             Form {
                 Section(header: Text("General Trip Details")) {
                     
-                    TextField("Start Address", text: $startAddress)
-                    
-                    TextField("End Address", text: $endAddress)
+                    HStack {
+                        Image(systemName: "circle")
+                            .foregroundColor(.blue)
+                        TextField("Start Address", text: $startAddress)
+                            .autocapitalization(.words)
+                    }
+
+                    HStack {
+                        Image(systemName: "mappin.circle.fill")
+                            .foregroundColor(.red)
+                        TextField("End Address", text: $endAddress)
+                            .autocapitalization(.words)
+                    }
                     
                     // Prettified date picker bar
                     HStack {
