@@ -15,9 +15,10 @@ struct ProspectRowView: View {
     let onDoubleTap: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 8) {
             Text(prospect.fullName)
                 .font(.headline)
+            
             Text(prospect.address)
                 .font(.subheadline)
                 .foregroundColor(.gray)

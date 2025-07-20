@@ -39,12 +39,6 @@ struct KnockingHistoryView: View {
                             Text(knock.date.formatted(date: .abbreviated, time: .shortened))
                                 .foregroundColor(.gray)
                             
-                            Spacer()
-                            
-                            // Display knock location coordinates
-                            Text("Lat: \(String(format: "%.4f", knock.latitude)), Lon: \(String(format: "%.4f", knock.longitude))")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
                         }
                     }
                     .padding(.vertical, 4)

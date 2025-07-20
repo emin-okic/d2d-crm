@@ -30,5 +30,8 @@
 	<!-- Encryption usage declaration -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+
+	<key>NSContactsUsageDescription</key>
+<string>This app uses contacts to export prospects.</string>
 </dict>
 </plist>

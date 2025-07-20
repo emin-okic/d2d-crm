@@ -7,6 +7,8 @@
 
 import SwiftUI
 import SwiftData
+import PhoneNumberKit
+import Contacts
 
 /// A view for editing the details of an existing `Prospect`.
 ///
@@ -14,7 +16,7 @@ import SwiftData
 /// - Update the prospect’s full name and address
 /// - Reassign the prospect to a different list (e.g., "Customers")
 /// - View the full knock history of the prospect
-struct EditProspectView: View {
+struct ProspectDetailsView: View {
     /// The prospect instance to be edited, bound to the form fields.
     @Bindable var prospect: Prospect
     
@@ -32,6 +34,8 @@ struct EditProspectView: View {
     @State private var showConversionSheet = false
     @State private var tempPhone: String = ""
     @State private var tempEmail: String = ""
+    
+    @State private var phoneError: String?
 
     var body: some View {
         Form {
@@ -39,7 +43,19 @@ struct EditProspectView: View {
             Section(header: Text("Prospect Details")) {
                 TextField("Full Name", text: $prospect.fullName)
                 TextField("Address", text: $prospect.address)
-                TextField("Phone", text: $prospect.contactPhone)
+                
+                TextField("Phone", text: $tempPhone)
+                    .keyboardType(.phonePad)
+                    .onChange(of: tempPhone) { newValue in
+                        validatePhoneNumber()
+                    }
+
+                if let phoneError = phoneError {
+                    Text(phoneError)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                }
+                
                 TextField("Email", text: $prospect.contactEmail)
             }
             
@@ -95,6 +111,7 @@ struct EditProspectView: View {
                 }
             }
             
+            
             if prospect.list == "Prospects" {
                 Section {
                     Button("Sign Up") {
@@ -103,7 +120,16 @@ struct EditProspectView: View {
                         showConversionSheet = true
                     }
                     .foregroundColor(.blue)
+                    
                 }
+                
+                Section {
+                    Button("Export to Contacts") {
+                        exportToContacts()
+                    }
+                    .foregroundColor(.blue)
+                }
+                
                 Section {
 
                     Button("Delete Prospect 🗑️") {
@@ -115,6 +141,13 @@ struct EditProspectView: View {
             }
             
             if prospect.list == "Customers" {
+                Section {
+                    Button("Export to Contacts") {
+                        exportToContacts()
+                    }
+                    .foregroundColor(.blue)
+                }
+                
                 Section {
 
                     Button("Delete Customer 🗑️") {
@@ -129,9 +162,15 @@ struct EditProspectView: View {
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") {
-                    presentationMode.wrappedValue.dismiss()
+                    if validatePhoneNumber() {
+                        prospect.contactPhone = tempPhone
+                        presentationMode.wrappedValue.dismiss()
+                    }
                 }
             }
+        }
+        .onAppear {
+            tempPhone = prospect.contactPhone
         }
         .sheet(isPresented: $showConversionSheet) {
             NavigationView {
@@ -168,6 +207,62 @@ struct EditProspectView: View {
         }
     }
     
+    private func exportToContacts() {
+        let contact = CNMutableContact()
+        contact.givenName = prospect.fullName
+        contact.phoneNumbers = [CNLabeledValue(
+            label: CNLabelPhoneNumberMobile,
+            value: CNPhoneNumber(stringValue: prospect.contactPhone)
+        )]
+
+        contact.emailAddresses = [CNLabeledValue(
+            label: CNLabelHome,
+            value: NSString(string: prospect.contactEmail)
+        )]
+
+        let postal = CNMutablePostalAddress()
+        postal.street = prospect.address
+        contact.postalAddresses = [CNLabeledValue(label: CNLabelHome, value: postal)]
+
+        let saveRequest = CNSaveRequest()
+        saveRequest.add(contact, toContainerWithIdentifier: nil)
+
+        do {
+            let store = CNContactStore()
+            try store.requestAccess(for: .contacts) { granted, error in
+                if granted {
+                    do {
+                        try store.execute(saveRequest)
+                        print("✅ Contact saved")
+                    } catch {
+                        print("❌ Failed to save contact: \(error)")
+                    }
+                } else {
+                    print("❌ Access to contacts denied")
+                }
+            }
+        }
+    }
+    
+    @discardableResult
+    private func validatePhoneNumber() -> Bool {
+        let raw = tempPhone.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else {
+            phoneError = nil
+            return true
+        }
+
+        let utility = PhoneNumberUtility()  // correct class in v4
+        do {
+            _ = try utility.parse(raw)       // parse + validation
+            phoneError = nil
+            return true
+        } catch {
+            phoneError = "Invalid phone number."
+            return false
+        }
+    }
+    
     private func deleteProspect() {
         // 1. Delete the prospect from SwiftData
         modelContext.delete(prospect)
@@ -180,5 +275,13 @@ struct EditProspectView: View {
 
         // 2. Dismiss the view
         presentationMode.wrappedValue.dismiss()
+    }
+}
+
+extension CNPostalAddress {
+    func apply(_ modify: (inout CNPostalAddress) -> Void) -> CNPostalAddress {
+        var copy = self
+        modify(&copy)
+        return copy
     }
 }

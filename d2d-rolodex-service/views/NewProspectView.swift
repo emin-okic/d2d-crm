@@ -5,6 +5,8 @@
 //  Created by Emin Okic on 5/30/25.
 //
 import SwiftUI
+import MapKit
+import PhoneNumberKit
 
 struct NewProspectView: View {
     @Environment(\.modelContext) private var modelContext
@@ -16,14 +18,51 @@ struct NewProspectView: View {
     @State private var contactPhone = ""
     @State private var contactEmail = ""
 
+    @State private var phoneError: String?
+
+    @StateObject private var searchVM = SearchCompleterViewModel()
+    @FocusState private var isAddressFocused: Bool
+
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("New Prospect Info")) {
                     TextField("Full Name", text: $fullName)
-                    TextField("Address", text: $address)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        TextField("Address", text: $address)
+                            .focused($isAddressFocused)
+                            .onChange(of: address) { searchVM.updateQuery($0) }
+
+                        if isAddressFocused && !searchVM.results.isEmpty {
+                            ForEach(searchVM.results.prefix(3), id: \.self) { result in
+                                Button {
+                                    handleAddressSelection(result)
+                                } label: {
+                                    VStack(alignment: .leading) {
+                                        Text(result.title).bold()
+                                        Text(result.subtitle)
+                                            .font(.subheadline)
+                                            .foregroundColor(.gray)
+                                    }
+                                    .padding(.vertical, 6)
+                                }
+                            }
+                        }
+                    }
+
                     TextField("Phone (Optional)", text: $contactPhone)
                         .keyboardType(.phonePad)
+                        .onChange(of: contactPhone) { _ in
+                            validatePhoneNumber()
+                        }
+
+                    if let phoneError = phoneError {
+                        Text(phoneError)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
+
                     TextField("Email (Optional)", text: $contactEmail)
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
@@ -33,16 +72,18 @@ struct NewProspectView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        let newProspect = Prospect(
-                            fullName: fullName,
-                            address: address,
-                            count: 0,
-                            list: selectedList
-                        )
-                        newProspect.contactPhone = contactPhone
-                        newProspect.contactEmail = contactEmail
-                        modelContext.insert(newProspect)
-                        onSave()
+                        if validatePhoneNumber() {
+                            let newProspect = Prospect(
+                                fullName: fullName,
+                                address: address,
+                                count: 0,
+                                list: selectedList
+                            )
+                            newProspect.contactPhone = contactPhone
+                            newProspect.contactEmail = contactEmail
+                            modelContext.insert(newProspect)
+                            onSave()
+                        }
                     }
                     .disabled(fullName.isEmpty || address.isEmpty)
                 }
@@ -53,6 +94,38 @@ struct NewProspectView: View {
                     }
                 }
             }
+        }
+    }
+
+    private func handleAddressSelection(_ result: MKLocalSearchCompletion) {
+        let request = MKLocalSearch.Request(completion: result)
+        MKLocalSearch(request: request).start { response, _ in
+            guard let item = response?.mapItems.first else { return }
+
+            DispatchQueue.main.async {
+                address = item.placemark.title ?? result.title
+                searchVM.results = []
+                isAddressFocused = false
+            }
+        }
+    }
+
+    @discardableResult
+    private func validatePhoneNumber() -> Bool {
+        let raw = contactPhone.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else {
+            phoneError = nil
+            return true
+        }
+
+        let utility = PhoneNumberUtility()
+        do {
+            _ = try utility.parse(raw)
+            phoneError = nil
+            return true
+        } catch {
+            phoneError = "Invalid phone number."
+            return false
         }
     }
 }
