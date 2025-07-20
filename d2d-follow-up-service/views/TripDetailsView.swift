@@ -1,5 +1,5 @@
 //
-//  EditTripView.swift
+//  TripDetailsView.swift
 //  d2d-map-service
 //
 //  Created by Emin Okic on 6/19/25.
@@ -7,7 +7,7 @@
 import SwiftUI
 import SwiftData
 
-struct EditTripView: View {
+struct TripDetailsView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
@@ -29,7 +29,12 @@ struct EditTripView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Trip Details")) {
+                Section(header: Text("General Trip Details")) {
+                    
+                    TextField("Start Address", text: $startAddress)
+                    
+                    TextField("End Address", text: $endAddress)
+                    
                     // Prettified date picker bar
                     HStack {
                         Image(systemName: "calendar")
@@ -37,9 +42,6 @@ struct EditTripView: View {
                         DatePicker("Trip Date", selection: $date, displayedComponents: [.date])
                             .labelsHidden()
                     }
-                    
-                    TextField("Start Address", text: $startAddress)
-                    TextField("End Address", text: $endAddress)
                 }
                 
                 Section(header: Text("Route Details")) {
@@ -64,14 +66,13 @@ struct EditTripView: View {
                             }
                         }
                     }
-                    .buttonStyle(.borderedProminent)
 
                     Button("Cancel", role: .cancel) {
                         dismiss()
                     }
                 }
             }
-            .navigationTitle("Edit Trip")
+            .navigationTitle("Trip Details")
         }
     }
 }
