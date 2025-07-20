@@ -99,7 +99,7 @@ struct TripsSectionView: View {
             NewTripView { showingAddTrip = false }
         }
         .sheet(item: $selectedTrip) { trip in
-            EditTripView(trip: trip)
+            TripDetailsView(trip: trip)
         }
     }
 }
