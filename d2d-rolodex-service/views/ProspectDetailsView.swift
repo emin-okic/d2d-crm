@@ -32,6 +32,8 @@ struct ProspectDetailsView: View {
     @State private var showConversionSheet = false
     @State private var tempPhone: String = ""
     @State private var tempEmail: String = ""
+    
+    @State private var phoneError: String?
 
     var body: some View {
         Form {
@@ -39,7 +41,19 @@ struct ProspectDetailsView: View {
             Section(header: Text("Prospect Details")) {
                 TextField("Full Name", text: $prospect.fullName)
                 TextField("Address", text: $prospect.address)
-                TextField("Phone", text: $prospect.contactPhone)
+                
+                TextField("Phone", text: $tempPhone)
+                    .keyboardType(.phonePad)
+                    .onChange(of: tempPhone) { newValue in
+                        validatePhoneNumber()
+                    }
+
+                if let phoneError = phoneError {
+                    Text(phoneError)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                }
+                
                 TextField("Email", text: $prospect.contactEmail)
             }
             
@@ -129,9 +143,15 @@ struct ProspectDetailsView: View {
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") {
-                    presentationMode.wrappedValue.dismiss()
+                    if validatePhoneNumber() {
+                        prospect.contactPhone = tempPhone
+                        presentationMode.wrappedValue.dismiss()
+                    }
                 }
             }
+        }
+        .onAppear {
+            tempPhone = prospect.contactPhone
         }
         .sheet(isPresented: $showConversionSheet) {
             NavigationView {
@@ -165,6 +185,21 @@ struct ProspectDetailsView: View {
                     }
                 }
             }
+        }
+    }
+    
+    @discardableResult
+    private func validatePhoneNumber() -> Bool {
+        let digits = tempPhone.filter(\.isNumber)
+        if digits.isEmpty {
+            phoneError = nil
+            return true
+        } else if digits.count != 10 {
+            phoneError = "Phone number must be 10 digits."
+            return false
+        } else {
+            phoneError = nil
+            return true
         }
     }
     
