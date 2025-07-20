@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import PhoneNumberKit
 
 /// A view for editing the details of an existing `Prospect`.
 ///
@@ -190,16 +191,20 @@ struct ProspectDetailsView: View {
     
     @discardableResult
     private func validatePhoneNumber() -> Bool {
-        let digits = tempPhone.filter(\.isNumber)
-        if digits.isEmpty {
+        let raw = tempPhone.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else {
             phoneError = nil
             return true
-        } else if digits.count != 10 {
-            phoneError = "Phone number must be 10 digits."
+        }
+
+        let utility = PhoneNumberUtility()  // correct class in v4
+        do {
+            _ = try utility.parse(raw)       // parse + validation
+            phoneError = nil
+            return true
+        } catch {
+            phoneError = "Invalid phone number."
             return false
-        } else {
-            phoneError = nil
-            return true
         }
     }
     

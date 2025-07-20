@@ -12,6 +12,8 @@
 		C5E6A7202E2BE6CD00EC05F4 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C5E6A71F2E2BE6CD00EC05F4 /* WidgetKit.framework */; };
 		C5E6A7222E2BE6CD00EC05F4 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C5E6A7212E2BE6CD00EC05F4 /* SwiftUI.framework */; };
 		C5E6A72F2E2BE6CD00EC05F4 /* d2d-widget-serviceExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C5E6A71D2E2BE6CD00EC05F4 /* d2d-widget-serviceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C5FB3DCB2E2D81FD00586E5D /* PhoneNumberKit in Frameworks */ = {isa = PBXBuildFile; productRef = C5FB3DCA2E2D81FD00586E5D /* PhoneNumberKit */; };
+		C5FB3DCF2E2D81FD00586E5D /* PhoneNumberKit-Static in Frameworks */ = {isa = PBXBuildFile; productRef = C5FB3DCE2E2D81FD00586E5D /* PhoneNumberKit-Static */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -48,6 +50,26 @@
 				C5E6A72F2E2BE6CD00EC05F4 /* d2d-widget-serviceExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C5FB3DD72E2D848700586E5D /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C5FB3DD92E2D849300586E5D /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -138,7 +160,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C5FB3DCF2E2D81FD00586E5D /* PhoneNumberKit-Static in Frameworks */,
 				C53F34042DE9E60900372BEE /* SQLite in Frameworks */,
+				C5FB3DCB2E2D81FD00586E5D /* PhoneNumberKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -229,6 +253,7 @@
 				C5BE4B312DE7CC9E005C37B1 /* Frameworks */,
 				C5BE4B322DE7CC9E005C37B1 /* Resources */,
 				C5E6A7302E2BE6CD00EC05F4 /* Embed Foundation Extensions */,
+				C5FB3DD92E2D849300586E5D /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -245,6 +270,8 @@
 			name = "d2d-studio";
 			packageProductDependencies = (
 				C53F34032DE9E60900372BEE /* SQLite */,
+				C5FB3DCA2E2D81FD00586E5D /* PhoneNumberKit */,
+				C5FB3DCE2E2D81FD00586E5D /* PhoneNumberKit-Static */,
 			);
 			productName = "d2d-map-service";
 			productReference = C5BE4B342DE7CC9E005C37B1 /* d2d-studio.app */;
@@ -303,6 +330,7 @@
 				C5E6A7192E2BE6CD00EC05F4 /* Sources */,
 				C5E6A71A2E2BE6CD00EC05F4 /* Frameworks */,
 				C5E6A71B2E2BE6CD00EC05F4 /* Resources */,
+				C5FB3DD72E2D848700586E5D /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -355,6 +383,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				C53F34022DE9E5D900372BEE /* XCRemoteSwiftPackageReference "SQLite" */,
+				C5FB3DC92E2D81FD00586E5D /* XCRemoteSwiftPackageReference "PhoneNumberKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C5BE4B352DE7CC9E005C37B1 /* Products */;
@@ -857,6 +886,14 @@
 				minimumVersion = 0.15.3;
 			};
 		};
+		C5FB3DC92E2D81FD00586E5D /* XCRemoteSwiftPackageReference "PhoneNumberKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/marmelroy/PhoneNumberKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.1.3;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -864,6 +901,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C53F34022DE9E5D900372BEE /* XCRemoteSwiftPackageReference "SQLite" */;
 			productName = SQLite;
+		};
+		C5FB3DCA2E2D81FD00586E5D /* PhoneNumberKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5FB3DC92E2D81FD00586E5D /* XCRemoteSwiftPackageReference "PhoneNumberKit" */;
+			productName = PhoneNumberKit;
+		};
+		C5FB3DCE2E2D81FD00586E5D /* PhoneNumberKit-Static */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5FB3DC92E2D81FD00586E5D /* XCRemoteSwiftPackageReference "PhoneNumberKit" */;
+			productName = "PhoneNumberKit-Static";
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
