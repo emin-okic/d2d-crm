@@ -8,6 +8,7 @@
 
 import SwiftUI
 import MessageUI
+import Contacts
 
 struct ProspectActionsToolbar: View {
     @Bindable var prospect: Prospect
@@ -41,6 +42,11 @@ struct ProspectActionsToolbar: View {
                 } else {
                     showEmailConfirmation = true
                 }
+            }
+            
+            // Export Contact
+            iconButton(systemName: "person.crop.circle.badge.plus") {
+                exportToContacts()
             }
 
             // More
@@ -193,5 +199,46 @@ struct ProspectActionsToolbar: View {
         let digits = raw.filter(\.isNumber)
         guard digits.count == 10 else { return raw }
         return "(\(digits.prefix(3))) \(digits.dropFirst(3).prefix(3))-\(digits.suffix(4))"
+    }
+
+    private func exportToContacts() {
+        let contact = CNMutableContact()
+        contact.givenName = prospect.fullName
+
+        if !prospect.contactPhone.isEmpty {
+            contact.phoneNumbers = [CNLabeledValue(
+                label: CNLabelPhoneNumberMobile,
+                value: CNPhoneNumber(stringValue: prospect.contactPhone)
+            )]
+        }
+
+        if !prospect.contactEmail.isEmpty {
+            contact.emailAddresses = [CNLabeledValue(
+                label: CNLabelHome,
+                value: NSString(string: prospect.contactEmail)
+            )]
+        }
+
+        let postal = CNMutablePostalAddress()
+        postal.street = prospect.address
+        contact.postalAddresses = [CNLabeledValue(label: CNLabelHome, value: postal)]
+
+        let saveRequest = CNSaveRequest()
+        saveRequest.add(contact, toContainerWithIdentifier: nil)
+
+        let store = CNContactStore()
+        store.requestAccess(for: .contacts) { granted, error in
+            guard granted else {
+                print("❌ Access to contacts denied")
+                return
+            }
+
+            do {
+                try store.execute(saveRequest)
+                print("✅ Contact saved")
+            } catch {
+                print("❌ Failed to save contact: \(error)")
+            }
+        }
     }
 }

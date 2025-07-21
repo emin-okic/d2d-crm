@@ -115,13 +115,6 @@ struct ProspectDetailsView: View {
                 }
                 
                 Section {
-                    Button("Export to Contacts") {
-                        exportToContacts()
-                    }
-                    .foregroundColor(.blue)
-                }
-                
-                Section {
 
                     Button("Delete Prospect 🗑️") {
                         deleteProspect()
@@ -132,12 +125,6 @@ struct ProspectDetailsView: View {
             }
             
             if prospect.list == "Customers" {
-                Section {
-                    Button("Export to Contacts") {
-                        exportToContacts()
-                    }
-                    .foregroundColor(.blue)
-                }
                 
                 Section {
 
