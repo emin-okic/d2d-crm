@@ -114,27 +114,8 @@ struct ProspectDetailsView: View {
                     
                 }
                 
-                Section {
-
-                    Button("Delete Prospect 🗑️") {
-                        deleteProspect()
-                    }
-                    .foregroundColor(.red)
-                    
-                }
             }
             
-            if prospect.list == "Customers" {
-                
-                Section {
-
-                    Button("Delete Customer 🗑️") {
-                        deleteProspect()
-                    }
-                    .foregroundColor(.red)
-                    
-                }
-            }
         }
         .navigationTitle("Edit Contact")
         .toolbar {

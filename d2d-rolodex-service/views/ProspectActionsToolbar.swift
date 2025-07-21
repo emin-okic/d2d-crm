@@ -21,8 +21,8 @@ struct ProspectActionsToolbar: View {
     @State private var showAddEmailSheet = false
     @State private var newEmail = ""
     @State private var showEmailConfirmation = false
-
-    @State private var showingMoreActions = false
+    
+    @State private var showDeleteConfirmation = false
 
     var body: some View {
         HStack(spacing: 24) {
@@ -48,13 +48,25 @@ struct ProspectActionsToolbar: View {
             iconButton(systemName: "person.crop.circle.badge.plus") {
                 exportToContacts()
             }
-
-            // More
-            iconButton(systemName: "ellipsis.circle") {
-                showingMoreActions = true
+            
+            // Delete Contact
+            iconButton(systemName: "trash.fill") {
+                showDeleteConfirmation = true
             }
         }
         .padding(.vertical, 8)
+        
+        // Delete confirmation
+        .confirmationDialog(
+            "Are you sure you want to delete this contact?",
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                deleteProspect()
+            }
+            Button("Cancel", role: .cancel) { }
+        }
 
         // Phone confirmation
         .confirmationDialog(
@@ -165,22 +177,6 @@ struct ProspectActionsToolbar: View {
                 }
             }
         }
-
-        // More Actions
-        .actionSheet(isPresented: $showingMoreActions) {
-            ActionSheet(
-                title: Text("More Actions"),
-                buttons: [
-                    .default(Text("Edit Contact")) {
-                        // TODO
-                    },
-                    .destructive(Text("Delete Prospect")) {
-                        // TODO
-                    },
-                    .cancel()
-                ]
-            )
-        }
     }
 
     private func iconButton(systemName: String, action: @escaping () -> Void) -> some View {
@@ -239,6 +235,22 @@ struct ProspectActionsToolbar: View {
             } catch {
                 print("❌ Failed to save contact: \(error)")
             }
+        }
+    }
+    
+    private func deleteProspect() {
+        modelContext.delete(prospect)
+
+        do {
+            try modelContext.save()
+            DispatchQueue.main.async {
+                if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let root = scene.windows.first?.rootViewController {
+                    root.dismiss(animated: true)
+                }
+            }
+        } catch {
+            print("❌ Failed to delete contact: \(error)")
         }
     }
 }
