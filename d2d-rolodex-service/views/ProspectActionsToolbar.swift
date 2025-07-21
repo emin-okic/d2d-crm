@@ -198,6 +198,58 @@ struct ProspectActionsToolbar: View {
                 }
             }
         }
+        
+        // Add Phone Validation
+        .sheet(isPresented: $showAddPhoneSheet) {
+            NavigationView {
+                VStack(spacing: 16) {
+                    Text("Add Phone Number")
+                        .font(.headline)
+
+                    TextField("Enter phone number", text: $newPhone)
+                        .keyboardType(.phonePad)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                        .padding()
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(12)
+                        .onChange(of: newPhone) { _ in
+                            validatePhoneNumber()
+                        }
+
+                    if let error = phoneError {
+                        Text(error)
+                            .foregroundColor(.red)
+                    }
+
+                    Button("Save & Call") {
+                        if validatePhoneNumber() {
+                            prospect.contactPhone = newPhone
+                            try? modelContext.save()
+
+                            if let url = URL(string: "tel://\(newPhone.filter(\.isNumber))") {
+                                UIApplication.shared.open(url)
+                            }
+
+                            showAddPhoneSheet = false
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(newPhone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                    Spacer()
+                }
+                .padding()
+                .navigationTitle("Phone Number")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            showAddPhoneSheet = false
+                        }
+                    }
+                }
+            }
+        }
     }
     
     private func validatePhoneNumber() -> Bool {
