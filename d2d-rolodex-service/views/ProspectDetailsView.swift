@@ -42,6 +42,8 @@ struct ProspectDetailsView: View {
     @FocusState private var isAddressFieldFocused: Bool
     
     @State private var showAppointmentSheet = false
+    
+    @State private var selectedTab: ProspectTab = .appointments
 
     var body: some View {
         Form {
@@ -95,42 +97,41 @@ struct ProspectDetailsView: View {
                    ProspectActionsToolbar(prospect: prospect)
                }
             
-            // Appointments Section
-            Section(header: Text("Appointments")) {
-                let upcomingAppointments = prospect.appointments
-                    .filter { $0.date >= Date() }
-                    .sorted { $0.date < $1.date }
-                    .prefix(3)
-
-                if upcomingAppointments.isEmpty {
-                    Text("No upcoming follow-ups.")
-                        .foregroundColor(.gray)
-                } else {
-                    ForEach(upcomingAppointments) { appt in
-                        Text(appt.title + " at " + appt.date.formatted(date: .abbreviated, time: .shortened))
+            Section {
+                Picker("View", selection: $selectedTab) {
+                    ForEach(ProspectTab.allCases, id: \.self) { tab in
+                        Text(tab.rawValue).tag(tab)
                     }
                 }
+                .pickerStyle(.segmented)
+                .padding(.bottom)
 
-                Button {
-                    showAppointmentSheet = true
-                } label: {
-                    Label("Add Appointment", systemImage: "calendar.badge.plus")
-                }
-            }
+                switch selectedTab {
+                case .appointments:
+                    let upcomingAppointments = prospect.appointments
+                        .filter { $0.date >= Date() }
+                        .sorted { $0.date < $1.date }
+                        .prefix(3)
 
-            // MARK: - Knock History Section (Expandable)
-            Section {
-                DisclosureGroup(isExpanded: $showKnockHistory) {
+                    if upcomingAppointments.isEmpty {
+                        Text("No upcoming follow-ups.")
+                            .foregroundColor(.gray)
+                    } else {
+                        ForEach(upcomingAppointments) { appt in
+                            Text(appt.title + " at " + appt.date.formatted(date: .abbreviated, time: .shortened))
+                        }
+                    }
+
+                    Button {
+                        showAppointmentSheet = true
+                    } label: {
+                        Label("Add Appointment", systemImage: "calendar.badge.plus")
+                    }
+
+                case .knocks:
                     KnockingHistoryView(prospect: prospect)
-                } label: {
-                    Text("Knock History")
-                        .fontWeight(.semibold)
-                }
-            }
 
-            // MARK: - Notes Section (Expandable)
-            Section {
-                DisclosureGroup(isExpanded: $showNotes) {
+                case .notes:
                     let sortedNotes = prospect.notes.sorted { a, b in
                         a.date > b.date
                     }
@@ -147,11 +148,9 @@ struct ProspectDetailsView: View {
                     }
 
                     AddNoteView(prospect: prospect)
-                } label: {
-                    Text("Notes")
-                        .fontWeight(.semibold)
                 }
             }
+
             
         }
         .navigationTitle("Edit Contact")
@@ -304,4 +303,10 @@ extension CNPostalAddress {
         modify(&copy)
         return copy
     }
+}
+
+enum ProspectTab: String, CaseIterable {
+    case appointments = "Appointments"
+    case knocks = "Knocks"
+    case notes = "Notes"
 }
