@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 import PhoneNumberKit
 import Contacts
+import MapKit
 
 /// A view for editing the details of an existing `Prospect`.
 ///
@@ -36,59 +37,101 @@ struct ProspectDetailsView: View {
     @State private var tempEmail: String = ""
     
     @State private var phoneError: String?
+    
+    @StateObject private var searchViewModel = SearchCompleterViewModel()
+    @FocusState private var isAddressFieldFocused: Bool
+    
+    @State private var showAppointmentSheet = false
+    
+    @State private var selectedTab: ProspectTab = .appointments
 
     var body: some View {
         Form {
             // MARK: - Prospect Info Section
             Section(header: Text("Prospect Details")) {
                 TextField("Full Name", text: $prospect.fullName)
-                TextField("Address", text: $prospect.address)
                 
-                TextField("Phone", text: $tempPhone)
-                    .keyboardType(.phonePad)
-                    .onChange(of: tempPhone) { newValue in
-                        validatePhoneNumber()
-                    }
+                // Address with auto suggest
+                VStack(alignment: .leading, spacing: 0) {
+                    TextField("Address", text: $prospect.address)
+                        .focused($isAddressFieldFocused)
+                        .onChange(of: prospect.address) { newValue in
+                            searchViewModel.updateQuery(newValue)
+                        }
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.words)
 
-                if let phoneError = phoneError {
-                    Text(phoneError)
-                        .foregroundColor(.red)
-                        .font(.caption)
+                    if isAddressFieldFocused && !searchViewModel.results.isEmpty {
+                        VStack(spacing: 0) {
+                            ForEach(searchViewModel.results.prefix(3), id: \.self) { result in
+                                Button {
+                                    // Perform lookup and assign formatted address
+                                    fetchAddress(for: result)
+                                    isAddressFieldFocused = false
+                                } label: {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(result.title)
+                                            .font(.body)
+                                            .bold()
+                                            .lineLimit(1)
+
+                                        Text(result.subtitle)
+                                            .font(.subheadline)
+                                            .foregroundColor(.gray)
+                                            .lineLimit(1)
+                                    }
+                                    .padding()
+                                }
+                                .buttonStyle(.plain)
+
+                                Divider()
+                            }
+                        }
+                        .background(Color(.systemBackground))
+                    }
                 }
                 
-                TextField("Email", text: $prospect.contactEmail)
             }
             
-            // Appointments Section
-            Section(header: Text("Appointments")) {
-                let upcomingAppointments = prospect.appointments
-                    .filter { $0.date >= Date() }
-                    .sorted { $0.date < $1.date }
-                    .prefix(3) // Show at most 3
-
-                if upcomingAppointments.isEmpty {
-                    Text("No upcoming follow-ups.")
-                        .foregroundColor(.gray)
-                } else {
-                    ForEach(upcomingAppointments) { appt in
-                        Text(appt.title + " at " + appt.date.formatted(date: .abbreviated, time: .shortened))
+            Section {
+                   ProspectActionsToolbar(prospect: prospect)
+               }
+            
+            Section {
+                Picker("View", selection: $selectedTab) {
+                    ForEach(ProspectTab.allCases, id: \.self) { tab in
+                        Text(tab.rawValue).tag(tab)
                     }
                 }
-            }
+                .pickerStyle(.segmented)
+                .padding(.bottom)
 
-            // MARK: - Knock History Section (Expandable)
-            Section {
-                DisclosureGroup(isExpanded: $showKnockHistory) {
+                switch selectedTab {
+                case .appointments:
+                    let upcomingAppointments = prospect.appointments
+                        .filter { $0.date >= Date() }
+                        .sorted { $0.date < $1.date }
+                        .prefix(3)
+
+                    if upcomingAppointments.isEmpty {
+                        Text("No upcoming follow-ups.")
+                            .foregroundColor(.gray)
+                    } else {
+                        ForEach(upcomingAppointments) { appt in
+                            Text(appt.title + " at " + appt.date.formatted(date: .abbreviated, time: .shortened))
+                        }
+                    }
+
+                    Button {
+                        showAppointmentSheet = true
+                    } label: {
+                        Label("Add Appointment", systemImage: "calendar.badge.plus")
+                    }
+
+                case .knocks:
                     KnockingHistoryView(prospect: prospect)
-                } label: {
-                    Text("Knock History")
-                        .fontWeight(.semibold)
-                }
-            }
 
-            // MARK: - Notes Section (Expandable)
-            Section {
-                DisclosureGroup(isExpanded: $showNotes) {
+                case .notes:
                     let sortedNotes = prospect.notes.sorted { a, b in
                         a.date > b.date
                     }
@@ -105,58 +148,10 @@ struct ProspectDetailsView: View {
                     }
 
                     AddNoteView(prospect: prospect)
-                } label: {
-                    Text("Notes")
-                        .fontWeight(.semibold)
                 }
             }
-            
-            
-            if prospect.list == "Prospects" {
-                Section {
-                    Button("Sign Up") {
-                        tempPhone = prospect.contactPhone
-                        tempEmail = prospect.contactEmail
-                        showConversionSheet = true
-                    }
-                    .foregroundColor(.blue)
-                    
-                }
-                
-                Section {
-                    Button("Export to Contacts") {
-                        exportToContacts()
-                    }
-                    .foregroundColor(.blue)
-                }
-                
-                Section {
 
-                    Button("Delete Prospect 🗑️") {
-                        deleteProspect()
-                    }
-                    .foregroundColor(.red)
-                    
-                }
-            }
             
-            if prospect.list == "Customers" {
-                Section {
-                    Button("Export to Contacts") {
-                        exportToContacts()
-                    }
-                    .foregroundColor(.blue)
-                }
-                
-                Section {
-
-                    Button("Delete Customer 🗑️") {
-                        deleteProspect()
-                    }
-                    .foregroundColor(.red)
-                    
-                }
-            }
         }
         .navigationTitle("Edit Contact")
         .toolbar {
@@ -202,6 +197,30 @@ struct ProspectDetailsView: View {
                             showConversionSheet = false
                         }
                     }
+                }
+            }
+        }
+        .sheet(isPresented: $showAppointmentSheet) {
+            NavigationStack {
+                ScheduleAppointmentView(prospect: prospect)
+            }
+        }
+    }
+    
+    private func fetchAddress(for completion: MKLocalSearchCompletion) {
+        let request = MKLocalSearch.Request(completion: completion)
+        let search = MKLocalSearch(request: request)
+        search.start { response, error in
+            if let item = response?.mapItems.first {
+                // Use formatted full postal address
+                let postalAddress = item.placemark.postalAddress
+                if let postalAddress {
+                    let formatter = CNPostalAddressFormatter()
+                    let fullAddress = formatter.string(from: postalAddress).replacingOccurrences(of: "\n", with: ", ")
+                    prospect.address = fullAddress
+                } else {
+                    // Fallback to name or title
+                    prospect.address = item.name ?? completion.title
                 }
             }
         }
@@ -284,4 +303,10 @@ extension CNPostalAddress {
         modify(&copy)
         return copy
     }
+}
+
+enum ProspectTab: String, CaseIterable {
+    case appointments = "Appointments"
+    case knocks = "Knocks"
+    case notes = "Notes"
 }
