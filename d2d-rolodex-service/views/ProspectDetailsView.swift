@@ -44,20 +44,11 @@ struct ProspectDetailsView: View {
                 TextField("Full Name", text: $prospect.fullName)
                 TextField("Address", text: $prospect.address)
                 
-                TextField("Phone", text: $tempPhone)
-                    .keyboardType(.phonePad)
-                    .onChange(of: tempPhone) { newValue in
-                        validatePhoneNumber()
-                    }
-
-                if let phoneError = phoneError {
-                    Text(phoneError)
-                        .foregroundColor(.red)
-                        .font(.caption)
-                }
-                
-                TextField("Email", text: $prospect.contactEmail)
             }
+            
+            Section {
+                   ProspectActionsToolbar(prospect: prospect)
+               }
             
             // Appointments Section
             Section(header: Text("Appointments")) {
