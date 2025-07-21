@@ -23,6 +23,8 @@ struct ProspectActionsToolbar: View {
     @State private var showEmailConfirmation = false
     
     @State private var showDeleteConfirmation = false
+    
+    @State private var showCreateSaleSheet = false
 
     var body: some View {
         HStack(spacing: 24) {
@@ -41,6 +43,13 @@ struct ProspectActionsToolbar: View {
                     showAddEmailSheet = true
                 } else {
                     showEmailConfirmation = true
+                }
+            }
+            
+            // Create Sale
+            if prospect.list == "Prospects" {
+                iconButton(systemName: "cart.fill.badge.plus") {
+                    showCreateSaleSheet = true
                 }
             }
             
@@ -94,6 +103,44 @@ struct ProspectActionsToolbar: View {
                 }
             }
             Button("Cancel", role: .cancel) { }
+        }
+        
+        // Sign Up Sheet
+        .sheet(isPresented: $showCreateSaleSheet) {
+            NavigationView {
+                Form {
+                    Section(header: Text("Confirm Customer Info")) {
+                        TextField("Full Name", text: $prospect.fullName)
+                        TextField("Address", text: $prospect.address)
+                        TextField("Phone", text: Binding(
+                            get: { prospect.contactPhone },
+                            set: { prospect.contactPhone = $0 }
+                        ))
+                        TextField("Email", text: Binding(
+                            get: { prospect.contactEmail },
+                            set: { prospect.contactEmail = $0 }
+                        ))
+                    }
+
+                    Section {
+                        Button("Confirm Sale") {
+                            prospect.list = "Customers"
+                            try? modelContext.save()
+                            showCreateSaleSheet = false
+                        }
+                        .disabled(prospect.fullName.isEmpty || prospect.address.isEmpty)
+                    }
+                }
+                .navigationTitle("Create Sale")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            showCreateSaleSheet = false
+                        }
+                    }
+                }
+            }
         }
 
         // Add phone sheet

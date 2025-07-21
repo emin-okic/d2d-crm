@@ -102,20 +102,6 @@ struct ProspectDetailsView: View {
                 }
             }
             
-            
-            if prospect.list == "Prospects" {
-                Section {
-                    Button("Sign Up") {
-                        tempPhone = prospect.contactPhone
-                        tempEmail = prospect.contactEmail
-                        showConversionSheet = true
-                    }
-                    .foregroundColor(.blue)
-                    
-                }
-                
-            }
-            
         }
         .navigationTitle("Edit Contact")
         .toolbar {
