@@ -40,6 +40,8 @@ struct ProspectDetailsView: View {
     
     @StateObject private var searchViewModel = SearchCompleterViewModel()
     @FocusState private var isAddressFieldFocused: Bool
+    
+    @State private var showAppointmentSheet = false
 
     var body: some View {
         Form {
@@ -98,7 +100,7 @@ struct ProspectDetailsView: View {
                 let upcomingAppointments = prospect.appointments
                     .filter { $0.date >= Date() }
                     .sorted { $0.date < $1.date }
-                    .prefix(3) // Show at most 3
+                    .prefix(3)
 
                 if upcomingAppointments.isEmpty {
                     Text("No upcoming follow-ups.")
@@ -107,6 +109,12 @@ struct ProspectDetailsView: View {
                     ForEach(upcomingAppointments) { appt in
                         Text(appt.title + " at " + appt.date.formatted(date: .abbreviated, time: .shortened))
                     }
+                }
+
+                Button {
+                    showAppointmentSheet = true
+                } label: {
+                    Label("Add Appointment", systemImage: "calendar.badge.plus")
                 }
             }
 
@@ -191,6 +199,11 @@ struct ProspectDetailsView: View {
                         }
                     }
                 }
+            }
+        }
+        .sheet(isPresented: $showAppointmentSheet) {
+            NavigationStack {
+                ScheduleAppointmentView(prospect: prospect)
             }
         }
     }
