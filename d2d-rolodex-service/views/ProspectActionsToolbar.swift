@@ -50,7 +50,7 @@ struct ProspectActionsToolbar: View {
             }
             
             // Delete Contact
-            iconButton(systemName: "trash.fill") {
+            iconButton(systemName: "trash.fill", color: .red) {
                 showDeleteConfirmation = true
             }
         }
@@ -179,11 +179,11 @@ struct ProspectActionsToolbar: View {
         }
     }
 
-    private func iconButton(systemName: String, action: @escaping () -> Void) -> some View {
+    private func iconButton(systemName: String, color: Color = .accentColor, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
                 .font(.title2)
-                .foregroundColor(.accentColor)
+                .foregroundColor(color)
                 .frame(width: 44, height: 44)
                 .background(Color.clear)
                 .clipShape(Circle())
