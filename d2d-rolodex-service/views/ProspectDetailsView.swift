@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 import PhoneNumberKit
 import Contacts
+import MapKit
 
 /// A view for editing the details of an existing `Prospect`.
 ///
@@ -36,13 +37,55 @@ struct ProspectDetailsView: View {
     @State private var tempEmail: String = ""
     
     @State private var phoneError: String?
+    
+    @StateObject private var searchViewModel = SearchCompleterViewModel()
+    @FocusState private var isAddressFieldFocused: Bool
 
     var body: some View {
         Form {
             // MARK: - Prospect Info Section
             Section(header: Text("Prospect Details")) {
                 TextField("Full Name", text: $prospect.fullName)
-                TextField("Address", text: $prospect.address)
+                
+                // Address with auto suggest
+                VStack(alignment: .leading, spacing: 0) {
+                    TextField("Address", text: $prospect.address)
+                        .focused($isAddressFieldFocused)
+                        .onChange(of: prospect.address) { newValue in
+                            searchViewModel.updateQuery(newValue)
+                        }
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.words)
+
+                    if isAddressFieldFocused && !searchViewModel.results.isEmpty {
+                        VStack(spacing: 0) {
+                            ForEach(searchViewModel.results.prefix(3), id: \.self) { result in
+                                Button {
+                                    // Perform lookup and assign formatted address
+                                    fetchAddress(for: result)
+                                    isAddressFieldFocused = false
+                                } label: {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(result.title)
+                                            .font(.body)
+                                            .bold()
+                                            .lineLimit(1)
+
+                                        Text(result.subtitle)
+                                            .font(.subheadline)
+                                            .foregroundColor(.gray)
+                                            .lineLimit(1)
+                                    }
+                                    .padding()
+                                }
+                                .buttonStyle(.plain)
+
+                                Divider()
+                            }
+                        }
+                        .background(Color(.systemBackground))
+                    }
+                }
                 
             }
             
@@ -147,6 +190,25 @@ struct ProspectDetailsView: View {
                             showConversionSheet = false
                         }
                     }
+                }
+            }
+        }
+    }
+    
+    private func fetchAddress(for completion: MKLocalSearchCompletion) {
+        let request = MKLocalSearch.Request(completion: completion)
+        let search = MKLocalSearch(request: request)
+        search.start { response, error in
+            if let item = response?.mapItems.first {
+                // Use formatted full postal address
+                let postalAddress = item.placemark.postalAddress
+                if let postalAddress {
+                    let formatter = CNPostalAddressFormatter()
+                    let fullAddress = formatter.string(from: postalAddress).replacingOccurrences(of: "\n", with: ", ")
+                    prospect.address = fullAddress
+                } else {
+                    // Fallback to name or title
+                    prospect.address = item.name ?? completion.title
                 }
             }
         }
