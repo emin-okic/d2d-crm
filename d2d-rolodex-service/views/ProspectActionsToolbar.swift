@@ -15,12 +15,17 @@ struct ProspectActionsToolbar: View {
 
     @State private var showAddPhoneSheet = false
     @State private var newPhone = ""
-    @State private var showingMoreActions = false
     @State private var showCallConfirmation = false
+
+    @State private var showAddEmailSheet = false
+    @State private var newEmail = ""
+    @State private var showEmailConfirmation = false
+
+    @State private var showingMoreActions = false
 
     var body: some View {
         HStack(spacing: 24) {
-            // Phone Button
+            // Phone
             iconButton(systemName: "phone.fill") {
                 if prospect.contactPhone.isEmpty {
                     showAddPhoneSheet = true
@@ -29,21 +34,23 @@ struct ProspectActionsToolbar: View {
                 }
             }
 
-            // Email Button
+            // Email
             iconButton(systemName: "envelope.fill") {
-                if let email = prospect.contactEmail.nilIfEmpty,
-                   let url = URL(string: "mailto:\(email)"),
-                   UIApplication.shared.canOpenURL(url) {
-                    UIApplication.shared.open(url)
+                if prospect.contactEmail.nilIfEmpty == nil {
+                    showAddEmailSheet = true
+                } else {
+                    showEmailConfirmation = true
                 }
             }
 
-            // More Button
+            // More
             iconButton(systemName: "ellipsis.circle") {
                 showingMoreActions = true
             }
         }
         .padding(.vertical, 8)
+
+        // Phone confirmation
         .confirmationDialog(
             "Call \(formattedPhone(prospect.contactPhone))?",
             isPresented: $showCallConfirmation,
@@ -56,6 +63,22 @@ struct ProspectActionsToolbar: View {
             }
             Button("Cancel", role: .cancel) { }
         }
+
+        // Email confirmation
+        .confirmationDialog(
+            "Send email to \(prospect.contactEmail)?",
+            isPresented: $showEmailConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Compose Email") {
+                if let url = URL(string: "mailto:\(prospect.contactEmail)") {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        }
+
+        // Add phone sheet
         .sheet(isPresented: $showAddPhoneSheet) {
             NavigationView {
                 VStack(spacing: 16) {
@@ -94,15 +117,59 @@ struct ProspectActionsToolbar: View {
                 }
             }
         }
+
+        // Add email sheet
+        .sheet(isPresented: $showAddEmailSheet) {
+            NavigationView {
+                VStack(spacing: 16) {
+                    Text("Add Email Address")
+                        .font(.headline)
+
+                    TextField("Enter email", text: $newEmail)
+                        .keyboardType(.emailAddress)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .padding()
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(12)
+
+                    Button("Save & Compose") {
+                        prospect.contactEmail = newEmail
+                        try? modelContext.save()
+
+                        if let url = URL(string: "mailto:\(newEmail)") {
+                            UIApplication.shared.open(url)
+                        }
+
+                        showAddEmailSheet = false
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(newEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                    Spacer()
+                }
+                .padding()
+                .navigationTitle("Email Address")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            showAddEmailSheet = false
+                        }
+                    }
+                }
+            }
+        }
+
+        // More Actions
         .actionSheet(isPresented: $showingMoreActions) {
             ActionSheet(
                 title: Text("More Actions"),
                 buttons: [
                     .default(Text("Edit Contact")) {
-                        // TODO: handle edit
+                        // TODO
                     },
                     .destructive(Text("Delete Prospect")) {
-                        // TODO: handle deletion
+                        // TODO
                     },
                     .cancel()
                 ]
