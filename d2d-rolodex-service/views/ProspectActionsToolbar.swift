@@ -9,6 +9,7 @@
 import SwiftUI
 import MessageUI
 import Contacts
+import PhoneNumberKit
 
 struct ProspectActionsToolbar: View {
     @Bindable var prospect: Prospect
@@ -25,6 +26,8 @@ struct ProspectActionsToolbar: View {
     @State private var showDeleteConfirmation = false
     
     @State private var showCreateSaleSheet = false
+    
+    @State private var phoneError: String?
 
     var body: some View {
         HStack(spacing: 24) {
@@ -133,54 +136,25 @@ struct ProspectActionsToolbar: View {
                 }
                 .navigationTitle("Create Sale")
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            showCreateSaleSheet = false
-                        }
-                    }
-                }
             }
         }
 
         // Add phone sheet
-        .sheet(isPresented: $showAddPhoneSheet) {
-            NavigationView {
-                VStack(spacing: 16) {
-                    Text("Add Phone Number")
-                        .font(.headline)
-
-                    TextField("Enter phone number", text: $newPhone)
-                        .keyboardType(.phonePad)
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(12)
-
-                    Button("Save & Call") {
-                        prospect.contactPhone = newPhone
-                        try? modelContext.save()
-
-                        if let url = URL(string: "tel://\(newPhone.filter(\.isNumber))") {
-                            UIApplication.shared.open(url)
-                        }
-
-                        showAddPhoneSheet = false
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(newPhone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-
-                    Spacer()
+        .sheet(isPresented: $showCreateSaleSheet) {
+            CreateSaleView(
+                fullName: $prospect.fullName,
+                address: $prospect.address,
+                contactPhone: $prospect.contactPhone,
+                contactEmail: $prospect.contactEmail,
+                onConfirm: {
+                    prospect.list = "Customers"
+                    try? modelContext.save()
+                    showCreateSaleSheet = false
+                },
+                onCancel: {
+                    showCreateSaleSheet = false
                 }
-                .padding()
-                .navigationTitle("Phone Number")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            showAddPhoneSheet = false
-                        }
-                    }
-                }
-            }
+            )
         }
 
         // Add email sheet
@@ -223,6 +197,25 @@ struct ProspectActionsToolbar: View {
                     }
                 }
             }
+        }
+    }
+    
+    private func validatePhoneNumber() -> Bool {
+        let raw = newPhone.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else {
+            phoneError = nil
+            return true
+        }
+
+        let utility = PhoneNumberUtility()
+
+        do {
+            _ = try utility.parse(raw)
+            phoneError = nil
+            return true
+        } catch {
+            phoneError = "Invalid phone number."
+            return false
         }
     }
 
