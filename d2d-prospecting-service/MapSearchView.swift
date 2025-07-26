@@ -59,6 +59,11 @@ struct MapSearchView: View {
     
     @State private var isTappedAddressCustomer = false
     
+    @State private var selectedPlace: IdentifiablePlace?
+    @State private var showProspectPopup = false
+    
+    @State private var popupScreenPosition: CGPoint? = nil
+    
     private var hasSignedUp: Bool {
         prospects
             .flatMap { $0.knockHistory }
@@ -93,6 +98,28 @@ struct MapSearchView: View {
     var body: some View {
         ZStack {
             mapAndOverlayLayer
+            if showProspectPopup,
+               let place = selectedPlace,
+               let popupPoint = popupScreenPosition {
+
+                ProspectPopupView(
+                    place: place,
+                    onLogKnock: {
+                        pendingAddress = place.address
+                        isTappedAddressCustomer = place.list == "Customers"
+                        showOutcomePrompt = true
+                        showProspectPopup = false
+                    },
+                    onClose: {
+                        showProspectPopup = false
+                    }
+                )
+                .frame(width: 240)
+                .background(.ultraThinMaterial)
+                .cornerRadius(16)
+                .position(x: popupPoint.x, y: popupPoint.y)
+                .zIndex(999)
+            }
             if showKnockTutorial {
                 KnockTutorialView(
                     totalKnocks: totalKnocks,
@@ -206,6 +233,12 @@ struct MapSearchView: View {
         }
     }
     
+    private func freezePopupPosition(for place: IdentifiablePlace) {
+        guard let mapView = MapDisplayView.cachedMapView else { return }
+        let point = mapView.convert(place.location, toPointTo: mapView)
+        popupScreenPosition = point
+    }
+    
     func normalizedAddress(_ raw: String) -> String {
         let formatter = CNPostalAddressFormatter()
         let address = CNMutablePostalAddress()
@@ -225,9 +258,14 @@ struct MapSearchView: View {
                     region: $controller.region,
                     markers: controller.markers,
                     onMarkerTapped: { place in
-                        pendingAddress = place.address
-                        isTappedAddressCustomer = place.list == "Customers"
-                        showOutcomePrompt = true
+                        selectedPlace = place
+                        showProspectPopup = true
+
+                        // Get pixel position using MKMapView projection
+                        if let mapView = MapDisplayView.cachedMapView {
+                            let point = mapView.convert(place.location, toPointTo: mapView)
+                            popupScreenPosition = point
+                        }
                     },
                     onMapTapped: { coordinate in
                         tapManager.handleTap(at: coordinate)
