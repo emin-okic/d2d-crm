@@ -12,6 +12,8 @@ struct MapDisplayView: UIViewRepresentable {
     var markers: [IdentifiablePlace]
     var onMarkerTapped: (IdentifiablePlace) -> Void
     var onMapTapped: (CLLocationCoordinate2D) -> Void
+    
+    static var cachedMapView: MKMapView?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(onMarkerTapped: onMarkerTapped, onMapTapped: onMapTapped)
@@ -24,6 +26,7 @@ struct MapDisplayView: UIViewRepresentable {
         mapView.isZoomEnabled = true
         mapView.isScrollEnabled = true
         mapView.showsUserLocation = false
+        MapDisplayView.cachedMapView = mapView
 
         let tapGesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap(_:)))
         mapView.addGestureRecognizer(tapGesture)
