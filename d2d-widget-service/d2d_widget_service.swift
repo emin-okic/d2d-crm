@@ -59,7 +59,8 @@ struct d2d_widget_service: Widget {
                     .background()
             }
         }
-        .configurationDisplayName("My Widget")
-        .description("This is an example widget.")
+        .supportedFamilies([.systemMedium])
+        .configurationDisplayName("D2D Studio Widget")
+        .description("This is a widget for the d2d studio to check your appointments.")
     }
 }
