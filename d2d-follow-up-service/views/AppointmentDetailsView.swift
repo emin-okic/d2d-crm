@@ -64,12 +64,6 @@ struct AppointmentDetailsView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.red)
-
-                    Button("Keep Appointment") {
-                        dismiss()
-                    }
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(.bordered)
                 }
             }
             .padding()
