@@ -43,15 +43,14 @@ struct MapDisplayView: UIViewRepresentable {
     }
 
     func updateUIView(_ mapView: MKMapView, context: Context) {
-        // Keep mapView region in sync with SwiftUI state
+        // Sync region
         if abs(mapView.region.center.latitude - region.center.latitude) > 0.0001 ||
            abs(mapView.region.center.longitude - region.center.longitude) > 0.0001 ||
            abs(mapView.region.span.latitudeDelta - region.span.latitudeDelta) > 0.0001 ||
            abs(mapView.region.span.longitudeDelta - region.span.longitudeDelta) > 0.0001 {
             mapView.setRegion(region, animated: false)
         }
-        
-        // Update annotations if marker list changed
+        // Sync annotations
         let existing = mapView.annotations.compactMap { $0 as? IdentifiableAnnotation }
         let existingIds = Set(existing.map { $0.place.id })
         let newIds = Set(markers.map { $0.id })
@@ -83,8 +82,6 @@ struct MapDisplayView: UIViewRepresentable {
             guard let mapView = gesture.view as? MKMapView else { return }
             let point = gesture.location(in: mapView)
             let coordinate = mapView.convert(point, toCoordinateFrom: mapView)
-
-            // If user tapped away from any annotation, treat as map tap
             let tappedAnnotations = mapView.annotations(in: mapView.visibleMapRect).filter {
                 let viewPoint = mapView.convert((($0 as! MKAnnotation).coordinate), toPointTo: mapView)
                 return hypot(viewPoint.x - point.x, viewPoint.y - point.y) < 30
