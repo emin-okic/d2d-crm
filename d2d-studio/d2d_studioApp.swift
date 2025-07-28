@@ -35,6 +35,7 @@ struct d2d_studioApp: App {
                             NavigationStack {
                                 TodaysAppointmentsView()
                                     .navigationTitle("Today's Appointments")
+                                    .navigationBarTitleDisplayMode(.inline)
                                     .toolbar {
                                         ToolbarItem(placement: .cancellationAction) {
                                             Button("Done") {
