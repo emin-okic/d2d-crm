@@ -13,8 +13,10 @@ struct AppointmentDetailsView: View {
 
     let appointment: Appointment
 
-    // — NEW STATE —
+    // State for reschedule and cancel prompts
     @State private var showRescheduleSheet = false
+    @State private var showRescheduleConfirmation = false
+    @State private var showCancelConfirmation = false
     @State private var newDate: Date = Date()
 
     var body: some View {
@@ -56,26 +58,43 @@ struct AppointmentDetailsView: View {
 
                 Spacer()
 
-                // MARK: Actions
-                HStack(spacing: 16) {
-                    Button("Reschedule") {
-                        newDate = appointment.date
-                        showRescheduleSheet = true
-                    }
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(.bordered)
-
-                    Button(role: .destructive) {
-                        context.delete(appointment)
-                        try? context.save()
-                        dismiss()
+                // MARK: Actions (icon buttons with confirmation)
+                HStack(spacing: 32) {
+                    Button {
+                        showRescheduleConfirmation = true
                     } label: {
-                        Text("Cancel Appointment")
-                            .frame(maxWidth: .infinity)
+                        Image(systemName: "calendar.badge.clock")
+                            .font(.title2)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.red)
+                    .alert("Reschedule Appointment", isPresented: $showRescheduleConfirmation) {
+                        Button("Continue") {
+                            newDate = appointment.date
+                            showRescheduleSheet = true
+                        }
+                        Button("Cancel", role: .cancel) { }
+                    } message: {
+                        Text("Pick a new date and time for this appointment.")
+                    }
+
+                    Button {
+                        showCancelConfirmation = true
+                    } label: {
+                        Image(systemName: "trash.fill")
+                            .font(.title2)
+                            .foregroundColor(.red)
+                    }
+                    .alert("Cancel Appointment", isPresented: $showCancelConfirmation) {
+                        Button("Yes", role: .destructive) {
+                            context.delete(appointment)
+                            try? context.save()
+                            dismiss()
+                        }
+                        Button("No", role: .cancel) { }
+                    } message: {
+                        Text("This will permanently delete this appointment. Are you sure?")
+                    }
                 }
+                .padding(.bottom)
             }
             .padding()
             .navigationTitle("Appointment Details")
@@ -84,13 +103,12 @@ struct AppointmentDetailsView: View {
                     Button("Done") { dismiss() }
                 }
             }
-            // — NEW SHEET —
+            // Sheet for actually picking new date
             .sheet(isPresented: $showRescheduleSheet) {
                 RescheduleAppointmentView(
                     original: appointment,
                     newDate: $newDate
                 ) {
-                    // onSave: delete old, insert new, then close both
                     context.delete(appointment)
                     let recreated = Appointment(
                         title: appointment.title,
