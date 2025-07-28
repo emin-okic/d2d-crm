@@ -5,7 +5,6 @@
 //  Created by Emin Okic on 7/6/25.
 //
 
-
 import SwiftUI
 import SwiftData
 
@@ -37,6 +36,7 @@ struct AppointmentsSectionView: View {
                 }
             }
             .padding(.horizontal, 20)
+            .padding(.vertical, 10)
 
             if upcomingAppointments.isEmpty {
                 Text("No upcoming appointments.")
@@ -49,7 +49,6 @@ struct AppointmentsSectionView: View {
                         selectedAppointment = appointment
                     } label: {
                         VStack(alignment: .leading, spacing: 4) {
-                            
                             Text("Follow Up With \(appointment.prospect?.fullName ?? "Unknown")")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
@@ -57,7 +56,7 @@ struct AppointmentsSectionView: View {
                             Text(appointment.prospect?.address ?? "No Address")
                                 .font(.caption)
                                 .foregroundColor(.gray)
-                            
+
                             Text(appointment.date.formatted(date: .abbreviated, time: .shortened))
                                 .font(.caption)
                                 .foregroundColor(.gray)
@@ -72,21 +71,47 @@ struct AppointmentsSectionView: View {
         }
         .sheet(isPresented: $showingProspectPicker) {
             NavigationStack {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Schedule Follow Up")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .padding(.vertical, 10)
+                    Text("Choose a prospect to schedule your follow-up appointment")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .padding(.vertical, 10)
+                }
+                .padding(.horizontal)
+                .padding(.top)
+
                 List(prospects) { prospect in
                     Button {
                         selectedProspect = prospect
                         showingProspectPicker = false
                     } label: {
-                        VStack(alignment: .leading) {
+                        VStack(alignment: .leading, spacing: 4) {
                             Text(prospect.fullName)
                             Text(prospect.address)
                                 .font(.caption)
                                 .foregroundColor(.gray)
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 10)
+                        .padding(.horizontal)
+                        .background(Color.white)
+                        .cornerRadius(6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1.0)
+                        )
                     }
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
                 }
-                .navigationTitle("Choose Prospect")
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
             }
+            .background(Color.white.ignoresSafeArea())
         }
         .sheet(item: $selectedProspect) { prospect in
             ScheduleAppointmentView(prospect: prospect)

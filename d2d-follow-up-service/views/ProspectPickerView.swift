@@ -13,19 +13,24 @@ struct ProspectPickerView: View {
     let onSelect: (Prospect) -> Void
 
     var body: some View {
-        List(prospects) { prospect in
-            Button {
-                onSelect(prospect)
-                dismiss()
-            } label: {
-                VStack(alignment: .leading) {
-                    Text(prospect.fullName)
-                    Text(prospect.address)
-                        .font(.caption)
-                        .foregroundColor(.gray)
+        List {
+            ForEach(prospects) { prospect in
+                Button {
+                    onSelect(prospect)
+                    dismiss()
+                } label: {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(prospect.fullName)
+                            .font(.body)
+                        Text(prospect.address)
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.vertical, 10)                // extra vertical padding
                 }
             }
         }
-        .navigationTitle("Choose Prospect")
+        .listStyle(InsetGroupedListStyle())               // inset style for more breathing room
+        .navigationTitle("Schedule Follow Up")            // clearer, action-oriented title
     }
 }
