@@ -58,14 +58,14 @@ struct RootView: View {
                 }
             )
             .tabItem {
-                Label("CRM", systemImage: "person.3.fill")
+                Label("Contacts", systemImage: "person.3.fill")
             }
             .tag(1)
             
             FollowUpAssistantView(
             )
             .tabItem {
-                Label("Calendar", systemImage: "calendar")
+                Label("Pipeline", systemImage: "calendar")
             }
             .tag(2)
         }
