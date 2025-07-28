@@ -42,6 +42,9 @@ struct d2d_widget_serviceEntryView: View {
                 .font(.system(size: 32, weight: .bold))
         }
         .padding()
+        
+        // make the whole widget tappable
+        .widgetURL(URL(string: "d2dcrm://todaysappointments"))
     }
 }
 
