@@ -31,33 +31,7 @@ struct AppointmentDetailsView: View {
                         .foregroundColor(.secondary)
                 }
                 .padding(.top)
-
-                // MARK: Who & Where
-                VStack(alignment: .leading, spacing: 6) {
-                    Label(appointment.clientName, systemImage: "person.crop.circle")
-                        .font(.title3)
-                    Label(appointment.location, systemImage: "mappin.and.ellipse")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                // MARK: Notes
-                if !appointment.notes.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Notes")
-                            .font(.headline)
-                        ForEach(appointment.notes, id: \.self) { note in
-                            Text("• \(note)")
-                                .font(.body)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-
-                Spacer()
-
+                
                 // MARK: Actions (icon buttons with confirmation)
                 HStack(spacing: 32) {
                     Button {
@@ -95,6 +69,33 @@ struct AppointmentDetailsView: View {
                     }
                 }
                 .padding(.bottom)
+
+                // MARK: Who & Where
+                VStack(alignment: .leading, spacing: 6) {
+                    Label(appointment.clientName, systemImage: "person.crop.circle")
+                        .font(.title3)
+                    Label(appointment.location, systemImage: "mappin.and.ellipse")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                // MARK: Notes
+                if !appointment.notes.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Notes")
+                            .font(.title)
+                        ForEach(appointment.notes, id: \.self) { note in
+                            Text("• \(note)")
+                                .font(.body)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                Spacer()
+
             }
             .padding()
             .navigationTitle("Appointment Details")
