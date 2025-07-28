@@ -4,6 +4,7 @@
 //
 //  Created by Emin Okic on 5/30/25.
 //
+
 import SwiftUI
 import MapKit
 import CoreLocation
@@ -21,56 +22,59 @@ struct MapSearchView: View {
     @Query private var customers: [Customer]
 
     @StateObject private var controller: MapController
-    // @State private var searchText: String = ""
     @State private var pendingAddress: String?
     @State private var showOutcomePrompt = false
     @State private var showNoteInput = false
-    @State private var newNoteText = ""
     @State private var prospectToNote: Prospect?
-    
+
     @State private var showObjectionPicker = false
     @State private var objectionOptions: [Objection] = []
     @State private var selectedObjection: Objection?
     @Query private var objections: [Objection]
-    
+
     @State private var showConversionSheet = false
     @State private var prospectToConvert: Prospect?
-    
+
     @State private var showTripPrompt = false
     @State private var showTripPopup = false
-    
+
     @State private var showFollowUpSheet = false
     @State private var followUpAddress: String = ""
     @State private var followUpProspectName: String = ""
     @State private var showFollowUpPrompt = false
-    
+
     @State private var shouldAskForTripAfterFollowUp = false
-    
+
     @StateObject private var tapManager = MapTapAddressManager()
-    
+
     @State private var showingAddObjection = false
-    
+
     @AppStorage("hasSeenKnockTutorial") private var hasSeenKnockTutorial: Bool = false
     @State private var showKnockTutorial = false
-    
+
     @StateObject private var searchVM = SearchCompleterViewModel()
-    
+
     @FocusState private var isSearchFocused: Bool
-    
+
     @State private var isTappedAddressCustomer = false
-    
+
+    @State private var selectedPlace: IdentifiablePlace?
+    @State private var showProspectPopup = false
+
+    @State private var popupScreenPosition: CGPoint? = nil
+
+    @Environment(\.modelContext) private var modelContext
+
     private var hasSignedUp: Bool {
         prospects
             .flatMap { $0.knockHistory }
             .contains { $0.status == "Converted To Sale" }
     }
-    
+
     private var totalKnocks: Int {
         prospects.flatMap { $0.knockHistory }.count
     }
 
-    @Environment(\.modelContext) private var modelContext
-    
     private var averageKnocksPerCustomer: Int {
         let customerKnocks = prospects
             .filter { $0.list == "Customers" }
@@ -79,11 +83,11 @@ struct MapSearchView: View {
         return Int(Double(customerKnocks.reduce(0, +)) / Double(customerKnocks.count))
     }
 
-    init(searchText: Binding<String>,  // <-- ADD THIS
+    init(searchText: Binding<String>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
          addressToCenter: Binding<String?>) {
-        _searchText = searchText       // <-- ADD THIS
+        _searchText = searchText
         _region = region
         _selectedList = selectedList
         _addressToCenter = addressToCenter
@@ -91,147 +95,28 @@ struct MapSearchView: View {
     }
 
     var body: some View {
-        ZStack {
-            mapAndOverlayLayer
-            if showKnockTutorial {
-                KnockTutorialView(
-                    totalKnocks: totalKnocks,
-                    onDismiss: {
-                        withAnimation {
-                            showKnockTutorial = false
-                            hasSeenKnockTutorial = true
-                        }
-                    }
-                )
-            }
-        }
-        .onChange(of: searchText) { searchVM.updateQuery($0) }
-        .onAppear { updateMarkers() }
-        .onChange(of: prospects) { _ in updateMarkers() }
-        .onChange(of: selectedList) { _ in updateMarkers() }
-        .onChange(of: addressToCenter) { handleMapCenterChange(newAddress: $0) }
-        .onTapGesture {
-            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
-                                            to: nil, from: nil, for: nil)
-        }
-        .alert("Knock Outcome", isPresented: $showOutcomePrompt, actions: {
-            if !isTappedAddressCustomer {
-                Button("Converted To Sale") {
-                    handleKnockAndConvertToCustomer(status: "Converted To Sale")
-                }
-            }
-            Button("Wasn't Home") {
-                handleKnockAndPromptNote(status: "Wasn't Home")
-            }
-            Button("Follow Up Later") {
-                handleKnockAndPromptObjection(status: "Follow Up Later")
-            }
-            Button("Cancel", role: .cancel) {}
-        }, message: {
-            Text("Did someone answer at \(pendingAddress ?? "this address")?")
-        })
-        .sheet(isPresented: $showNoteInput) {
-            if let prospect = prospectToNote {
-                LogNoteView(
-                    prospect: prospect,
-                    objection: selectedObjection,
-                    pendingAddress: pendingAddress,
-                    onComplete: {
-                        followUpAddress = prospect.address
-                        followUpProspectName = prospect.fullName
-                        selectedObjection = nil
-                        showFollowUpPrompt = true
-                    }
-                )
-            }
-        }
-        .sheet(isPresented: $showObjectionPicker) {
-            NavigationView {
-                List(objectionOptions) { obj in
-                    Button(action: {
-                        selectedObjection = obj
-                        obj.timesHeard += 1
-                        try? modelContext.save()
-                        showObjectionPicker = false
-                        showNoteInput = true
-                    }) {
-                        VStack(alignment: .leading) {
-                            Text(obj.text).font(.headline)
-                        }.padding(.vertical, 4)
-                    }
-                }
-                .navigationTitle("Why not interested?")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            showObjectionPicker = false
-                        }
-                    }
-                }
-            }
-        }
-        .sheet(isPresented: $showingAddObjection) {
-            AddObjectionView()
-        }
-        .alert("Schedule Follow-Up?", isPresented: $showFollowUpPrompt) {
-            Button("Yes") { showFollowUpSheet = true }
-            Button("No", role: .cancel) {
-                showTripPrompt = true
-            }
-        } message: {
-            Text("Would you like to schedule a follow-up for \(followUpProspectName)?")
-        }
-        .sheet(isPresented: $showFollowUpSheet, onDismiss: {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                showTripPrompt = true
-            }
-        }) {
-            if let prospect = prospectToNote {
-                FollowUpScheduleView(prospect: prospect)
-            }
-        }
-        .alert("Do you want to log a trip?", isPresented: $showTripPrompt) {
-            Button("Yes") { showTripPopup = true }
-            Button("No", role: .cancel) {}
-        }
-        .sheet(isPresented: $showTripPopup) {
-            if let addr = pendingAddress {
-                LogTripPopupView(endAddress: addr)
-            }
-        }
-        .sheet(isPresented: $showConversionSheet) {
-            if let prospect = prospectToConvert {
-                SignUpPopupView(prospect: prospect, isPresented: $showConversionSheet)
-            }
-        }
-    }
-    
-    func normalizedAddress(_ raw: String) -> String {
-        let formatter = CNPostalAddressFormatter()
-        let address = CNMutablePostalAddress()
-        
-        let parts = raw.components(separatedBy: ",")
-        if parts.count > 0 { address.street = parts[0].trimmingCharacters(in: .whitespaces) }
-        if parts.count > 1 { address.city = parts[1].trimmingCharacters(in: .whitespaces) }
-        if parts.count > 2 { address.state = parts[2].trimmingCharacters(in: .whitespaces) }
-        
-        return formatter.string(from: address).lowercased().replacingOccurrences(of: "\n", with: " ")
-    }
-    
-    private var mapAndOverlayLayer: some View {
-        ZStack(alignment: .topTrailing) {
-            VStack(spacing: 12) {
+        GeometryReader { geo in
+            ZStack(alignment: .topLeading) {
                 MapDisplayView(
                     region: $controller.region,
                     markers: controller.markers,
                     onMarkerTapped: { place in
-                        pendingAddress = place.address
-                        isTappedAddressCustomer = place.list == "Customers"
-                        showOutcomePrompt = true
+                        selectedPlace = place
+                        showProspectPopup = true
+                        if let mapView = MapDisplayView.cachedMapView {
+                            let raw = mapView.convert(place.location, toPointTo: mapView)
+                            let popupW: CGFloat = 240
+                            let halfW = popupW/2
+                            let halfH: CGFloat = 60
+                            let offsetY = halfH + 14
+                            let x = min(max(raw.x, halfW), geo.size.width-halfW)
+                            let y = min(max(raw.y-offsetY, halfH), geo.size.height-halfH)
+                            popupScreenPosition = CGPoint(x: x, y: y)
+                        }
                     },
                     onMapTapped: { coordinate in
                         tapManager.handleTap(at: coordinate)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        DispatchQueue.main.asyncAfter(deadline: .now()+0.6) {
                             let tapped = tapManager.tappedAddress
                             if !tapped.isEmpty {
                                 pendingAddress = tapped
@@ -242,173 +127,165 @@ struct MapSearchView: View {
                                 showOutcomePrompt = true
                             }
                         }
+                    },
+                    onRegionChange: { newRegion in
+                        controller.region = newRegion
+                        // close popup on any pan/zoom
+                        if showProspectPopup { showProspectPopup = false }
                     }
                 )
                 .frame(maxHeight: .infinity)
                 .edgesIgnoringSafeArea(.horizontal)
 
-                Spacer()
-            }
+                ScorecardBar(totalKnocks: totalKnocks,
+                             avgKnocksPerSale: averageKnocksPerCustomer,
+                             hasSignedUp: hasSignedUp)
 
-            // Scorecard at top right
-            ScorecardBar(
-                totalKnocks: totalKnocks,
-                avgKnocksPerSale: averageKnocksPerCustomer,
-                hasSignedUp: hasSignedUp
-            )
-
-            // Search bar + Zoom buttons at bottom
-            VStack {
-                Spacer()
-                HStack {
+                VStack {
                     Spacer()
-
-                    VStack(spacing: 10) {
-                        Button(action: { zoom(by: 0.5) }) {
-                            Image(systemName: "plus.magnifyingglass")
-                                .padding()
-                                .background(Color.white)
-                                .clipShape(Circle())
-                                .shadow(radius: 3)
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 10) {
+                            Button { zoom(by: 0.5) } label: {
+                                Image(systemName: "plus.magnifyingglass").padding()
+                                    .background(Color.white).clipShape(Circle()).shadow(radius: 3)
+                            }
+                            Button { zoom(by: 2.0) } label: {
+                                Image(systemName: "minus.magnifyingglass").padding()
+                                    .background(Color.white).clipShape(Circle()).shadow(radius: 3)
+                            }
                         }
-
-                        Button(action: { zoom(by: 2.0) }) {
-                            Image(systemName: "minus.magnifyingglass")
-                                .padding()
-                                .background(Color.white)
-                                .clipShape(Circle())
-                                .shadow(radius: 3)
-                        }
+                        .padding(.trailing,20).padding(.bottom,20)
                     }
-                    .padding(.trailing, 20)
-                    .padding(.bottom, 20)
+                    SearchBarView(searchText: $searchText,
+                                  isFocused: $isSearchFocused,
+                                  viewModel: searchVM,
+                                  onSubmit: { submitSearch() },
+                                  onSelectResult: { handleCompletionTap($0) })
                 }
 
-                SearchBarView(
-                    searchText: $searchText,
-                    isFocused: $isSearchFocused,
-                    viewModel: searchVM,
-                    onSubmit: { submitSearch() },
-                    onSelectResult: { handleCompletionTap($0) }
-                )
+                if showProspectPopup, let place = selectedPlace, let pos = popupScreenPosition {
+                    ProspectPopupView(place: place,
+                                      onLogKnock: {
+                                          pendingAddress = place.address
+                                          isTappedAddressCustomer = place.list=="Customers"
+                                          showOutcomePrompt=true
+                                          showProspectPopup=false
+                                      },
+                                      onClose: { showProspectPopup=false })
+                    .frame(width:240).background(.ultraThinMaterial)
+                    .cornerRadius(16).position(pos).zIndex(999)
+                }
+                if showKnockTutorial {
+                    KnockTutorialView(totalKnocks: totalKnocks) {
+                        withAnimation { showKnockTutorial=false; hasSeenKnockTutorial=true }
+                    }
+                }
             }
         }
+        .onChange(of: searchText) { searchVM.updateQuery($0) }
+        .onAppear { updateMarkers() }
+        .onChange(of: prospects) { _ in updateMarkers() }
+        .onChange(of: selectedList) { _ in updateMarkers() }
+        .onChange(of: addressToCenter) { handleMapCenterChange(newAddress: $0) }
+        .onTapGesture {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                            to:nil,from:nil,for:nil)
+        }
+        .alert("Knock Outcome",isPresented:$showOutcomePrompt) {
+            if !isTappedAddressCustomer {
+                Button("Converted To Sale"){ handleKnockAndConvertToCustomer(status:"Converted To Sale") }
+            }
+            Button("Wasn't Home"){ handleKnockAndPromptNote(status:"Wasn't Home") }
+            Button("Follow-Up Later"){ handleKnockAndPromptObjection(status:"Follow Up Later") }
+            Button("Cancel",role:.cancel){}
+        } message: { Text("Did someone answer at \(pendingAddress ?? "this address")?") }
+        .sheet(isPresented:$showNoteInput){ if let prospect=prospectToNote { LogNoteView(prospect:prospect,
+                                                                                       objection:selectedObjection,
+                                                                                       pendingAddress:pendingAddress) {
+            followUpAddress=prospect.address; followUpProspectName=prospect.fullName; selectedObjection=nil; showFollowUpPrompt=true
+        } }}
+        .sheet(isPresented:$showObjectionPicker){ NavigationView{ List(objectionOptions){ obj in
+            Button(obj.text){ selectedObjection=obj; obj.timesHeard+=1; try? modelContext.save(); showObjectionPicker=false; showNoteInput=true }
+        }.navigationTitle("Why not interested?")
+          .toolbar{ ToolbarItem(placement:.cancellationAction){ Button("Cancel"){ showObjectionPicker=false } } } } }
+        .sheet(isPresented:$showingAddObjection){ AddObjectionView() }
+        .alert("Schedule Follow-Up?",isPresented:$showFollowUpPrompt){ Button("Yes"){ showFollowUpSheet=true }
+                                                                  Button("No",role:.cancel){ showTripPrompt=true } } message:
+              { Text("Schedule follow-up for \(followUpProspectName)?") }
+        .sheet(isPresented:$showFollowUpSheet,onDismiss:{ DispatchQueue.main.asyncAfter(deadline:.now()+0.3){ showTripPrompt=true } }){
+            if let prospect=prospectToNote { FollowUpScheduleView(prospect:prospect) } }
+        .alert("Log a trip?",isPresented:$showTripPrompt){ Button("Yes"){ showTripPopup=true }
+                                                      Button("No",role:.cancel){} }
+        .sheet(isPresented:$showTripPopup){ if let addr=pendingAddress { LogTripPopupView(endAddress:addr) } }
+        .sheet(isPresented:$showConversionSheet){ if let prospect=prospectToConvert { SignUpPopupView(prospect:prospect,isPresented:$showConversionSheet) } }
     }
-    
+
     private func zoom(by factor: Double) {
-        let currentSpan = controller.region.span
-        let newSpan = MKCoordinateSpan(latitudeDelta: currentSpan.latitudeDelta * factor,
-                                       longitudeDelta: currentSpan.longitudeDelta * factor)
+        // update region
+        let span = controller.region.span
+        let newSpan = MKCoordinateSpan(latitudeDelta: span.latitudeDelta * factor,
+                                       longitudeDelta: span.longitudeDelta * factor)
         controller.region = MKCoordinateRegion(center: controller.region.center, span: newSpan)
+        // close popup when zoom buttons pressed
+        showProspectPopup = false
     }
-    
+
     private func handleMapCenterChange(newAddress: String?) {
         guard let query = newAddress else { return }
         Task {
-            if let coordinate = await controller.geocodeAddress(query) {
+            if let coord = await controller.geocodeAddress(query) {
                 withAnimation {
-                    controller.region = MKCoordinateRegion(
-                        center: coordinate,
-                        latitudinalMeters: 1609.34,
-                        longitudinalMeters: 1609.34
-                    )
+                    controller.region = MKCoordinateRegion(center: coord, latitudinalMeters:1609.34, longitudinalMeters:1609.34)
                 }
             }
             addressToCenter = nil
         }
     }
-    
-    @ViewBuilder
-    private var searchSuggestionsList: some View {
-        if isSearchFocused && !searchVM.results.isEmpty {
-            VStack(spacing: 0) {
-                ForEach(searchVM.results.prefix(3), id: \.self) { result in
-                    Button {
-                        handleCompletionTap(result)
-                    } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(result.title)
-                                .font(.body)
-                                .bold()
-                                .lineLimit(1)
-                                .truncationMode(.tail)
 
-                            Text(result.subtitle)
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                                .lineLimit(1)
-                                .truncationMode(.tail)
+    @ViewBuilder private var searchSuggestionsList: some View {
+        if isSearchFocused && !searchVM.results.isEmpty {
+            VStack(spacing:0){
+                ForEach(searchVM.results.prefix(3),id:\.self){ res in
+                    Button{ handleCompletionTap(res) } label:{
+                        VStack(alignment:.leading,spacing:4){
+                            Text(res.title).font(.body).bold().lineLimit(1)
+                            Text(res.subtitle).font(.subheadline).foregroundColor(.gray).lineLimit(1)
                         }
-                        .padding(.vertical, 10)
+                        .padding(.vertical,10)
                         .padding(.horizontal)
-                        .frame(maxWidth: .infinity, alignment: .leading) // 👈 Full width
+                        .frame(maxWidth:.infinity,alignment:.leading)
                         .background(Color.white)
                     }
                     .buttonStyle(PlainButtonStyle())
-
                     Divider()
                 }
             }
-            .background(Color.white)
-            .cornerRadius(12)
-            .padding(.horizontal)
-            .padding(.top, 4)
-            .shadow(radius: 4)
-            .frame(maxWidth: .infinity)
-            .frame(maxHeight: 180)
-            .transition(.opacity)
-            .zIndex(10)
+            .background(Color.white).cornerRadius(12)
+            .padding(.horizontal).padding(.top,4)
+            .shadow(radius:4).frame(maxWidth:.infinity,maxHeight:180)
+            .transition(.opacity).zIndex(10)
         }
     }
-    
+
     private func handleCompletionTap(_ result: MKLocalSearchCompletion) {
-        let request = MKLocalSearch.Request(completion: result)
-        let search = MKLocalSearch(request: request)
-        search.start { response, error in
-            guard let mapItem = response?.mapItems.first else { return }
-
-            let titleAddress = mapItem.placemark.title ?? "\(mapItem.placemark.name ?? ""), \(mapItem.placemark.locality ?? "")"
-
+        let req = MKLocalSearch.Request(completion: result)
+        MKLocalSearch(request:req).start{ resp,err in
+            guard let item=resp?.mapItems.first else { return }
+            let addr=item.placemark.title ?? "\(item.placemark.name ?? ""), \(item.placemark.locality ?? "")"
             DispatchQueue.main.async {
-                searchText = titleAddress
-                pendingAddress = titleAddress
-                controller.region = MKCoordinateRegion(
-                    center: mapItem.placemark.coordinate,
-                    latitudinalMeters: 1609.34,
-                    longitudinalMeters: 1609.34
-                )
-                searchVM.results = []
-                isSearchFocused = false // dismiss keyboard and hide dropdown
+                searchText=addr; pendingAddress=addr; controller.region=MKCoordinateRegion(center:item.placemark.coordinate,latitudinalMeters:1609.34,longitudinalMeters:1609.34); searchVM.results=[]; isSearchFocused=false
             }
         }
     }
-    
+
     private func submitSearch() {
         searchVM.results = []
         let trimmed = searchText.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
-        handleSearch(query: trimmed)
+        pendingAddress = trimmed
+        showOutcomePrompt = true
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-    }
-    
-    private var totalRejectionsSinceLastSignup: Int {
-        let allKnocks = prospects.flatMap { $0.knockHistory }
-            .sorted(by: { $0.date > $1.date })
-
-        var count = 0
-        for knock in allKnocks {
-            if knock.status == "Converted To Sale" { break }
-            if knock.status == "Wasn't Home" || knock.status == "Follow Up Later" {
-                count += 1
-            }
-        }
-        return count
-    }
-    
-    private func prospectExists(at address: String) -> Bool {
-        let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        return prospects.contains { $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized } ||
-               customers.contains { $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized }
     }
 
     private func updateMarkers() {
