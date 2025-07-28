@@ -53,7 +53,7 @@ struct TodaysAppointmentsView: View {
             }
         }
         .sheet(item: $selectedAppointment) { appt in
-            CancelAppointmentView(appointment: appt)
+            AppointmentDetailsView(appointment: appt)
         }
     }
 }
