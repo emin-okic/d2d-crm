@@ -5,7 +5,6 @@
 //  Created by Emin Okic on 7/13/25.
 //
 
-
 import SwiftUI
 import SwiftData
 
@@ -16,32 +15,45 @@ struct TodaysAppointmentsView: View {
     private var todaysAppointments: [Appointment] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        return appointments.filter { calendar.isDate($0.date, inSameDayAs: today) }
+        return appointments
+            .filter { calendar.isDate($0.date, inSameDayAs: today) }
             .sorted { $0.date < $1.date }
     }
 
     var body: some View {
-        List {
+        Group {
             if todaysAppointments.isEmpty {
                 Text("No appointments scheduled for today.")
+                    .font(.caption)
                     .foregroundColor(.gray)
+                    .padding(.horizontal, 20)
             } else {
-                ForEach(todaysAppointments) { appt in
+                List(todaysAppointments) { appointment in
                     Button {
-                        selectedAppointment = appt
+                        selectedAppointment = appointment
                     } label: {
-                        VStack(alignment: .leading) {
-                            Text(appt.title)
-                                .font(.headline)
-                            Text(appt.date.formatted(date: .abbreviated, time: .shortened))
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Follow Up With \(appointment.prospect?.fullName ?? appointment.title)")
                                 .font(.subheadline)
+                                .fontWeight(.medium)
+
+                            Text(appointment.prospect?.address ?? "")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+
+                            Text(appointment.date.formatted(date: .abbreviated, time: .shortened))
+                                .font(.caption)
+                                .foregroundColor(.gray)
                         }
+                        .padding(.vertical, 4)
                     }
                 }
+                .listStyle(.plain)
+                .padding(.horizontal, 20)
             }
         }
         .sheet(item: $selectedAppointment) { appt in
-            CancelAppointmentView(appointment: appt)
+            AppointmentDetailsView(appointment: appt)
         }
     }
 }

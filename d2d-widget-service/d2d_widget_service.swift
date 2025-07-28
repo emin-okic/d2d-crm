@@ -42,6 +42,9 @@ struct d2d_widget_serviceEntryView: View {
                 .font(.system(size: 32, weight: .bold))
         }
         .padding()
+        
+        // make the whole widget tappable
+        .widgetURL(URL(string: "d2dcrm://todaysappointments"))
     }
 }
 
@@ -59,7 +62,8 @@ struct d2d_widget_service: Widget {
                     .background()
             }
         }
-        .configurationDisplayName("My Widget")
-        .description("This is an example widget.")
+        .supportedFamilies([.systemMedium])
+        .configurationDisplayName("D2D Studio Widget")
+        .description("This is a widget for the d2d studio to check your appointments.")
     }
 }

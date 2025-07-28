@@ -41,7 +41,10 @@ struct ProspectDetailsView: View {
     @StateObject private var searchViewModel = SearchCompleterViewModel()
     @FocusState private var isAddressFieldFocused: Bool
     
+    // Sheet for adding a new appointment
     @State private var showAppointmentSheet = false
+    // Track which existing appointment to view details for
+    @State private var selectedAppointmentDetails: Appointment?
     
     @State private var selectedTab: ProspectTab = .appointments
 
@@ -65,7 +68,6 @@ struct ProspectDetailsView: View {
                         VStack(spacing: 0) {
                             ForEach(searchViewModel.results.prefix(3), id: \.self) { result in
                                 Button {
-                                    // Perform lookup and assign formatted address
                                     fetchAddress(for: result)
                                     isAddressFieldFocused = false
                                 } label: {
@@ -90,12 +92,11 @@ struct ProspectDetailsView: View {
                         .background(Color(.systemBackground))
                     }
                 }
-                
             }
             
             Section {
-                   ProspectActionsToolbar(prospect: prospect)
-               }
+                ProspectActionsToolbar(prospect: prospect)
+            }
             
             Section {
                 Picker("View", selection: $selectedTab) {
@@ -118,7 +119,25 @@ struct ProspectDetailsView: View {
                             .foregroundColor(.gray)
                     } else {
                         ForEach(upcomingAppointments) { appt in
-                            Text(appt.title + " at " + appt.date.formatted(date: .abbreviated, time: .shortened))
+                            Button {
+                                selectedAppointmentDetails = appt
+                            } label: {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Follow Up With \(prospect.fullName)")
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+
+                                    Text(prospect.address)
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+
+                                    Text(appt.date.formatted(date: .abbreviated, time: .shortened))
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                                .padding(.vertical, 4)
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
 
@@ -150,8 +169,6 @@ struct ProspectDetailsView: View {
                     AddNoteView(prospect: prospect)
                 }
             }
-
-            
         }
         .navigationTitle("Edit Contact")
         .toolbar {
@@ -167,6 +184,7 @@ struct ProspectDetailsView: View {
         .onAppear {
             tempPhone = prospect.contactPhone
         }
+        // Sheet for conversion to customer
         .sheet(isPresented: $showConversionSheet) {
             NavigationView {
                 Form {
@@ -200,10 +218,15 @@ struct ProspectDetailsView: View {
                 }
             }
         }
+        // Sheet for adding a new appointment
         .sheet(isPresented: $showAppointmentSheet) {
             NavigationStack {
                 ScheduleAppointmentView(prospect: prospect)
             }
+        }
+        // Sheet for viewing appointment details
+        .sheet(item: $selectedAppointmentDetails) { appointment in
+            AppointmentDetailsView(appointment: appointment)
         }
     }
     
@@ -219,7 +242,6 @@ struct ProspectDetailsView: View {
                     let fullAddress = formatter.string(from: postalAddress).replacingOccurrences(of: "\n", with: ", ")
                     prospect.address = fullAddress
                 } else {
-                    // Fallback to name or title
                     prospect.address = item.name ?? completion.title
                 }
             }
@@ -260,6 +282,8 @@ struct ProspectDetailsView: View {
                     print("❌ Access to contacts denied")
                 }
             }
+        } catch {
+            print("❌ Failed to request contacts permission: \(error)")
         }
     }
     
@@ -271,9 +295,9 @@ struct ProspectDetailsView: View {
             return true
         }
 
-        let utility = PhoneNumberUtility()  // correct class in v4
+        let utility = PhoneNumberUtility()
         do {
-            _ = try utility.parse(raw)       // parse + validation
+            _ = try utility.parse(raw)
             phoneError = nil
             return true
         } catch {
@@ -283,25 +307,13 @@ struct ProspectDetailsView: View {
     }
     
     private func deleteProspect() {
-        // 1. Delete the prospect from SwiftData
         modelContext.delete(prospect)
-
         do {
             try modelContext.save()
         } catch {
             print("Failed to delete prospect from SwiftData: \(error)")
         }
-
-        // 2. Dismiss the view
         presentationMode.wrappedValue.dismiss()
-    }
-}
-
-extension CNPostalAddress {
-    func apply(_ modify: (inout CNPostalAddress) -> Void) -> CNPostalAddress {
-        var copy = self
-        modify(&copy)
-        return copy
     }
 }
 

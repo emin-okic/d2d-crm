@@ -9,30 +9,56 @@ import SwiftUI
 import SwiftData
 import Foundation
 
-/// The main entry point of the D2D Map Service app.
-///
-/// This struct defines the app's lifecycle using SwiftUI's `App` protocol.
-/// It determines whether to show the `LoginView` or the main `RootView` depending on login state.
 @main
 struct d2d_studioApp: App {
     @State private var showSplash = true
+    @State private var deepLinkURL: URL?
+    @State private var showTodaysAppointments = false
 
     var body: some Scene {
         WindowGroup {
-            if showSplash {
-                SplashView()
-                    .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
-                            withAnimation {
-                                showSplash = false
+            ZStack {
+                if showSplash {
+                    SplashView()
+                        .onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+                                withAnimation { showSplash = false }
                             }
                         }
-                    }
-            } else {
-                RootView()
+                        // Catch deep-link even while splash is up
+                        .onOpenURL { url in handleDeepLink(url) }
+                } else {
+                    RootView()
+                        .onOpenURL { url in handleDeepLink(url) }
+                        // Sheet for today’s appointments
+                        .sheet(isPresented: $showTodaysAppointments) {
+                            NavigationStack {
+                                TodaysAppointmentsView()
+                                    .navigationTitle("Today's Appointments")
+                                    .navigationBarTitleDisplayMode(.inline)
+                                    .toolbar {
+                                        ToolbarItem(placement: .cancellationAction) {
+                                            Button("Done") {
+                                                showTodaysAppointments = false
+                                            }
+                                        }
+                                    }
+                            }
+                        }
+                }
             }
         }
         .modelContainer(sharedModelContainer)
+    }
+
+    /// Route incoming URLs into the correct state change
+    private func handleDeepLink(_ url: URL) {
+        guard url.scheme == "d2dcrm",
+              url.host == "todaysappointments"
+        else { return }
+
+        // trigger the sheet
+        showTodaysAppointments = true
     }
 }
 

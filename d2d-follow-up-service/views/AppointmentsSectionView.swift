@@ -117,7 +117,7 @@ struct AppointmentsSectionView: View {
             ScheduleAppointmentView(prospect: prospect)
         }
         .sheet(item: $selectedAppointment) { appt in
-            CancelAppointmentView(appointment: appt)
+            AppointmentDetailsView(appointment: appt)
         }
     }
 }
