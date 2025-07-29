@@ -23,6 +23,10 @@ struct AppointmentDetailsView: View {
     // Set state variables for setting appt
     @State private var calendarPermissionGranted = false
     @State private var calendarError: String?
+    
+    @State private var showAddToCalendarPrompt = false
+    @State private var showSuccessBanner = false
+    @State private var successMessage = ""
 
     var body: some View {
         NavigationView {
@@ -75,10 +79,18 @@ struct AppointmentDetailsView: View {
                     
                     // Set an action for adding to ical
                     Button {
-                        addAppointmentToCalendar(appointment)
+                        showAddToCalendarPrompt = true
                     } label: {
                         Image(systemName: "calendar.badge.plus")
                             .font(.title2)
+                    }
+                    .alert("Add to Calendar", isPresented: $showAddToCalendarPrompt) {
+                        Button("Yes") {
+                            addAppointmentToCalendar(appointment)
+                        }
+                        Button("No", role: .cancel) { }
+                    } message: {
+                        Text("Do you want to add this appointment to your iOS Calendar?")
                     }
                     
                     // Create logic to check for existing events
@@ -101,6 +113,19 @@ struct AppointmentDetailsView: View {
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                
+                if showSuccessBanner {
+                    Text(successMessage)
+                        .font(.subheadline)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(Color.green.opacity(0.9))
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .zIndex(1)
+                        .padding(.bottom)
+                }
 
                 // MARK: Notes
                 if !appointment.notes.isEmpty {
@@ -156,44 +181,59 @@ struct AppointmentDetailsView: View {
 
         store.requestAccess(to: .event) { granted, error in
             if let error = error {
-                calendarError = "Calendar access error: \(error.localizedDescription)"
+                showFeedback("Calendar access error: \(error.localizedDescription)")
                 return
             }
 
             if granted {
-                calendarPermissionGranted = true
-
-                let predicate = store.predicateForEvents(withStart: appointment.date.addingTimeInterval(-60),
-                                                         end: appointment.date.addingTimeInterval(60),
-                                                         calendars: nil)
+                let predicate = store.predicateForEvents(
+                    withStart: appointment.date.addingTimeInterval(-60),
+                    end: appointment.date.addingTimeInterval(60),
+                    calendars: nil
+                )
 
                 let existing = store.events(matching: predicate).first {
-                    $0.title == appointment.title &&
-                    $0.location == appointment.location
+                    $0.title == appointment.title && $0.location == appointment.location
                 }
 
                 if existing != nil {
-                    calendarError = "This event is already in your calendar."
+                    showFeedback("Already exists in calendar.")
                     return
                 }
 
                 let event = EKEvent(eventStore: store)
                 event.title = appointment.title
                 event.startDate = appointment.date
-                event.endDate = appointment.date.addingTimeInterval(60 * 30) // 30 mins
+                event.endDate = appointment.date.addingTimeInterval(60 * 30)
                 event.notes = appointment.notes.joined(separator: "\n")
                 event.location = appointment.location
                 event.calendar = store.defaultCalendarForNewEvents
 
                 do {
                     try store.save(event, span: .thisEvent)
-                    calendarError = "Event added to calendar!"
+                    showFeedback("Successfully added to calendar!")
                 } catch {
-                    calendarError = "Failed to add event: \(error.localizedDescription)"
+                    showFeedback("Failed to save event: \(error.localizedDescription)")
                 }
             } else {
-                calendarError = "Calendar access denied. Enable it in Settings."
+                showFeedback("Calendar access denied. Enable in Settings.")
             }
         }
     }
+
+    private func showFeedback(_ message: String) {
+        DispatchQueue.main.async {
+            successMessage = message
+            withAnimation {
+                showSuccessBanner = true
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                withAnimation {
+                    showSuccessBanner = false
+                }
+            }
+        }
+    }
+    
 }
