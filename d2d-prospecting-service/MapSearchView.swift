@@ -339,14 +339,15 @@ struct MapSearchView: View {
             let prospect = saveKnock(address: addr, status: status)
 
             // Only show note popup for statuses other than "Not Answered"
-            if status != "Not Answered" {
+            if status != "Wasn't Home" {
                 prospectToNote = prospect
                 showNoteInput = true
             } else {
                 // Optionally prompt to log a trip even if no note is added
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    showTripPrompt = true
-                }
+                // DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                //     showTripPrompt = true
+                // }
+                return
             }
         }
     }
