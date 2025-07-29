@@ -6,8 +6,8 @@
 //
 import SwiftUI
 import SwiftData
-
 import StoreKit
+import PhoneNumberKit
 
 
 struct SignUpPopupView: View {
@@ -16,6 +16,8 @@ struct SignUpPopupView: View {
 
     @State private var tempPhone: String
     @State private var tempEmail: String
+    
+    @State private var phoneError: String?
 
     @Environment(\.modelContext) private var modelContext
 
@@ -33,23 +35,33 @@ struct SignUpPopupView: View {
                     TextField("Full Name", text: $prospect.fullName)
                     TextField("Address", text: $prospect.address)
                     TextField("Phone", text: $tempPhone)
+                        .keyboardType(.phonePad)
+                        .onChange(of: tempPhone) { _ in
+                            _ = validatePhoneNumber()
+                        }
+
+                    if let error = phoneError {
+                        Text(error).foregroundColor(.red)
+                    }
                     TextField("Email", text: $tempEmail)
                 }
 
                 Section {
                     Button("Confirm Sign Up") {
-                        prospect.list = "Customers"
-                        prospect.contactPhone = tempPhone
-                        prospect.contactEmail = tempEmail
-                        try? modelContext.save()
-                        isPresented = false
+                        if validatePhoneNumber() {
+                            prospect.list = "Customers"
+                            prospect.contactPhone = tempPhone
+                            prospect.contactEmail = tempEmail
+                            try? modelContext.save()
+                            isPresented = false
 
-                        // Ask for review only if not already done
-                        if !UserDefaults.standard.hasLeftReview {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                                if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-                                    SKStoreReviewController.requestReview(in: scene)
-                                    UserDefaults.standard.hasLeftReview = true
+                            // Ask for review only if not already done
+                            if !UserDefaults.standard.hasLeftReview {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                    if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                                        SKStoreReviewController.requestReview(in: scene)
+                                        UserDefaults.standard.hasLeftReview = true
+                                    }
                                 }
                             }
                         }
@@ -66,6 +78,25 @@ struct SignUpPopupView: View {
                     }
                 }
             }
+        }
+    }
+    
+    private func validatePhoneNumber() -> Bool {
+        let raw = tempPhone.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else {
+            phoneError = nil
+            return true
+        }
+
+        let utility = PhoneNumberUtility()
+
+        do {
+            _ = try utility.parse(raw)
+            phoneError = nil
+            return true
+        } catch {
+            phoneError = "Invalid phone number."
+            return false
         }
     }
 }
