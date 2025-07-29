@@ -303,7 +303,14 @@ struct MapSearchView: View {
             guard let item=resp?.mapItems.first else { return }
             let addr=item.placemark.title ?? "\(item.placemark.name ?? ""), \(item.placemark.locality ?? "")"
             DispatchQueue.main.async {
-                searchText=addr; pendingAddress=addr; controller.region=MKCoordinateRegion(center:item.placemark.coordinate,latitudinalMeters:1609.34,longitudinalMeters:1609.34); searchVM.results=[]; isSearchFocused=false
+                
+                // Keep the text after selecting an autofill address until hit done
+                searchText=addr;
+                
+                pendingAddress=addr;
+                controller.region=MKCoordinateRegion(center:item.placemark.coordinate,latitudinalMeters:1609.34,longitudinalMeters:1609.34);
+                searchVM.results=[];
+                isSearchFocused=false
             }
         }
     }
@@ -312,8 +319,13 @@ struct MapSearchView: View {
         searchVM.results = []
         let trimmed = searchText.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
+        
         pendingAddress = trimmed
         showOutcomePrompt = true
+        
+        // Clear the search bar text
+        searchText = ""
+        
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 
