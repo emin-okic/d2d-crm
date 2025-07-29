@@ -44,6 +44,9 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 
+	<key>NSCalendarsUsageDescription</key>
+	<string>This app uses your calendar to schedule follow-up appointments.</string>
+
 	<key>NSContactsUsageDescription</key>
 <string>This app uses contacts to export prospects.</string>
 </dict>

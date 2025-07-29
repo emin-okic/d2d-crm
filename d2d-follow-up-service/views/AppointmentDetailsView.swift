@@ -6,6 +6,7 @@
 //
 import SwiftUI
 import SwiftData
+import EventKit
 
 struct AppointmentDetailsView: View {
     @Environment(\.dismiss) private var dismiss
@@ -18,6 +19,10 @@ struct AppointmentDetailsView: View {
     @State private var showRescheduleConfirmation = false
     @State private var showCancelConfirmation = false
     @State private var newDate: Date = Date()
+    
+    // Set state variables for setting appt
+    @State private var calendarPermissionGranted = false
+    @State private var calendarError: String?
 
     var body: some View {
         NavigationView {
@@ -67,6 +72,22 @@ struct AppointmentDetailsView: View {
                     } message: {
                         Text("This will permanently delete this appointment. Are you sure?")
                     }
+                    
+                    // Set an action for adding to ical
+                    Button {
+                        addAppointmentToCalendar(appointment)
+                    } label: {
+                        Label("Add to Calendar", systemImage: "calendar.badge.plus")
+                    }
+                    
+                    // Create logic to check for existing events
+                    if let error = calendarError {
+                        Text(error)
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                            .padding(.top, 4)
+                    }
+                    
                 }
                 .padding(.bottom)
 
@@ -125,6 +146,52 @@ struct AppointmentDetailsView: View {
                     showRescheduleSheet = false
                     dismiss()
                 }
+            }
+        }
+    }
+    
+    private func addAppointmentToCalendar(_ appointment: Appointment) {
+        let store = EKEventStore()
+
+        store.requestAccess(to: .event) { granted, error in
+            if let error = error {
+                calendarError = "Calendar access error: \(error.localizedDescription)"
+                return
+            }
+
+            if granted {
+                calendarPermissionGranted = true
+
+                let predicate = store.predicateForEvents(withStart: appointment.date.addingTimeInterval(-60),
+                                                         end: appointment.date.addingTimeInterval(60),
+                                                         calendars: nil)
+
+                let existing = store.events(matching: predicate).first {
+                    $0.title == appointment.title &&
+                    $0.location == appointment.location
+                }
+
+                if existing != nil {
+                    calendarError = "This event is already in your calendar."
+                    return
+                }
+
+                let event = EKEvent(eventStore: store)
+                event.title = appointment.title
+                event.startDate = appointment.date
+                event.endDate = appointment.date.addingTimeInterval(60 * 30) // 30 mins
+                event.notes = appointment.notes.joined(separator: "\n")
+                event.location = appointment.location
+                event.calendar = store.defaultCalendarForNewEvents
+
+                do {
+                    try store.save(event, span: .thisEvent)
+                    calendarError = "Event added to calendar!"
+                } catch {
+                    calendarError = "Failed to add event: \(error.localizedDescription)"
+                }
+            } else {
+                calendarError = "Calendar access denied. Enable it in Settings."
             }
         }
     }
