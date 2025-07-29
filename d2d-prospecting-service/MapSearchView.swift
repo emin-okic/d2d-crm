@@ -200,21 +200,50 @@ struct MapSearchView: View {
             Button("Follow-Up Later"){ handleKnockAndPromptObjection(status:"Follow Up Later") }
             Button("Cancel",role:.cancel){}
         } message: { Text("Did someone answer at \(pendingAddress ?? "this address")?") }
-        .sheet(isPresented:$showNoteInput){ if let prospect=prospectToNote { LogNoteView(prospect:prospect,
-                                                                                       objection:selectedObjection,
-                                                                                       pendingAddress:pendingAddress) {
-            followUpAddress=prospect.address; followUpProspectName=prospect.fullName; selectedObjection=nil; showFollowUpPrompt=true
-        } }}
-        .sheet(isPresented:$showObjectionPicker){ NavigationView{ List(objectionOptions){ obj in
-            Button(obj.text){ selectedObjection=obj; obj.timesHeard+=1; try? modelContext.save(); showObjectionPicker=false; showNoteInput=true }
+            .sheet(isPresented:$showNoteInput){
+                if let prospect=prospectToNote {
+                    LogNoteView(
+                        prospect:prospect,
+                        objection:selectedObjection,
+                        pendingAddress:pendingAddress) {
+                            followUpAddress=prospect.address;
+                            followUpProspectName=prospect.fullName;
+                            selectedObjection=nil;
+                            // showFollowUpPrompt=true
+                            showTripPrompt = true
+                        }
+                }
+            }
+        .sheet(isPresented:$showObjectionPicker){
+            NavigationView{
+                List(objectionOptions){
+                    obj in
+                    Button(obj.text){
+                        selectedObjection=obj;
+                        obj.timesHeard+=1;
+                        try? modelContext.save();
+                        showObjectionPicker=false;
+                        // showNoteInput=true
+                        
+                        // Trigger follow-up scheduling first
+                        showFollowUpSheet = true
+                    }
         }.navigationTitle("Why not interested?")
           .toolbar{ ToolbarItem(placement:.cancellationAction){ Button("Cancel"){ showObjectionPicker=false } } } } }
         .sheet(isPresented:$showingAddObjection){ AddObjectionView() }
         .alert("Schedule Follow-Up?",isPresented:$showFollowUpPrompt){ Button("Yes"){ showFollowUpSheet=true }
                                                                   Button("No",role:.cancel){ showTripPrompt=true } } message:
               { Text("Schedule follow-up for \(followUpProspectName)?") }
-        .sheet(isPresented:$showFollowUpSheet,onDismiss:{ DispatchQueue.main.asyncAfter(deadline:.now()+0.3){ showTripPrompt=true } }){
-            if let prospect=prospectToNote { FollowUpScheduleView(prospect:prospect) } }
+            .sheet(isPresented:$showFollowUpSheet,onDismiss:{
+                DispatchQueue.main.asyncAfter(deadline:.now()+0.3){
+                    // showTripPrompt=true
+                    showNoteInput = true
+                }
+            }) {
+                if let prospect=prospectToNote {
+                    FollowUpScheduleView(prospect:prospect)
+                }
+            }
         .alert("Log a trip?",isPresented:$showTripPrompt){ Button("Yes"){ showTripPopup=true }
                                                       Button("No",role:.cancel){} }
         .sheet(isPresented:$showTripPopup){ if let addr=pendingAddress { LogTripPopupView(endAddress:addr) } }
@@ -364,13 +393,13 @@ struct MapSearchView: View {
             // Redirect user to create a new objection before proceeding
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 selectedObjection = nil
-                showNoteInput = false
+                // showNoteInput = false
                 showingAddObjection = true  // <-- triggers AddObjectionView sheet
             }
         } else {
             objectionOptions = objections
             showObjectionPicker = true
-            shouldAskForTripAfterFollowUp = true // carry trip flag if needed
+            // shouldAskForTripAfterFollowUp = true // carry trip flag if needed
         }
     }
     
