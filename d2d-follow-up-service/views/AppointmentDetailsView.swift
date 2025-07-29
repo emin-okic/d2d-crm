@@ -42,7 +42,7 @@ struct AppointmentDetailsView: View {
                     Button {
                         showRescheduleConfirmation = true
                     } label: {
-                        Image(systemName: "calendar.badge.clock")
+                        Image(systemName: "arrow.clockwise.circle")
                             .font(.title2)
                     }
                     .alert("Reschedule Appointment", isPresented: $showRescheduleConfirmation) {
@@ -77,7 +77,8 @@ struct AppointmentDetailsView: View {
                     Button {
                         addAppointmentToCalendar(appointment)
                     } label: {
-                        Label("Add to Calendar", systemImage: "calendar.badge.plus")
+                        Image(systemName: "calendar.badge.plus")
+                            .font(.title2)
                     }
                     
                     // Create logic to check for existing events
