@@ -248,45 +248,6 @@ struct ProspectDetailsView: View {
         }
     }
     
-    private func exportToContacts() {
-        let contact = CNMutableContact()
-        contact.givenName = prospect.fullName
-        contact.phoneNumbers = [CNLabeledValue(
-            label: CNLabelPhoneNumberMobile,
-            value: CNPhoneNumber(stringValue: prospect.contactPhone)
-        )]
-
-        contact.emailAddresses = [CNLabeledValue(
-            label: CNLabelHome,
-            value: NSString(string: prospect.contactEmail)
-        )]
-
-        let postal = CNMutablePostalAddress()
-        postal.street = prospect.address
-        contact.postalAddresses = [CNLabeledValue(label: CNLabelHome, value: postal)]
-
-        let saveRequest = CNSaveRequest()
-        saveRequest.add(contact, toContainerWithIdentifier: nil)
-
-        do {
-            let store = CNContactStore()
-            try store.requestAccess(for: .contacts) { granted, error in
-                if granted {
-                    do {
-                        try store.execute(saveRequest)
-                        print("✅ Contact saved")
-                    } catch {
-                        print("❌ Failed to save contact: \(error)")
-                    }
-                } else {
-                    print("❌ Access to contacts denied")
-                }
-            }
-        } catch {
-            print("❌ Failed to request contacts permission: \(error)")
-        }
-    }
-    
     @discardableResult
     private func validatePhoneNumber() -> Bool {
         let raw = tempPhone.trimmingCharacters(in: .whitespacesAndNewlines)
