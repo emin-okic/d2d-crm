@@ -12,6 +12,9 @@ struct ProspectPopupView: View {
     var onClose: () -> Void
     var onOutcomeSelected: (String) -> Void
 
+    @State private var showConvertConfirm = false
+    @State private var showFollowUpConfirm = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -31,31 +34,70 @@ struct ProspectPopupView: View {
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
-            VStack(spacing: 8) {
-                Button("Wasn't Home") {
+            HStack(spacing: 16) {
+                iconButton(
+                    systemName: "house.slash.fill",
+                    label: "Not Home",
+                    color: .gray
+                ) {
                     onOutcomeSelected("Wasn't Home")
                 }
-                .buttonStyle(.borderedProminent)
 
-                Button("Converted To Sale") {
-                    onOutcomeSelected("Converted To Sale")
+                iconButton(
+                    systemName: "checkmark.seal.fill",
+                    label: "Sale",
+                    color: .green
+                ) {
+                    showConvertConfirm = true
                 }
-                .buttonStyle(.borderedProminent)
 
-                Button("Follow-Up Later") {
-                    onOutcomeSelected("Follow Up Later")
+                iconButton(
+                    systemName: "calendar.badge.clock",
+                    label: "Follow Up",
+                    color: .orange
+                ) {
+                    showFollowUpConfirm = true
                 }
-                .buttonStyle(.borderedProminent)
             }
+            .padding(.top, 6)
         }
         .padding()
         .frame(width: 260)
         .background(.ultraThinMaterial)
         .cornerRadius(16)
         .shadow(radius: 6)
+        .alert("Convert to Customer?", isPresented: $showConvertConfirm) {
+            Button("Yes") { onOutcomeSelected("Converted To Sale") }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Convert this lead to a customer?")
+        }
+        .alert("Schedule Follow-Up?", isPresented: $showFollowUpConfirm) {
+            Button("Yes") { onOutcomeSelected("Follow Up Later") }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Schedule a follow-up for this address?")
+        }
     }
 
-    func findProspectName(for address: String) -> String {
-        return "Prospect" // Improve with external lookup if needed
+    private func iconButton(systemName: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: systemName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 28, height: 28)
+                    .foregroundColor(color)
+                Text(label)
+                    .font(.caption2)
+                    .foregroundColor(.primary)
+            }
+            .frame(width: 64)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func findProspectName(for address: String) -> String {
+        return "Prospect"
     }
 }
