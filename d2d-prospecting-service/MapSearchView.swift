@@ -155,13 +155,17 @@ struct MapSearchView: View {
                                 viewModel: searchVM,
                                 onSubmit: {
                                     submitSearch()
-                                    searchText = "" // Clear the bar
-                                    withAnimation { isSearchExpanded = false } // Collapse only on submit
+                                    searchText = ""
+                                    withAnimation { isSearchExpanded = false }
                                 },
                                 onSelectResult: {
                                     handleCompletionTap($0)
-                                    // Keep the bar open so user can tap Done/Enter
-                                    // searchText will be replaced by handleCompletionTap anyway
+                                },
+                                onCancel: {
+                                    withAnimation {
+                                        isSearchExpanded = false
+                                        searchText = ""
+                                    }
                                 }
                             )
                             .frame(maxWidth: .infinity, alignment: .trailing)
