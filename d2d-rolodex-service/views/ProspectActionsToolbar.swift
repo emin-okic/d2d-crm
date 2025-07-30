@@ -290,30 +290,6 @@ struct ProspectActionsToolbar: View {
     }
 
     private func exportToContacts() {
-        let contact = CNMutableContact()
-        contact.givenName = prospect.fullName
-
-        if !prospect.contactPhone.isEmpty {
-            contact.phoneNumbers = [CNLabeledValue(
-                label: CNLabelPhoneNumberMobile,
-                value: CNPhoneNumber(stringValue: prospect.contactPhone)
-            )]
-        }
-
-        if !prospect.contactEmail.isEmpty {
-            contact.emailAddresses = [CNLabeledValue(
-                label: CNLabelHome,
-                value: NSString(string: prospect.contactEmail)
-            )]
-        }
-
-        let postal = CNMutablePostalAddress()
-        postal.street = prospect.address
-        contact.postalAddresses = [CNLabeledValue(label: CNLabelHome, value: postal)]
-
-        let saveRequest = CNSaveRequest()
-        saveRequest.add(contact, toContainerWithIdentifier: nil)
-
         let store = CNContactStore()
         store.requestAccess(for: .contacts) { granted, error in
             guard granted else {
@@ -321,11 +297,56 @@ struct ProspectActionsToolbar: View {
                 return
             }
 
+            let predicate = CNContact.predicateForContacts(matchingName: prospect.fullName)
+            let keysToFetch = [
+                CNContactGivenNameKey,
+                CNContactFamilyNameKey,
+                CNContactPhoneNumbersKey,
+                CNContactEmailAddressesKey,
+                CNContactPostalAddressesKey
+            ] as [CNKeyDescriptor]
+
             do {
+                let matches = try store.unifiedContacts(matching: predicate, keysToFetch: keysToFetch)
+                let existing = matches.first(where: {
+                    $0.postalAddresses.first?.value.street == prospect.address
+                })
+
+                let contact: CNMutableContact
+                let saveRequest = CNSaveRequest()
+
+                if let existing = existing {
+                    contact = existing.mutableCopy() as! CNMutableContact
+                    print("ℹ️ Updating existing contact: \(contact.givenName)")
+                } else {
+                    contact = CNMutableContact()
+                    contact.givenName = prospect.fullName
+                    print("✅ Creating new contact")
+                    saveRequest.add(contact, toContainerWithIdentifier: nil)
+                }
+
+                contact.phoneNumbers = prospect.contactPhone.isEmpty ? [] : [
+                    CNLabeledValue(label: CNLabelPhoneNumberMobile, value: CNPhoneNumber(stringValue: prospect.contactPhone))
+                ]
+
+                contact.emailAddresses = prospect.contactEmail.isEmpty ? [] : [
+                    CNLabeledValue(label: CNLabelHome, value: NSString(string: prospect.contactEmail))
+                ]
+
+                let postal = CNMutablePostalAddress()
+                postal.street = prospect.address
+                contact.postalAddresses = [
+                    CNLabeledValue(label: CNLabelHome, value: postal)
+                ]
+
+                if existing != nil {
+                    saveRequest.update(contact)
+                }
+
                 try store.execute(saveRequest)
                 print("✅ Contact saved")
             } catch {
-                print("❌ Failed to save contact: \(error)")
+                print("❌ Failed to export contact: \(error)")
             }
         }
     }
