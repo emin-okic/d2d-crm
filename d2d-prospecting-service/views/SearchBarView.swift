@@ -17,9 +17,12 @@ struct SearchBarView: View {
     @ObservedObject var viewModel: SearchCompleterViewModel
     var onSubmit: () -> Void
     var onSelectResult: (MKLocalSearchCompletion) -> Void
+    
+    var onCancel: () -> Void
 
     var body: some View {
         VStack(spacing: 8) {
+            
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.gray)
@@ -36,17 +39,27 @@ struct SearchBarView: View {
                     Button("Done") {
                         onSubmit()
                     }
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, 6)
                     .padding(.vertical, 6)
                     .background(Color.blue.opacity(0.8))
                     .foregroundColor(.white)
                     .cornerRadius(8)
                     .transition(.opacity)
                 }
+
+                // ⬅️ Add cancel button here
+                Button(action: {
+                    onCancel()
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                        .font(.title3)
+                }
+                .padding(.leading, 6)
             }
-            .padding(12)
+            .padding(10)
             .background(.ultraThinMaterial)
-            .cornerRadius(12)
+            .cornerRadius(10)
             .shadow(radius: 3, x: 0, y: 2)
             .padding(.horizontal)
 
