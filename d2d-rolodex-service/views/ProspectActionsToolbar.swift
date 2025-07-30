@@ -28,46 +28,71 @@ struct ProspectActionsToolbar: View {
     @State private var showCreateSaleSheet = false
     
     @State private var phoneError: String?
+    
+    @State private var showExportPrompt = false
+    @State private var showExportSuccessBanner = false
+    @State private var exportSuccessMessage = ""
 
     var body: some View {
-        HStack(spacing: 24) {
-            // Phone
-            iconButton(systemName: "phone.fill") {
-                if prospect.contactPhone.isEmpty {
-                    showAddPhoneSheet = true
-                } else {
-                    showCallConfirmation = true
+        ZStack {
+            HStack(spacing: 24) {
+                // Phone
+                iconButton(systemName: "phone.fill") {
+                    if prospect.contactPhone.isEmpty {
+                        showAddPhoneSheet = true
+                    } else {
+                        showCallConfirmation = true
+                    }
                 }
-            }
 
-            // Email
-            iconButton(systemName: "envelope.fill") {
-                if prospect.contactEmail.nilIfEmpty == nil {
-                    showAddEmailSheet = true
-                } else {
-                    showEmailConfirmation = true
+                // Email
+                iconButton(systemName: "envelope.fill") {
+                    if prospect.contactEmail.nilIfEmpty == nil {
+                        showAddEmailSheet = true
+                    } else {
+                        showEmailConfirmation = true
+                    }
+                }
+
+                // Create Sale
+                if prospect.list == "Prospects" {
+                    iconButton(systemName: "cart.fill.badge.plus") {
+                        showCreateSaleSheet = true
+                    }
+                }
+
+                // Export Contact
+                iconButton(systemName: "person.crop.circle.badge.plus") {
+                    showExportPrompt = true
+                }
+
+                // Delete Contact
+                iconButton(systemName: "trash.fill", color: .red) {
+                    showDeleteConfirmation = true
                 }
             }
-            
-            // Create Sale
-            if prospect.list == "Prospects" {
-                iconButton(systemName: "cart.fill.badge.plus") {
-                    showCreateSaleSheet = true
+            .padding(.vertical, 8)
+
+            // ✅ Floating banner at top
+            if showExportSuccessBanner {
+                VStack {
+                    Spacer().frame(height: 60)
+                    Text(exportSuccessMessage)
+                        .font(.subheadline)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(Color.green.opacity(0.95))
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                        .shadow(radius: 6)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    Spacer()
                 }
-            }
-            
-            // Export Contact
-            iconButton(systemName: "person.crop.circle.badge.plus") {
-                exportToContacts()
-            }
-            
-            // Delete Contact
-            iconButton(systemName: "trash.fill", color: .red) {
-                showDeleteConfirmation = true
+                .frame(maxWidth: .infinity)
+                .zIndex(999)
             }
         }
-        .padding(.vertical, 8)
-        
+
         // Delete confirmation
         .confirmationDialog(
             "Are you sure you want to delete this contact?",
@@ -107,8 +132,18 @@ struct ProspectActionsToolbar: View {
             }
             Button("Cancel", role: .cancel) { }
         }
-        
-        // Sign Up Sheet
+
+        // Export confirmation
+        .alert("Export to Contacts", isPresented: $showExportPrompt) {
+            Button("Yes") {
+                exportToContacts()
+            }
+            Button("No", role: .cancel) { }
+        } message: {
+            Text("Would you like to save this contact to your iOS Contacts app?")
+        }
+
+        // Create sale sheet
         .sheet(isPresented: $showCreateSaleSheet) {
             NavigationView {
                 Form {
@@ -140,66 +175,6 @@ struct ProspectActionsToolbar: View {
         }
 
         // Add phone sheet
-        .sheet(isPresented: $showCreateSaleSheet) {
-            CreateSaleView(
-                fullName: $prospect.fullName,
-                address: $prospect.address,
-                contactPhone: $prospect.contactPhone,
-                contactEmail: $prospect.contactEmail,
-                onConfirm: {
-                    prospect.list = "Customers"
-                    try? modelContext.save()
-                    showCreateSaleSheet = false
-                },
-                onCancel: {
-                    showCreateSaleSheet = false
-                }
-            )
-        }
-
-        // Add email sheet
-        .sheet(isPresented: $showAddEmailSheet) {
-            NavigationView {
-                VStack(spacing: 16) {
-                    Text("Add Email Address")
-                        .font(.headline)
-
-                    TextField("Enter email", text: $newEmail)
-                        .keyboardType(.emailAddress)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(12)
-
-                    Button("Save & Compose") {
-                        prospect.contactEmail = newEmail
-                        try? modelContext.save()
-
-                        if let url = URL(string: "mailto:\(newEmail)") {
-                            UIApplication.shared.open(url)
-                        }
-
-                        showAddEmailSheet = false
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(newEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-
-                    Spacer()
-                }
-                .padding()
-                .navigationTitle("Email Address")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            showAddEmailSheet = false
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Add Phone Validation
         .sheet(isPresented: $showAddPhoneSheet) {
             NavigationView {
                 VStack(spacing: 16) {
@@ -250,6 +225,48 @@ struct ProspectActionsToolbar: View {
                 }
             }
         }
+
+        // Add email sheet
+        .sheet(isPresented: $showAddEmailSheet) {
+            NavigationView {
+                VStack(spacing: 16) {
+                    Text("Add Email Address")
+                        .font(.headline)
+
+                    TextField("Enter email", text: $newEmail)
+                        .keyboardType(.emailAddress)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .padding()
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(12)
+
+                    Button("Save & Compose") {
+                        prospect.contactEmail = newEmail
+                        try? modelContext.save()
+
+                        if let url = URL(string: "mailto:\(newEmail)") {
+                            UIApplication.shared.open(url)
+                        }
+
+                        showAddEmailSheet = false
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(newEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                    Spacer()
+                }
+                .padding()
+                .navigationTitle("Email Address")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            showAddEmailSheet = false
+                        }
+                    }
+                }
+            }
+        }
     }
     
     private func validatePhoneNumber() -> Bool {
@@ -293,18 +310,17 @@ struct ProspectActionsToolbar: View {
         let store = CNContactStore()
         store.requestAccess(for: .contacts) { granted, error in
             guard granted else {
-                print("❌ Access to contacts denied")
+                showExportFeedback("Contacts access denied.")
                 return
             }
 
             let predicate = CNContact.predicateForContacts(matchingName: prospect.fullName)
-            let keysToFetch = [
-                CNContactGivenNameKey,
-                CNContactFamilyNameKey,
-                CNContactPhoneNumbersKey,
-                CNContactEmailAddressesKey,
-                CNContactPostalAddressesKey
-            ] as [CNKeyDescriptor]
+            let keysToFetch: [CNKeyDescriptor] = [
+                CNContactGivenNameKey as CNKeyDescriptor,
+                CNContactPostalAddressesKey as CNKeyDescriptor,
+                CNContactPhoneNumbersKey as CNKeyDescriptor,
+                CNContactEmailAddressesKey as CNKeyDescriptor
+            ]
 
             do {
                 let matches = try store.unifiedContacts(matching: predicate, keysToFetch: keysToFetch)
@@ -317,11 +333,10 @@ struct ProspectActionsToolbar: View {
 
                 if let existing = existing {
                     contact = existing.mutableCopy() as! CNMutableContact
-                    print("ℹ️ Updating existing contact: \(contact.givenName)")
+                    saveRequest.update(contact)
                 } else {
                     contact = CNMutableContact()
                     contact.givenName = prospect.fullName
-                    print("✅ Creating new contact")
                     saveRequest.add(contact, toContainerWithIdentifier: nil)
                 }
 
@@ -335,18 +350,27 @@ struct ProspectActionsToolbar: View {
 
                 let postal = CNMutablePostalAddress()
                 postal.street = prospect.address
-                contact.postalAddresses = [
-                    CNLabeledValue(label: CNLabelHome, value: postal)
-                ]
-
-                if existing != nil {
-                    saveRequest.update(contact)
-                }
+                contact.postalAddresses = [CNLabeledValue(label: CNLabelHome, value: postal)]
 
                 try store.execute(saveRequest)
-                print("✅ Contact saved")
+                showExportFeedback("Contact saved to Contacts.")
             } catch {
-                print("❌ Failed to export contact: \(error)")
+                showExportFeedback("Failed to save contact.")
+            }
+        }
+    }
+    
+    private func showExportFeedback(_ message: String) {
+        DispatchQueue.main.async {
+            exportSuccessMessage = message
+            withAnimation {
+                showExportSuccessBanner = true
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                withAnimation {
+                    showExportSuccessBanner = false
+                }
             }
         }
     }
