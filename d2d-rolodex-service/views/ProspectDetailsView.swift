@@ -267,15 +267,6 @@ struct ProspectDetailsView: View {
         }
     }
     
-    private func deleteProspect() {
-        modelContext.delete(prospect)
-        do {
-            try modelContext.save()
-        } catch {
-            print("Failed to delete prospect from SwiftData: \(error)")
-        }
-        presentationMode.wrappedValue.dismiss()
-    }
 }
 
 enum ProspectTab: String, CaseIterable {

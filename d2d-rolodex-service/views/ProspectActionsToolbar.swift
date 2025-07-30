@@ -376,7 +376,7 @@ struct ProspectActionsToolbar: View {
     }
     
     private func deleteProspect() {
-        modelContext.delete(prospect)
+        deleteProspectAndAppointments()
 
         do {
             try modelContext.save()
@@ -390,4 +390,22 @@ struct ProspectActionsToolbar: View {
             print("❌ Failed to delete contact: \(error)")
         }
     }
+    
+    private func deleteProspectAndAppointments() {
+        // Delete all appointments linked to the prospect
+        for appointment in prospect.appointments {
+            modelContext.delete(appointment)
+        }
+
+        // Now delete the prospect itself
+        modelContext.delete(prospect)
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("❌ Failed to delete prospect or appointments: \(error)")
+        }
+
+    }
+    
 }
