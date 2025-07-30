@@ -9,11 +9,14 @@ import MapKit
 
 struct ProspectPopupView: View {
     let place: IdentifiablePlace
-    var onLogKnock: () -> Void
     var onClose: () -> Void
+    var onOutcomeSelected: (String) -> Void
+
+    @State private var showConvertConfirm = false
+    @State private var showFollowUpConfirm = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Spacer()
                 Button(action: onClose) {
@@ -31,26 +34,81 @@ struct ProspectPopupView: View {
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
-            Button(action: onLogKnock) {
-                Text("Log Knock")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+            HStack(spacing: 16) {
+                iconButton(
+                    systemName: "house.slash.fill",
+                    label: "Not Home",
+                    color: .gray
+                ) {
+                    onOutcomeSelected("Wasn't Home")
+                }
+
+                iconButton(
+                    systemName: "checkmark.seal.fill",
+                    label: "Sale",
+                    color: .green
+                ) {
+                    showConvertConfirm = true
+                }
+
+                iconButton(
+                    systemName: "calendar.badge.clock",
+                    label: "Follow Up",
+                    color: .orange
+                ) {
+                    showFollowUpConfirm = true
+                }
             }
-            .padding(.top, 8)
+            .padding(.top, 6)
         }
+        
         .padding()
-        .frame(width: 240)
-        .background(.ultraThinMaterial)
+        .frame(width: 260)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 4)
+        )
+        .compositingGroup()
+        
         .cornerRadius(16)
         .shadow(radius: 6)
+        .alert("Convert to Customer?", isPresented: $showConvertConfirm) {
+            Button("Yes") { onOutcomeSelected("Converted To Sale") }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Convert this lead to a customer?")
+        }
+        .alert("Schedule Follow-Up?", isPresented: $showFollowUpConfirm) {
+            Button("Yes") { onOutcomeSelected("Follow Up Later") }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Schedule a follow-up for this address?")
+        }
     }
 
-    func findProspectName(for address: String) -> String {
-        // You can improve this by passing a name directly or querying from outside
+    private func iconButton(systemName: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: systemName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 28, height: 28)
+                    .foregroundColor(color)
+                Text(label)
+                    .font(.caption2)
+                    .foregroundColor(.primary)
+            }
+            .frame(width: 64)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func findProspectName(for address: String) -> String {
         return "Prospect"
     }
 }
