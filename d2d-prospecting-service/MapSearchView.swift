@@ -62,6 +62,9 @@ struct MapSearchView: View {
     @State private var showProspectPopup = false
 
     @State private var popupScreenPosition: CGPoint? = nil
+    
+    @State private var isSearchExpanded = false
+    @Namespace private var animationNamespace
 
     @Environment(\.modelContext) private var modelContext
 
@@ -145,23 +148,45 @@ struct MapSearchView: View {
                     Spacer()
                     HStack {
                         Spacer()
-                        VStack(spacing: 10) {
-                            Button { zoom(by: 0.5) } label: {
-                                Image(systemName: "plus.magnifyingglass").padding()
-                                    .background(Color.white).clipShape(Circle()).shadow(radius: 3)
+                        if isSearchExpanded {
+                            SearchBarView(
+                                searchText: $searchText,
+                                isFocused: $isSearchFocused,
+                                viewModel: searchVM,
+                                onSubmit: {
+                                    submitSearch()
+                                    searchText = "" // Clear the bar
+                                    withAnimation { isSearchExpanded = false } // Collapse only on submit
+                                },
+                                onSelectResult: {
+                                    handleCompletionTap($0)
+                                    // Keep the bar open so user can tap Done/Enter
+                                    // searchText will be replaced by handleCompletionTap anyway
+                                }
+                            )
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 30)
+                            .matchedGeometryEffect(id: "search", in: animationNamespace)
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                        } else {
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.25)) {
+                                    isSearchExpanded = true
+                                    isSearchFocused = true
+                                }
+                            } label: {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .background(Circle().fill(Color.blue))
                             }
-                            Button { zoom(by: 2.0) } label: {
-                                Image(systemName: "minus.magnifyingglass").padding()
-                                    .background(Color.white).clipShape(Circle()).shadow(radius: 3)
-                            }
+                            .matchedGeometryEffect(id: "search", in: animationNamespace)
+                            .padding(.trailing, 20)
+                            .padding(.bottom, 30)
+                            .shadow(radius: 4)
                         }
-                        .padding(.trailing,20).padding(.bottom,20)
                     }
-                    SearchBarView(searchText: $searchText,
-                                  isFocused: $isSearchFocused,
-                                  viewModel: searchVM,
-                                  onSubmit: { submitSearch() },
-                                  onSelectResult: { handleCompletionTap($0) })
                 }
 
                 if showProspectPopup, let place = selectedPlace, let pos = popupScreenPosition {
