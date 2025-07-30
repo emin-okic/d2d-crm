@@ -9,11 +9,11 @@ import MapKit
 
 struct ProspectPopupView: View {
     let place: IdentifiablePlace
-    var onLogKnock: () -> Void
     var onClose: () -> Void
+    var onOutcomeSelected: (String) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Spacer()
                 Button(action: onClose) {
@@ -31,26 +31,31 @@ struct ProspectPopupView: View {
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
-            Button(action: onLogKnock) {
-                Text("Log Knock")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+            VStack(spacing: 8) {
+                Button("Wasn't Home") {
+                    onOutcomeSelected("Wasn't Home")
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button("Converted To Sale") {
+                    onOutcomeSelected("Converted To Sale")
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button("Follow-Up Later") {
+                    onOutcomeSelected("Follow Up Later")
+                }
+                .buttonStyle(.borderedProminent)
             }
-            .padding(.top, 8)
         }
         .padding()
-        .frame(width: 240)
+        .frame(width: 260)
         .background(.ultraThinMaterial)
         .cornerRadius(16)
         .shadow(radius: 6)
     }
 
     func findProspectName(for address: String) -> String {
-        // You can improve this by passing a name directly or querying from outside
-        return "Prospect"
+        return "Prospect" // Improve with external lookup if needed
     }
 }

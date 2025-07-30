@@ -194,14 +194,16 @@ struct MapSearchView: View {
                 }
 
                 if showProspectPopup, let place = selectedPlace, let pos = popupScreenPosition {
-                    ProspectPopupView(place: place,
-                                      onLogKnock: {
-                                          pendingAddress = place.address
-                                          isTappedAddressCustomer = place.list=="Customers"
-                                          showOutcomePrompt=true
-                                          showProspectPopup=false
-                                      },
-                                      onClose: { showProspectPopup=false })
+                    ProspectPopupView(
+                        place: place,
+                        onClose: { showProspectPopup = false },
+                        onOutcomeSelected: { outcome in
+                            pendingAddress = place.address
+                            isTappedAddressCustomer = place.list == "Customers"
+                            showProspectPopup = false
+                            handleImmediateOutcome(outcome)
+                        }
+                    )
                     .frame(width:240).background(.ultraThinMaterial)
                     .cornerRadius(16).position(pos).zIndex(999)
                 }
@@ -277,6 +279,16 @@ struct MapSearchView: View {
                                                       Button("No",role:.cancel){} }
         .sheet(isPresented:$showTripPopup){ if let addr=pendingAddress { LogTripPopupView(endAddress:addr) } }
         .sheet(isPresented:$showConversionSheet){ if let prospect=prospectToConvert { SignUpPopupView(prospect:prospect,isPresented:$showConversionSheet) } }
+    }
+    
+    private func handleImmediateOutcome(_ status: String) {
+        if status == "Converted To Sale" {
+            handleKnockAndConvertToCustomer(status: status)
+        } else if status == "Wasn't Home" {
+            handleKnockAndPromptNote(status: status)
+        } else if status == "Follow Up Later" {
+            handleKnockAndPromptObjection(status: status)
+        }
     }
 
     private func zoom(by factor: Double) {
