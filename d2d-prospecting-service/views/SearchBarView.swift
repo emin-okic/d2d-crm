@@ -39,7 +39,7 @@ struct SearchBarView: View {
                     Button("Done") {
                         onSubmit()
                     }
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, 6)
                     .padding(.vertical, 6)
                     .background(Color.blue.opacity(0.8))
                     .foregroundColor(.white)
@@ -57,9 +57,9 @@ struct SearchBarView: View {
                 }
                 .padding(.leading, 6)
             }
-            .padding(12)
+            .padding(10)
             .background(.ultraThinMaterial)
-            .cornerRadius(12)
+            .cornerRadius(10)
             .shadow(radius: 3, x: 0, y: 2)
             .padding(.horizontal)
 
