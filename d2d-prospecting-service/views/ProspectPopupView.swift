@@ -61,9 +61,20 @@ struct ProspectPopupView: View {
             }
             .padding(.top, 6)
         }
+        
         .padding()
         .frame(width: 260)
-        .background(.ultraThinMaterial)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 4)
+        )
+        .compositingGroup()
+        
         .cornerRadius(16)
         .shadow(radius: 6)
         .alert("Convert to Customer?", isPresented: $showConvertConfirm) {
