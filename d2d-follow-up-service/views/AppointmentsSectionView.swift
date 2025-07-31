@@ -4,7 +4,6 @@
 //
 //  Created by Emin Okic on 7/6/25.
 //
-
 import SwiftUI
 import SwiftData
 
@@ -15,17 +14,26 @@ struct AppointmentsSectionView: View {
     @State private var showingProspectPicker = false
     @State private var selectedProspect: Prospect?
     @State private var selectedAppointment: Appointment?
+
     @State private var filter: AppointmentFilter = .upcoming
+
+    private let filterKey = "lastSelectedAppointmentFilter"
+
+    private var upcomingCount: Int {
+        appointments.filter { $0.date >= Date() }.count
+    }
+
+    private var pastCount: Int {
+        appointments.filter { $0.date < Date() }.count
+    }
 
     private var filteredAppointments: [Appointment] {
         let now = Date()
         return appointments
             .filter {
                 switch filter {
-                case .upcoming:
-                    return $0.date >= now
-                case .past:
-                    return $0.date < now
+                case .upcoming: return $0.date >= now
+                case .past: return $0.date < now
                 }
             }
             .sorted(by: { $0.date < $1.date })
@@ -34,9 +42,17 @@ struct AppointmentsSectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Appointments")
-                    .font(.headline)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Appointments")
+                        .font(.headline)
+
+                    Text("\(pastCount) Past | \(upcomingCount) Upcoming")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
                 Spacer()
+
                 Menu {
                     Picker("Filter", selection: $filter) {
                         ForEach(AppointmentFilter.allCases) {
@@ -47,6 +63,7 @@ struct AppointmentsSectionView: View {
                     Image(systemName: "line.3.horizontal.decrease.circle")
                         .font(.title3)
                 }
+
                 Button {
                     showingProspectPicker = true
                 } label: {
@@ -86,6 +103,17 @@ struct AppointmentsSectionView: View {
                 .listStyle(.plain)
                 .padding(.horizontal, 20)
             }
+        }
+        .onAppear {
+            if let saved = UserDefaults.standard.string(forKey: filterKey),
+               let parsed = AppointmentFilter(rawValue: saved) {
+                filter = parsed
+            } else {
+                filter = .upcoming // Default
+            }
+        }
+        .onChange(of: filter) {
+            UserDefaults.standard.set(filter.rawValue, forKey: filterKey)
         }
         .sheet(isPresented: $showingProspectPicker) {
             NavigationStack {
