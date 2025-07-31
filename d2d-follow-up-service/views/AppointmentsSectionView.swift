@@ -15,11 +15,20 @@ struct AppointmentsSectionView: View {
     @State private var showingProspectPicker = false
     @State private var selectedProspect: Prospect?
     @State private var selectedAppointment: Appointment?
+    @State private var filter: AppointmentFilter = .upcoming
 
-    private var upcomingAppointments: [Appointment] {
-        appointments
-            .filter { $0.date >= Date() }
-            .sorted { $0.date < $1.date }
+    private var filteredAppointments: [Appointment] {
+        let now = Date()
+        return appointments
+            .filter {
+                switch filter {
+                case .upcoming:
+                    return $0.date >= now
+                case .past:
+                    return $0.date < now
+                }
+            }
+            .sorted(by: { $0.date < $1.date })
     }
 
     var body: some View {
@@ -28,6 +37,16 @@ struct AppointmentsSectionView: View {
                 Text("Appointments")
                     .font(.headline)
                 Spacer()
+                Menu {
+                    Picker("Filter", selection: $filter) {
+                        ForEach(AppointmentFilter.allCases) {
+                            Text($0.rawValue).tag($0)
+                        }
+                    }
+                } label: {
+                    Image(systemName: "line.3.horizontal.decrease.circle")
+                        .font(.title3)
+                }
                 Button {
                     showingProspectPicker = true
                 } label: {
@@ -36,15 +55,15 @@ struct AppointmentsSectionView: View {
                 }
             }
             .padding(.horizontal, 20)
-            .padding(.vertical, 10)
+            .padding(.top, 10)
 
-            if upcomingAppointments.isEmpty {
-                Text("No upcoming appointments.")
+            if filteredAppointments.isEmpty {
+                Text("No \(filter.rawValue.lowercased()) appointments.")
                     .font(.caption)
                     .foregroundColor(.gray)
                     .padding(.horizontal, 20)
             } else {
-                List(upcomingAppointments) { appointment in
+                List(filteredAppointments) { appointment in
                     Button {
                         selectedAppointment = appointment
                     } label: {
@@ -60,7 +79,6 @@ struct AppointmentsSectionView: View {
                             Text(appointment.date.formatted(date: .abbreviated, time: .shortened))
                                 .font(.caption)
                                 .foregroundColor(.gray)
-
                         }
                         .padding(.vertical, 4)
                     }
