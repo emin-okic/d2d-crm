@@ -65,26 +65,39 @@ struct MapSearchView: View {
     
     @State private var isSearchExpanded = false
     @Namespace private var animationNamespace
+    
+    private var prospectsVersion: Int {
+        prospects.map { "\($0.fullName)\($0.address)\($0.list)\($0.knockHistory.count)" }
+            .joined()
+            .hashValue
+    }
+    
+    private var customersVersion: Int {
+        customers.map { "\($0.fullName)\($0.address)\($0.knockHistory.count)" }
+            .joined()
+            .hashValue
+    }
+    
+    @State private var viewNeedsUpdate = false
 
     @Environment(\.modelContext) private var modelContext
 
     private var hasSignedUp: Bool {
-        prospects
-            .flatMap { $0.knockHistory }
-            .contains { $0.status == "Converted To Sale" }
+        let allKnocks = prospects.flatMap { $0.knockHistory } + customers.flatMap { $0.knockHistory }
+        return allKnocks.contains { $0.status == "Converted To Sale" }
     }
 
     private var totalKnocks: Int {
-        prospects.flatMap { $0.knockHistory }.count
+        prospects.flatMap { $0.knockHistory }.count + customers.flatMap { $0.knockHistory }.count
     }
 
     private var averageKnocksPerCustomer: Int {
-        let customerKnocks = prospects
-            .filter { $0.list == "Customers" }
-            .map { $0.knockHistory.count }
-        guard !customerKnocks.isEmpty else { return 0 }
-        return Int(Double(customerKnocks.reduce(0, +)) / Double(customerKnocks.count))
+        let knockCounts = customers.map { $0.knockHistory.count }
+        guard !knockCounts.isEmpty else { return 0 }
+        return Int(Double(knockCounts.reduce(0, +)) / Double(knockCounts.count))
     }
+    
+    @EnvironmentObject private var appState: AppState
 
     init(searchText: Binding<String>,
          region: Binding<MKCoordinateRegion>,
@@ -140,9 +153,13 @@ struct MapSearchView: View {
                 .frame(maxHeight: .infinity)
                 .edgesIgnoringSafeArea(.horizontal)
 
-                ScorecardBar(totalKnocks: totalKnocks,
-                             avgKnocksPerSale: averageKnocksPerCustomer,
-                             hasSignedUp: hasSignedUp)
+                if viewNeedsUpdate || !prospects.isEmpty {
+                    ScorecardBar(
+                        totalKnocks: totalKnocks,
+                        avgKnocksPerSale: averageKnocksPerCustomer,
+                        hasSignedUp: hasSignedUp
+                    )
+                }
 
                 VStack {
                     Spacer()
@@ -214,6 +231,27 @@ struct MapSearchView: View {
                 }
             }
         }
+        .onChange(of: appState.shouldRefreshMapView) { newValue in
+            if newValue {
+                updateMarkers()
+                DispatchQueue.main.async {
+                    viewNeedsUpdate.toggle()
+                    appState.shouldRefreshMapView = false
+                }
+            }
+        }
+        .onChange(of: prospectsVersion) { _ in
+            updateMarkers()
+            DispatchQueue.main.async {
+                viewNeedsUpdate.toggle()
+            }
+        }
+        .onChange(of: customersVersion) { _ in
+            updateMarkers()
+            DispatchQueue.main.async {
+                viewNeedsUpdate.toggle()
+            }
+        }
         .onChange(of: searchText) { searchVM.updateQuery($0) }
         .onAppear { updateMarkers() }
         .onChange(of: prospects) { _ in updateMarkers() }
@@ -278,7 +316,12 @@ struct MapSearchView: View {
         .alert("Log a trip?",isPresented:$showTripPrompt){ Button("Yes"){ showTripPopup=true }
                                                       Button("No",role:.cancel){} }
         .sheet(isPresented:$showTripPopup){ if let addr=pendingAddress { LogTripPopupView(endAddress:addr) } }
-        .sheet(isPresented:$showConversionSheet){ if let prospect=prospectToConvert { SignUpPopupView(prospect:prospect,isPresented:$showConversionSheet) } }
+        .sheet(isPresented:$showConversionSheet){
+            if let prospect=prospectToConvert {
+                SignUpPopupView(prospect:prospect,isPresented:$showConversionSheet)
+                    .environmentObject(appState)
+            }
+        }
     }
     
     private func handleImmediateOutcome(_ status: String) {

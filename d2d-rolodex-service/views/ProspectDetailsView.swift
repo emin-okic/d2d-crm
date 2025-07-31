@@ -47,6 +47,8 @@ struct ProspectDetailsView: View {
     @State private var selectedAppointmentDetails: Appointment?
     
     @State private var selectedTab: ProspectTab = .appointments
+    
+    @EnvironmentObject private var appState: AppState
 
     var body: some View {
         Form {
@@ -96,6 +98,7 @@ struct ProspectDetailsView: View {
             
             Section {
                 ProspectActionsToolbar(prospect: prospect)
+                    .environmentObject(appState)
             }
             
             Section {
@@ -201,6 +204,9 @@ struct ProspectDetailsView: View {
                             prospect.contactPhone = tempPhone
                             prospect.contactEmail = tempEmail
                             try? modelContext.save()
+                            
+                            appState.shouldRefreshMapView = true
+                            
                             showConversionSheet = false
                             presentationMode.wrappedValue.dismiss()
                         }
