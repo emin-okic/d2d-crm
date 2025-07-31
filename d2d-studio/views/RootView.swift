@@ -35,6 +35,8 @@ struct RootView: View {
     @State private var addressToCenter: String? = nil
     
     @State private var searchText: String = ""
+    
+    @StateObject private var appState = AppState()
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -44,6 +46,7 @@ struct RootView: View {
                 selectedList: $selectedList,
                 addressToCenter: $addressToCenter
             )
+            .environmentObject(appState)
             .tabItem {
                 Label("Map", systemImage: "map.fill")
             }
@@ -51,12 +54,16 @@ struct RootView: View {
 
             RolodexView(
                 selectedList: $selectedList,
-                onSave: { showingAddProspect = false },
+                onSave: {
+                    appState.shouldRefreshMapView = true
+                    showingAddProspect = false
+                },
                 onDoubleTap: { prospect in
                     selectedTab = 0
                     addressToCenter = prospect.address
                 }
             )
+            .environmentObject(appState)
             .tabItem {
                 Label("Contacts", systemImage: "person.3.fill")
             }

@@ -32,6 +32,8 @@ struct ProspectActionsToolbar: View {
     @State private var showExportPrompt = false
     @State private var showExportSuccessBanner = false
     @State private var exportSuccessMessage = ""
+    
+    @EnvironmentObject private var appState: AppState
 
     var body: some View {
         ZStack {
@@ -153,33 +155,7 @@ struct ProspectActionsToolbar: View {
 
         // Create sale sheet
         .sheet(isPresented: $showCreateSaleSheet) {
-            NavigationView {
-                Form {
-                    Section(header: Text("Confirm Customer Info")) {
-                        TextField("Full Name", text: $prospect.fullName)
-                        TextField("Address", text: $prospect.address)
-                        TextField("Phone", text: Binding(
-                            get: { prospect.contactPhone },
-                            set: { prospect.contactPhone = $0 }
-                        ))
-                        TextField("Email", text: Binding(
-                            get: { prospect.contactEmail },
-                            set: { prospect.contactEmail = $0 }
-                        ))
-                    }
-
-                    Section {
-                        Button("Confirm Sale") {
-                            prospect.list = "Customers"
-                            try? modelContext.save()
-                            showCreateSaleSheet = false
-                        }
-                        .disabled(prospect.fullName.isEmpty || prospect.address.isEmpty)
-                    }
-                }
-                .navigationTitle("Create Sale")
-                .navigationBarTitleDisplayMode(.inline)
-            }
+            CreateSaleView(prospect: prospect, isPresented: $showCreateSaleSheet)
         }
 
         // Add phone sheet

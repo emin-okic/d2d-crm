@@ -46,6 +46,8 @@ struct RolodexView: View {
     private var totalCustomers: Int {
         prospects.filter { $0.list == "Customers" }.count
     }
+    
+    @EnvironmentObject private var appState: AppState
 
     var body: some View {
         NavigationView {
@@ -106,10 +108,14 @@ struct RolodexView: View {
                         )
                         .background(
                             NavigationLink(
-                                destination: ProspectDetailsView(prospect: prospect),
                                 tag: prospect.persistentModelID,
-                                selection: $selectedProspectID
-                            ) { EmptyView() }
+                                selection: $selectedProspectID,
+                                destination: {
+                                    ProspectDetailsView(prospect: prospect)
+                                        .environmentObject(appState)
+                                },
+                                label: { EmptyView() }
+                            )
                             .hidden()
                         )
                     }
@@ -209,20 +215,23 @@ struct RolodexView: View {
             }
         }
 
-        if let neighbor = neighbor {
+        DispatchQueue.main.async {
             suggestedProspect = neighbor
         }
     }
     
     func fetchNextSuggestedNeighbor() async {
         let controller = DatabaseController.shared
+        
         let customerProspects = prospects.filter { $0.list == "Customers" }
         guard !customerProspects.isEmpty else {
             suggestedProspect = nil
             return
         }
 
+        suggestionSourceIndex = suggestionSourceIndex % customerProspects.count
         var attemptIndex = suggestionSourceIndex
+        
         var found: Prospect?
 
         for _ in 0..<customerProspects.count {
