@@ -116,6 +116,10 @@ struct ProspectActionsToolbar: View {
                     UIApplication.shared.open(url)
                 }
             }
+            Button("Edit Number") {
+                newPhone = prospect.contactPhone // Pre-fill current value
+                showAddPhoneSheet = true
+            }
             Button("Cancel", role: .cancel) { }
         }
 
@@ -129,6 +133,10 @@ struct ProspectActionsToolbar: View {
                 if let url = URL(string: "mailto:\(prospect.contactEmail)") {
                     UIApplication.shared.open(url)
                 }
+            }
+            Button("Edit Email") {
+                newEmail = prospect.contactEmail // Pre-fill current value
+                showAddEmailSheet = true
             }
             Button("Cancel", role: .cancel) { }
         }
@@ -197,7 +205,7 @@ struct ProspectActionsToolbar: View {
                             .foregroundColor(.red)
                     }
 
-                    Button("Save & Call") {
+                    Button("Save Number") {
                         if validatePhoneNumber() {
                             prospect.contactPhone = newPhone
                             try? modelContext.save()
@@ -241,7 +249,7 @@ struct ProspectActionsToolbar: View {
                         .background(Color(.secondarySystemBackground))
                         .cornerRadius(12)
 
-                    Button("Save & Compose") {
+                    Button("Save Email") {
                         prospect.contactEmail = newEmail
                         try? modelContext.save()
 
