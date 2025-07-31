@@ -27,6 +27,8 @@ struct AppointmentDetailsView: View {
     @State private var showAddToCalendarPrompt = false
     @State private var showSuccessBanner = false
     @State private var successMessage = ""
+    
+    @State private var showOpenInMapsPrompt = false
 
     var body: some View {
         ZStack {
@@ -102,10 +104,18 @@ struct AppointmentDetailsView: View {
                         
                         // This is action button for opening in maps
                         Button {
-                            openInAppleMaps(destination: appointment.location)
+                            showOpenInMapsPrompt = true
                         } label: {
                             Image(systemName: "car.fill")
                                 .font(.title2)
+                        }
+                        .alert("Open in Apple Maps", isPresented: $showOpenInMapsPrompt) {
+                            Button("Yes") {
+                                openInAppleMaps(destination: appointment.location)
+                            }
+                            Button("No", role: .cancel) { }
+                        } message: {
+                            Text("Would you like to open directions in Apple Maps?")
                         }
                         
                     }
