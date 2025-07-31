@@ -46,7 +46,7 @@ struct AppointmentsSectionView: View {
                     Text("Appointments")
                         .font(.headline)
 
-                    Text("\(pastCount) Past | \(upcomingCount) Upcoming")
+                    Text(filter == .upcoming ? "\(upcomingCount) Upcoming Appointments" : "\(pastCount) Past Appointments")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
