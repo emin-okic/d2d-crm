@@ -99,6 +99,15 @@ struct AppointmentDetailsView: View {
                                 .foregroundColor(.secondary)
                                 .padding(.top, 4)
                         }
+                        
+                        // This is action button for opening in maps
+                        Button {
+                            openInAppleMaps(destination: appointment.location)
+                        } label: {
+                            Image(systemName: "car.fill")
+                                .font(.title2)
+                        }
+                        
                     }
                     .padding(.bottom)
 
@@ -176,6 +185,16 @@ struct AppointmentDetailsView: View {
                 .frame(maxWidth: .infinity)
                 .zIndex(999)
             }
+        }
+    }
+    
+    // Helper function for opening in maps
+    private func openInAppleMaps(destination: String) {
+        let encodedAddress = destination.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let urlString = "http://maps.apple.com/?daddr=\(encodedAddress)&dirflg=d"
+
+        if let url = URL(string: urlString), UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.open(url)
         }
     }
     
