@@ -459,6 +459,20 @@ struct MapSearchView: View {
     private func handleKnockAndConvertToCustomer(status: String) {
         guard let addr = pendingAddress else { return }
         let prospect = saveKnock(address: addr, status: status)
+        
+        // Update the marker immediately to reflect "Customer" status
+        if let index = controller.markers.firstIndex(where: {
+            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
+            addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        }) {
+            controller.markers[index] = IdentifiablePlace(
+                address: addr,
+                location: controller.markers[index].location,
+                count: controller.markers[index].count,
+                list: "Customers"
+            )
+        }
+
         prospectToConvert = prospect
         showConversionSheet = true
     }
