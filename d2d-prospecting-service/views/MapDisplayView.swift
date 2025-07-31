@@ -103,13 +103,24 @@ struct MapDisplayView: UIViewRepresentable {
             }
             view?.frame = CGRect(x: 0, y: 0, width: 28, height: 28)
             view?.layer.cornerRadius = 14
+            
             if annotation.place.list == "Customers" {
                 view?.image = UIImage(systemName: "star.circle.fill")?
                     .withTintColor(.systemBlue, renderingMode: .alwaysOriginal)
+
+                // Add simple pulse animation
+                let pulse = CABasicAnimation(keyPath: "transform.scale")
+                pulse.fromValue = 1.5
+                pulse.toValue = 1.0
+                pulse.duration = 0.4
+                pulse.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                view?.layer.add(pulse, forKey: "pulse")
+                
             } else {
                 view?.image = nil
                 view?.backgroundColor = UIColor(annotation.place.markerColor)
             }
+            
             return view
         }
 
