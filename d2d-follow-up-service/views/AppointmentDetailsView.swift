@@ -27,6 +27,8 @@ struct AppointmentDetailsView: View {
     @State private var showAddToCalendarPrompt = false
     @State private var showSuccessBanner = false
     @State private var successMessage = ""
+    
+    @State private var showOpenInMapsPrompt = false
 
     var body: some View {
         ZStack {
@@ -99,6 +101,23 @@ struct AppointmentDetailsView: View {
                                 .foregroundColor(.secondary)
                                 .padding(.top, 4)
                         }
+                        
+                        // This is action button for opening in maps
+                        Button {
+                            showOpenInMapsPrompt = true
+                        } label: {
+                            Image(systemName: "car.fill")
+                                .font(.title2)
+                        }
+                        .alert("Open in Apple Maps", isPresented: $showOpenInMapsPrompt) {
+                            Button("Yes") {
+                                openInAppleMaps(destination: appointment.location)
+                            }
+                            Button("No", role: .cancel) { }
+                        } message: {
+                            Text("Would you like to open directions in Apple Maps?")
+                        }
+                        
                     }
                     .padding(.bottom)
 
@@ -176,6 +195,16 @@ struct AppointmentDetailsView: View {
                 .frame(maxWidth: .infinity)
                 .zIndex(999)
             }
+        }
+    }
+    
+    // Helper function for opening in maps
+    private func openInAppleMaps(destination: String) {
+        let encodedAddress = destination.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let urlString = "http://maps.apple.com/?daddr=\(encodedAddress)&dirflg=d"
+
+        if let url = URL(string: urlString), UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.open(url)
         }
     }
     
