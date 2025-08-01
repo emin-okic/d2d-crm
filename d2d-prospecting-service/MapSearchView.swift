@@ -67,6 +67,8 @@ struct MapSearchView: View {
     @Namespace private var animationNamespace
 
     @Environment(\.modelContext) private var modelContext
+    
+    @State private var pendingRecordingFileName: String?
 
     private var hasSignedUp: Bool {
         prospects
@@ -196,17 +198,19 @@ struct MapSearchView: View {
                 if showProspectPopup, let place = selectedPlace, let pos = popupScreenPosition {
                     ProspectPopupView(
                         place: place,
+                        isCustomer: place.list == "Customers",  // 👈 Pass whether this is a customer
                         onClose: { showProspectPopup = false },
-                        onOutcomeSelected: { outcome in
+                        onOutcomeSelected: { outcome, fileName in
                             pendingAddress = place.address
                             isTappedAddressCustomer = place.list == "Customers"
                             showProspectPopup = false
-                            handleImmediateOutcome(outcome)
+                            handleOutcome(outcome, recordingFileName: fileName)
                         }
                     )
                     .frame(width:240).background(.ultraThinMaterial)
                     .cornerRadius(16).position(pos).zIndex(999)
                 }
+                
                 if showKnockTutorial {
                     KnockTutorialView(totalKnocks: totalKnocks) {
                         withAnimation { showKnockTutorial=false; hasSeenKnockTutorial=true }
@@ -249,16 +253,23 @@ struct MapSearchView: View {
             NavigationView{
                 List(objectionOptions){
                     obj in
-                    Button(obj.text){
-                        selectedObjection=obj;
-                        obj.timesHeard+=1;
-                        try? modelContext.save();
-                        showObjectionPicker=false;
-                        // showNoteInput=true
-                        
-                        // Trigger follow-up scheduling first
+                    Button(obj.text) {
+                        selectedObjection = obj
+                        obj.timesHeard += 1
+                        try? modelContext.save()
+                        showObjectionPicker = false
+
+                        // ✅ Insert recording now that objection is selected
+                        if let name = pendingRecordingFileName {
+                            let newRecording = Recording(fileName: name, date: .now, objection: obj, rating: 3)
+                            modelContext.insert(newRecording)
+                            try? modelContext.save()
+                            pendingRecordingFileName = nil
+                        }
+
                         showFollowUpSheet = true
                     }
+                    
         }.navigationTitle("Why not interested?")
           .toolbar{ ToolbarItem(placement:.cancellationAction){ Button("Cancel"){ showObjectionPicker=false } } } } }
         .sheet(isPresented:$showingAddObjection){ AddObjectionView() }
@@ -281,6 +292,29 @@ struct MapSearchView: View {
         .sheet(isPresented:$showConversionSheet){ if let prospect=prospectToConvert { SignUpPopupView(prospect:prospect,isPresented:$showConversionSheet) } }
     }
     
+    private func handleOutcome(_ status: String, recordingFileName: String?) {
+        if status == "Converted To Sale" {
+            let objection = Objection(text: "Converted To Sale", response: "Handled successfully", timesHeard: 0)
+            modelContext.insert(objection)
+            if let name = recordingFileName {
+                let newRecording = Recording(fileName: name, date: .now, objection: objection, rating: 5)
+                modelContext.insert(newRecording)
+            }
+            handleKnockAndConvertToCustomer(status: status)
+
+        } else if status == "Follow Up Later" {
+            // Defer recording until objection is picked
+            pendingRecordingFileName = recordingFileName
+            handleKnockAndPromptObjection(status: status)
+
+        } else if status == "Wasn't Home" {
+            handleKnockAndPromptNote(status: status)
+        }
+
+        try? modelContext.save()
+    }
+    
+    // This is for the prompts - might be redundant
     private func handleImmediateOutcome(_ status: String) {
         if status == "Converted To Sale" {
             handleKnockAndConvertToCustomer(status: status)
@@ -450,7 +484,7 @@ struct MapSearchView: View {
                 showingAddObjection = true  // <-- triggers AddObjectionView sheet
             }
         } else {
-            objectionOptions = objections
+            objectionOptions = objections.filter { $0.text != "Converted To Sale" }
             showObjectionPicker = true
             // shouldAskForTripAfterFollowUp = true // carry trip flag if needed
         }

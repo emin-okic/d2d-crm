@@ -9,11 +9,15 @@ import MapKit
 
 struct ProspectPopupView: View {
     let place: IdentifiablePlace
+    let isCustomer: Bool
     var onClose: () -> Void
-    var onOutcomeSelected: (String) -> Void
+    var onOutcomeSelected: (String, String?) -> Void
 
-    @State private var showConvertConfirm = false
-    @State private var showFollowUpConfirm = false
+    @State private var isRecording = false
+    @State private var showOutcomeButtons = false
+    @State private var currentFileName: String?
+
+    private let recorder = RecordingManager()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -34,34 +38,58 @@ struct ProspectPopupView: View {
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
-            HStack(spacing: 16) {
-                iconButton(
-                    systemName: "house.slash.fill",
-                    label: "Not Home",
-                    color: .gray
-                ) {
-                    onOutcomeSelected("Wasn't Home")
-                }
+            Divider().padding(.vertical, 4)
 
-                iconButton(
-                    systemName: "checkmark.seal.fill",
-                    label: "Sale",
-                    color: .green
-                ) {
-                    showConvertConfirm = true
-                }
+            if !isRecording && !showOutcomeButtons {
+                HStack {
+                    Spacer()
+                    Button(action: startRecording) {
+                        VStack(spacing: 4) {
+                            Image(systemName: "mic.circle.fill")
+                                .resizable()
+                                .frame(width: 30, height: 30)
+                                .foregroundColor(.red)
+                                .shadow(radius: 4)
 
-                iconButton(
-                    systemName: "calendar.badge.clock",
-                    label: "Follow Up",
-                    color: .orange
-                ) {
-                    showFollowUpConfirm = true
+                            Text("Start Recording")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    Spacer()
                 }
+                .padding(.top, 8)
             }
-            .padding(.top, 6)
+
+            if showOutcomeButtons {
+                Text("Select Knock Outcome")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+
+                HStack {
+                    Spacer()
+                    HStack(spacing: 16) {
+                        iconButton(systemName: "house.slash.fill", label: "Not Home", color: .gray) {
+                            stopAndHandleOutcome("Wasn't Home")
+                        }
+
+                        if !isCustomer {
+                            iconButton(systemName: "checkmark.seal.fill", label: "Sale", color: .green) {
+                                stopAndHandleOutcome("Converted To Sale")
+                            }
+                        }
+
+                        iconButton(systemName: "calendar.badge.clock", label: "Follow Up", color: .orange) {
+                            stopAndHandleOutcome("Follow Up Later")
+                        }
+                    }
+                    Spacer()
+                }
+                .padding(.top, 4)
+
+            }
         }
-        
         .padding()
         .frame(width: 260)
         .background(
@@ -73,22 +101,8 @@ struct ProspectPopupView: View {
                 )
                 .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 4)
         )
-        .compositingGroup()
-        
         .cornerRadius(16)
         .shadow(radius: 6)
-        .alert("Convert to Customer?", isPresented: $showConvertConfirm) {
-            Button("Yes") { onOutcomeSelected("Converted To Sale") }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Convert this lead to a customer?")
-        }
-        .alert("Schedule Follow-Up?", isPresented: $showFollowUpConfirm) {
-            Button("Yes") { onOutcomeSelected("Follow Up Later") }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Schedule a follow-up for this address?")
-        }
     }
 
     private func iconButton(systemName: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
@@ -106,6 +120,37 @@ struct ProspectPopupView: View {
             .frame(width: 64)
         }
         .buttonStyle(.plain)
+    }
+
+    private func startRecording() {
+        let result = recorder.start()
+        if result.started {
+            isRecording = true
+            currentFileName = result.fileName
+            showOutcomeButtons = true
+        }
+    }
+
+    private func stopAndHandleOutcome(_ outcome: String) {
+        recorder.stop()
+        isRecording = false
+
+        if outcome == "Wasn't Home" {
+            discardRecording()
+            onOutcomeSelected(outcome, nil)
+        } else {
+            onOutcomeSelected(outcome, currentFileName)
+        }
+
+        currentFileName = nil
+        showOutcomeButtons = false
+    }
+
+    private func discardRecording() {
+        if let file = currentFileName {
+            let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(file)
+            try? FileManager.default.removeItem(at: url)
+        }
     }
 
     private func findProspectName(for address: String) -> String {
