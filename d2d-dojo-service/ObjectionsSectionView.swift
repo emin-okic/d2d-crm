@@ -34,6 +34,7 @@ struct ObjectionsSectionView: View {
                     .padding(.horizontal, 20)
             } else {
                 let ranked = objections
+                    .filter { $0.text != "Converted To Sale" }
                     .sorted { $0.timesHeard > $1.timesHeard }
                     .enumerated()
                     .map { RankedObjection(rank: $0.offset + 1, objection: $0.element) }
