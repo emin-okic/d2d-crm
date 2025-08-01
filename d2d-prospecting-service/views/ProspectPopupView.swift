@@ -30,9 +30,13 @@ struct ProspectPopupView: View {
                 }
             }
 
-            Text(place.address)
-                .font(.headline)
-                .multilineTextAlignment(.leading)
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(formattedAddressLines, id: \.self) { line in
+                    Text(line)
+                        .font(.headline)
+                        .multilineTextAlignment(.leading)
+                }
+            }
 
             Text("Name: \(findProspectName(for: place.address))")
                 .font(.subheadline)
@@ -120,6 +124,28 @@ struct ProspectPopupView: View {
             .frame(width: 64)
         }
         .buttonStyle(.plain)
+    }
+    
+    private var formattedAddressLines: [String] {
+        let parts = place.address.components(separatedBy: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+        if parts.count >= 3 {
+            let street = parts[0] // e.g. "10320 Norfolk Dr"
+            let city = parts[1]   // e.g. "Johnston"
+            let stateZip = parts[2] // e.g. "IA 50131"
+            return [street, "\(city), \(stateZip)"]
+        }
+
+        // fallback if address isn't comma-separated
+        let words = place.address.components(separatedBy: " ")
+        if words.count >= 5 {
+            let street = words.prefix(3).joined(separator: " ") // e.g. "10320 Norfolk Dr"
+            let rest = words.dropFirst(3).joined(separator: " ") // "Johnston IA 50131"
+            return [street, rest]
+        }
+
+        return [place.address]
     }
 
     private func startRecording() {
