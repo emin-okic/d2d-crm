@@ -67,22 +67,27 @@ struct ProspectPopupView: View {
                     .font(.caption)
                     .foregroundColor(.gray)
 
-                HStack(spacing: 16) {
-                    iconButton(systemName: "house.slash.fill", label: "Not Home", color: .gray) {
-                        stopAndHandleOutcome("Wasn't Home")
-                    }
+                HStack {
+                    Spacer()
+                    HStack(spacing: 16) {
+                        iconButton(systemName: "house.slash.fill", label: "Not Home", color: .gray) {
+                            stopAndHandleOutcome("Wasn't Home")
+                        }
 
-                    if !isCustomer {
-                        iconButton(systemName: "checkmark.seal.fill", label: "Sale", color: .green) {
-                            stopAndHandleOutcome("Converted To Sale")
+                        if !isCustomer {
+                            iconButton(systemName: "checkmark.seal.fill", label: "Sale", color: .green) {
+                                stopAndHandleOutcome("Converted To Sale")
+                            }
+                        }
+
+                        iconButton(systemName: "calendar.badge.clock", label: "Follow Up", color: .orange) {
+                            stopAndHandleOutcome("Follow Up Later")
                         }
                     }
-
-                    iconButton(systemName: "calendar.badge.clock", label: "Follow Up", color: .orange) {
-                        stopAndHandleOutcome("Follow Up Later")
-                    }
+                    Spacer()
                 }
                 .padding(.top, 4)
+
             }
         }
         .padding()
