@@ -41,23 +41,16 @@ struct RecordingsView: View {
                     
                     // MARK: - Custom Header
                     HStack {
-                        Text("The Virtual Sales Studio")
+                        Text("Recent Conversations")
                             .font(.title)
                             .fontWeight(.bold)
                         Spacer()
                     }
                     .padding(.horizontal, 0)
-                    .padding(.top, 20)
+                    .padding(.top, 10)
                     
                     RecordingStatsView(total: totalRecordings, avg: averageScore)
                     
-                    Spacer()
-
-                    ObjectionsSectionView()
-                    
-                    Spacer()
-
-                    header
 
                     if isRecording {
                         recordingIndicator
