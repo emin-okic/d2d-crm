@@ -43,13 +43,17 @@ struct ProspectPopupView: View {
                 HStack {
                     Spacer()
                     Button(action: startRecording) {
-                        Image(systemName: "mic.circle.fill")
-                            .resizable()
-                            .frame(width: 60, height: 60)
-                            .foregroundColor(.red)
-                            .shadow(radius: 4)
-                            .scaleEffect(isRecording ? 1.1 : 1.0)
-                            .animation(.easeInOut(duration: 0.3), value: isRecording)
+                        VStack(spacing: 4) {
+                            Image(systemName: "mic.circle.fill")
+                                .resizable()
+                                .frame(width: 30, height: 30)
+                                .foregroundColor(.red)
+                                .shadow(radius: 4)
+
+                            Text("Start Recording")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                     }
                     .buttonStyle(PlainButtonStyle())
                     Spacer()
