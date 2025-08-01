@@ -197,11 +197,11 @@ struct MapSearchView: View {
                     ProspectPopupView(
                         place: place,
                         onClose: { showProspectPopup = false },
-                        onOutcomeSelected: { outcome in
+                        onOutcomeSelected: { outcome, fileName in
                             pendingAddress = place.address
                             isTappedAddressCustomer = place.list == "Customers"
                             showProspectPopup = false
-                            handleImmediateOutcome(outcome)
+                            handleOutcome(outcome, recordingFileName: fileName)
                         }
                     )
                     .frame(width:240).background(.ultraThinMaterial)
@@ -281,6 +281,30 @@ struct MapSearchView: View {
         .sheet(isPresented:$showConversionSheet){ if let prospect=prospectToConvert { SignUpPopupView(prospect:prospect,isPresented:$showConversionSheet) } }
     }
     
+    private func handleOutcome(_ status: String, recordingFileName: String?) {
+        // Save the knock and update UI as usual
+        if status == "Converted To Sale" {
+            if let name = recordingFileName {
+                let newRecording = Recording(fileName: name, date: .now, objection: nil, rating: 5)
+                modelContext.insert(newRecording)
+            }
+            handleKnockAndConvertToCustomer(status: status)
+
+        } else if status == "Follow Up Later" {
+            if let name = recordingFileName {
+                let newRecording = Recording(fileName: name, date: .now, objection: nil, rating: 3)
+                modelContext.insert(newRecording)
+            }
+            handleKnockAndPromptObjection(status: status)
+
+        } else if status == "Wasn't Home" {
+            handleKnockAndPromptNote(status: status)
+        }
+
+        try? modelContext.save()
+    }
+    
+    // This is for the prompts - might be redundant
     private func handleImmediateOutcome(_ status: String) {
         if status == "Converted To Sale" {
             handleKnockAndConvertToCustomer(status: status)
