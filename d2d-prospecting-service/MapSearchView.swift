@@ -198,6 +198,7 @@ struct MapSearchView: View {
                 if showProspectPopup, let place = selectedPlace, let pos = popupScreenPosition {
                     ProspectPopupView(
                         place: place,
+                        isCustomer: place.list == "Customers",  // 👈 Pass whether this is a customer
                         onClose: { showProspectPopup = false },
                         onOutcomeSelected: { outcome, fileName in
                             pendingAddress = place.address
@@ -209,6 +210,7 @@ struct MapSearchView: View {
                     .frame(width:240).background(.ultraThinMaterial)
                     .cornerRadius(16).position(pos).zIndex(999)
                 }
+                
                 if showKnockTutorial {
                     KnockTutorialView(totalKnocks: totalKnocks) {
                         withAnimation { showKnockTutorial=false; hasSeenKnockTutorial=true }

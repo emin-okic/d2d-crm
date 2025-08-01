@@ -9,8 +9,9 @@ import MapKit
 
 struct ProspectPopupView: View {
     let place: IdentifiablePlace
+    let isCustomer: Bool
     var onClose: () -> Void
-    var onOutcomeSelected: (String, String?) -> Void  // Includes optional fileName
+    var onOutcomeSelected: (String, String?) -> Void
 
     @State private var isRecording = false
     @State private var showOutcomeButtons = false
@@ -71,8 +72,10 @@ struct ProspectPopupView: View {
                         stopAndHandleOutcome("Wasn't Home")
                     }
 
-                    iconButton(systemName: "checkmark.seal.fill", label: "Sale", color: .green) {
-                        stopAndHandleOutcome("Converted To Sale")
+                    if !isCustomer {
+                        iconButton(systemName: "checkmark.seal.fill", label: "Sale", color: .green) {
+                            stopAndHandleOutcome("Converted To Sale")
+                        }
                     }
 
                     iconButton(systemName: "calendar.badge.clock", label: "Follow Up", color: .orange) {
