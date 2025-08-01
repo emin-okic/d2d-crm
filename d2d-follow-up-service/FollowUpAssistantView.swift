@@ -22,6 +22,13 @@ struct FollowUpAssistantView: View {
     
     @State private var showTodaysAppointmentsSheet = false
     
+    @State private var selectedTab: FollowUpTab = .appointments
+    
+    enum FollowUpTab: String, CaseIterable {
+        case appointments = "Appointments"
+        case recordings = "Recent Conversations"
+    }
+    
     private var appointmentsToday: Int {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
@@ -91,11 +98,25 @@ struct FollowUpAssistantView: View {
                     
                     ObjectionsSectionView()
                     
-                    NavigationView {
-                        AppointmentsSectionView()
+                    // MARK: - Tab Selector
+                    Picker("View", selection: $selectedTab) {
+                        ForEach(FollowUpTab.allCases, id: \.self) { tab in
+                            Text(tab.rawValue).tag(tab)
+                        }
                     }
-                    
-                    RecordingsView()
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, 20)
+
+                    // MARK: - Tab Content
+                    Group {
+                        switch selectedTab {
+                        case .appointments:
+                            AppointmentsSectionView()
+                                .frame(minHeight: 300) // Enough to render content
+                        case .recordings:
+                            RecordingsView()
+                        }
+                    }
                     
 
                 }
