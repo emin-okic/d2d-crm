@@ -45,25 +45,25 @@ struct ProspectPopupView: View {
             Divider().padding(.vertical, 4)
 
             if !isRecording && !showOutcomeButtons {
-                HStack {
+                HStack(spacing: 24) {
                     Spacer()
-                    Button(action: startRecording) {
-                        VStack(spacing: 4) {
-                            Image(systemName: "mic.circle.fill")
-                                .resizable()
-                                .frame(width: 30, height: 30)
-                                .foregroundColor(.red)
-                                .shadow(radius: 4)
 
-                            Text("Start Recording")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .buttonStyle(PlainButtonStyle())
+                    recordingActionButton(
+                        systemName: "mic.circle.fill",
+                        label: "Start Recording",
+                        color: .red,
+                        action: startRecording
+                    )
+
+                    recordingActionButton(
+                        systemName: "arrowshape.turn.up.right.circle.fill",
+                        label: "Skip Recording",
+                        color: .blue,
+                        action: { showOutcomeButtons = true }
+                    )
+
                     Spacer()
                 }
-                .padding(.top, 8)
             }
 
             if showOutcomeButtons {
@@ -107,6 +107,27 @@ struct ProspectPopupView: View {
         )
         .cornerRadius(16)
         .shadow(radius: 6)
+    }
+    
+    private func recordingActionButton(systemName: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: systemName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 30, height: 30)
+                    .foregroundColor(color)
+                    .shadow(radius: 3)
+
+                Text(label)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .frame(width: 64)
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     private func iconButton(systemName: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
