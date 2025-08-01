@@ -40,14 +40,21 @@ struct ProspectPopupView: View {
             Divider().padding(.vertical, 4)
 
             if !isRecording && !showOutcomeButtons {
-                Button(action: startRecording) {
-                    Label("Start Recording", systemImage: "mic.circle.fill")
-                        .font(.title3)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.red.opacity(0.1))
-                        .cornerRadius(12)
+                HStack {
+                    Spacer()
+                    Button(action: startRecording) {
+                        Image(systemName: "mic.circle.fill")
+                            .resizable()
+                            .frame(width: 60, height: 60)
+                            .foregroundColor(.red)
+                            .shadow(radius: 4)
+                            .scaleEffect(isRecording ? 1.1 : 1.0)
+                            .animation(.easeInOut(duration: 0.3), value: isRecording)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    Spacer()
                 }
+                .padding(.top, 8)
             }
 
             if showOutcomeButtons {
