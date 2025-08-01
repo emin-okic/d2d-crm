@@ -48,32 +48,24 @@ struct ProspectPopupView: View {
                         .background(Color.red.opacity(0.1))
                         .cornerRadius(12)
                 }
-            } else if isRecording {
-                Button(action: stopRecording) {
-                    Label("Stop Recording", systemImage: "stop.circle.fill")
-                        .font(.title3)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.yellow.opacity(0.2))
-                        .cornerRadius(12)
-                }
-            } else if showOutcomeButtons {
+            }
+
+            if showOutcomeButtons {
                 Text("Select Knock Outcome")
                     .font(.caption)
                     .foregroundColor(.gray)
 
                 HStack(spacing: 16) {
                     iconButton(systemName: "house.slash.fill", label: "Not Home", color: .gray) {
-                        discardRecording()
-                        onOutcomeSelected("Wasn't Home", nil)
+                        stopAndHandleOutcome("Wasn't Home")
                     }
 
                     iconButton(systemName: "checkmark.seal.fill", label: "Sale", color: .green) {
-                        onOutcomeSelected("Converted To Sale", currentFileName)
+                        stopAndHandleOutcome("Converted To Sale")
                     }
 
                     iconButton(systemName: "calendar.badge.clock", label: "Follow Up", color: .orange) {
-                        onOutcomeSelected("Follow Up Later", currentFileName)
+                        stopAndHandleOutcome("Follow Up Later")
                     }
                 }
                 .padding(.top, 4)
@@ -116,13 +108,23 @@ struct ProspectPopupView: View {
         if result.started {
             isRecording = true
             currentFileName = result.fileName
+            showOutcomeButtons = true
         }
     }
 
-    private func stopRecording() {
+    private func stopAndHandleOutcome(_ outcome: String) {
         recorder.stop()
         isRecording = false
-        showOutcomeButtons = true
+
+        if outcome == "Wasn't Home" {
+            discardRecording()
+            onOutcomeSelected(outcome, nil)
+        } else {
+            onOutcomeSelected(outcome, currentFileName)
+        }
+
+        currentFileName = nil
+        showOutcomeButtons = false
     }
 
     private func discardRecording() {
@@ -130,9 +132,6 @@ struct ProspectPopupView: View {
             let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(file)
             try? FileManager.default.removeItem(at: url)
         }
-        currentFileName = nil
-        showOutcomeButtons = false
-        isRecording = false
     }
 
     private func findProspectName(for address: String) -> String {
