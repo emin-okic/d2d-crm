@@ -94,6 +94,11 @@ struct FollowUpAssistantView: View {
                     NavigationView {
                         AppointmentsSectionView()
                     }
+                    
+                    NavigationView {
+                        
+                        RecordingsView()
+                    }
 
                 }
                 .padding(.bottom, 20)

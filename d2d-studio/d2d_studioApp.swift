@@ -83,7 +83,8 @@ let sharedModelContainer: ModelContainer = {
         Trip.self,
         Objection.self,
         Appointment.self,
-        Note.self
+        Note.self,
+        Recording.self
     ])
 
     let config = ModelConfiguration(schema: schema, url: url)
