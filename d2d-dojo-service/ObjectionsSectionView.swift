@@ -15,7 +15,7 @@ struct ObjectionsSectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Objections")
+                Text("Biggest Objections")
                     .font(.headline)
                 Spacer()
                 Button {
