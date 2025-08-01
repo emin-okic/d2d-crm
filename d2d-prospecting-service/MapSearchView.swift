@@ -282,23 +282,32 @@ struct MapSearchView: View {
     }
     
     private func handleOutcome(_ status: String, recordingFileName: String?) {
-        // Save the knock and update UI as usual
+        var objection: Objection?
+
         if status == "Converted To Sale" {
-            if let name = recordingFileName {
-                let newRecording = Recording(fileName: name, date: .now, objection: nil, rating: 5)
-                modelContext.insert(newRecording)
-            }
-            handleKnockAndConvertToCustomer(status: status)
+            // Auto-generate a synthetic objection object for this case
+            objection = Objection(text: "Converted To Sale", response: "Handled successfully", timesHeard: 0)
+            modelContext.insert(objection!)
 
         } else if status == "Follow Up Later" {
-            if let name = recordingFileName {
-                let newRecording = Recording(fileName: name, date: .now, objection: nil, rating: 3)
-                modelContext.insert(newRecording)
-            }
-            handleKnockAndPromptObjection(status: status)
+            // Use the selected objection from the picker
+            objection = selectedObjection
+        }
 
-        } else if status == "Wasn't Home" {
-            handleKnockAndPromptNote(status: status)
+        if let name = recordingFileName, status != "Wasn't Home" {
+            let rating = status == "Converted To Sale" ? 5 : 3
+            let newRecording = Recording(fileName: name, date: .now, objection: objection, rating: rating)
+            modelContext.insert(newRecording)
+        }
+
+        switch status {
+            case "Converted To Sale":
+                handleKnockAndConvertToCustomer(status: status)
+            case "Follow Up Later":
+                handleKnockAndPromptObjection(status: status)
+            case "Wasn't Home":
+                handleKnockAndPromptNote(status: status)
+            default: break
         }
 
         try? modelContext.save()
