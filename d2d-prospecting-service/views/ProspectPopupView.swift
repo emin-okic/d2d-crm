@@ -37,10 +37,12 @@ struct ProspectPopupView: View {
                         .multilineTextAlignment(.leading)
                 }
             }
+            .padding(.horizontal, 5)
 
             Text("Name: \(findProspectName(for: place.address))")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
+                .padding(.horizontal, 5)
 
             Divider().padding(.vertical, 4)
 
