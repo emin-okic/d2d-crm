@@ -30,36 +30,42 @@ struct ProspectPopupView: View {
                 }
             }
 
-            Text(place.address)
-                .font(.headline)
-                .multilineTextAlignment(.leading)
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(formattedAddressLines, id: \.self) { line in
+                    Text(line)
+                        .font(.headline)
+                        .multilineTextAlignment(.leading)
+                }
+            }
+            .padding(.horizontal, 5)
 
             Text("Name: \(findProspectName(for: place.address))")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
+                .padding(.horizontal, 5)
 
             Divider().padding(.vertical, 4)
 
             if !isRecording && !showOutcomeButtons {
-                HStack {
+                HStack(spacing: 24) {
                     Spacer()
-                    Button(action: startRecording) {
-                        VStack(spacing: 4) {
-                            Image(systemName: "mic.circle.fill")
-                                .resizable()
-                                .frame(width: 30, height: 30)
-                                .foregroundColor(.red)
-                                .shadow(radius: 4)
 
-                            Text("Start Recording")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .buttonStyle(PlainButtonStyle())
+                    recordingActionButton(
+                        systemName: "mic.circle.fill",
+                        label: "Start Recording",
+                        color: .red,
+                        action: startRecording
+                    )
+
+                    recordingActionButton(
+                        systemName: "arrowshape.turn.up.right.circle.fill",
+                        label: "Skip Recording",
+                        color: .blue,
+                        action: { showOutcomeButtons = true }
+                    )
+
                     Spacer()
                 }
-                .padding(.top, 8)
             }
 
             if showOutcomeButtons {
@@ -104,6 +110,27 @@ struct ProspectPopupView: View {
         .cornerRadius(16)
         .shadow(radius: 6)
     }
+    
+    private func recordingActionButton(systemName: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: systemName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 30, height: 30)
+                    .foregroundColor(color)
+                    .shadow(radius: 3)
+
+                Text(label)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .frame(width: 64)
+            }
+        }
+        .buttonStyle(.plain)
+    }
 
     private func iconButton(systemName: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -120,6 +147,28 @@ struct ProspectPopupView: View {
             .frame(width: 64)
         }
         .buttonStyle(.plain)
+    }
+    
+    private var formattedAddressLines: [String] {
+        let parts = place.address.components(separatedBy: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+        if parts.count >= 3 {
+            let street = parts[0] // e.g. "10320 Norfolk Dr"
+            let city = parts[1]   // e.g. "Johnston"
+            let stateZip = parts[2] // e.g. "IA 50131"
+            return [street, "\(city), \(stateZip)"]
+        }
+
+        // fallback if address isn't comma-separated
+        let words = place.address.components(separatedBy: " ")
+        if words.count >= 5 {
+            let street = words.prefix(3).joined(separator: " ") // e.g. "10320 Norfolk Dr"
+            let rest = words.dropFirst(3).joined(separator: " ") // "Johnston IA 50131"
+            return [street, rest]
+        }
+
+        return [place.address]
     }
 
     private func startRecording() {
