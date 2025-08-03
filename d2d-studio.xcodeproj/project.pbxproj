@@ -122,9 +122,14 @@
 			path = "d2d-rolodex-service";
 			sourceTree = "<group>";
 		};
-		C5AF70BA2E1205E200754997 /* d2d-dojo-service */ = {
+		C5AF70BA2E1205E200754997 /* d2d-objection-service */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "d2d-dojo-service";
+			path = "d2d-objection-service";
+			sourceTree = "<group>";
+		};
+		C5B1B4A62E3FC15A004766E8 /* d2d-recording-service */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "d2d-recording-service";
 			sourceTree = "<group>";
 		};
 		C5BE4B362DE7CC9E005C37B1 /* d2d-studio */ = {
@@ -214,7 +219,8 @@
 				C59705F92E198214006C3B55 /* d2d-rolodex-service */,
 				C56CD3852E1993CB00232EF7 /* d2d-prospecting-service */,
 				C5328C812E1B1D180057F68E /* d2d-follow-up-service */,
-				C5AF70BA2E1205E200754997 /* d2d-dojo-service */,
+				C5AF70BA2E1205E200754997 /* d2d-objection-service */,
+				C5B1B4A62E3FC15A004766E8 /* d2d-recording-service */,
 				C5BE4B442DE7CC9F005C37B1 /* d2d-map-serviceTests */,
 				C5BE4B4E2DE7CC9F005C37B1 /* d2d-map-serviceUITests */,
 				C5E6A71E2E2BE6CD00EC05F4 /* Frameworks */,
@@ -264,7 +270,8 @@
 				C5328C812E1B1D180057F68E /* d2d-follow-up-service */,
 				C56CD3852E1993CB00232EF7 /* d2d-prospecting-service */,
 				C59705F92E198214006C3B55 /* d2d-rolodex-service */,
-				C5AF70BA2E1205E200754997 /* d2d-dojo-service */,
+				C5AF70BA2E1205E200754997 /* d2d-objection-service */,
+				C5B1B4A62E3FC15A004766E8 /* d2d-recording-service */,
 				C5BE4B362DE7CC9E005C37B1 /* d2d-studio */,
 			);
 			name = "d2d-studio";
