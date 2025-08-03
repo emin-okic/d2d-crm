@@ -50,14 +50,14 @@ struct ProspectPopupView: View {
                 HStack(spacing: 24) {
                     Spacer()
 
-                    recordingActionButton(
+                    RecordingActionButton(
                         systemName: "mic.circle.fill",
                         label: "Start Recording",
                         color: .red,
                         action: startRecording
                     )
 
-                    recordingActionButton(
+                    RecordingActionButton(
                         systemName: "arrowshape.turn.up.right.circle.fill",
                         label: "Skip Recording",
                         color: .blue,
@@ -88,44 +88,6 @@ struct ProspectPopupView: View {
         )
         .cornerRadius(16)
         .shadow(radius: 6)
-    }
-    
-    private func recordingActionButton(systemName: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: systemName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 30, height: 30)
-                    .foregroundColor(color)
-                    .shadow(radius: 3)
-
-                Text(label)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-                    .frame(width: 64)
-            }
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func iconButton(systemName: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: systemName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 28, height: 28)
-                    .foregroundColor(color)
-                Text(label)
-                    .font(.caption2)
-                    .foregroundColor(.primary)
-            }
-            .frame(width: 64)
-        }
-        .buttonStyle(.plain)
     }
     
     private var formattedAddressLines: [String] {
