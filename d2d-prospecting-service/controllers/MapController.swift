@@ -4,7 +4,7 @@
 //
 //  Created by Emin Okic on 5/31/25.
 //
-
+import SwiftUI
 import Foundation
 import MapKit
 import CoreLocation
@@ -140,6 +140,7 @@ class MapController: ObservableObject {
 }
 
 extension MapController {
+    
     func geocodeAddress(_ address: String) async -> CLLocationCoordinate2D? {
         return await withCheckedContinuation { continuation in
             let geocoder = CLGeocoder()
@@ -152,4 +153,27 @@ extension MapController {
             }
         }
     }
+    
+    /// Centers the map on a geocoded address.
+        /// - Parameters:
+        ///   - address: Address to geocode and center on.
+        ///   - animated: Whether to animate the region change.
+        @MainActor
+        func centerMapOnAddress(_ address: String, animated: Bool = true) async {
+            if let coord = await geocodeAddress(address) {
+                let newRegion = MKCoordinateRegion(
+                    center: coord,
+                    latitudinalMeters: 1609.34,
+                    longitudinalMeters: 1609.34
+                )
+                if animated {
+                    withAnimation {
+                        self.region = newRegion
+                    }
+                } else {
+                    self.region = newRegion
+                }
+            }
+        }
+    
 }
