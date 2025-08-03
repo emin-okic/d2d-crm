@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct OutcomeButtonsView: View {
+struct ProspectPopupOutcomeButtons: View {
     let isCustomer: Bool
     let onSelect: (String) -> Void
 

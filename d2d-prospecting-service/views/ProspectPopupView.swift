@@ -69,7 +69,7 @@ struct ProspectPopupView: View {
             }
 
             if showOutcomeButtons {
-                OutcomeButtonsView(isCustomer: isCustomer) { outcome in
+                ProspectPopupOutcomeButtons(isCustomer: isCustomer) { outcome in
                     stopAndHandleOutcome(outcome)
                 }
             }
