@@ -54,21 +54,20 @@ struct MapSearchView: View {
 
     @StateObject private var searchVM = SearchCompleterViewModel()
 
-    @FocusState private var isSearchFocused: Bool
-
     @State private var isTappedAddressCustomer = false
 
     @State private var selectedPlace: IdentifiablePlace?
     @State private var showProspectPopup = false
 
     @State private var popupScreenPosition: CGPoint? = nil
-    
-    @State private var isSearchExpanded = false
-    @Namespace private var animationNamespace
 
     @Environment(\.modelContext) private var modelContext
     
     @State private var pendingRecordingFileName: String?
+    
+    @State private var isSearchExpanded = false
+    @FocusState private var isSearchFocused: Bool
+    @Namespace private var animationNamespace
 
     private var hasSignedUp: Bool {
         prospects
@@ -146,54 +145,19 @@ struct MapSearchView: View {
                              avgKnocksPerSale: averageKnocksPerCustomer,
                              hasSignedUp: hasSignedUp)
 
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        if isSearchExpanded {
-                            SearchBarView(
-                                searchText: $searchText,
-                                isFocused: $isSearchFocused,
-                                viewModel: searchVM,
-                                onSubmit: {
-                                    submitSearch()
-                                    searchText = ""
-                                    withAnimation { isSearchExpanded = false }
-                                },
-                                onSelectResult: {
-                                    handleCompletionTap($0)
-                                },
-                                onCancel: {
-                                    withAnimation {
-                                        isSearchExpanded = false
-                                        searchText = ""
-                                    }
-                                }
-                            )
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 30)
-                            .matchedGeometryEffect(id: "search", in: animationNamespace)
-                            .transition(.move(edge: .trailing).combined(with: .opacity))
-                        } else {
-                            Button {
-                                withAnimation(.easeInOut(duration: 0.25)) {
-                                    isSearchExpanded = true
-                                    isSearchFocused = true
-                                }
-                            } label: {
-                                Image(systemName: "magnifyingglass")
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .background(Circle().fill(Color.blue))
-                            }
-                            .matchedGeometryEffect(id: "search", in: animationNamespace)
-                            .padding(.trailing, 20)
-                            .padding(.bottom, 30)
-                            .shadow(radius: 4)
-                        }
-                    }
-                }
+                FloatingSearchButtonView(
+                    searchText: $searchText,
+                    isSearchExpanded: $isSearchExpanded,
+                    isSearchFocused: $isSearchFocused, // still passed down
+                    viewModel: searchVM,
+                    namespace: animationNamespace,
+                    onSubmit: {
+                        submitSearch()
+                    },
+                    onSelectResult: { handleCompletionTap($0) },
+                    onCancel: { searchText = "" },
+                    onClearFocus: { } // ✅ Provide a no-op or flag as needed
+                )
 
                 if showProspectPopup, let place = selectedPlace, let pos = popupScreenPosition {
                     ProspectPopupView(
@@ -347,31 +311,6 @@ struct MapSearchView: View {
         }
     }
 
-    @ViewBuilder private var searchSuggestionsList: some View {
-        if isSearchFocused && !searchVM.results.isEmpty {
-            VStack(spacing:0){
-                ForEach(searchVM.results.prefix(3),id:\.self){ res in
-                    Button{ handleCompletionTap(res) } label:{
-                        VStack(alignment:.leading,spacing:4){
-                            Text(res.title).font(.body).bold().lineLimit(1)
-                            Text(res.subtitle).font(.subheadline).foregroundColor(.gray).lineLimit(1)
-                        }
-                        .padding(.vertical,10)
-                        .padding(.horizontal)
-                        .frame(maxWidth:.infinity,alignment:.leading)
-                        .background(Color.white)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    Divider()
-                }
-            }
-            .background(Color.white).cornerRadius(12)
-            .padding(.horizontal).padding(.top,4)
-            .shadow(radius:4).frame(maxWidth:.infinity,maxHeight:180)
-            .transition(.opacity).zIndex(10)
-        }
-    }
-
     private func handleCompletionTap(_ result: MKLocalSearchCompletion) {
         let req = MKLocalSearch.Request(completion: result)
         MKLocalSearch(request:req).start{ resp,err in
@@ -385,7 +324,6 @@ struct MapSearchView: View {
                 pendingAddress=addr;
                 controller.region=MKCoordinateRegion(center:item.placemark.coordinate,latitudinalMeters:1609.34,longitudinalMeters:1609.34);
                 searchVM.results=[];
-                isSearchFocused=false
             }
         }
     }
