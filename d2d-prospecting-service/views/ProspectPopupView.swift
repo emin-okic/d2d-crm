@@ -69,32 +69,11 @@ struct ProspectPopupView: View {
             }
 
             if showOutcomeButtons {
-                Text("Select Knock Outcome")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-
-                HStack {
-                    Spacer()
-                    HStack(spacing: 16) {
-                        iconButton(systemName: "house.slash.fill", label: "Not Home", color: .gray) {
-                            stopAndHandleOutcome("Wasn't Home")
-                        }
-
-                        if !isCustomer {
-                            iconButton(systemName: "checkmark.seal.fill", label: "Sale", color: .green) {
-                                stopAndHandleOutcome("Converted To Sale")
-                            }
-                        }
-
-                        iconButton(systemName: "calendar.badge.clock", label: "Follow Up", color: .orange) {
-                            stopAndHandleOutcome("Follow Up Later")
-                        }
-                    }
-                    Spacer()
+                OutcomeButtonsView(isCustomer: isCustomer) { outcome in
+                    stopAndHandleOutcome(outcome)
                 }
-                .padding(.top, 4)
-
             }
+            
         }
         .padding()
         .frame(width: 260)
