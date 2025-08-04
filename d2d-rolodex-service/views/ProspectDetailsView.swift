@@ -231,19 +231,9 @@ struct ProspectDetailsView: View {
     }
     
     private func fetchAddress(for completion: MKLocalSearchCompletion) {
-        let request = MKLocalSearch.Request(completion: completion)
-        let search = MKLocalSearch(request: request)
-        search.start { response, error in
-            if let item = response?.mapItems.first {
-                // Use formatted full postal address
-                let postalAddress = item.placemark.postalAddress
-                if let postalAddress {
-                    let formatter = CNPostalAddressFormatter()
-                    let fullAddress = formatter.string(from: postalAddress).replacingOccurrences(of: "\n", with: ", ")
-                    prospect.address = fullAddress
-                } else {
-                    prospect.address = item.name ?? completion.title
-                }
+        Task {
+            if let fullAddress = await SearchBarController.resolveFormattedPostalAddress(from: completion) {
+                prospect.address = fullAddress
             }
         }
     }

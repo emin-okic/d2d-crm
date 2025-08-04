@@ -146,54 +146,15 @@ struct MapSearchView: View {
                              avgKnocksPerSale: averageKnocksPerCustomer,
                              hasSignedUp: hasSignedUp)
 
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        if isSearchExpanded {
-                            SearchBarView(
-                                searchText: $searchText,
-                                isFocused: $isSearchFocused,
-                                viewModel: searchVM,
-                                onSubmit: {
-                                    submitSearch()
-                                    searchText = ""
-                                    withAnimation { isSearchExpanded = false }
-                                },
-                                onSelectResult: {
-                                    handleCompletionTap($0)
-                                },
-                                onCancel: {
-                                    withAnimation {
-                                        isSearchExpanded = false
-                                        searchText = ""
-                                    }
-                                }
-                            )
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 30)
-                            .matchedGeometryEffect(id: "search", in: animationNamespace)
-                            .transition(.move(edge: .trailing).combined(with: .opacity))
-                        } else {
-                            Button {
-                                withAnimation(.easeInOut(duration: 0.25)) {
-                                    isSearchExpanded = true
-                                    isSearchFocused = true
-                                }
-                            } label: {
-                                Image(systemName: "magnifyingglass")
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .background(Circle().fill(Color.blue))
-                            }
-                            .matchedGeometryEffect(id: "search", in: animationNamespace)
-                            .padding(.trailing, 20)
-                            .padding(.bottom, 30)
-                            .shadow(radius: 4)
-                        }
-                    }
-                }
+                ExpandableSearchView(
+                    searchText: $searchText,
+                    isExpanded: $isSearchExpanded,
+                    isFocused: $isSearchFocused,
+                    viewModel: searchVM,
+                    animationNamespace: animationNamespace,
+                    onSubmit: { submitSearch() },
+                    onSelectResult: { handleCompletionTap($0) }
+                )
 
                 if showProspectPopup, let place = selectedPlace, let pos = popupScreenPosition {
                     ProspectPopupView(
@@ -325,16 +286,6 @@ struct MapSearchView: View {
         }
     }
 
-    private func zoom(by factor: Double) {
-        // update region
-        let span = controller.region.span
-        let newSpan = MKCoordinateSpan(latitudeDelta: span.latitudeDelta * factor,
-                                       longitudeDelta: span.longitudeDelta * factor)
-        controller.region = MKCoordinateRegion(center: controller.region.center, span: newSpan)
-        // close popup when zoom buttons pressed
-        showProspectPopup = false
-    }
-
     private func handleMapCenterChange(newAddress: String?) {
         guard let query = newAddress else { return }
         Task {
@@ -344,31 +295,6 @@ struct MapSearchView: View {
                 }
             }
             addressToCenter = nil
-        }
-    }
-
-    @ViewBuilder private var searchSuggestionsList: some View {
-        if isSearchFocused && !searchVM.results.isEmpty {
-            VStack(spacing:0){
-                ForEach(searchVM.results.prefix(3),id:\.self){ res in
-                    Button{ handleCompletionTap(res) } label:{
-                        VStack(alignment:.leading,spacing:4){
-                            Text(res.title).font(.body).bold().lineLimit(1)
-                            Text(res.subtitle).font(.subheadline).foregroundColor(.gray).lineLimit(1)
-                        }
-                        .padding(.vertical,10)
-                        .padding(.horizontal)
-                        .frame(maxWidth:.infinity,alignment:.leading)
-                        .background(Color.white)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    Divider()
-                }
-            }
-            .background(Color.white).cornerRadius(12)
-            .padding(.horizontal).padding(.top,4)
-            .shadow(radius:4).frame(maxWidth:.infinity,maxHeight:180)
-            .transition(.opacity).zIndex(10)
         }
     }
 
@@ -391,26 +317,18 @@ struct MapSearchView: View {
     }
 
     private func submitSearch() {
-        searchVM.results = []
-        let trimmed = searchText.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return }
-        
-        pendingAddress = trimmed
-        showOutcomePrompt = true
-        
-        // Clear the search bar text
-        searchText = ""
-        
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        SearchHandler.submitManualSearch(
+            searchText: searchText,
+            pendingAddress: &pendingAddress,
+            showOutcomePrompt: &showOutcomePrompt,
+            clearSearchText: {
+                searchText = ""
+            }
+        )
     }
 
     private func updateMarkers() {
         controller.setMarkers(prospects: prospects, customers: customers)
-    }
-
-    private func handleSearch(query: String) {
-        pendingAddress = query
-        showOutcomePrompt = true
     }
 
     private func saveKnock(address: String, status: String) -> Prospect {
