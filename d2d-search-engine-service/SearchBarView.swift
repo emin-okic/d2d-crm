@@ -63,45 +63,12 @@ struct SearchBarView: View {
             .shadow(radius: 3, x: 0, y: 2)
             .padding(.horizontal)
 
-            if isFocused && !viewModel.results.isEmpty {
-                VStack(spacing: 0) {
-                    ForEach(viewModel.results.prefix(3), id: \.self) { result in
-                        Button {
-                            onSelectResult(result)
-                        } label: {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(result.title)
-                                    .font(.body)
-                                    .bold()
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-
-                                Text(result.subtitle)
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-                            }
-                            .padding(.vertical, 10)
-                            .padding(.horizontal)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.white)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-
-                        Divider()
-                    }
-                }
-                .background(Color.white)
-                .cornerRadius(12)
-                .padding(.horizontal)
-                .padding(.top, 4)
-                .shadow(radius: 4)
-                .frame(maxWidth: .infinity)
-                .frame(maxHeight: 180)
-                .transition(.opacity)
-                .zIndex(10)
-            }
+            SearchSuggestionsListView(
+                isVisible: isFocused,
+                results: viewModel.results,
+                onSelect: onSelectResult
+            )
+            
         }
         .padding(.bottom, 56)
         .animation(.easeInOut(duration: 0.25), value: viewModel.results.count)

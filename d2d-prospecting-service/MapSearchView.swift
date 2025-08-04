@@ -175,6 +175,7 @@ struct MapSearchView: View {
                             .padding(.bottom, 30)
                             .matchedGeometryEffect(id: "search", in: animationNamespace)
                             .transition(.move(edge: .trailing).combined(with: .opacity))
+                            
                         } else {
                             Button {
                                 withAnimation(.easeInOut(duration: 0.25)) {
@@ -347,29 +348,12 @@ struct MapSearchView: View {
         }
     }
 
-    @ViewBuilder private var searchSuggestionsList: some View {
-        if isSearchFocused && !searchVM.results.isEmpty {
-            VStack(spacing:0){
-                ForEach(searchVM.results.prefix(3),id:\.self){ res in
-                    Button{ handleCompletionTap(res) } label:{
-                        VStack(alignment:.leading,spacing:4){
-                            Text(res.title).font(.body).bold().lineLimit(1)
-                            Text(res.subtitle).font(.subheadline).foregroundColor(.gray).lineLimit(1)
-                        }
-                        .padding(.vertical,10)
-                        .padding(.horizontal)
-                        .frame(maxWidth:.infinity,alignment:.leading)
-                        .background(Color.white)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    Divider()
-                }
-            }
-            .background(Color.white).cornerRadius(12)
-            .padding(.horizontal).padding(.top,4)
-            .shadow(radius:4).frame(maxWidth:.infinity,maxHeight:180)
-            .transition(.opacity).zIndex(10)
-        }
+    private var searchSuggestionsList: some View {
+        SearchSuggestionsListView(
+            isVisible: isSearchFocused,
+            results: searchVM.results,
+            onSelect: handleCompletionTap
+        )
     }
 
     private func handleCompletionTap(_ result: MKLocalSearchCompletion) {
