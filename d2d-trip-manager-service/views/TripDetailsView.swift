@@ -17,6 +17,9 @@ struct TripDetailsView: View {
     @State private var endAddress: String
     @State private var miles: String
     @State private var date: Date
+    
+    @FocusState private var focusedField: Field?
+    @StateObject private var searchVM = SearchCompleterViewModel()
 
     init(trip: Trip) {
         self.trip = trip
@@ -30,20 +33,26 @@ struct TripDetailsView: View {
         NavigationView {
             Form {
                 Section(header: Text("General Trip Details")) {
-                    
-                    HStack {
-                        Image(systemName: "circle")
-                            .foregroundColor(.blue)
-                        TextField("Start Address", text: $startAddress)
-                            .autocapitalization(.words)
-                    }
 
-                    HStack {
-                        Image(systemName: "mappin.circle.fill")
-                            .foregroundColor(.red)
-                        TextField("End Address", text: $endAddress)
-                            .autocapitalization(.words)
-                    }
+                    TripAddressFieldView(
+                        iconName: "circle",
+                        placeholder: "Start Address",
+                        iconColor: .blue,
+                        addressText: $startAddress,
+                        focusedField: $focusedField,
+                        fieldType: .start,
+                        searchVM: searchVM
+                    )
+
+                    TripAddressFieldView(
+                        iconName: "mappin.circle.fill",
+                        placeholder: "End Address",
+                        iconColor: .red,
+                        addressText: $endAddress,
+                        focusedField: $focusedField,
+                        fieldType: .end,
+                        searchVM: searchVM
+                    )
                     
                     // Prettified date picker bar
                     HStack {
