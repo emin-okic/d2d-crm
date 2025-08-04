@@ -357,17 +357,14 @@ struct MapSearchView: View {
     }
 
     private func submitSearch() {
-        searchVM.results = []
-        let trimmed = searchText.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return }
-        
-        pendingAddress = trimmed
-        showOutcomePrompt = true
-        
-        // Clear the search bar text
-        searchText = ""
-        
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        SearchHandler.submitManualSearch(
+            searchText: searchText,
+            pendingAddress: &pendingAddress,
+            showOutcomePrompt: &showOutcomePrompt,
+            clearSearchText: {
+                searchText = ""
+            }
+        )
     }
 
     private func updateMarkers() {
