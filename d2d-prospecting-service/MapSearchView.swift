@@ -338,14 +338,6 @@ struct MapSearchView: View {
         }
     }
 
-    private var searchSuggestionsList: some View {
-        SearchSuggestionsListView(
-            isVisible: isSearchFocused,
-            results: searchVM.results,
-            onSelect: handleCompletionTap
-        )
-    }
-
     private func handleCompletionTap(_ result: MKLocalSearchCompletion) {
         let req = MKLocalSearch.Request(completion: result)
         MKLocalSearch(request:req).start{ resp,err in
