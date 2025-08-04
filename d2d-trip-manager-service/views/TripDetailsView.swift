@@ -34,33 +34,40 @@ struct TripDetailsView: View {
             Form {
                 Section(header: Text("General Trip Details")) {
                     
-                    HStack {
-                        Image(systemName: "circle")
-                            .foregroundColor(.blue)
+                    HStack(alignment: .top, spacing: 16) {
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            TextField("Start Address", text: $startAddress)
-                                .focused($focusedField, equals: .start)
-                                .onChange(of: startAddress) { searchVM.updateQuery($0) }
+                                    HStack {
+                                        Image(systemName: "circle")
+                                            .foregroundColor(.blue)
+                                        TextField("Start Address", text: $startAddress)
+                                            .focused($focusedField, equals: .start)
+                                            .onChange(of: startAddress) { searchVM.updateQuery($0) }
+                                    }
 
-                            if focusedField == .start && !searchVM.results.isEmpty {
-                                ForEach(searchVM.results.prefix(3), id: \.self) { result in
-                                    Button {
-                                        SearchBarController.resolveAndSelectAddress(from: result) { resolved in
-                                            startAddress = resolved
-                                            searchVM.results = []
-                                            focusedField = nil
+                                    if focusedField == .start && !searchVM.results.isEmpty {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            ForEach(searchVM.results.prefix(3), id: \.self) { result in
+                                                Button {
+                                                    SearchBarController.resolveAndSelectAddress(from: result) { resolved in
+                                                        startAddress = resolved
+                                                        searchVM.results = []
+                                                        focusedField = nil
+                                                    }
+                                                } label: {
+                                                    VStack(alignment: .leading) {
+                                                        Text(result.title).bold()
+                                                        Text(result.subtitle)
+                                                            .font(.subheadline)
+                                                            .foregroundColor(.gray)
+                                                    }
+                                                    .padding(.vertical, 6)
+                                                }
+                                            }
                                         }
-                                    } label: {
-                                        VStack(alignment: .leading) {
-                                            Text(result.title).bold()
-                                            Text(result.subtitle).font(.subheadline).foregroundColor(.gray)
-                                        }
-                                        .padding(.vertical, 6)
                                     }
                                 }
-                            }
-                        }
+                                .frame(maxWidth: .infinity)
                         
                     }
 
