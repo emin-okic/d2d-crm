@@ -58,16 +58,12 @@ struct LogTripPopupView: View {
                 }
 
                 Section {
-                    Button("Log Trip") {
-                        Task {
-                            let miles = await TripDistanceHelper.calculateMiles(from: startAddress, to: endAddress)
-                            let trip = Trip(startAddress: startAddress, endAddress: endAddress, miles: miles, date: date)
-                            modelContext.insert(trip)
-                            try? modelContext.save()
-                            dismiss()
-                        }
-                    }
-                    .disabled(startAddress.isEmpty || endAddress.isEmpty)
+                    LogTripButtonView(
+                        startAddress: startAddress,
+                        endAddress: endAddress,
+                        date: date,
+                        onComplete: { dismiss() }
+                    )
                 }
             }
             .navigationTitle("New Trip")
