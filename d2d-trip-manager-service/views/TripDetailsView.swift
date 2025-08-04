@@ -17,6 +17,9 @@ struct TripDetailsView: View {
     @State private var endAddress: String
     @State private var miles: String
     @State private var date: Date
+    
+    @FocusState private var focusedField: Field?
+    @StateObject private var searchVM = SearchCompleterViewModel()
 
     init(trip: Trip) {
         self.trip = trip
@@ -34,16 +37,65 @@ struct TripDetailsView: View {
                     HStack {
                         Image(systemName: "circle")
                             .foregroundColor(.blue)
-                        TextField("Start Address", text: $startAddress)
-                            .autocapitalization(.words)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            TextField("Start Address", text: $startAddress)
+                                .focused($focusedField, equals: .start)
+                                .onChange(of: startAddress) { searchVM.updateQuery($0) }
+
+                            if focusedField == .start && !searchVM.results.isEmpty {
+                                ForEach(searchVM.results.prefix(3), id: \.self) { result in
+                                    Button {
+                                        SearchBarController.resolveAndSelectAddress(from: result) { resolved in
+                                            startAddress = resolved
+                                            searchVM.results = []
+                                            focusedField = nil
+                                        }
+                                    } label: {
+                                        VStack(alignment: .leading) {
+                                            Text(result.title).bold()
+                                            Text(result.subtitle).font(.subheadline).foregroundColor(.gray)
+                                        }
+                                        .padding(.vertical, 6)
+                                    }
+                                }
+                            }
+                        }
+                        
                     }
 
-                    HStack {
-                        Image(systemName: "mappin.circle.fill")
-                            .foregroundColor(.red)
-                        TextField("End Address", text: $endAddress)
-                            .autocapitalization(.words)
-                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    Image(systemName: "mappin.circle.fill")
+                                        .foregroundColor(.red)
+                                    TextField("End Address", text: $endAddress)
+                                        .focused($focusedField, equals: .end)
+                                        .onChange(of: endAddress) { searchVM.updateQuery($0) }
+                                }
+
+                                if focusedField == .end && !searchVM.results.isEmpty {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        ForEach(searchVM.results.prefix(3), id: \.self) { result in
+                                            Button {
+                                                SearchBarController.resolveAndSelectAddress(from: result) { resolved in
+                                                    endAddress = resolved
+                                                    searchVM.results = []
+                                                    focusedField = nil
+                                                }
+                                            } label: {
+                                                VStack(alignment: .leading) {
+                                                    Text(result.title).bold()
+                                                    Text(result.subtitle)
+                                                        .font(.subheadline)
+                                                        .foregroundColor(.gray)
+                                                }
+                                                .padding(.vertical, 6)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
                     
                     // Prettified date picker bar
                     HStack {
