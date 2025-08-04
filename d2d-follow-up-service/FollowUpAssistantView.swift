@@ -159,31 +159,4 @@ struct FollowUpAssistantView: View {
             }
         }
     }
-
-    private var milesByDay: [(date: Date, miles: Double)] {
-        let calendar = Calendar.current
-        let now = Date()
-
-        let startOfToday = calendar.startOfDay(for: now)
-        let weekday = calendar.component(.weekday, from: startOfToday)
-        let daysFromMonday = (weekday + 5) % 7
-        guard let startOfWeek = calendar.date(byAdding: .day, value: -daysFromMonday, to: startOfToday) else { return [] }
-
-        var result: [Date: Double] = [:]
-        for i in 0..<7 {
-            if let day = calendar.date(byAdding: .day, value: i, to: startOfWeek) {
-                result[calendar.startOfDay(for: day)] = 0
-            }
-        }
-
-        let grouped = Dictionary(grouping: trips) { calendar.startOfDay(for: $0.date) }
-
-        for (day, tripsOnDay) in grouped {
-            if result[day] != nil {
-                result[day]! += tripsOnDay.reduce(0) { $0 + $1.miles }
-            }
-        }
-
-        return result.map { ($0.key, $0.value) }.sorted { $0.0 < $1.0 }
-    }
 }
