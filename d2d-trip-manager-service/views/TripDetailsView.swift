@@ -33,20 +33,16 @@ struct TripDetailsView: View {
         NavigationView {
             Form {
                 Section(header: Text("General Trip Details")) {
-                    
-                    HStack(alignment: .top, spacing: 16) {
-                        
-                        TripAddressFieldView(
-                            iconName: "circle",
-                            placeholder: "Start Address",
-                            iconColor: .blue,
-                            addressText: $startAddress,
-                            focusedField: $focusedField,
-                            fieldType: .start,
-                            searchVM: searchVM
-                        )
-                        
-                    }
+
+                    TripAddressFieldView(
+                        iconName: "circle",
+                        placeholder: "Start Address",
+                        iconColor: .blue,
+                        addressText: $startAddress,
+                        focusedField: $focusedField,
+                        fieldType: .start,
+                        searchVM: searchVM
+                    )
 
                     TripAddressFieldView(
                         iconName: "mappin.circle.fill",
