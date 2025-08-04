@@ -331,11 +331,6 @@ struct MapSearchView: View {
         controller.setMarkers(prospects: prospects, customers: customers)
     }
 
-    private func handleSearch(query: String) {
-        pendingAddress = query
-        showOutcomePrompt = true
-    }
-
     private func saveKnock(address: String, status: String) -> Prospect {
         let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         let now = Date()

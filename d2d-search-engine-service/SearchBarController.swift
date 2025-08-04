@@ -44,4 +44,14 @@ enum SearchBarController {
             return nil
         }
     }
+    
+    static func handleResolvedSearch(
+        query: String,
+        onResolved: (String) -> Void
+    ) {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        onResolved(trimmed)
+    }
 }
