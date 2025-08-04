@@ -98,12 +98,9 @@ struct NewProspectView: View {
     }
 
     private func handleAddressSelection(_ result: MKLocalSearchCompletion) {
-        let request = MKLocalSearch.Request(completion: result)
-        MKLocalSearch(request: request).start { response, _ in
-            guard let item = response?.mapItems.first else { return }
-
-            DispatchQueue.main.async {
-                address = item.placemark.title ?? result.title
+        Task {
+            if let resolved = await SearchBarController.resolveAddress(from: result) {
+                address = resolved
                 searchVM.results = []
                 isAddressFocused = false
             }
