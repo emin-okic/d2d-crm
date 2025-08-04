@@ -31,9 +31,14 @@ struct NewTripView: View {
                             .onChange(of: startAddress) { searchVM.updateQuery($0) }
 
                         if focusedField == .start && !searchVM.results.isEmpty {
+                            
                             ForEach(searchVM.results.prefix(3), id: \.self) { result in
                                 Button {
-                                    handleSelection(result, for: .start)
+                                    SearchBarController.resolveAndSelectAddress(from: result) { resolved in
+                                        startAddress = resolved
+                                        searchVM.results = []
+                                        focusedField = nil
+                                    }
                                 } label: {
                                     VStack(alignment: .leading) {
                                         Text(result.title).bold()
@@ -51,9 +56,14 @@ struct NewTripView: View {
                             .onChange(of: endAddress) { searchVM.updateQuery($0) }
 
                         if focusedField == .end && !searchVM.results.isEmpty {
+                            
                             ForEach(searchVM.results.prefix(3), id: \.self) { result in
                                 Button {
-                                    handleSelection(result, for: .end)
+                                    SearchBarController.resolveAndSelectAddress(from: result) { resolved in
+                                        endAddress = resolved
+                                        searchVM.results = []
+                                        focusedField = nil
+                                    }
                                 } label: {
                                     VStack(alignment: .leading) {
                                         Text(result.title).bold()
@@ -62,13 +72,14 @@ struct NewTripView: View {
                                     .padding(.vertical, 6)
                                 }
                             }
+                            
                         }
                     }
                 }
 
                 Button("Save Trip") {
                     guard !startAddress.isEmpty && !endAddress.isEmpty else { return }
-
+                    
                     Task {
                         let distance = await TripsController.shared.calculateMiles(from: startAddress, to: endAddress)
                         print("🧭 Calculated distance: \(distance)")
@@ -94,24 +105,6 @@ struct NewTripView: View {
         }
     }
     
-    private func handleSelection(_ result: MKLocalSearchCompletion, for field: Field) {
-        let request = MKLocalSearch.Request(completion: result)
-        MKLocalSearch(request: request).start { response, error in
-            guard let item = response?.mapItems.first else { return }
-
-            DispatchQueue.main.async {
-                let selectedAddress = item.placemark.title ?? result.title
-                switch field {
-                case .start:
-                    startAddress = selectedAddress
-                case .end:
-                    endAddress = selectedAddress
-                }
-                searchVM.results = []
-                focusedField = nil
-            }
-        }
-    }
 }
 
 enum Field {

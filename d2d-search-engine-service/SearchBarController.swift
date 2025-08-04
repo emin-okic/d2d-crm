@@ -54,4 +54,18 @@ enum SearchBarController {
 
         onResolved(trimmed)
     }
+    
+    static func resolveAndSelectAddress(
+        from completion: MKLocalSearchCompletion,
+        onResolved: @escaping (String) -> Void
+    ) {
+        let request = MKLocalSearch.Request(completion: completion)
+        MKLocalSearch(request: request).start { response, _ in
+            guard let item = response?.mapItems.first else { return }
+            let selectedAddress = item.placemark.title ?? completion.title
+            DispatchQueue.main.async {
+                onResolved(selectedAddress)
+            }
+        }
+    }
 }
