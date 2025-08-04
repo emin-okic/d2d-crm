@@ -233,7 +233,16 @@ struct MapSearchView: View {
                     
         }.navigationTitle("Why not interested?")
           .toolbar{ ToolbarItem(placement:.cancellationAction){ Button("Cancel"){ showObjectionPicker=false } } } } }
-        .sheet(isPresented:$showingAddObjection){ AddObjectionView() }
+        
+        .sheet(isPresented: $showingAddObjection, onDismiss: {
+            if let prospect = prospectToNote {
+                showFollowUpSheet = true
+            }
+        })
+        {
+            AddObjectionView()
+        }
+        
         .alert("Schedule Follow-Up?",isPresented:$showFollowUpPrompt){ Button("Yes"){ showFollowUpSheet=true }
                                                                   Button("No",role:.cancel){ showTripPrompt=true } } message:
               { Text("Schedule follow-up for \(followUpProspectName)?") }
