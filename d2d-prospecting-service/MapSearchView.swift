@@ -146,55 +146,15 @@ struct MapSearchView: View {
                              avgKnocksPerSale: averageKnocksPerCustomer,
                              hasSignedUp: hasSignedUp)
 
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        if isSearchExpanded {
-                            SearchBarView(
-                                searchText: $searchText,
-                                isFocused: $isSearchFocused,
-                                viewModel: searchVM,
-                                onSubmit: {
-                                    submitSearch()
-                                    searchText = ""
-                                    withAnimation { isSearchExpanded = false }
-                                },
-                                onSelectResult: {
-                                    handleCompletionTap($0)
-                                },
-                                onCancel: {
-                                    withAnimation {
-                                        isSearchExpanded = false
-                                        searchText = ""
-                                    }
-                                }
-                            )
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 30)
-                            .matchedGeometryEffect(id: "search", in: animationNamespace)
-                            .transition(.move(edge: .trailing).combined(with: .opacity))
-                            
-                        } else {
-                            Button {
-                                withAnimation(.easeInOut(duration: 0.25)) {
-                                    isSearchExpanded = true
-                                    isSearchFocused = true
-                                }
-                            } label: {
-                                Image(systemName: "magnifyingglass")
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .background(Circle().fill(Color.blue))
-                            }
-                            .matchedGeometryEffect(id: "search", in: animationNamespace)
-                            .padding(.trailing, 20)
-                            .padding(.bottom, 30)
-                            .shadow(radius: 4)
-                        }
-                    }
-                }
+                ExpandableSearchView(
+                    searchText: $searchText,
+                    isExpanded: $isSearchExpanded,
+                    isFocused: $isSearchFocused,
+                    viewModel: searchVM,
+                    animationNamespace: animationNamespace,
+                    onSubmit: { submitSearch() },
+                    onSelectResult: { handleCompletionTap($0) }
+                )
 
                 if showProspectPopup, let place = selectedPlace, let pos = popupScreenPosition {
                     ProspectPopupView(
