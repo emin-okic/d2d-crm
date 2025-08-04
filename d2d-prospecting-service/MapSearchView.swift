@@ -326,16 +326,6 @@ struct MapSearchView: View {
         }
     }
 
-    private func zoom(by factor: Double) {
-        // update region
-        let span = controller.region.span
-        let newSpan = MKCoordinateSpan(latitudeDelta: span.latitudeDelta * factor,
-                                       longitudeDelta: span.longitudeDelta * factor)
-        controller.region = MKCoordinateRegion(center: controller.region.center, span: newSpan)
-        // close popup when zoom buttons pressed
-        showProspectPopup = false
-    }
-
     private func handleMapCenterChange(newAddress: String?) {
         guard let query = newAddress else { return }
         Task {
