@@ -36,73 +36,27 @@ struct TripDetailsView: View {
                     
                     HStack(alignment: .top, spacing: 16) {
                         
-                        VStack(alignment: .leading, spacing: 4) {
-                                    HStack {
-                                        Image(systemName: "circle")
-                                            .foregroundColor(.blue)
-                                        TextField("Start Address", text: $startAddress)
-                                            .focused($focusedField, equals: .start)
-                                            .onChange(of: startAddress) { searchVM.updateQuery($0) }
-                                    }
-
-                                    if focusedField == .start && !searchVM.results.isEmpty {
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            ForEach(searchVM.results.prefix(3), id: \.self) { result in
-                                                Button {
-                                                    SearchBarController.resolveAndSelectAddress(from: result) { resolved in
-                                                        startAddress = resolved
-                                                        searchVM.results = []
-                                                        focusedField = nil
-                                                    }
-                                                } label: {
-                                                    VStack(alignment: .leading) {
-                                                        Text(result.title).bold()
-                                                        Text(result.subtitle)
-                                                            .font(.subheadline)
-                                                            .foregroundColor(.gray)
-                                                    }
-                                                    .padding(.vertical, 6)
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                .frame(maxWidth: .infinity)
+                        TripAddressFieldView(
+                            iconName: "circle",
+                            placeholder: "Start Address",
+                            iconColor: .blue,
+                            addressText: $startAddress,
+                            focusedField: $focusedField,
+                            fieldType: .start,
+                            searchVM: searchVM
+                        )
                         
                     }
 
-                    VStack(alignment: .leading, spacing: 4) {
-                                HStack {
-                                    Image(systemName: "mappin.circle.fill")
-                                        .foregroundColor(.red)
-                                    TextField("End Address", text: $endAddress)
-                                        .focused($focusedField, equals: .end)
-                                        .onChange(of: endAddress) { searchVM.updateQuery($0) }
-                                }
-
-                                if focusedField == .end && !searchVM.results.isEmpty {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        ForEach(searchVM.results.prefix(3), id: \.self) { result in
-                                            Button {
-                                                SearchBarController.resolveAndSelectAddress(from: result) { resolved in
-                                                    endAddress = resolved
-                                                    searchVM.results = []
-                                                    focusedField = nil
-                                                }
-                                            } label: {
-                                                VStack(alignment: .leading) {
-                                                    Text(result.title).bold()
-                                                    Text(result.subtitle)
-                                                        .font(.subheadline)
-                                                        .foregroundColor(.gray)
-                                                }
-                                                .padding(.vertical, 6)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            .frame(maxWidth: .infinity)
+                    TripAddressFieldView(
+                        iconName: "mappin.circle.fill",
+                        placeholder: "End Address",
+                        iconColor: .red,
+                        addressText: $endAddress,
+                        focusedField: $focusedField,
+                        fieldType: .end,
+                        searchVM: searchVM
+                    )
                     
                     // Prettified date picker bar
                     HStack {
