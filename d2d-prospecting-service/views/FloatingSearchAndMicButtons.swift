@@ -31,7 +31,11 @@ struct FloatingSearchAndMicButtons: View {
                 onSelectResult: onSelectResult
             )
 
-            RecordingToggleButton()
+            if !isExpanded {
+                RecordingToggleButton()
+                    .transition(.opacity)
+                    .padding(.bottom, 10)
+            }
         }
         .padding(.bottom, 30)
         .padding(.trailing, 20)
