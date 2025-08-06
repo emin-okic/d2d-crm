@@ -49,9 +49,6 @@ struct MapSearchView: View {
 
     @State private var showingAddObjection = false
 
-    @AppStorage("hasSeenKnockTutorial") private var hasSeenKnockTutorial: Bool = false
-    @State private var showKnockTutorial = false
-
     @StateObject private var searchVM = SearchCompleterViewModel()
 
     @FocusState private var isSearchFocused: Bool
@@ -161,11 +158,6 @@ struct MapSearchView: View {
                     onSelectResult: { handleCompletionTap($0) }
                 )
                 
-                if showKnockTutorial {
-                    KnockTutorialView(totalKnocks: totalKnocks) {
-                        withAnimation { showKnockTutorial=false; hasSeenKnockTutorial=true }
-                    }
-                }
             }
         }
         .onChange(of: searchText) { searchVM.updateQuery($0) }
