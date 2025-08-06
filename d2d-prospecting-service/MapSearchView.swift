@@ -151,7 +151,15 @@ struct MapSearchView: View {
 
                 prospectPopup
                 
-                floatingButtons
+                FloatingSearchAndMicButtons(
+                    searchText: $searchText,
+                    isExpanded: $isSearchExpanded,
+                    isFocused: $isSearchFocused,
+                    viewModel: searchVM,
+                    animationNamespace: animationNamespace,
+                    onSubmit: { submitSearch() },
+                    onSelectResult: { handleCompletionTap($0) }
+                )
                 
                 if showKnockTutorial {
                     KnockTutorialView(totalKnocks: totalKnocks) {
@@ -243,27 +251,6 @@ struct MapSearchView: View {
         .sheet(isPresented:$showConversionSheet){ if let prospect=prospectToConvert { SignUpPopupView(prospect:prospect,isPresented:$showConversionSheet) } }
     }
     
-    private var floatingButtons: some View {
-        VStack(spacing: 10) {
-            // Floating search icon + expanded bar
-            ExpandableSearchView(
-                searchText: $searchText,
-                isExpanded: $isSearchExpanded,
-                isFocused: $isSearchFocused,
-                viewModel: searchVM,
-                animationNamespace: animationNamespace,
-                onSubmit: { submitSearch() },
-                onSelectResult: { handleCompletionTap($0) }
-            )
-
-            // Mic button directly below search button
-            recordingToggleButton
-        }
-        .padding(.bottom, 30)
-        .padding(.trailing, 20)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-        .zIndex(999)
-    }
     
     private var prospectPopup: some View {
         Group {
@@ -286,20 +273,6 @@ struct MapSearchView: View {
                 .position(pos)
                 .zIndex(999)
             }
-        }
-    }
-    
-    private var recordingToggleButton: some View {
-        // Mic button directly below search button
-        Button(action: {
-            recordingModeEnabled.toggle()
-        }) {
-            Image(systemName: recordingModeEnabled ? "mic.circle.fill" : "mic.slash.circle.fill")
-                .resizable()
-                .frame(width: 48, height: 48)
-                .foregroundColor(recordingModeEnabled ? .blue : .red)
-                .opacity(recordingModeEnabled ? 1.0 : 0.5)
-                .shadow(radius: 4)
         }
     }
     
