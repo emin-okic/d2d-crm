@@ -69,6 +69,8 @@ struct MapSearchView: View {
     @Environment(\.modelContext) private var modelContext
     
     @State private var pendingRecordingFileName: String?
+    
+    @AppStorage("recordingModeEnabled") private var recordingModeEnabled: Bool = true
 
     private var hasSignedUp: Bool {
         prospects
@@ -102,6 +104,7 @@ struct MapSearchView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .topLeading) {
+                
                 MapDisplayView(
                     region: $controller.region,
                     markers: controller.markers,
@@ -146,31 +149,9 @@ struct MapSearchView: View {
                              avgKnocksPerSale: averageKnocksPerCustomer,
                              hasSignedUp: hasSignedUp)
 
-                ExpandableSearchView(
-                    searchText: $searchText,
-                    isExpanded: $isSearchExpanded,
-                    isFocused: $isSearchFocused,
-                    viewModel: searchVM,
-                    animationNamespace: animationNamespace,
-                    onSubmit: { submitSearch() },
-                    onSelectResult: { handleCompletionTap($0) }
-                )
-
-                if showProspectPopup, let place = selectedPlace, let pos = popupScreenPosition {
-                    ProspectPopupView(
-                        place: place,
-                        isCustomer: place.list == "Customers",  // 👈 Pass whether this is a customer
-                        onClose: { showProspectPopup = false },
-                        onOutcomeSelected: { outcome, fileName in
-                            pendingAddress = place.address
-                            isTappedAddressCustomer = place.list == "Customers"
-                            showProspectPopup = false
-                            handleOutcome(outcome, recordingFileName: fileName)
-                        }
-                    )
-                    .frame(width:240).background(.ultraThinMaterial)
-                    .cornerRadius(16).position(pos).zIndex(999)
-                }
+                prospectPopup
+                
+                floatingButtons
                 
                 if showKnockTutorial {
                     KnockTutorialView(totalKnocks: totalKnocks) {
@@ -260,6 +241,81 @@ struct MapSearchView: View {
                                                       Button("No",role:.cancel){} }
         .sheet(isPresented:$showTripPopup){ if let addr=pendingAddress { LogTripPopupView(endAddress:addr) } }
         .sheet(isPresented:$showConversionSheet){ if let prospect=prospectToConvert { SignUpPopupView(prospect:prospect,isPresented:$showConversionSheet) } }
+    }
+    
+    private var floatingButtons: some View {
+        VStack(spacing: 12) {
+            ExpandableSearchView(
+                searchText: $searchText,
+                isExpanded: $isSearchExpanded,
+                isFocused: $isSearchFocused,
+                viewModel: searchVM,
+                animationNamespace: animationNamespace,
+                onSubmit: { submitSearch() },
+                onSelectResult: { handleCompletionTap($0) }
+            )
+
+            Button(action: {
+                recordingModeEnabled.toggle()
+            }) {
+                Image(systemName: recordingModeEnabled ? "mic.circle.fill" : "mic.slash.circle.fill")
+                    .resizable()
+                    .frame(width: 48, height: 48)
+                    .foregroundColor(recordingModeEnabled ? .blue : .red)
+                    .opacity(recordingModeEnabled ? 1.0 : 0.5)
+                    .shadow(radius: 4)
+            }
+        }
+        .padding(.bottom, 40)
+        .padding(.trailing, 20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        .zIndex(1000)
+    }
+    
+    private var prospectPopup: some View {
+        Group {
+            if showProspectPopup, let place = selectedPlace, let pos = popupScreenPosition {
+                ProspectPopupView(
+                    place: place,
+                    isCustomer: place.list == "Customers",
+                    onClose: { showProspectPopup = false },
+                    onOutcomeSelected: { outcome, fileName in
+                        pendingAddress = place.address
+                        isTappedAddressCustomer = place.list == "Customers"
+                        showProspectPopup = false
+                        handleOutcome(outcome, recordingFileName: fileName)
+                    },
+                    recordingModeEnabled: recordingModeEnabled
+                )
+                .frame(width: 240)
+                .background(.ultraThinMaterial)
+                .cornerRadius(16)
+                .position(pos)
+                .zIndex(999)
+            }
+        }
+    }
+    
+    private var recordingToggleButton: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                Button(action: {
+                    recordingModeEnabled.toggle()
+                }) {
+                    Image(systemName: recordingModeEnabled ? "mic.circle.fill" : "mic.slash.circle.fill")
+                        .resizable()
+                        .frame(width: 48, height: 48)
+                        .foregroundColor(recordingModeEnabled ? .blue : .red)
+                        .opacity(recordingModeEnabled ? 1.0 : 0.5)
+                        .shadow(radius: 4)
+                }
+                .padding(.bottom, 40)
+                .padding(.trailing, 20)
+            }
+        }
+        .zIndex(1000)
     }
     
     private func handleOutcome(_ status: String, recordingFileName: String?) {

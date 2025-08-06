@@ -12,6 +12,8 @@ struct ProspectPopupView: View {
     let isCustomer: Bool
     var onClose: () -> Void
     var onOutcomeSelected: (String, String?) -> Void
+    
+    let recordingModeEnabled: Bool
 
     @State private var isRecording = false
     @State private var showOutcomeButtons = false
@@ -47,24 +49,29 @@ struct ProspectPopupView: View {
             Divider().padding(.vertical, 4)
 
             if !isRecording && !showOutcomeButtons {
-                HStack(spacing: 24) {
-                    Spacer()
+                if recordingModeEnabled {
+                    HStack(spacing: 24) {
+                        Spacer()
 
-                    recordingActionButton(
-                        systemName: "mic.circle.fill",
-                        label: "Start Recording",
-                        color: .red,
-                        action: startRecording
-                    )
+                        recordingActionButton(
+                            systemName: "mic.circle.fill",
+                            label: "Start Recording",
+                            color: .red,
+                            action: startRecording
+                        )
 
-                    recordingActionButton(
-                        systemName: "arrowshape.turn.up.right.circle.fill",
-                        label: "Skip Recording",
-                        color: .blue,
-                        action: { showOutcomeButtons = true }
-                    )
+                        recordingActionButton(
+                            systemName: "arrowshape.turn.up.right.circle.fill",
+                            label: "Skip Recording",
+                            color: .blue,
+                            action: { showOutcomeButtons = true }
+                        )
 
-                    Spacer()
+                        Spacer()
+                    }
+                } else {
+                    // Show empty view if recording is off and outcomes haven't appeared yet
+                    EmptyView()
                 }
             }
 
@@ -94,6 +101,11 @@ struct ProspectPopupView: View {
                 }
                 .padding(.top, 4)
 
+            }
+        }
+        .onAppear {
+            if !recordingModeEnabled {
+                showOutcomeButtons = true
             }
         }
         .padding()
