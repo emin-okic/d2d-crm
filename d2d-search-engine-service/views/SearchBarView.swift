@@ -70,7 +70,7 @@ struct SearchBarView: View {
             )
             
         }
-        .padding(.bottom, 56)
+        .padding(.bottom, 10)
         .animation(.easeInOut(duration: 0.25), value: viewModel.results.count)
     }
 }

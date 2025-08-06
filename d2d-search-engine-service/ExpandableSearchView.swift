@@ -21,9 +21,9 @@ struct ExpandableSearchView: View {
 
     var body: some View {
         VStack {
-            Spacer()
+            
             HStack {
-                Spacer()
+                // Spacer()
                 if isExpanded {
                     SearchBarView(
                         searchText: $searchText,
@@ -62,8 +62,8 @@ struct ExpandableSearchView: View {
                             .background(Circle().fill(Color.blue))
                     }
                     .matchedGeometryEffect(id: "search", in: animationNamespace)
-                    .padding(.trailing, 20)
-                    .padding(.bottom, 30)
+                    // .padding(.trailing, 10)
+                    .padding(.bottom, 10)
                     .shadow(radius: 4)
                 }
             }

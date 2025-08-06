@@ -244,7 +244,8 @@ struct MapSearchView: View {
     }
     
     private var floatingButtons: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 10) {
+            // Floating search icon + expanded bar
             ExpandableSearchView(
                 searchText: $searchText,
                 isExpanded: $isSearchExpanded,
@@ -255,6 +256,7 @@ struct MapSearchView: View {
                 onSelectResult: { handleCompletionTap($0) }
             )
 
+            // Mic button directly below search button
             Button(action: {
                 recordingModeEnabled.toggle()
             }) {
@@ -266,10 +268,10 @@ struct MapSearchView: View {
                     .shadow(radius: 4)
             }
         }
-        .padding(.bottom, 40)
+        .padding(.bottom, 30)
         .padding(.trailing, 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-        .zIndex(1000)
+        .zIndex(999)
     }
     
     private var prospectPopup: some View {
@@ -311,11 +313,9 @@ struct MapSearchView: View {
                         .opacity(recordingModeEnabled ? 1.0 : 0.5)
                         .shadow(radius: 4)
                 }
-                .padding(.bottom, 40)
-                .padding(.trailing, 20)
             }
         }
-        .zIndex(1000)
+        .zIndex(999)
     }
     
     private func handleOutcome(_ status: String, recordingFileName: String?) {
