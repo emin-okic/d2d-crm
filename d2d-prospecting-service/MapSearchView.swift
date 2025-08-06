@@ -49,9 +49,6 @@ struct MapSearchView: View {
 
     @State private var showingAddObjection = false
 
-    @AppStorage("hasSeenKnockTutorial") private var hasSeenKnockTutorial: Bool = false
-    @State private var showKnockTutorial = false
-
     @StateObject private var searchVM = SearchCompleterViewModel()
 
     @FocusState private var isSearchFocused: Bool
@@ -69,6 +66,8 @@ struct MapSearchView: View {
     @Environment(\.modelContext) private var modelContext
     
     @State private var pendingRecordingFileName: String?
+    
+    @AppStorage("recordingModeEnabled") private var recordingModeEnabled: Bool = true
 
     private var hasSignedUp: Bool {
         prospects
@@ -102,6 +101,7 @@ struct MapSearchView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .topLeading) {
+                
                 MapDisplayView(
                     region: $controller.region,
                     markers: controller.markers,
@@ -146,7 +146,9 @@ struct MapSearchView: View {
                              avgKnocksPerSale: averageKnocksPerCustomer,
                              hasSignedUp: hasSignedUp)
 
-                ExpandableSearchView(
+                prospectPopup
+                
+                FloatingSearchAndMicButtons(
                     searchText: $searchText,
                     isExpanded: $isSearchExpanded,
                     isFocused: $isSearchFocused,
@@ -155,28 +157,7 @@ struct MapSearchView: View {
                     onSubmit: { submitSearch() },
                     onSelectResult: { handleCompletionTap($0) }
                 )
-
-                if showProspectPopup, let place = selectedPlace, let pos = popupScreenPosition {
-                    ProspectPopupView(
-                        place: place,
-                        isCustomer: place.list == "Customers",  // 👈 Pass whether this is a customer
-                        onClose: { showProspectPopup = false },
-                        onOutcomeSelected: { outcome, fileName in
-                            pendingAddress = place.address
-                            isTappedAddressCustomer = place.list == "Customers"
-                            showProspectPopup = false
-                            handleOutcome(outcome, recordingFileName: fileName)
-                        }
-                    )
-                    .frame(width:240).background(.ultraThinMaterial)
-                    .cornerRadius(16).position(pos).zIndex(999)
-                }
                 
-                if showKnockTutorial {
-                    KnockTutorialView(totalKnocks: totalKnocks) {
-                        withAnimation { showKnockTutorial=false; hasSeenKnockTutorial=true }
-                    }
-                }
             }
         }
         .onChange(of: searchText) { searchVM.updateQuery($0) }
@@ -260,6 +241,31 @@ struct MapSearchView: View {
                                                       Button("No",role:.cancel){} }
         .sheet(isPresented:$showTripPopup){ if let addr=pendingAddress { LogTripPopupView(endAddress:addr) } }
         .sheet(isPresented:$showConversionSheet){ if let prospect=prospectToConvert { SignUpPopupView(prospect:prospect,isPresented:$showConversionSheet) } }
+    }
+    
+    
+    private var prospectPopup: some View {
+        Group {
+            if showProspectPopup, let place = selectedPlace, let pos = popupScreenPosition {
+                ProspectPopupView(
+                    place: place,
+                    isCustomer: place.list == "Customers",
+                    onClose: { showProspectPopup = false },
+                    onOutcomeSelected: { outcome, fileName in
+                        pendingAddress = place.address
+                        isTappedAddressCustomer = place.list == "Customers"
+                        showProspectPopup = false
+                        handleOutcome(outcome, recordingFileName: fileName)
+                    },
+                    recordingModeEnabled: recordingModeEnabled
+                )
+                .frame(width: 240)
+                .background(.ultraThinMaterial)
+                .cornerRadius(16)
+                .position(pos)
+                .zIndex(999)
+            }
+        }
     }
     
     private func handleOutcome(_ status: String, recordingFileName: String?) {

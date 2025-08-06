@@ -24,6 +24,8 @@ struct FollowUpAssistantView: View {
     
     @State private var selectedTab: FollowUpTab = .appointments
     
+    @AppStorage("recordingModeEnabled") private var recordingModeEnabled: Bool = true
+    
     enum FollowUpTab: String, CaseIterable {
         case appointments = "Appointments"
         case recordings = "Recent Conversations"
@@ -99,22 +101,29 @@ struct FollowUpAssistantView: View {
                     ObjectionsSectionView()
                     
                     // MARK: - Tab Selector
-                    Picker("View", selection: $selectedTab) {
-                        ForEach(FollowUpTab.allCases, id: \.self) { tab in
-                            Text(tab.rawValue).tag(tab)
+                    if recordingModeEnabled {
+                        Picker("View", selection: $selectedTab) {
+                            ForEach(FollowUpTab.allCases, id: \.self) { tab in
+                                Text(tab.rawValue).tag(tab)
+                            }
                         }
+                        .pickerStyle(.segmented)
+                        .padding(.horizontal, 20)
                     }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal, 20)
 
                     // MARK: - Tab Content
                     Group {
-                        switch selectedTab {
-                        case .appointments:
+                        if recordingModeEnabled {
+                            switch selectedTab {
+                            case .appointments:
+                                AppointmentsSectionView()
+                                    .frame(minHeight: 300)
+                            case .recordings:
+                                RecordingsView()
+                            }
+                        } else {
                             AppointmentsSectionView()
-                                .frame(minHeight: 300) // Enough to render content
-                        case .recordings:
-                            RecordingsView()
+                                .frame(minHeight: 300)
                         }
                     }
                     
