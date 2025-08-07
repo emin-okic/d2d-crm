@@ -210,7 +210,36 @@ struct MapSearchView: View {
                 }
             }
             
-            Button("Follow-Up Later"){ handleKnockAndPromptObjection(status:"Follow Up Later") }
+            Button("Follow-Up Later"){
+                
+                if let addr = pendingAddress {
+                    knockController?.handleKnockAndPromptObjection(
+                        address: addr,
+                        status: "Follow Up Later",
+                        prospects: prospects,
+                        objections: objections,
+                        onUpdateMarkers: {
+                            updateMarkers()
+                        },
+                        onShowObjectionPicker: { filtered, prospect in
+                            objectionOptions = filtered
+                            prospectToNote = prospect
+                            followUpAddress = prospect.address
+                            followUpProspectName = prospect.fullName
+                            showObjectionPicker = true
+                        },
+                        onShowAddObjection: { prospect in
+                            selectedObjection = nil
+                            prospectToNote = prospect
+                            followUpAddress = prospect.address
+                            followUpProspectName = prospect.fullName
+                            showingAddObjection = true
+                        }
+                    )
+                }
+                
+            }
+            
             Button("Cancel",role:.cancel){}
         } message: { Text("Did someone answer at \(pendingAddress ?? "this address")?") }
             .sheet(isPresented:$showNoteInput){
@@ -316,9 +345,35 @@ struct MapSearchView: View {
             handleKnockAndConvertToCustomer(status: status)
 
         } else if status == "Follow Up Later" {
+            
             // Defer recording until objection is picked
             pendingRecordingFileName = recordingFileName
-            handleKnockAndPromptObjection(status: status)
+            
+            if let addr = pendingAddress {
+                knockController?.handleKnockAndPromptObjection(
+                    address: addr,
+                    status: "Follow Up Later",
+                    prospects: prospects,
+                    objections: objections,
+                    onUpdateMarkers: {
+                        updateMarkers()
+                    },
+                    onShowObjectionPicker: { filtered, prospect in
+                        objectionOptions = filtered
+                        prospectToNote = prospect
+                        followUpAddress = prospect.address
+                        followUpProspectName = prospect.fullName
+                        showObjectionPicker = true
+                    },
+                    onShowAddObjection: { prospect in
+                        selectedObjection = nil
+                        prospectToNote = prospect
+                        followUpAddress = prospect.address
+                        followUpProspectName = prospect.fullName
+                        showingAddObjection = true
+                    }
+                )
+            }
 
         } else if status == "Wasn't Home" {
             if let addr = pendingAddress {
@@ -365,7 +420,32 @@ struct MapSearchView: View {
             
         } else if status == "Follow Up Later" {
             
-            handleKnockAndPromptObjection(status: status)
+            if let addr = pendingAddress {
+                knockController?.handleKnockAndPromptObjection(
+                    address: addr,
+                    status: "Follow Up Later",
+                    prospects: prospects,
+                    objections: objections,
+                    onUpdateMarkers: {
+                        updateMarkers()
+                    },
+                    onShowObjectionPicker: { filtered, prospect in
+                        objectionOptions = filtered
+                        prospectToNote = prospect
+                        followUpAddress = prospect.address
+                        followUpProspectName = prospect.fullName
+                        showObjectionPicker = true
+                    },
+                    onShowAddObjection: { prospect in
+                        selectedObjection = nil
+                        prospectToNote = prospect
+                        followUpAddress = prospect.address
+                        followUpProspectName = prospect.fullName
+                        showingAddObjection = true
+                    }
+                )
+            }
+            
         }
     }
 
@@ -449,30 +529,6 @@ struct MapSearchView: View {
         try? modelContext.save()
         
         return updated
-    }
-    
-    private func handleKnockAndPromptObjection(status: String) {
-        guard let addr = pendingAddress else { return }
-
-        let prospect = saveKnock(address: addr, status: status)
-        prospectToNote = prospect
-        followUpAddress = prospect.address
-        followUpProspectName = prospect.fullName
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            updateMarkers()
-        }
-
-        if objections.isEmpty {
-            // Redirect user to create a new objection before proceeding
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                selectedObjection = nil
-                showingAddObjection = true
-            }
-        } else {
-            objectionOptions = objections.filter { $0.text != "Converted To Sale" }
-            showObjectionPicker = true
-        }
     }
     
     private func handleKnockAndConvertToCustomer(status: String) {
