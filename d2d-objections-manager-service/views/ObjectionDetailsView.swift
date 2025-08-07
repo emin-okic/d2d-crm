@@ -17,17 +17,34 @@ struct ObjectionDetailsView: View {
         NavigationView {
             VStack(spacing: 0) {
                 Form {
+                    
                     Section(header: Text("Objection")) {
                         TextField("Objection text", text: $objection.text)
                     }
+                    
                     Section(header: Text("Expected Response")) {
                         TextEditor(text: $objection.response)
                             .frame(minHeight: 120)
                             .padding(.vertical, 4)
                     }
-                    Section(header: Text("Times Heard")) {
-                        Stepper("\(objection.timesHeard)", value: $objection.timesHeard, in: 0...1000)
+                    
+                    Section() {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Times Heard")
+                                .font(.headline)
+                            Text("Tracks how often you've heard this objection while knocking.")
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 4)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            
+                            Stepper("\(objection.timesHeard)", value: $objection.timesHeard, in: 0...1000)
+                        }
+                        .padding(.vertical, 4)
                     }
+                    
                     Section {
                         Button("Regenerate Response") {
                             Task {
@@ -36,6 +53,7 @@ struct ObjectionDetailsView: View {
                             }
                         }
                     }
+                    
                 }
 
                 Button(role: .destructive) {
