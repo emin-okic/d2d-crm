@@ -60,7 +60,7 @@ struct MapSearchView: View {
         let place: IdentifiablePlace
 
         static func == (lhs: PopupState, rhs: PopupState) -> Bool {
-            false // Always return false to trigger view refresh
+            lhs.id == rhs.id
         }
     }
 
@@ -175,14 +175,8 @@ struct MapSearchView: View {
             }
         }
         .onChange(of: searchText) { searchVM.updateQuery($0) }
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now()) {
-                updateMarkers()
-            }
-        }
-        .onChange(of: prospects) {
-            _ in updateMarkers()
-        }
+        .onAppear { updateMarkers() }
+        .onChange(of: prospects) { _ in updateMarkers() }
         .onChange(of: selectedList) { _ in updateMarkers() }
         .onChange(of: addressToCenter) { handleMapCenterChange(newAddress: $0) }
         .onTapGesture {
@@ -421,10 +415,7 @@ struct MapSearchView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     updateMarkers()
                 }
-                // Optionally prompt to log a trip even if no note is added
-                // DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                //     showTripPrompt = true
-                // }
+
                 return
             }
         }
