@@ -67,7 +67,7 @@ struct ObjectionsSectionView: View {
             }
         }
         .sheet(item: $selectedObjection) { obj in
-            EditObjectionView(objection: obj)
+            ObjectionDetailsView(objection: obj)
         }
         .sheet(isPresented: $showingAddObjection) {
             AddObjectionView()
