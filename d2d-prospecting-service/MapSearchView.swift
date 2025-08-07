@@ -55,8 +55,16 @@ struct MapSearchView: View {
 
     @State private var isTappedAddressCustomer = false
 
-    @State private var selectedPlace: IdentifiablePlace?
-    @State private var showProspectPopup = false
+    struct PopupState: Identifiable, Equatable {
+        let id = UUID()
+        let place: IdentifiablePlace
+
+        static func == (lhs: PopupState, rhs: PopupState) -> Bool {
+            lhs.id == rhs.id
+        }
+    }
+
+    @State private var popupState: PopupState?
 
     @State private var popupScreenPosition: CGPoint? = nil
     
@@ -68,6 +76,8 @@ struct MapSearchView: View {
     @State private var pendingRecordingFileName: String?
     
     @AppStorage("recordingModeEnabled") private var recordingModeEnabled: Bool = true
+    
+    @State private var knockController: KnockActionController? = nil
 
     private var hasSignedUp: Bool {
         prospects
@@ -106,16 +116,20 @@ struct MapSearchView: View {
                     region: $controller.region,
                     markers: controller.markers,
                     onMarkerTapped: { place in
-                        selectedPlace = place
-                        showProspectPopup = true
+                        let state = PopupState(place: place)
+                        popupState = nil
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+                            popupState = state
+                        }
+
                         if let mapView = MapDisplayView.cachedMapView {
                             let raw = mapView.convert(place.location, toPointTo: mapView)
                             let popupW: CGFloat = 240
-                            let halfW = popupW/2
+                            let halfW = popupW / 2
                             let halfH: CGFloat = 60
                             let offsetY = halfH + 14
-                            let x = min(max(raw.x, halfW), geo.size.width-halfW)
-                            let y = min(max(raw.y-offsetY, halfH), geo.size.height-halfH)
+                            let x = min(max(raw.x, halfW), geo.size.width - halfW)
+                            let y = min(max(raw.y - offsetY, halfH), geo.size.height - halfH)
                             popupScreenPosition = CGPoint(x: x, y: y)
                         }
                     },
@@ -136,7 +150,9 @@ struct MapSearchView: View {
                     onRegionChange: { newRegion in
                         controller.region = newRegion
                         // close popup on any pan/zoom
-                        if showProspectPopup { showProspectPopup = false }
+                        if popupState != nil {
+                            popupState = nil
+                        }
                     }
                 )
                 .frame(maxHeight: .infinity)
@@ -161,7 +177,10 @@ struct MapSearchView: View {
             }
         }
         .onChange(of: searchText) { searchVM.updateQuery($0) }
-        .onAppear { updateMarkers() }
+        .onAppear {
+            updateMarkers()
+            knockController = KnockActionController(modelContext: modelContext, controller: controller)
+        }
         .onChange(of: prospects) { _ in updateMarkers() }
         .onChange(of: selectedList) { _ in updateMarkers() }
         .onChange(of: addressToCenter) { handleMapCenterChange(newAddress: $0) }
@@ -170,11 +189,89 @@ struct MapSearchView: View {
                                             to:nil,from:nil,for:nil)
         }
         .alert("Knock Outcome",isPresented:$showOutcomePrompt) {
+            
             if !isTappedAddressCustomer {
-                Button("Converted To Sale"){ handleKnockAndConvertToCustomer(status:"Converted To Sale") }
+                
+                Button("Converted To Sale"){
+
+                    if let addr = pendingAddress {
+                        knockController?.handleKnockAndConvertToCustomer(
+                            address: addr,
+                            status: "Converted To Sale",
+                            prospects: prospects,
+                            onUpdateMarkers: {
+                                updateMarkers()
+                            },
+                            onSetCustomerMarker: {
+                                if let index = controller.markers.firstIndex(where: {
+                                    $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
+                                    addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                                }) {
+                                    controller.markers[index] = IdentifiablePlace(
+                                        address: addr,
+                                        location: controller.markers[index].location,
+                                        count: controller.markers[index].count,
+                                        list: "Customers"
+                                    )
+                                }
+                            },
+                            onShowConversionSheet: { prospect in
+                                prospectToConvert = prospect
+                                showConversionSheet = true
+                            }
+                        )
+                    }
+                    
+                }
             }
-            Button("Wasn't Home"){ handleKnockAndPromptNote(status:"Wasn't Home") }
-            Button("Follow-Up Later"){ handleKnockAndPromptObjection(status:"Follow Up Later") }
+            
+            Button("Wasn't Home"){
+                if let addr = pendingAddress {
+                    knockController?.handleKnockAndPromptNote(
+                        address: addr,
+                        status: "Wasn't Home",
+                        prospects: prospects,
+                        onUpdateMarkers: {
+                            updateMarkers()
+                        },
+                        onShowNoteInput: { prospect in
+                            prospectToNote = prospect
+                            showNoteInput = true
+                        }
+                    )
+                }
+            }
+            
+            Button("Follow-Up Later"){
+                
+                if let addr = pendingAddress {
+                    knockController?.handleKnockAndPromptObjection(
+                        address: addr,
+                        status: "Follow Up Later",
+                        prospects: prospects,
+                        objections: objections,
+                        onUpdateMarkers: {
+                            updateMarkers()
+                        },
+                        onShowObjectionPicker: { filtered, prospect in
+                            objectionOptions = filtered
+                            prospectToNote = prospect
+                            followUpAddress = prospect.address
+                            followUpProspectName = prospect.fullName
+                            showObjectionPicker = true
+                        },
+                        onShowAddObjection: { prospect in
+                            selectedObjection = nil
+                            prospectToNote = prospect
+                            followUpAddress = prospect.address
+                            followUpProspectName = prospect.fullName
+                            showingAddObjection = true
+                        }
+                    )
+                }
+                
+            }
+            
             Button("Cancel",role:.cancel){}
         } message: { Text("Did someone answer at \(pendingAddress ?? "this address")?") }
             .sheet(isPresented:$showNoteInput){
@@ -246,15 +343,15 @@ struct MapSearchView: View {
     
     private var prospectPopup: some View {
         Group {
-            if showProspectPopup, let place = selectedPlace, let pos = popupScreenPosition {
+            if let popup = popupState, let pos = popupScreenPosition {
                 ProspectPopupView(
-                    place: place,
-                    isCustomer: place.list == "Customers",
-                    onClose: { showProspectPopup = false },
+                    place: popup.place,
+                    isCustomer: popup.place.list == "Customers",
+                    onClose: { popupState = nil },
                     onOutcomeSelected: { outcome, fileName in
-                        pendingAddress = place.address
-                        isTappedAddressCustomer = place.list == "Customers"
-                        showProspectPopup = false
+                        pendingAddress = popup.place.address
+                        isTappedAddressCustomer = popup.place.list == "Customers"
+                        popupState = nil
                         handleOutcome(outcome, recordingFileName: fileName)
                     },
                     recordingModeEnabled: recordingModeEnabled
@@ -264,6 +361,7 @@ struct MapSearchView: View {
                 .cornerRadius(16)
                 .position(pos)
                 .zIndex(999)
+                .id(popup.id) // <- force remount every time
             }
         }
     }
@@ -272,19 +370,88 @@ struct MapSearchView: View {
         if status == "Converted To Sale" {
             let objection = Objection(text: "Converted To Sale", response: "Handled successfully", timesHeard: 0)
             modelContext.insert(objection)
+            
             if let name = recordingFileName {
+                
                 let newRecording = Recording(fileName: name, date: .now, objection: objection, rating: 5)
                 modelContext.insert(newRecording)
+                
             }
-            handleKnockAndConvertToCustomer(status: status)
+            
+            if let addr = pendingAddress {
+                knockController?.handleKnockAndConvertToCustomer(
+                    address: addr,
+                    status: "Converted To Sale",
+                    prospects: prospects,
+                    onUpdateMarkers: {
+                        updateMarkers()
+                    },
+                    onSetCustomerMarker: {
+                        if let index = controller.markers.firstIndex(where: {
+                            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
+                            addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                        }) {
+                            controller.markers[index] = IdentifiablePlace(
+                                address: addr,
+                                location: controller.markers[index].location,
+                                count: controller.markers[index].count,
+                                list: "Customers"
+                            )
+                        }
+                    },
+                    onShowConversionSheet: { prospect in
+                        prospectToConvert = prospect
+                        showConversionSheet = true
+                    }
+                )
+            }
 
         } else if status == "Follow Up Later" {
+            
             // Defer recording until objection is picked
             pendingRecordingFileName = recordingFileName
-            handleKnockAndPromptObjection(status: status)
+            
+            if let addr = pendingAddress {
+                knockController?.handleKnockAndPromptObjection(
+                    address: addr,
+                    status: "Follow Up Later",
+                    prospects: prospects,
+                    objections: objections,
+                    onUpdateMarkers: {
+                        updateMarkers()
+                    },
+                    onShowObjectionPicker: { filtered, prospect in
+                        objectionOptions = filtered
+                        prospectToNote = prospect
+                        followUpAddress = prospect.address
+                        followUpProspectName = prospect.fullName
+                        showObjectionPicker = true
+                    },
+                    onShowAddObjection: { prospect in
+                        selectedObjection = nil
+                        prospectToNote = prospect
+                        followUpAddress = prospect.address
+                        followUpProspectName = prospect.fullName
+                        showingAddObjection = true
+                    }
+                )
+            }
 
         } else if status == "Wasn't Home" {
-            handleKnockAndPromptNote(status: status)
+            if let addr = pendingAddress {
+                knockController?.handleKnockAndPromptNote(
+                    address: addr,
+                    status: "Wasn't Home",
+                    prospects: prospects,
+                    onUpdateMarkers: {
+                        updateMarkers()
+                    },
+                    onShowNoteInput: { prospect in
+                        prospectToNote = prospect
+                        showNoteInput = true
+                    }
+                )
+            }
         }
 
         try? modelContext.save()
@@ -292,12 +459,82 @@ struct MapSearchView: View {
     
     // This is for the prompts - might be redundant
     private func handleImmediateOutcome(_ status: String) {
+        
         if status == "Converted To Sale" {
-            handleKnockAndConvertToCustomer(status: status)
+            
+            if let addr = pendingAddress {
+                knockController?.handleKnockAndConvertToCustomer(
+                    address: addr,
+                    status: "Converted To Sale",
+                    prospects: prospects,
+                    onUpdateMarkers: {
+                        updateMarkers()
+                    },
+                    onSetCustomerMarker: {
+                        if let index = controller.markers.firstIndex(where: {
+                            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
+                            addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                        }) {
+                            controller.markers[index] = IdentifiablePlace(
+                                address: addr,
+                                location: controller.markers[index].location,
+                                count: controller.markers[index].count,
+                                list: "Customers"
+                            )
+                        }
+                    },
+                    onShowConversionSheet: { prospect in
+                        prospectToConvert = prospect
+                        showConversionSheet = true
+                    }
+                )
+            }
+            
         } else if status == "Wasn't Home" {
-            handleKnockAndPromptNote(status: status)
+            
+            if let addr = pendingAddress {
+                knockController?.handleKnockAndPromptNote(
+                    address: addr,
+                    status: "Wasn't Home",
+                    prospects: prospects,
+                    onUpdateMarkers: {
+                        updateMarkers()
+                    },
+                    onShowNoteInput: { prospect in
+                        prospectToNote = prospect
+                        showNoteInput = true
+                    }
+                )
+            }
+            
         } else if status == "Follow Up Later" {
-            handleKnockAndPromptObjection(status: status)
+            
+            if let addr = pendingAddress {
+                knockController?.handleKnockAndPromptObjection(
+                    address: addr,
+                    status: "Follow Up Later",
+                    prospects: prospects,
+                    objections: objections,
+                    onUpdateMarkers: {
+                        updateMarkers()
+                    },
+                    onShowObjectionPicker: { filtered, prospect in
+                        objectionOptions = filtered
+                        prospectToNote = prospect
+                        followUpAddress = prospect.address
+                        followUpProspectName = prospect.fullName
+                        showObjectionPicker = true
+                    },
+                    onShowAddObjection: { prospect in
+                        selectedObjection = nil
+                        prospectToNote = prospect
+                        followUpAddress = prospect.address
+                        followUpProspectName = prospect.fullName
+                        showingAddObjection = true
+                    }
+                )
+            }
+            
         }
     }
 
@@ -382,65 +619,5 @@ struct MapSearchView: View {
         
         return updated
     }
-
-    private func handleKnockAndPromptNote(status: String) {
-        if let addr = pendingAddress {
-            let prospect = saveKnock(address: addr, status: status)
-
-            // Only show note popup for statuses other than "Not Answered"
-            if status != "Wasn't Home" {
-                prospectToNote = prospect
-                showNoteInput = true
-            } else {
-                // Optionally prompt to log a trip even if no note is added
-                // DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                //     showTripPrompt = true
-                // }
-                return
-            }
-        }
-    }
     
-    private func handleKnockAndPromptObjection(status: String) {
-        guard let addr = pendingAddress else { return }
-
-        let prospect = saveKnock(address: addr, status: status)
-        prospectToNote = prospect
-        followUpAddress = prospect.address
-        followUpProspectName = prospect.fullName
-
-        if objections.isEmpty {
-            // Redirect user to create a new objection before proceeding
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                selectedObjection = nil
-                // showNoteInput = false
-                showingAddObjection = true  // <-- triggers AddObjectionView sheet
-            }
-        } else {
-            objectionOptions = objections.filter { $0.text != "Converted To Sale" }
-            showObjectionPicker = true
-            // shouldAskForTripAfterFollowUp = true // carry trip flag if needed
-        }
-    }
-    
-    private func handleKnockAndConvertToCustomer(status: String) {
-        guard let addr = pendingAddress else { return }
-        let prospect = saveKnock(address: addr, status: status)
-        
-        // Update the marker immediately to reflect "Customer" status
-        if let index = controller.markers.firstIndex(where: {
-            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
-            addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        }) {
-            controller.markers[index] = IdentifiablePlace(
-                address: addr,
-                location: controller.markers[index].location,
-                count: controller.markers[index].count,
-                list: "Customers"
-            )
-        }
-
-        prospectToConvert = prospect
-        showConversionSheet = true
-    }
 }
