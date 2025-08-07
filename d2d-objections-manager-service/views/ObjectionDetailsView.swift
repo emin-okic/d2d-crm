@@ -6,7 +6,7 @@
 //
 import SwiftUI
 
-struct EditObjectionView: View {
+struct ObjectionDetailsView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) private var modelContext
     @Bindable var objection: Objection
