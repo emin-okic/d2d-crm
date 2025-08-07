@@ -429,24 +429,26 @@ struct MapSearchView: View {
         followUpAddress = prospect.address
         followUpProspectName = prospect.fullName
 
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            updateMarkers()
+        }
+
         if objections.isEmpty {
             // Redirect user to create a new objection before proceeding
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 selectedObjection = nil
-                // showNoteInput = false
-                showingAddObjection = true  // <-- triggers AddObjectionView sheet
+                showingAddObjection = true
             }
         } else {
             objectionOptions = objections.filter { $0.text != "Converted To Sale" }
             showObjectionPicker = true
-            // shouldAskForTripAfterFollowUp = true // carry trip flag if needed
         }
     }
     
     private func handleKnockAndConvertToCustomer(status: String) {
         guard let addr = pendingAddress else { return }
         let prospect = saveKnock(address: addr, status: status)
-        
+
         // Update the marker immediately to reflect "Customer" status
         if let index = controller.markers.firstIndex(where: {
             $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
@@ -458,6 +460,10 @@ struct MapSearchView: View {
                 count: controller.markers[index].count,
                 list: "Customers"
             )
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            updateMarkers()
         }
 
         prospectToConvert = prospect
