@@ -189,8 +189,40 @@ struct MapSearchView: View {
                                             to:nil,from:nil,for:nil)
         }
         .alert("Knock Outcome",isPresented:$showOutcomePrompt) {
+            
             if !isTappedAddressCustomer {
-                Button("Converted To Sale"){ handleKnockAndConvertToCustomer(status:"Converted To Sale") }
+                
+                Button("Converted To Sale"){
+
+                    if let addr = pendingAddress {
+                        knockController?.handleKnockAndConvertToCustomer(
+                            address: addr,
+                            status: "Converted To Sale",
+                            prospects: prospects,
+                            onUpdateMarkers: {
+                                updateMarkers()
+                            },
+                            onSetCustomerMarker: {
+                                if let index = controller.markers.firstIndex(where: {
+                                    $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
+                                    addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                                }) {
+                                    controller.markers[index] = IdentifiablePlace(
+                                        address: addr,
+                                        location: controller.markers[index].location,
+                                        count: controller.markers[index].count,
+                                        list: "Customers"
+                                    )
+                                }
+                            },
+                            onShowConversionSheet: { prospect in
+                                prospectToConvert = prospect
+                                showConversionSheet = true
+                            }
+                        )
+                    }
+                    
+                }
             }
             
             Button("Wasn't Home"){
@@ -338,11 +370,41 @@ struct MapSearchView: View {
         if status == "Converted To Sale" {
             let objection = Objection(text: "Converted To Sale", response: "Handled successfully", timesHeard: 0)
             modelContext.insert(objection)
+            
             if let name = recordingFileName {
+                
                 let newRecording = Recording(fileName: name, date: .now, objection: objection, rating: 5)
                 modelContext.insert(newRecording)
+                
             }
-            handleKnockAndConvertToCustomer(status: status)
+            
+            if let addr = pendingAddress {
+                knockController?.handleKnockAndConvertToCustomer(
+                    address: addr,
+                    status: "Converted To Sale",
+                    prospects: prospects,
+                    onUpdateMarkers: {
+                        updateMarkers()
+                    },
+                    onSetCustomerMarker: {
+                        if let index = controller.markers.firstIndex(where: {
+                            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
+                            addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                        }) {
+                            controller.markers[index] = IdentifiablePlace(
+                                address: addr,
+                                location: controller.markers[index].location,
+                                count: controller.markers[index].count,
+                                list: "Customers"
+                            )
+                        }
+                    },
+                    onShowConversionSheet: { prospect in
+                        prospectToConvert = prospect
+                        showConversionSheet = true
+                    }
+                )
+            }
 
         } else if status == "Follow Up Later" {
             
@@ -397,9 +459,36 @@ struct MapSearchView: View {
     
     // This is for the prompts - might be redundant
     private func handleImmediateOutcome(_ status: String) {
+        
         if status == "Converted To Sale" {
             
-            handleKnockAndConvertToCustomer(status: status)
+            if let addr = pendingAddress {
+                knockController?.handleKnockAndConvertToCustomer(
+                    address: addr,
+                    status: "Converted To Sale",
+                    prospects: prospects,
+                    onUpdateMarkers: {
+                        updateMarkers()
+                    },
+                    onSetCustomerMarker: {
+                        if let index = controller.markers.firstIndex(where: {
+                            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
+                            addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                        }) {
+                            controller.markers[index] = IdentifiablePlace(
+                                address: addr,
+                                location: controller.markers[index].location,
+                                count: controller.markers[index].count,
+                                list: "Customers"
+                            )
+                        }
+                    },
+                    onShowConversionSheet: { prospect in
+                        prospectToConvert = prospect
+                        showConversionSheet = true
+                    }
+                )
+            }
             
         } else if status == "Wasn't Home" {
             
@@ -531,28 +620,4 @@ struct MapSearchView: View {
         return updated
     }
     
-    private func handleKnockAndConvertToCustomer(status: String) {
-        guard let addr = pendingAddress else { return }
-        let prospect = saveKnock(address: addr, status: status)
-
-        // Update the marker immediately to reflect "Customer" status
-        if let index = controller.markers.firstIndex(where: {
-            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
-            addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        }) {
-            controller.markers[index] = IdentifiablePlace(
-                address: addr,
-                location: controller.markers[index].location,
-                count: controller.markers[index].count,
-                list: "Customers"
-            )
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            updateMarkers()
-        }
-
-        prospectToConvert = prospect
-        showConversionSheet = true
-    }
 }
