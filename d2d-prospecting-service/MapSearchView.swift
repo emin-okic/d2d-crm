@@ -76,6 +76,8 @@ struct MapSearchView: View {
     @State private var pendingRecordingFileName: String?
     
     @AppStorage("recordingModeEnabled") private var recordingModeEnabled: Bool = true
+    
+    @State private var knockController: KnockActionController? = nil
 
     private var hasSignedUp: Bool {
         prospects
@@ -175,7 +177,10 @@ struct MapSearchView: View {
             }
         }
         .onChange(of: searchText) { searchVM.updateQuery($0) }
-        .onAppear { updateMarkers() }
+        .onAppear {
+            updateMarkers()
+            knockController = KnockActionController(modelContext: modelContext, controller: controller)
+        }
         .onChange(of: prospects) { _ in updateMarkers() }
         .onChange(of: selectedList) { _ in updateMarkers() }
         .onChange(of: addressToCenter) { handleMapCenterChange(newAddress: $0) }
@@ -187,7 +192,24 @@ struct MapSearchView: View {
             if !isTappedAddressCustomer {
                 Button("Converted To Sale"){ handleKnockAndConvertToCustomer(status:"Converted To Sale") }
             }
-            Button("Wasn't Home"){ handleKnockAndPromptNote(status:"Wasn't Home") }
+            
+            Button("Wasn't Home"){
+                if let addr = pendingAddress {
+                    knockController?.handleKnockAndPromptNote(
+                        address: addr,
+                        status: "Wasn't Home",
+                        prospects: prospects,
+                        onUpdateMarkers: {
+                            updateMarkers()
+                        },
+                        onShowNoteInput: { prospect in
+                            prospectToNote = prospect
+                            showNoteInput = true
+                        }
+                    )
+                }
+            }
+            
             Button("Follow-Up Later"){ handleKnockAndPromptObjection(status:"Follow Up Later") }
             Button("Cancel",role:.cancel){}
         } message: { Text("Did someone answer at \(pendingAddress ?? "this address")?") }
@@ -299,7 +321,20 @@ struct MapSearchView: View {
             handleKnockAndPromptObjection(status: status)
 
         } else if status == "Wasn't Home" {
-            handleKnockAndPromptNote(status: status)
+            if let addr = pendingAddress {
+                knockController?.handleKnockAndPromptNote(
+                    address: addr,
+                    status: "Wasn't Home",
+                    prospects: prospects,
+                    onUpdateMarkers: {
+                        updateMarkers()
+                    },
+                    onShowNoteInput: { prospect in
+                        prospectToNote = prospect
+                        showNoteInput = true
+                    }
+                )
+            }
         }
 
         try? modelContext.save()
@@ -308,10 +343,28 @@ struct MapSearchView: View {
     // This is for the prompts - might be redundant
     private func handleImmediateOutcome(_ status: String) {
         if status == "Converted To Sale" {
+            
             handleKnockAndConvertToCustomer(status: status)
+            
         } else if status == "Wasn't Home" {
-            handleKnockAndPromptNote(status: status)
+            
+            if let addr = pendingAddress {
+                knockController?.handleKnockAndPromptNote(
+                    address: addr,
+                    status: "Wasn't Home",
+                    prospects: prospects,
+                    onUpdateMarkers: {
+                        updateMarkers()
+                    },
+                    onShowNoteInput: { prospect in
+                        prospectToNote = prospect
+                        showNoteInput = true
+                    }
+                )
+            }
+            
         } else if status == "Follow Up Later" {
+            
             handleKnockAndPromptObjection(status: status)
         }
     }
@@ -396,29 +449,6 @@ struct MapSearchView: View {
         try? modelContext.save()
         
         return updated
-    }
-
-    private func handleKnockAndPromptNote(status: String) {
-        if let addr = pendingAddress {
-            let prospect = saveKnock(address: addr, status: status)
-
-            // Only show note popup for statuses other than "Not Answered"
-            if status != "Wasn't Home" {
-                prospectToNote = prospect
-                showNoteInput = true
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    updateMarkers()
-                }
-                
-            } else {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    updateMarkers()
-                }
-
-                return
-            }
-        }
     }
     
     private func handleKnockAndPromptObjection(status: String) {
