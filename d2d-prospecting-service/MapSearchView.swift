@@ -55,8 +55,16 @@ struct MapSearchView: View {
 
     @State private var isTappedAddressCustomer = false
 
-    @State private var selectedPlace: IdentifiablePlace?
-    @State private var showProspectPopup = false
+    struct PopupState: Identifiable, Equatable {
+        let id = UUID()
+        let place: IdentifiablePlace
+
+        static func == (lhs: PopupState, rhs: PopupState) -> Bool {
+            false // Always return false to trigger view refresh
+        }
+    }
+
+    @State private var popupState: PopupState?
 
     @State private var popupScreenPosition: CGPoint? = nil
     
@@ -106,16 +114,20 @@ struct MapSearchView: View {
                     region: $controller.region,
                     markers: controller.markers,
                     onMarkerTapped: { place in
-                        selectedPlace = place
-                        showProspectPopup = true
+                        let state = PopupState(place: place)
+                        popupState = nil
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+                            popupState = state
+                        }
+
                         if let mapView = MapDisplayView.cachedMapView {
                             let raw = mapView.convert(place.location, toPointTo: mapView)
                             let popupW: CGFloat = 240
-                            let halfW = popupW/2
+                            let halfW = popupW / 2
                             let halfH: CGFloat = 60
                             let offsetY = halfH + 14
-                            let x = min(max(raw.x, halfW), geo.size.width-halfW)
-                            let y = min(max(raw.y-offsetY, halfH), geo.size.height-halfH)
+                            let x = min(max(raw.x, halfW), geo.size.width - halfW)
+                            let y = min(max(raw.y - offsetY, halfH), geo.size.height - halfH)
                             popupScreenPosition = CGPoint(x: x, y: y)
                         }
                     },
@@ -136,7 +148,9 @@ struct MapSearchView: View {
                     onRegionChange: { newRegion in
                         controller.region = newRegion
                         // close popup on any pan/zoom
-                        if showProspectPopup { showProspectPopup = false }
+                        if popupState != nil {
+                            popupState = nil
+                        }
                     }
                 )
                 .frame(maxHeight: .infinity)
@@ -161,8 +175,14 @@ struct MapSearchView: View {
             }
         }
         .onChange(of: searchText) { searchVM.updateQuery($0) }
-        .onAppear { updateMarkers() }
-        .onChange(of: prospects) { _ in updateMarkers() }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now()) {
+                updateMarkers()
+            }
+        }
+        .onChange(of: prospects) {
+            _ in updateMarkers()
+        }
         .onChange(of: selectedList) { _ in updateMarkers() }
         .onChange(of: addressToCenter) { handleMapCenterChange(newAddress: $0) }
         .onTapGesture {
@@ -246,15 +266,15 @@ struct MapSearchView: View {
     
     private var prospectPopup: some View {
         Group {
-            if showProspectPopup, let place = selectedPlace, let pos = popupScreenPosition {
+            if let popup = popupState, let pos = popupScreenPosition {
                 ProspectPopupView(
-                    place: place,
-                    isCustomer: place.list == "Customers",
-                    onClose: { showProspectPopup = false },
+                    place: popup.place,
+                    isCustomer: popup.place.list == "Customers",
+                    onClose: { popupState = nil },
                     onOutcomeSelected: { outcome, fileName in
-                        pendingAddress = place.address
-                        isTappedAddressCustomer = place.list == "Customers"
-                        showProspectPopup = false
+                        pendingAddress = popup.place.address
+                        isTappedAddressCustomer = popup.place.list == "Customers"
+                        popupState = nil
                         handleOutcome(outcome, recordingFileName: fileName)
                     },
                     recordingModeEnabled: recordingModeEnabled
@@ -264,6 +284,7 @@ struct MapSearchView: View {
                 .cornerRadius(16)
                 .position(pos)
                 .zIndex(999)
+                .id(popup.id) // <- force remount every time
             }
         }
     }
@@ -391,7 +412,15 @@ struct MapSearchView: View {
             if status != "Wasn't Home" {
                 prospectToNote = prospect
                 showNoteInput = true
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    updateMarkers()
+                }
+                
             } else {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    updateMarkers()
+                }
                 // Optionally prompt to log a trip even if no note is added
                 // DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 //     showTripPrompt = true
