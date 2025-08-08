@@ -15,29 +15,23 @@ struct RecordingToggleButton: View {
     @State private var showTogglePrompt = false
     @State private var showPromo = false
     @State private var showWalkthrough = false
-
-    // NEW: full-screen celebration instead of overlay
     @State private var showCelebration = false
 
     var body: some View {
-        Button(action: {
-            if studioUnlocked {
-                showTogglePrompt = true
-            } else {
-                showPromo = true
+        Button {
+            if studioUnlocked { showTogglePrompt = true } else { showPromo = true }
+        } label: {
+            Group {
+                if studioUnlocked {
+                    UnlockedMicIcon(isOn: recordingModeEnabled)   // ✅ new style you liked
+                } else {
+                    HiddenMicIcon()                               // ✅ old hidden style you liked
+                }
             }
-        }) {
-            Image(systemName: "mic.circle.fill")
-                .resizable()
-                .frame(width: 48, height: 48)
-                .foregroundColor(studioUnlocked ? (recordingModeEnabled ? .blue : .red) : .gray)
-                .opacity(studioUnlocked ? (recordingModeEnabled ? 1.0 : 0.5) : 0.35)
-                .symbolRenderingMode(.hierarchical)
-                .shadow(radius: 4)
         }
         .alert("Toggle Recording Mode", isPresented: $showTogglePrompt) {
             Button(recordingModeEnabled ? "Turn Off" : "Turn On") { recordingModeEnabled.toggle() }
-            Button("Cancel", role: .cancel) { }
+            Button("Cancel", role: .cancel) {}
         } message: {
             Text(recordingModeEnabled
                  ? "Disable recording mode for now?"
@@ -45,11 +39,8 @@ struct RecordingToggleButton: View {
         }
         .sheet(isPresented: $showPromo) {
             RecordingStudioPromo {
-                // onUnlock
                 studioUnlocked = true
                 showPromo = false
-
-                // 👉 Full-screen dim + confetti
                 showCelebration = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
                     showCelebration = false
@@ -60,9 +51,35 @@ struct RecordingToggleButton: View {
         .sheet(isPresented: $showWalkthrough) {
             RecordingStudioWalkthrough { showWalkthrough = false }
         }
-        // NEW: the full-screen cover that dims and shows confetti
         .fullScreenCover(isPresented: $showCelebration) {
-            FullScreenCelebrationView()
+            FullScreenCelebrationView(dimOpacity: 0.08)
         }
+    }
+}
+
+private struct HiddenMicIcon: View {
+    var body: some View {
+        Image(systemName: "mic.circle.fill")
+            .resizable()
+            .frame(width: 48, height: 48)
+            .symbolRenderingMode(.hierarchical)
+            .foregroundColor(.gray)  // old hidden style
+            .opacity(0.35)
+            .shadow(radius: 4)
+    }
+}
+
+private struct UnlockedMicIcon: View {
+    let isOn: Bool
+    var body: some View {
+        Image(systemName: "mic.circle.fill")
+            .resizable()
+            .frame(width: 48, height: 48)
+            .symbolRenderingMode(.palette)
+            .foregroundStyle(
+                .white,          // mic glyph
+                isOn ? .blue : .red  // circle color when unlocked: blue(on)/red(off)
+            )
+            .shadow(radius: 4)
     }
 }
