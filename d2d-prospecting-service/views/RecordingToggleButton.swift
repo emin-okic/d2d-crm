@@ -63,8 +63,7 @@ private struct HiddenMicIcon: View {
             .resizable()
             .frame(width: 48, height: 48)
             .symbolRenderingMode(.hierarchical)
-            .foregroundColor(.gray)  // old hidden style
-            .opacity(0.35)
+            .foregroundColor(Color(.darkGray))
             .shadow(radius: 4)
     }
 }
