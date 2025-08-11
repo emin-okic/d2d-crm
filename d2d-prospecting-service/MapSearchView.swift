@@ -78,6 +78,9 @@ struct MapSearchView: View {
     @AppStorage("recordingModeEnabled") private var recordingModeEnabled: Bool = true
     
     @State private var knockController: KnockActionController? = nil
+    
+    @State private var launchedAddObjectionFromPicker = false
+    @State private var pendingShowAddObjection = false
 
     private var hasSignedUp: Bool {
         prospects
@@ -288,38 +291,62 @@ struct MapSearchView: View {
                         }
                 }
             }
-        .sheet(isPresented:$showObjectionPicker){
-            NavigationView{
-                List(objectionOptions){
-                    obj in
-                    Button(obj.text) {
-                        selectedObjection = obj
-                        obj.timesHeard += 1
-                        try? modelContext.save()
-                        showObjectionPicker = false
-
-                        // ✅ Insert recording now that objection is selected
-                        if let name = pendingRecordingFileName {
-                            let newRecording = Recording(fileName: name, date: .now, objection: obj, rating: 3)
-                            modelContext.insert(newRecording)
+            .sheet(isPresented: $showObjectionPicker, onDismiss: {
+                if pendingShowAddObjection {
+                    launchedAddObjectionFromPicker = true
+                    pendingShowAddObjection = false
+                    showingAddObjection = true   // present AddObjectionView immediately
+                }
+            }) {
+                NavigationView {
+                    List(objectionOptions) { obj in
+                        Button(obj.text) {
+                            selectedObjection = obj
+                            obj.timesHeard += 1
                             try? modelContext.save()
-                            pendingRecordingFileName = nil
-                        }
+                            showObjectionPicker = false
 
-                        showFollowUpSheet = true
+                            if let name = pendingRecordingFileName {
+                                let newRecording = Recording(fileName: name, date: .now, objection: obj, rating: 3)
+                                modelContext.insert(newRecording)
+                                try? modelContext.save()
+                                pendingRecordingFileName = nil
+                            }
+
+                            showFollowUpSheet = true
+                        }
                     }
-                    
-        }.navigationTitle("Why not interested?")
-          .toolbar{ ToolbarItem(placement:.cancellationAction){ Button("Cancel"){ showObjectionPicker=false } } } } }
-        
-        .sheet(isPresented: $showingAddObjection, onDismiss: {
-            if let prospect = prospectToNote {
-                showFollowUpSheet = true
+                    .navigationTitle("Why not interested?")
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") { showObjectionPicker = false }
+                        }
+                        ToolbarItem(placement: .primaryAction) {
+                            Button {
+                                pendingShowAddObjection = true   // ask to open Add next
+                                showObjectionPicker = false      // close picker first
+                            } label: {
+                                Image(systemName: "plus")
+                            }
+                            .accessibilityLabel("Add Objection")
+                        }
+                    }
+                }
             }
-        })
-        {
-            AddObjectionView()
-        }
+            
+            .sheet(isPresented: $showingAddObjection, onDismiss: {
+                if launchedAddObjectionFromPicker {
+                    objectionOptions = objections
+                        .filter { $0.text != "Converted To Sale" }
+                        .sorted { $0.timesHeard > $1.timesHeard }
+                    launchedAddObjectionFromPicker = false
+                    showObjectionPicker = true      // reopen picker immediately
+                } else if let prospect = prospectToNote {
+                    showFollowUpSheet = true
+                }
+            }) {
+                AddObjectionView()
+            }
         
         .alert("Schedule Follow-Up?",isPresented:$showFollowUpPrompt){ Button("Yes"){ showFollowUpSheet=true }
                                                                   Button("No",role:.cancel){ showTripPrompt=true } } message:
