@@ -11,20 +11,24 @@ struct SummaryCardView: View {
     let count: Int
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(spacing: 8) {
             Text(title)
-                .font(.caption)
+                .font(.subheadline)
+                .fontWeight(.medium)
                 .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
 
             Text("\(count)")
-                .font(.title2)
-                .bold()
+                .font(.system(size: 28, weight: .bold, design: .rounded))
                 .foregroundColor(.primary)
         }
-        .padding()
-        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 80)
+        .frame(minWidth: 100, maxWidth: .infinity, minHeight: 100)
+        .padding(5)
         .background(.ultraThinMaterial)
         .cornerRadius(16)
-        .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 2)
+        .shadow(color: .black.opacity(0.08), radius: 5, x: 0, y: 3)
+        .contentShape(Rectangle()) // makes tap target full card
     }
 }
