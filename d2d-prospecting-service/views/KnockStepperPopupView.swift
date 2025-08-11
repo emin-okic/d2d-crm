@@ -172,13 +172,36 @@ struct KnockStepperPopupView: View {
 
     private var objectionStep: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Why not interested?").font(.subheadline).foregroundColor(.secondary)
+            // Title + guidance
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Add an Objection")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Text("Pick what they said so we can track patterns. You can also add a new one if it’s not listed.")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             if objectionOptions.isEmpty {
+                // Compact empty-state inside the stepper
                 VStack(spacing: 8) {
-                    Text("No objections yet.")
-                    Button("Add Objection") { showAddObjection = true }
+                    Text("No objections yet")
+                        .font(.headline)
+                    Text("Tap **Add New Objection** to create one, then select it to continue.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                    Button {
+                        showAddObjection = true
+                    } label: {
+                        Label("Add New Objection", systemImage: "plus")
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             } else {
+                // Scrollable list stays within fixed height
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 8) {
                         ForEach(objectionOptions) { obj in
@@ -186,28 +209,92 @@ struct KnockStepperPopupView: View {
                                 selectedObjection = obj
                                 incrementObjection(obj)
                             } label: {
-                                HStack {
+                                HStack(spacing: 8) {
                                     Image(systemName: selectedObjection == obj ? "largecircle.fill.circle" : "circle")
                                     Text(obj.text)
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.leading)
                                     Spacer()
                                 }
+                                .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
                         }
+
+                        Divider().padding(.vertical, 4)
+
+                        Button {
+                            showAddObjection = true
+                        } label: {
+                            Label("Add New Objection", systemImage: "plus")
+                                .font(.footnote)
+                        }
+                        .buttonStyle(.bordered)
                     }
                     .padding(.trailing, 2)
                 }
-                .frame(maxHeight: .infinity)   // stays within the fixed 260h content area
+                .frame(maxHeight: .infinity)
             }
         }
     }
 
     private var followUpStep: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Schedule Follow-Up").font(.subheadline).foregroundColor(.secondary)
-            DatePicker("Date", selection: $followUpDate, displayedComponents: [.date, .hourAndMinute])
+            // Title + guidance
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Schedule Follow-Up")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Text("Choose when to return. Tapping **Next** will create the appointment.")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+            }
+
+            // Quick chips
+            HStack(spacing: 8) {
+                quickDateChip("Tomorrow", days: 1)
+                quickDateChip("+3d", days: 3)
+                quickDateChip("+7d", days: 7)
+                quickDateChip("Next Month", days: 30)
+            }
+
+            // Date/time picker
+            HStack {
+                Image(systemName: "calendar")
+                    .foregroundColor(.blue)
+                DatePicker(
+                    "Follow-up date & time",
+                    selection: $followUpDate,
+                    displayedComponents: [.date, .hourAndMinute]
+                )
                 .labelsHidden()
+            }
+
+            Text("We’ll attach the address and notes automatically.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top, 2)
+
+            Spacer(minLength: 0)
         }
+    }
+    
+    @ViewBuilder
+    private func quickDateChip(_ title: String, days: Int) -> some View {
+        Button(title) {
+            if let target = Calendar.current.date(byAdding: .day, value: days, to: Date()) {
+                // Keep existing time-of-day from current followUpDate
+                let comps = Calendar.current.dateComponents([.hour, .minute], from: followUpDate)
+                followUpDate = Calendar.current.date(
+                    bySettingHour: comps.hour ?? 9,
+                    minute: comps.minute ?? 0,
+                    second: 0,
+                    of: target
+                ) ?? target
+            }
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.small)
     }
 
     private var convertStep: some View {
