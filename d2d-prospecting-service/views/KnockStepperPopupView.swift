@@ -230,11 +230,21 @@ struct KnockStepperPopupView: View {
 
     private var tripStep: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Log Trip (optional)").font(.subheadline).foregroundColor(.secondary)
+            // Title + brief guidance
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Log Your Trip (optional)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Text("If you tap **Next**, we’ll save this trip with the details below. Tap **Skip** to continue without saving a trip.")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
+            // Start address
             TripAddressFieldView(
                 iconName: "circle",
-                placeholder: "Start Address",
+                placeholder: "Start address (optional)",
                 iconColor: .blue,
                 addressText: $startAddress,
                 focusedField: $tripFocusedField,
@@ -242,9 +252,10 @@ struct KnockStepperPopupView: View {
                 searchVM: tripSearchVM
             )
 
+            // End address (pre-filled to the tapped address)
             TripAddressFieldView(
                 iconName: "mappin.circle.fill",
-                placeholder: "End Address",
+                placeholder: "End address (defaults to this home)",
                 iconColor: .red,
                 addressText: $endAddress,
                 focusedField: $tripFocusedField,
@@ -252,19 +263,22 @@ struct KnockStepperPopupView: View {
                 searchVM: tripSearchVM
             )
 
+            // Date/time
             HStack {
                 Image(systemName: "calendar").foregroundColor(.blue)
-                DatePicker("Date", selection: $tripDate, displayedComponents: [.date, .hourAndMinute])
-                    .labelsHidden()
+                DatePicker(
+                    "Trip date & time",
+                    selection: $tripDate,
+                    displayedComponents: [.date, .hourAndMinute]
+                )
+                .labelsHidden()
             }
 
-            // Keep same action as the popup version
-            LogTripButtonView(
-                startAddress: startAddress,
-                endAddress: endAddress,
-                date: tripDate,
-                onComplete: { /* no-op inside stepper */ }
-            )
+            // Inline hint so users know what happens
+            Text("Press **Next** to save this trip now. **Skip** won’t save a trip.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top, 2)
         }
     }
 
