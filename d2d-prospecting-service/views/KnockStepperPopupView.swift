@@ -80,24 +80,24 @@ struct KnockStepperPopupView: View {
           .frame(width: 256, height: 160)     // tight content box inside 280 card
           .clipped()
 
-        // Nav buttons (unchanged logic)
-        HStack {
-          let canShowSkip = currentStep.map(canSkip) ?? false
-          Button("Skip") { goSkip() }
-            .buttonStyle(.bordered)
-            .opacity(canShowSkip ? 1 : 0)
+          // Nav buttons
+          HStack {
+            let canShowSkip = currentStep.map(canSkip) ?? false
+            Button("Skip") { goSkip() }
+              .buttonStyle(.bordered)
+              .opacity(canShowSkip ? 1 : 0)
 
-          Spacer()
+            Spacer()
 
-          if currentStep == .done {
-            Button("Finish") { onClose() }.buttonStyle(.borderedProminent)
-          } else if isCurrentStepSatisfied(currentStep) {
-            Button("Next") { goNext() }.buttonStyle(.borderedProminent)
-          } else {
-            Button("Next") {}.buttonStyle(.borderedProminent).disabled(true)
+            if currentStep != .done {
+              if isCurrentStepSatisfied(currentStep) {
+                Button("Next") { goNext() }.buttonStyle(.borderedProminent)
+              } else {
+                Button("Next") {}.buttonStyle(.borderedProminent).disabled(true)
+              }
+            }
           }
-        }
-        .overlay(Group { if showConfetti { ConfettiBurstView() } })
+          .overlay(Group { if showConfetti { ConfettiBurstView() } })
       }
       .padding(8)                              // was 14
       .background(.ultraThinMaterial)
@@ -115,20 +115,33 @@ struct KnockStepperPopupView: View {
     }
     
     private func goSkip() {
-        guard let step = currentStep else { return }
+      guard let step = currentStep else { return }
 
-        // Never perform side-effects on Skip.
-        if step == .trip {
-            // jump to .done if present; otherwise just advance safely
-            if let doneIdx = stepSequence.firstIndex(of: .done) {
-                stepIndex = doneIdx
-            } else if stepIndex + 1 < stepSequence.count {
-                stepIndex += 1
-            }
-            return
+      if step == .trip {
+        // no trip save here
+        stepSequence = [.done]
+        stepIndex = 0
+
+        if didScheduleFollowUp {
+          showConfetti = true
+          DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            showConfetti = false
+            onClose()
+          }
+        } else {
+          closeAfterDone()
         }
+        return
+      }
 
-        if stepIndex + 1 < stepSequence.count { stepIndex += 1 }
+      if stepIndex + 1 < stepSequence.count { stepIndex += 1 }
+    }
+    
+    private func closeAfterDone() {
+      // brief peek at the finished screen
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+        onClose()
+      }
     }
 
     // MARK: - Step Content
@@ -231,24 +244,24 @@ struct KnockStepperPopupView: View {
     private var followUpStep: some View {
       VStack(alignment: .leading, spacing: 6) {
         Text("Schedule Follow-Up").font(.footnote).foregroundColor(.secondary)
+              .padding(5)
         Text("Choose when to return. **Next** will create the appointment.")
           .font(.caption2).foregroundColor(.secondary)
+          .padding(5)
 
         HStack(spacing: 6) {
-          quickDateChip("Tomorrow", days: 1)
-          quickDateChip("+3d", days: 3)
+          quickDateChip("+1d", days: 1)
           quickDateChip("+7d", days: 7)
-          quickDateChip("Next Month", days: 30)
+          quickDateChip("+30d", days: 30)
         }
+        .padding(5)
 
         HStack(spacing: 6) {
           Image(systemName: "calendar").foregroundColor(.blue)
           DatePicker("", selection: $followUpDate, displayedComponents: [.date, .hourAndMinute])
             .labelsHidden()
         }
-
-        Text("We’ll attach the address and notes automatically.")
-          .font(.caption2).foregroundColor(.secondary)
+        .padding(5)
       }
     }
     
@@ -359,21 +372,24 @@ struct KnockStepperPopupView: View {
            !noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             addNote(p, noteText)
         }
+        
         if step == .trip {
-            let end = endAddress.isEmpty ? context.address : endAddress
-            logTrip(startAddress, end, tripDate)          // <- only on Next
+          let end = endAddress.isEmpty ? context.address : endAddress
+          logTrip(startAddress, end, tripDate)   // only on Next
 
-            // Go to final, celebrate if we scheduled a follow-up, then auto-close
-            stepSequence = [.done]
-            stepIndex = 0
-            if didScheduleFollowUp {
-                showConfetti = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                    showConfetti = false
-                    onClose()
-                }
+          stepSequence = [.done]
+          stepIndex = 0
+
+          if didScheduleFollowUp {
+            showConfetti = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+              showConfetti = false
+              onClose()                          // confetti path: close a bit later
             }
-            return
+          } else {
+            closeAfterDone()                     // quick close when no confetti
+          }
+          return
         }
 
         if stepIndex + 1 < stepSequence.count { stepIndex += 1 }
