@@ -53,8 +53,6 @@ struct ObjectionSelectorView: View {
                         } label: {
                             HStack {
                                 Text(obj.text).font(.body)
-                                Spacer()
-                                Text("×\(obj.timesHeard)").foregroundColor(.secondary)
                             }
                         }
                     }
