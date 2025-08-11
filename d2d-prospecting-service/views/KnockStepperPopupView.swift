@@ -85,7 +85,7 @@ struct KnockStepperPopupView: View {
             // Nav buttons
             HStack {
                 let canShowSkip = currentStep.map(canSkip) ?? false
-                Button("Skip") { goNext() }
+                Button("Skip") { goSkip() }
                     .buttonStyle(.bordered)
                     .opacity(canShowSkip ? 1 : 0)   // <- keeps row height identical
 
@@ -119,6 +119,23 @@ struct KnockStepperPopupView: View {
         .sheet(isPresented: $showAddObjection) {
             AddObjectionView()
         }
+    }
+    
+    private func goSkip() {
+        guard let step = currentStep else { return }
+
+        // Never perform side-effects on Skip.
+        if step == .trip {
+            // jump to .done if present; otherwise just advance safely
+            if let doneIdx = stepSequence.firstIndex(of: .done) {
+                stepIndex = doneIdx
+            } else if stepIndex + 1 < stepSequence.count {
+                stepIndex += 1
+            }
+            return
+        }
+
+        if stepIndex + 1 < stepSequence.count { stepIndex += 1 }
     }
 
     // MARK: - Step Content
@@ -398,28 +415,25 @@ struct KnockStepperPopupView: View {
 
         if step == .scheduleFollowUp, let p = workingProspect {
             saveFollowUp(p, followUpDate)
-            didScheduleFollowUp = true                    // <- add
+            didScheduleFollowUp = true
         }
         if step == .note, let p = workingProspect,
            !noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             addNote(p, noteText)
         }
-        if step == .trip {                                // <- add
-            // Assume Next means "save the trip"
+        if step == .trip {
             let end = endAddress.isEmpty ? context.address : endAddress
-            logTrip(startAddress, end, tripDate)
+            logTrip(startAddress, end, tripDate)          // <- only on Next
 
-            // Jump to final step and celebrate if a follow-up was scheduled
+            // Go to final, celebrate if we scheduled a follow-up, then auto-close
             stepSequence = [.done]
             stepIndex = 0
             if didScheduleFollowUp {
                 showConfetti = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                     showConfetti = false
-                    onClose()                              // auto-close so you can knock the next home
+                    onClose()
                 }
-            } else {
-                // No follow-up scheduled; still allow manual Finish
             }
             return
         }
