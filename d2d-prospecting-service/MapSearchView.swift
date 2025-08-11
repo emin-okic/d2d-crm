@@ -254,18 +254,7 @@ struct MapSearchView: View {
                             updateMarkers()
                         },
                         onShowObjectionPicker: { filtered, prospect in
-                            objectionOptions = filtered
-                            prospectToNote = prospect
-                            followUpAddress = prospect.address
-                            followUpProspectName = prospect.fullName
-                            if filtered.isEmpty {
-                                    // ➜ No objections yet: go straight to Add
-                                    showObjectionPicker = false
-                                    showingAddObjection = true
-                                } else {
-                                    // ➜ Show the selector
-                                    showObjectionPicker = true
-                                }
+                            presentObjectionFlow(filtered: filtered, for: prospect)
                         },
                         onShowAddObjection: { prospect in
                             selectedObjection = nil
@@ -343,6 +332,20 @@ struct MapSearchView: View {
         }
     }
     
+    private func presentObjectionFlow(filtered: [Objection], for prospect: Prospect) {
+        objectionOptions = filtered
+        prospectToNote = prospect
+        followUpAddress = prospect.address
+        followUpProspectName = prospect.fullName
+
+        if filtered.isEmpty {
+            // No objections yet: open Add directly
+            showObjectionPicker = false
+            showingAddObjection = true
+        } else {
+            showObjectionPicker = true
+        }
+    }
     
     private var prospectPopup: some View {
         Group {
@@ -424,18 +427,7 @@ struct MapSearchView: View {
                         updateMarkers()
                     },
                     onShowObjectionPicker: { filtered, prospect in
-                        objectionOptions = filtered
-                        prospectToNote = prospect
-                        followUpAddress = prospect.address
-                        followUpProspectName = prospect.fullName
-                        if filtered.isEmpty {
-                                // ➜ No objections yet: go straight to Add
-                                showObjectionPicker = false
-                                showingAddObjection = true
-                            } else {
-                                // ➜ Show the selector
-                                showObjectionPicker = true
-                            }
+                        presentObjectionFlow(filtered: filtered, for: prospect)
                     },
                     onShowAddObjection: { prospect in
                         selectedObjection = nil
@@ -529,18 +521,7 @@ struct MapSearchView: View {
                         updateMarkers()
                     },
                     onShowObjectionPicker: { filtered, prospect in
-                        objectionOptions = filtered
-                        prospectToNote = prospect
-                        followUpAddress = prospect.address
-                        followUpProspectName = prospect.fullName
-                        if filtered.isEmpty {
-                                // ➜ No objections yet: go straight to Add
-                                showObjectionPicker = false
-                                showingAddObjection = true
-                            } else {
-                                // ➜ Show the selector
-                                showObjectionPicker = true
-                            }
+                        presentObjectionFlow(filtered: filtered, for: prospect)
                     },
                     onShowAddObjection: { prospect in
                         selectedObjection = nil
