@@ -57,6 +57,12 @@ Track knock counts, conversion rates, rejection streaks, and mileage.
 ### GPS Territory Mapping
 Visualize every door you’ve knocked, every lead you’ve spoken to, and every sale you’ve closed.
 
+<p align="center">
+  <a href="https://apps.apple.com/us/app/d2d-studio/id6748091911">
+    <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" height="60"/>
+  </a>
+</p>
+
 ---
 
 ## Contributor's Guide
