@@ -59,66 +59,59 @@ struct KnockStepperPopupView: View {
     }
 
     var body: some View {
-        VStack(spacing: 14) {
-            // Header
-            HStack {
-                Text(shortAddress(context.address))
-                    .font(.headline)
-                    .lineLimit(1)
-                Spacer()
-                Button(action: onClose) {
-                    Image(systemName: "xmark.circle.fill").foregroundColor(.secondary)
-                }
-            }
-
-            // Step indicator (optional: clamp index)
-            DotStepBar(total: stepSequence.count, index: min(stepIndex, max(0, stepSequence.count - 1)))
-                .padding(.bottom, 4)
-
-            // Content for current step
-            Group {
-                contentForCurrentStep()
-            }
-            .frame(width: 300, height: 260)
-            .clipped()
-
-            // Nav buttons
-            HStack {
-                let canShowSkip = currentStep.map(canSkip) ?? false
-                Button("Skip") { goSkip() }
-                    .buttonStyle(.bordered)
-                    .opacity(canShowSkip ? 1 : 0)   // <- keeps row height identical
-
-                Spacer()
-
-                if currentStep == .done {
-                    Button("Finish") { onClose() }.buttonStyle(.borderedProminent)
-                } else if isCurrentStepSatisfied(currentStep) {
-                    Button("Next") { goNext() }.buttonStyle(.borderedProminent)
-                } else {
-                    Button("Next") {}.buttonStyle(.borderedProminent).disabled(true)
-                }
-            }
-            .overlay(
-                Group { if showConfetti { ConfettiBurstView() } }    // <- add
-            )
-            
+      VStack(spacing: 8) {                     // was 14
+        // Header
+        HStack(spacing: 8) {
+          Text(shortAddress(context.address))
+            .font(.subheadline)               // slightly smaller than .headline
+            .lineLimit(1)
+          Spacer()
+          Button(action: onClose) {
+            Image(systemName: "xmark.circle.fill").foregroundColor(.secondary)
+          }
         }
-        .padding(14)
-        .background(.ultraThinMaterial)
-        .cornerRadius(18)
-        .shadow(radius: 10)
-        .frame(width: 340)
-        .onAppear { configureSteps() }
-        .onAppear {
-            chosenOutcome = initialOutcome
-            workingProspect = saveKnock(initialOutcome)
-            injectRequiredSteps(for: initialOutcome)
-            endAddress = context.address                  // <- prefill end
+
+        // Step indicator
+        DotStepBar(total: stepSequence.count, index: min(stepIndex, max(0, stepSequence.count - 1)))
+          .padding(.bottom, 2)                // was 4
+
+        // Content
+        Group { contentForCurrentStep() }
+          .frame(width: 256, height: 160)     // tight content box inside 280 card
+          .clipped()
+
+        // Nav buttons (unchanged logic)
+        HStack {
+          let canShowSkip = currentStep.map(canSkip) ?? false
+          Button("Skip") { goSkip() }
+            .buttonStyle(.bordered)
+            .opacity(canShowSkip ? 1 : 0)
+
+          Spacer()
+
+          if currentStep == .done {
+            Button("Finish") { onClose() }.buttonStyle(.borderedProminent)
+          } else if isCurrentStepSatisfied(currentStep) {
+            Button("Next") { goNext() }.buttonStyle(.borderedProminent)
+          } else {
+            Button("Next") {}.buttonStyle(.borderedProminent).disabled(true)
+          }
         }
-        .sheet(isPresented: $showAddObjection) {
-            AddObjectionView()
-        }
+        .overlay(Group { if showConfetti { ConfettiBurstView() } })
+      }
+      .padding(8)                              // was 14
+      .background(.ultraThinMaterial)
+      .cornerRadius(14)                        // slightly smaller
+      .shadow(radius: 6)                       // lighter shadow
+      .frame(width: 280, height: 280)          // ⬅️ hard clamp
+      .onAppear { configureSteps() }
+      .onAppear {
+        chosenOutcome = initialOutcome
+        workingProspect = saveKnock(initialOutcome)
+        injectRequiredSteps(for: initialOutcome)
+        endAddress = context.address
+      }
+      .sheet(isPresented: $showAddObjection) { AddObjectionView() }
     }
     
     private func goSkip() {
@@ -188,112 +181,75 @@ struct KnockStepperPopupView: View {
     }
 
     private var objectionStep: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // Title + guidance
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Add an Objection")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                Text("Pick what they said so we can track patterns. You can also add a new one if it’s not listed.")
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+      VStack(alignment: .leading, spacing: 6) {
+        Text("Add an Objection")
+          .font(.footnote).foregroundColor(.secondary)
+        Text("Pick what they said. Add a new one if it’s not listed.")
+          .font(.caption2).foregroundColor(.secondary)
 
-            if objectionOptions.isEmpty {
-                // Compact empty-state inside the stepper
-                VStack(spacing: 8) {
-                    Text("No objections yet")
-                        .font(.headline)
-                    Text("Tap **Add New Objection** to create one, then select it to continue.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                    Button {
-                        showAddObjection = true
-                    } label: {
-                        Label("Add New Objection", systemImage: "plus")
-                    }
-                    .buttonStyle(.borderedProminent)
+        if objectionOptions.isEmpty {
+          VStack(spacing: 6) {
+            Text("No objections yet").font(.subheadline)
+            Text("Tap **Add New Objection**, then select it to continue.")
+              .font(.caption2).foregroundColor(.secondary).multilineTextAlignment(.center)
+            Button { showAddObjection = true } label: { Label("Add New Objection", systemImage: "plus") }
+              .buttonStyle(.bordered)
+              .controlSize(.small)
+          }
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        } else {
+          ScrollView {
+            LazyVStack(alignment: .leading, spacing: 6) {
+              ForEach(objectionOptions) { obj in
+                Button {
+                  selectedObjection = obj
+                  incrementObjection(obj)
+                } label: {
+                  HStack(spacing: 6) {
+                    Image(systemName: selectedObjection == obj ? "largecircle.fill.circle" : "circle")
+                    Text(obj.text).font(.caption).lineLimit(2)
+                    Spacer()
+                  }
+                  .contentShape(Rectangle())
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            } else {
-                // Scrollable list stays within fixed height
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 8) {
-                        ForEach(objectionOptions) { obj in
-                            Button {
-                                selectedObjection = obj
-                                incrementObjection(obj)
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: selectedObjection == obj ? "largecircle.fill.circle" : "circle")
-                                    Text(obj.text)
-                                        .lineLimit(2)
-                                        .multilineTextAlignment(.leading)
-                                    Spacer()
-                                }
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                        }
+                .buttonStyle(.plain)
+              }
 
-                        Divider().padding(.vertical, 4)
-
-                        Button {
-                            showAddObjection = true
-                        } label: {
-                            Label("Add New Objection", systemImage: "plus")
-                                .font(.footnote)
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                    .padding(.trailing, 2)
-                }
-                .frame(maxHeight: .infinity)
+              Button {
+                showAddObjection = true
+              } label: {
+                Label("Add New Objection", systemImage: "plus").font(.caption2)
+              }
+              .buttonStyle(.bordered)
+              .controlSize(.small)
             }
+          } // ← no .frame(maxHeight: .infinity)
         }
+      }
     }
 
     private var followUpStep: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Title + guidance
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Schedule Follow-Up")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                Text("Choose when to return. Tapping **Next** will create the appointment.")
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-            }
+      VStack(alignment: .leading, spacing: 6) {
+        Text("Schedule Follow-Up").font(.footnote).foregroundColor(.secondary)
+        Text("Choose when to return. **Next** will create the appointment.")
+          .font(.caption2).foregroundColor(.secondary)
 
-            // Quick chips
-            HStack(spacing: 8) {
-                quickDateChip("Tomorrow", days: 1)
-                quickDateChip("+3d", days: 3)
-                quickDateChip("+7d", days: 7)
-                quickDateChip("Next Month", days: 30)
-            }
-
-            // Date/time picker
-            HStack {
-                Image(systemName: "calendar")
-                    .foregroundColor(.blue)
-                DatePicker(
-                    "Follow-up date & time",
-                    selection: $followUpDate,
-                    displayedComponents: [.date, .hourAndMinute]
-                )
-                .labelsHidden()
-            }
-
-            Text("We’ll attach the address and notes automatically.")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .padding(.top, 2)
-
-            Spacer(minLength: 0)
+        HStack(spacing: 6) {
+          quickDateChip("Tomorrow", days: 1)
+          quickDateChip("+3d", days: 3)
+          quickDateChip("+7d", days: 7)
+          quickDateChip("Next Month", days: 30)
         }
+
+        HStack(spacing: 6) {
+          Image(systemName: "calendar").foregroundColor(.blue)
+          DatePicker("", selection: $followUpDate, displayedComponents: [.date, .hourAndMinute])
+            .labelsHidden()
+        }
+
+        Text("We’ll attach the address and notes automatically.")
+          .font(.caption2).foregroundColor(.secondary)
+      }
     }
     
     @ViewBuilder
@@ -331,59 +287,41 @@ struct KnockStepperPopupView: View {
                 .frame(minHeight: 100, maxHeight: .infinity)
         }
     }
-
+    
     private var tripStep: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // Title + brief guidance
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Log Your Trip (optional)")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                Text("If you tap **Next**, we’ll save this trip with the details below. Tap **Skip** to continue without saving a trip.")
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+      VStack(alignment: .leading, spacing: 6) {
+        Text("Log Your Trip (optional)").font(.footnote).foregroundColor(.secondary)
+        Text("**Next** saves this trip. **Skip** won’t save it.")
+          .font(.caption2).foregroundColor(.secondary)
 
-            // Start address
-            TripAddressFieldView(
-                iconName: "circle",
-                placeholder: "Start address (optional)",
-                iconColor: .blue,
-                addressText: $startAddress,
-                focusedField: $tripFocusedField,
-                fieldType: .start,
-                searchVM: tripSearchVM
-            )
+          // Start address
+          TripAddressFieldView(
+              iconName: "circle",
+              placeholder: "Start address (optional)",
+              iconColor: .blue,
+              addressText: $startAddress,
+              focusedField: $tripFocusedField,
+              fieldType: .start,
+              searchVM: tripSearchVM
+          )
 
-            // End address (pre-filled to the tapped address)
-            TripAddressFieldView(
-                iconName: "mappin.circle.fill",
-                placeholder: "End address (defaults to this home)",
-                iconColor: .red,
-                addressText: $endAddress,
-                focusedField: $tripFocusedField,
-                fieldType: .end,
-                searchVM: tripSearchVM
-            )
+          // End address (pre-filled to the tapped address)
+          TripAddressFieldView(
+              iconName: "mappin.circle.fill",
+              placeholder: "End address (defaults to this home)",
+              iconColor: .red,
+              addressText: $endAddress,
+              focusedField: $tripFocusedField,
+              fieldType: .end,
+              searchVM: tripSearchVM
+          )
 
-            // Date/time
-            HStack {
-                Image(systemName: "calendar").foregroundColor(.blue)
-                DatePicker(
-                    "Trip date & time",
-                    selection: $tripDate,
-                    displayedComponents: [.date, .hourAndMinute]
-                )
-                .labelsHidden()
-            }
-
-            // Inline hint so users know what happens
-            Text("Press **Next** to save this trip now. **Skip** won’t save a trip.")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .padding(.top, 2)
+        HStack(spacing: 6) {
+          Image(systemName: "calendar").foregroundColor(.blue)
+          DatePicker("", selection: $tripDate, displayedComponents: [.date, .hourAndMinute])
+            .labelsHidden()
         }
+      }
     }
 
     private var doneStep: some View {

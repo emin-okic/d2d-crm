@@ -166,60 +166,35 @@ struct MapSearchView: View {
             }
             // Stepper overlay — presented ONLY when stepperState is set (Follow-Up Later path)
             .overlay(
-                Group {
-                    if let s = stepperState {
-                        KnockStepperPopupView(
-                            context: s.ctx,
-                            objections: objections,
-                            saveKnock: { outcome in
-                                knockController!.saveKnockOnly(
-                                    address: s.ctx.address,
-                                    status: outcome.rawValue,
-                                    prospects: prospects,
-                                    onUpdateMarkers: { updateMarkers() }
-                                )
-                            },
-                            incrementObjection: { obj in
-                                obj.timesHeard += 1
-                                try? modelContext.save()
-                            },
-                            saveFollowUp: { prospect, date in
-                                let appt = Appointment(
-                                    title: "Follow-Up",
-                                    location: prospect.address,
-                                    clientName: prospect.fullName,
-                                    date: date,
-                                    type: "Follow-Up",
-                                    notes: prospect.notes.map { $0.content },
-                                    prospect: prospect
-                                )
-                                modelContext.insert(appt)
-                                try? modelContext.save()
-                            },
-                            convertToCustomer: { prospect, done in
-                                // Not used in Follow-Up flow, but kept for API completeness
-                                self.prospectToConvert = prospect
-                                self.showConversionSheet = true
-                                done()
-                            },
-                            addNote: { prospect, text in
-                                prospect.notes.append(Note(content: text))
-                                try? modelContext.save()
-                            },
-                            logTrip: { start, end, date in
-                                guard !end.isEmpty else { return }
-                                let trip = Trip(startAddress: start, endAddress: end, miles: 0, date: date)
-                                modelContext.insert(trip)
-                                try? modelContext.save()
-                            },
-                            onClose: { self.stepperState = nil }
-                        )
-                        .frame(maxWidth: 340)
-                        .position(x: geo.size.width / 2, y: geo.size.height * 0.42)
-                        .transition(.scale.combined(with: .opacity))
-                        .zIndex(1000)
-                    }
+              Group {
+                if let s = stepperState {
+                  KnockStepperPopupView(
+                    context: s.ctx,
+                    objections: objections,
+                    saveKnock: { outcome in
+                      knockController!.saveKnockOnly(
+                        address: s.ctx.address,
+                        status: outcome.rawValue,
+                        prospects: prospects,
+                        onUpdateMarkers: { updateMarkers() }
+                      )
+                    },
+                    incrementObjection: { obj in obj.timesHeard += 1; try? modelContext.save() },
+                    saveFollowUp: { prospect, date in
+                      let appt = Appointment(title: "Follow-Up", location: prospect.address, clientName: prospect.fullName, date: date, type: "Follow-Up", notes: prospect.notes.map { $0.content }, prospect: prospect)
+                      modelContext.insert(appt); try? modelContext.save()
+                    },
+                    convertToCustomer: { prospect, done in self.prospectToConvert = prospect; self.showConversionSheet = true; done() },
+                    addNote: { prospect, text in prospect.notes.append(Note(content: text)); try? modelContext.save() },
+                    logTrip: { start, end, date in guard !end.isEmpty else { return }; let trip = Trip(startAddress: start, endAddress: end, miles: 0, date: date); modelContext.insert(trip); try? modelContext.save() },
+                    onClose: { self.stepperState = nil }
+                  )
+                  .frame(width: 280, height: 280) // ⬅️ hard clamp
+                  .position(x: geo.size.width / 2, y: geo.size.height * 0.42)
+                  .transition(.scale.combined(with: .opacity))
+                  .zIndex(1000)
                 }
+              }
             )
         }
         .onChange(of: searchText) { searchVM.updateQuery($0) }
