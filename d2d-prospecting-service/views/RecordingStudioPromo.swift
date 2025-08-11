@@ -127,7 +127,7 @@ struct RecordingStudioPromo: View {
         // Unlock when app returns from the App Store (submit or cancel)
         .onChange(of: scenePhase) { phase in
             guard phase == .active, pendingUnlockFromReview else { return }
-            if let t = openedReviewAt, Date().timeIntervalSince(t) > 0.8 {
+            if let t = openedReviewAt, Date().timeIntervalSince(t) > 3.0 {
                 pendingUnlockFromReview = false
                 onUnlock()
             }

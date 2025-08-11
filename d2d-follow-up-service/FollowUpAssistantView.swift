@@ -25,6 +25,8 @@ struct FollowUpAssistantView: View {
     @State private var selectedTab: FollowUpTab = .appointments
     
     @AppStorage("recordingModeEnabled") private var recordingModeEnabled: Bool = true
+    @AppStorage("studioUnlocked") private var studioUnlocked: Bool = false
+    private var recordingFeaturesActive: Bool { studioUnlocked && recordingModeEnabled }
     
     enum FollowUpTab: String, CaseIterable {
         case appointments = "Appointments"
@@ -101,7 +103,8 @@ struct FollowUpAssistantView: View {
                     ObjectionsSectionView()
                     
                     // MARK: - Tab Selector
-                    if recordingModeEnabled {
+                    // Show the segmented control only when recording features are active
+                    if recordingFeaturesActive {
                         Picker("View", selection: $selectedTab) {
                             ForEach(FollowUpTab.allCases, id: \.self) { tab in
                                 Text(tab.rawValue).tag(tab)
@@ -111,19 +114,17 @@ struct FollowUpAssistantView: View {
                         .padding(.horizontal, 20)
                     }
 
-                    // MARK: - Tab Content
+                    // Tab content: never show recordings when locked or off
                     Group {
-                        if recordingModeEnabled {
+                        if recordingFeaturesActive {
                             switch selectedTab {
                             case .appointments:
-                                AppointmentsSectionView()
-                                    .frame(minHeight: 300)
+                                AppointmentsSectionView().frame(minHeight: 300)
                             case .recordings:
                                 RecordingsView()
                             }
                         } else {
-                            AppointmentsSectionView()
-                                .frame(minHeight: 300)
+                            AppointmentsSectionView().frame(minHeight: 300)
                         }
                     }
                     
