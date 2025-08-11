@@ -119,3 +119,12 @@ class KnockActionController {
         return updated
     }
 }
+
+extension KnockActionController {
+    @discardableResult
+    func saveKnockOnly(address: String, status: String, prospects: [Prospect], onUpdateMarkers: @escaping () -> Void) -> Prospect {
+        let p = saveKnock(address: address, status: status, prospects: prospects)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { onUpdateMarkers() }
+        return p
+    }
+}

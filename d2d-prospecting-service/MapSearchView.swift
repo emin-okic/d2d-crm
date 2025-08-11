@@ -54,6 +54,9 @@ struct MapSearchView: View {
     @FocusState private var isSearchFocused: Bool
 
     @State private var isTappedAddressCustomer = false
+    
+    @State private var stepperState: KnockStepperState? = nil
+    @State private var showConversionSheetFromStepper = false
 
     struct PopupState: Identifiable, Equatable {
         let id = UUID()
@@ -623,4 +626,8 @@ struct MapSearchView: View {
         return updated
     }
     
+}
+
+extension MapSearchView {
+    struct KnockStepperState: Identifiable, Equatable { let id = UUID(); var ctx: KnockContext }
 }
