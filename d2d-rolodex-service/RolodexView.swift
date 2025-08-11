@@ -53,7 +53,7 @@ struct RolodexView: View {
                 
                 // MARK: - Custom Header
                 HStack {
-                    Text("The Rolodex")
+                    Text("Contacts")
                         .font(.title)
                         .fontWeight(.bold)
                     Spacer()
