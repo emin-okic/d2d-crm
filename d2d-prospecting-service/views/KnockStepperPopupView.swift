@@ -12,6 +12,8 @@ import MapKit
 struct KnockStepperPopupView: View {
     // Inputs
     let context: KnockContext
+    
+    let initialOutcome: KnockOutcome = .followUpLater
 
     // Dependencies
     let objections: [Objection]
@@ -26,7 +28,7 @@ struct KnockStepperPopupView: View {
     var onClose: () -> Void
 
     // State
-    @State private var stepSequence: [KnockStep] = [.outcome, .note, .trip, .done]
+    @State private var stepSequence: [KnockStep] = []
     @State private var stepIndex: Int = 0
 
     @State private var chosenOutcome: KnockOutcome? = nil
@@ -44,6 +46,15 @@ struct KnockStepperPopupView: View {
 
     // Trip state
     @State private var startAddress: String = ""
+    @State private var endAddress: String = ""
+    @State private var tripDate: Date = .now
+
+    @StateObject private var tripSearchVM = SearchCompleterViewModel()
+    @FocusState private var tripFocusedField: Field?   // uses the same Field enum as your popup
+    
+    private var currentStep: KnockStep? {
+        stepSequence.indices.contains(stepIndex) ? stepSequence[stepIndex] : nil
+    }
 
     var body: some View {
         VStack(spacing: 14) {
@@ -58,33 +69,31 @@ struct KnockStepperPopupView: View {
                 }
             }
 
-            // Step indicator
-            DotStepBar(total: stepSequence.count, index: stepIndex)
+            // Step indicator (optional: clamp index)
+            DotStepBar(total: stepSequence.count, index: min(stepIndex, max(0, stepSequence.count - 1)))
                 .padding(.bottom, 4)
 
             // Content for current step
-            Group { contentForCurrentStep() }
-                .frame(maxWidth: 300)
+            Group {
+                contentForCurrentStep()
+            }
+            .frame(width: 300, height: 260)
+            .clipped()
 
             // Nav buttons
             HStack {
-                if canSkip(stepSequence[stepIndex]) {
-                    Button("Skip") { goNext() }
-                        .buttonStyle(.bordered)
+                if let s = currentStep, canSkip(s) {
+                    Button("Skip") { goNext() }.buttonStyle(.bordered)
                 }
 
                 Spacer()
 
-                if stepSequence[stepIndex] == .done {
-                    Button("Finish") { onClose() }
-                        .buttonStyle(.borderedProminent)
-                } else if isCurrentStepSatisfied() {
-                    Button("Next") { goNext() }
-                        .buttonStyle(.borderedProminent)
+                if currentStep == .done {
+                    Button("Finish") { onClose() }.buttonStyle(.borderedProminent)
+                } else if isCurrentStepSatisfied(currentStep) {
+                    Button("Next") { goNext() }.buttonStyle(.borderedProminent)
                 } else {
-                    Button("Next") {}
-                        .buttonStyle(.borderedProminent)
-                        .disabled(true)
+                    Button("Next") {}.buttonStyle(.borderedProminent).disabled(true)
                 }
             }
         }
@@ -93,6 +102,12 @@ struct KnockStepperPopupView: View {
         .cornerRadius(18)
         .shadow(radius: 10)
         .onAppear { configureSteps() }
+        .onAppear {
+            chosenOutcome = initialOutcome
+            workingProspect = saveKnock(initialOutcome)
+            injectRequiredSteps(for: initialOutcome)
+            endAddress = context.address                  // <- prefill end
+        }
         .sheet(isPresented: $showAddObjection) {
             AddObjectionView()
         }
@@ -102,21 +117,23 @@ struct KnockStepperPopupView: View {
 
     @ViewBuilder
     private func contentForCurrentStep() -> some View {
-        switch stepSequence[stepIndex] {
-        case .outcome:
-            outcomeStep
-        case .objection:
+        switch currentStep {
+        case .some(.outcome):
+            EmptyView()
+        case .some(.objection):
             objectionStep
-        case .scheduleFollowUp:
+        case .some(.scheduleFollowUp):
             followUpStep
-        case .convertToCustomer:
+        case .some(.convertToCustomer):
             convertStep
-        case .note:
+        case .some(.note):
             noteStep
-        case .trip:
+        case .some(.trip):
             tripStep
-        case .done:
+        case .some(.done):
             doneStep
+        case .none:
+            EmptyView()
         }
     }
 
@@ -154,21 +171,25 @@ struct KnockStepperPopupView: View {
                     Button("Add Objection") { showAddObjection = true }
                 }
             } else {
-                ScrollView { LazyVStack(alignment: .leading, spacing: 8) {
-                    ForEach(objectionOptions) { obj in
-                        Button {
-                            selectedObjection = obj
-                            incrementObjection(obj)
-                        } label: {
-                            HStack {
-                                Image(systemName: selectedObjection == obj ? "largecircle.fill.circle" : "circle")
-                                Text(obj.text)
-                                Spacer()
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 8) {
+                        ForEach(objectionOptions) { obj in
+                            Button {
+                                selectedObjection = obj
+                                incrementObjection(obj)
+                            } label: {
+                                HStack {
+                                    Image(systemName: selectedObjection == obj ? "largecircle.fill.circle" : "circle")
+                                    Text(obj.text)
+                                    Spacer()
+                                }
                             }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
-                }}
+                    .padding(.trailing, 2)
+                }
+                .frame(maxHeight: .infinity)   // stays within the fixed 260h content area
             }
         }
     }
@@ -194,31 +215,48 @@ struct KnockStepperPopupView: View {
     private var noteStep: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Add Note (optional)").font(.subheadline).foregroundColor(.secondary)
-            TextEditor(text: $noteText).frame(minHeight: 80)
-            HStack { Spacer()
-                Button("Save Note") {
-                    if let p = workingProspect, !noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        addNote(p, noteText)
-                        noteText = ""
-                    }
-                }.buttonStyle(.bordered)
-            }
+            TextEditor(text: $noteText)
+                .frame(minHeight: 100, maxHeight: .infinity)
         }
     }
 
     private var tripStep: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Log Trip (optional)").font(.subheadline).foregroundColor(.secondary)
-            TextField("Start Address", text: $startAddress)
-                .textFieldStyle(.roundedBorder)
-            HStack { Spacer()
-                Button("Save Trip") {
-                    if let p = workingProspect {
-                        logTrip(startAddress, context.address, .now)
-                        startAddress = ""
-                    }
-                }.buttonStyle(.bordered)
+
+            TripAddressFieldView(
+                iconName: "circle",
+                placeholder: "Start Address",
+                iconColor: .blue,
+                addressText: $startAddress,
+                focusedField: $tripFocusedField,
+                fieldType: .start,
+                searchVM: tripSearchVM
+            )
+
+            TripAddressFieldView(
+                iconName: "mappin.circle.fill",
+                placeholder: "End Address",
+                iconColor: .red,
+                addressText: $endAddress,
+                focusedField: $tripFocusedField,
+                fieldType: .end,
+                searchVM: tripSearchVM
+            )
+
+            HStack {
+                Image(systemName: "calendar").foregroundColor(.blue)
+                DatePicker("Date", selection: $tripDate, displayedComponents: [.date, .hourAndMinute])
+                    .labelsHidden()
             }
+
+            // Keep same action as the popup version
+            LogTripButtonView(
+                startAddress: startAddress,
+                endAddress: endAddress,
+                date: tripDate,
+                onComplete: { /* no-op inside stepper */ }
+            )
         }
     }
 
@@ -235,30 +273,28 @@ struct KnockStepperPopupView: View {
         return step == .note || step == .trip
     }
 
-    private func isCurrentStepSatisfied() -> Bool {
-        switch stepSequence[stepIndex] {
-        case .outcome:
-            return chosenOutcome != nil
-        case .objection:
-            return selectedObjection != nil
-        case .scheduleFollowUp:
-            return true
-        case .convertToCustomer:
-            // We don't know when the form is completed; allow Next to keep moving
-            return true
-        case .note, .trip, .done:
-            return true
+    private func isCurrentStepSatisfied(_ step: KnockStep?) -> Bool {
+        guard let step = step else { return false }
+        switch step {
+        case .outcome: return true
+        case .objection: return selectedObjection != nil
+        case .scheduleFollowUp: return true
+        case .convertToCustomer: return true
+        case .note, .trip, .done: return true
         }
     }
 
     private func goNext() {
-        let current = stepSequence[stepIndex]
-        if current == .scheduleFollowUp, let p = workingProspect {
+        guard let step = currentStep else { return }
+
+        if step == .scheduleFollowUp, let p = workingProspect {
             saveFollowUp(p, followUpDate)
         }
-        if stepIndex + 1 < stepSequence.count {
-            stepIndex += 1
+        if step == .note, let p = workingProspect,
+           !noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            addNote(p, noteText)
         }
+        if stepIndex + 1 < stepSequence.count { stepIndex += 1 }
     }
 
     private func configureSteps() {
@@ -297,6 +333,18 @@ struct KnockStepperPopupView: View {
         case .followUpLater:
             stepSequence += [.objection, .scheduleFollowUp, .note, .trip, .done]
         }
+    }
+    
+    private func injectRequiredSteps(for outcome: KnockOutcome) {
+        switch outcome {
+        case .wasntHome:
+            stepSequence = [.note, .trip, .done]
+        case .convertedToSale:
+            stepSequence = [.convertToCustomer, .note, .trip, .done]
+        case .followUpLater:
+            stepSequence = [.objection, .scheduleFollowUp, .note, .trip, .done]
+        }
+        stepIndex = 0
     }
 
     private var objectionOptions: [Objection] {
