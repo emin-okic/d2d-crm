@@ -1,120 +1,72 @@
-# D2D CRM
+# D2D CRM – The Mobile-First CRM for Door-to-Door Sales
 
-## Introducing A Sneak Peak Of The D2D CRM
-<p float="left">
-  <img src="https://github.com/user-attachments/assets/c42dabca-fdd7-4bda-a4ab-5be3de71305a" alt="1" width="150" style="margin-right: 10px;"/>
-  <img src="https://github.com/user-attachments/assets/108d547a-63fa-4ec8-a779-107a28a85bc2" alt="2" width="150"/>
+## A Free CRM & Sales Tracker for Real Estate Agents and Sales Reps
+D2D CRM is a street-ready, mobile-first customer relationship management system built for door-to-door sales professionals in real estate, solar, home services, and beyond.
+
+Whether you’re knocking on doors, canvassing neighborhoods, or closing face-to-face deals, this free CRM helps you track leads, follow up faster, and close more sales—all without the clutter of traditional enterprise tools.
+
+<p align="center">
+  <a href="https://apps.apple.com/us/app/d2d-studio/id6748091911">
+    <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" height="60"/>
+  </a>
 </p>
-
-## How to Turn Field Data Into Deals
-
-**D2D CRM** is a free, open-source customer relationship management system built specifically for door-to-door sales reps using iOS 18 and above. It's designed to help reps manage prospects, track knocks, and follow up with leads — all while on the move.
 
 ---
 
-## Why Build This?
+## Why D2D CRM?
+
+Forget spreadsheets. Forget notebooks. Forget losing track of who to follow up with.
+D2D CRM is built for speed, clarity, and action:
+
+- Tap a house on the map, log your outcome, and move on.
+- Follow up later with one-tap scheduling.
+- Record live conversations and get scored against proven sales responses.
+- Track rejection streaks, conversion rates, and miles covered—all automatically.
+
+No more bloated dashboards. No endless menus. Just the essentials, designed for your pace.
+
+---
+
+## Who It’s For
+
+- Real estate agents tracking buyers and sellers across neighborhoods.
+- Solar reps managing warm leads across counties.
+- Home service pros who can’t afford to lose track of a single knock.
+- Any sales rep who works in the field and wants a CRM that works there too.
+
+---
+
+## Core Features
 
 A service is about helping someone — and in this case, helping sales reps do their job better.
 
 What does that mean for a door-to-door rep?
 
-- Managing leads while knocking doors
-- Tracking prospects and their status
-- Logging and reviewing knock history
-- Saving time while improving follow-up
+### Map-Driven Knock Logging
+Tap a property, choose Wasn’t Home, Follow Up Later, or Converted to Sale, and the CRM handles the workflow.
 
-That’s what this CRM aims to deliver.
+### Prospect Management
+Save addresses, names, notes, objections, and follow-up dates—instantly.
 
----
+### Recording Studio
+Record doorstep conversations, get AI-powered feedback, and refine your pitch.
 
-## The 3 Core Services
+### Performance Scorecards
+Track knock counts, conversion rates, rejection streaks, and mileage.
 
-### 1. Map Service
-
-Every day starts with deciding where to go. A map helps reps:
-
-- Find their next area
-- See which homes were knocked before
-- Log knocks directly from the map view
-
-It’s the first and most important tool in the app. Without a map, it’s impossible to organize territory or track progress.
-
-### 2. Prospect Management
-
-Once you talk to someone at the door, you need to remember the conversation.
-
-This service allows reps to:
-
-- Save addresses and contact names
-- Add notes and follow-up details
-- Keep track of every prospect over time
-
-This is especially helpful for medium-difficulty leads — the ones that convert with just a bit more attention.
-
-### 3. Backend Service (Data Glue)
-
-To tie it all together, this CRM uses a backend data model to connect the Map and Prospect systems.
-
-When you log a knock on the map, it shows up in the prospect’s record. When you update a prospect’s knock history, it affects how it appears on the map.
-
-This structure creates a smooth user experience where everything works together without manual syncing.
+### GPS Territory Mapping
+Visualize every door you’ve knocked, every lead you’ve spoken to, and every sale you’ve closed.
 
 ---
 
-## Why iOS Only?
+## Contributor's Guide
 
-Most reps use iPhones. Instead of trying to build for both platforms and doing a mediocre job, this project focuses on doing one platform well.
-
-iOS also offers strong developer tools and a consistent environment for creating fast, reliable apps.
-
----
-
-## Why Mobile Only?
-
-Reps aren’t at desks. They’re outside.
-
-That means software has to:
-
-- Be quick to use
-- Work offline
-- Require minimal input
-- Deliver fast feedback
-
-This CRM is designed with mobile-first principles to support reps in the field, not slow them down.
-
----
-
-## Features
-
-- Email and password login
-- Map-based address search
-- Prospect management table
-- Knock tracking with status
-- Local storage via SwiftData and SQLite
-- Designed for speed and simplicity
-
----
-
-## Screenshots
-
-Below is a preview of the login screen used to access the CRM.
-
-<p align="center">
-  <img src="media/login-screen-screenshot.png" alt="Login Screen" width="250"/>
-</p>
-
----
-
-## Requirements
+### Requirements
 
 - iOS 18 or later
 - Xcode 16 or later
 - SwiftData
 - MapKit
-
----
-
-## Contributor's Guide
 
 ### Clone the Repository
 
