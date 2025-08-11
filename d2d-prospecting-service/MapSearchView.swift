@@ -78,9 +78,6 @@ struct MapSearchView: View {
     @AppStorage("recordingModeEnabled") private var recordingModeEnabled: Bool = true
     
     @State private var knockController: KnockActionController? = nil
-    
-    @State private var launchedAddObjectionFromPicker = false
-    @State private var pendingShowAddObjection = false
 
     private var hasSignedUp: Bool {
         prospects
@@ -261,7 +258,14 @@ struct MapSearchView: View {
                             prospectToNote = prospect
                             followUpAddress = prospect.address
                             followUpProspectName = prospect.fullName
-                            showObjectionPicker = true
+                            if filtered.isEmpty {
+                                    // ➜ No objections yet: go straight to Add
+                                    showObjectionPicker = false
+                                    showingAddObjection = true
+                                } else {
+                                    // ➜ Show the selector
+                                    showObjectionPicker = true
+                                }
                         },
                         onShowAddObjection: { prospect in
                             selectedObjection = nil
@@ -291,61 +295,24 @@ struct MapSearchView: View {
                         }
                 }
             }
-            .sheet(isPresented: $showObjectionPicker, onDismiss: {
-                if pendingShowAddObjection {
-                    launchedAddObjectionFromPicker = true
-                    pendingShowAddObjection = false
-                    showingAddObjection = true   // present AddObjectionView immediately
-                }
-            }) {
-                NavigationView {
-                    List(objectionOptions) { obj in
-                        Button(obj.text) {
-                            selectedObjection = obj
-                            obj.timesHeard += 1
+            .sheet(isPresented: $showObjectionPicker) {
+                ObjectionSelectorView(
+                    isPresented: $showObjectionPicker,
+                    onSelect: { obj in
+                        selectedObjection = obj
+                        // ✅ If a recording was deferred, attach it now
+                        if let name = pendingRecordingFileName {
+                            let newRecording = Recording(fileName: name, date: .now, objection: obj, rating: 3)
+                            modelContext.insert(newRecording)
                             try? modelContext.save()
-                            showObjectionPicker = false
-
-                            if let name = pendingRecordingFileName {
-                                let newRecording = Recording(fileName: name, date: .now, objection: obj, rating: 3)
-                                modelContext.insert(newRecording)
-                                try? modelContext.save()
-                                pendingRecordingFileName = nil
-                            }
-
-                            showFollowUpSheet = true
+                            pendingRecordingFileName = nil
                         }
-                    }
-                    .navigationTitle("Why not interested?")
-                    .toolbar {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button("Cancel") { showObjectionPicker = false }
-                        }
-                        ToolbarItem(placement: .primaryAction) {
-                            Button {
-                                pendingShowAddObjection = true   // ask to open Add next
-                                showObjectionPicker = false      // close picker first
-                            } label: {
-                                Image(systemName: "plus")
-                            }
-                            .accessibilityLabel("Add Objection")
-                        }
-                    }
-                }
-            }
-            
-            .sheet(isPresented: $showingAddObjection, onDismiss: {
-                if launchedAddObjectionFromPicker {
-                    objectionOptions = objections
-                        .filter { $0.text != "Converted To Sale" }
-                        .sorted { $0.timesHeard > $1.timesHeard }
-                    launchedAddObjectionFromPicker = false
-                    showObjectionPicker = true      // reopen picker immediately
-                } else if let prospect = prospectToNote {
-                    showFollowUpSheet = true
-                }
-            }) {
-                AddObjectionView()
+                        // Continue to Follow-Up
+                        showFollowUpSheet = true
+                    },
+                    // Optional filter: hide the special "Converted To Sale"
+                    filter: { $0.text != "Converted To Sale" }
+                )
             }
         
         .alert("Schedule Follow-Up?",isPresented:$showFollowUpPrompt){ Button("Yes"){ showFollowUpSheet=true }
@@ -365,6 +332,15 @@ struct MapSearchView: View {
                                                       Button("No",role:.cancel){} }
         .sheet(isPresented:$showTripPopup){ if let addr=pendingAddress { LogTripPopupView(endAddress:addr) } }
         .sheet(isPresented:$showConversionSheet){ if let prospect=prospectToConvert { SignUpPopupView(prospect:prospect,isPresented:$showConversionSheet) } }
+        
+        .sheet(isPresented: $showingAddObjection, onDismiss: {
+            // Match your original behavior: after adding, proceed to Follow-Up scheduling
+            if let _ = prospectToNote {
+                showFollowUpSheet = true
+            }
+        }) {
+            AddObjectionView()
+        }
     }
     
     
@@ -452,7 +428,14 @@ struct MapSearchView: View {
                         prospectToNote = prospect
                         followUpAddress = prospect.address
                         followUpProspectName = prospect.fullName
-                        showObjectionPicker = true
+                        if filtered.isEmpty {
+                                // ➜ No objections yet: go straight to Add
+                                showObjectionPicker = false
+                                showingAddObjection = true
+                            } else {
+                                // ➜ Show the selector
+                                showObjectionPicker = true
+                            }
                     },
                     onShowAddObjection: { prospect in
                         selectedObjection = nil
@@ -550,7 +533,14 @@ struct MapSearchView: View {
                         prospectToNote = prospect
                         followUpAddress = prospect.address
                         followUpProspectName = prospect.fullName
-                        showObjectionPicker = true
+                        if filtered.isEmpty {
+                                // ➜ No objections yet: go straight to Add
+                                showObjectionPicker = false
+                                showingAddObjection = true
+                            } else {
+                                // ➜ Show the selector
+                                showObjectionPicker = true
+                            }
                     },
                     onShowAddObjection: { prospect in
                         selectedObjection = nil
