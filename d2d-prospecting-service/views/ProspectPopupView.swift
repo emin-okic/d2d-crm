@@ -4,6 +4,7 @@
 //
 //  Created by Emin Okic on 7/26/25.
 //
+
 import SwiftUI
 import MapKit
 
@@ -12,8 +13,12 @@ struct ProspectPopupView: View {
     let isCustomer: Bool
     var onClose: () -> Void
     var onOutcomeSelected: (String, String?) -> Void
-    
+
+    // Passed from parent (on/off)
     let recordingModeEnabled: Bool
+    // Also check if the studio is unlocked (hidden == locked)
+    @AppStorage("studioUnlocked") private var studioUnlocked: Bool = false
+    private var recordingFeaturesActive: Bool { studioUnlocked && recordingModeEnabled }
 
     @State private var isRecording = false
     @State private var showOutcomeButtons = false
@@ -48,8 +53,10 @@ struct ProspectPopupView: View {
 
             Divider().padding(.vertical, 4)
 
-            if !isRecording && !showOutcomeButtons {
-                if recordingModeEnabled {
+            // When features are active: show Record/Skip first, then outcomes.
+            // When locked or off: always show outcomes (no recording UI).
+            if recordingFeaturesActive {
+                if !isRecording && !showOutcomeButtons {
                     HStack(spacing: 24) {
                         Spacer()
 
@@ -69,42 +76,20 @@ struct ProspectPopupView: View {
 
                         Spacer()
                     }
-                } else {
-                    // Show empty view if recording is off and outcomes haven't appeared yet
-                    EmptyView()
                 }
-            }
 
-            if showOutcomeButtons {
-                Text("Select Knock Outcome")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-
-                HStack {
-                    Spacer()
-                    HStack(spacing: 16) {
-                        iconButton(systemName: "house.slash.fill", label: "Not Home", color: .gray) {
-                            stopAndHandleOutcome("Wasn't Home")
-                        }
-
-                        if !isCustomer {
-                            iconButton(systemName: "checkmark.seal.fill", label: "Sale", color: .green) {
-                                stopAndHandleOutcome("Converted To Sale")
-                            }
-                        }
-
-                        iconButton(systemName: "calendar.badge.clock", label: "Follow Up", color: .orange) {
-                            stopAndHandleOutcome("Follow Up Later")
-                        }
-                    }
-                    Spacer()
+                if showOutcomeButtons {
+                    outcomeHeader
+                    outcomeButtons
                 }
-                .padding(.top, 4)
-
+            } else {
+                // Locked or turned off: act like recording is off and show outcomes only
+                outcomeHeader
+                outcomeButtons
             }
         }
         .onAppear {
-            if !recordingModeEnabled {
+            if !recordingFeaturesActive {
                 showOutcomeButtons = true
             }
         }
@@ -122,7 +107,38 @@ struct ProspectPopupView: View {
         .cornerRadius(16)
         .shadow(radius: 6)
     }
-    
+
+    // MARK: - Subviews
+
+    private var outcomeHeader: some View {
+        Text("Select Knock Outcome")
+            .font(.caption)
+            .foregroundColor(.gray)
+    }
+
+    private var outcomeButtons: some View {
+        HStack {
+            Spacer()
+            HStack(spacing: 16) {
+                iconButton(systemName: "house.slash.fill", label: "Not Home", color: .gray) {
+                    stopAndHandleOutcome("Wasn't Home")
+                }
+
+                if !isCustomer {
+                    iconButton(systemName: "checkmark.seal.fill", label: "Sale", color: .green) {
+                        stopAndHandleOutcome("Converted To Sale")
+                    }
+                }
+
+                iconButton(systemName: "calendar.badge.clock", label: "Follow Up", color: .orange) {
+                    stopAndHandleOutcome("Follow Up Later")
+                }
+            }
+            Spacer()
+        }
+        .padding(.top, 4)
+    }
+
     private func recordingActionButton(systemName: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 4) {
@@ -160,23 +176,24 @@ struct ProspectPopupView: View {
         }
         .buttonStyle(.plain)
     }
-    
+
+    // MARK: - Helpers
+
     private var formattedAddressLines: [String] {
         let parts = place.address.components(separatedBy: ",")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
 
         if parts.count >= 3 {
-            let street = parts[0] // e.g. "10320 Norfolk Dr"
-            let city = parts[1]   // e.g. "Johnston"
-            let stateZip = parts[2] // e.g. "IA 50131"
+            let street = parts[0]
+            let city = parts[1]
+            let stateZip = parts[2]
             return [street, "\(city), \(stateZip)"]
         }
 
-        // fallback if address isn't comma-separated
         let words = place.address.components(separatedBy: " ")
         if words.count >= 5 {
-            let street = words.prefix(3).joined(separator: " ") // e.g. "10320 Norfolk Dr"
-            let rest = words.dropFirst(3).joined(separator: " ") // "Johnston IA 50131"
+            let street = words.prefix(3).joined(separator: " ")
+            let rest = words.dropFirst(3).joined(separator: " ")
             return [street, rest]
         }
 
@@ -184,6 +201,12 @@ struct ProspectPopupView: View {
     }
 
     private func startRecording() {
+        // If locked/off, just reveal outcomes; do not attempt to start recording
+        guard recordingFeaturesActive else {
+            showOutcomeButtons = true
+            return
+        }
+
         let result = recorder.start()
         if result.started {
             isRecording = true
@@ -209,7 +232,8 @@ struct ProspectPopupView: View {
 
     private func discardRecording() {
         if let file = currentFileName {
-            let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(file)
+            let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent(file)
             try? FileManager.default.removeItem(at: url)
         }
     }

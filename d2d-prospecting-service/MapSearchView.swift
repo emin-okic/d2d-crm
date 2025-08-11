@@ -76,6 +76,8 @@ struct MapSearchView: View {
     @State private var pendingRecordingFileName: String?
     
     @AppStorage("recordingModeEnabled") private var recordingModeEnabled: Bool = true
+    @AppStorage("studioUnlocked") private var studioUnlocked: Bool = false
+    private var recordingFeaturesActive: Bool { studioUnlocked && recordingModeEnabled }
     
     @State private var knockController: KnockActionController? = nil
 
@@ -348,8 +350,11 @@ struct MapSearchView: View {
     }
     
     private var prospectPopup: some View {
+        
         Group {
+            
             if let popup = popupState, let pos = popupScreenPosition {
+                
                 ProspectPopupView(
                     place: popup.place,
                     isCustomer: popup.place.list == "Customers",
