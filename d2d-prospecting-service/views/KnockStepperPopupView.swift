@@ -40,6 +40,8 @@ struct KnockStepperPopupView: View {
 
     // Follow-up state
     @State private var followUpDate: Date = Calendar.current.date(byAdding: .day, value: 3, to: .now) ?? .now
+    @State private var didScheduleFollowUp = false
+    @State private var showConfetti = false
 
     // Note state
     @State private var noteText: String = ""
@@ -82,9 +84,10 @@ struct KnockStepperPopupView: View {
 
             // Nav buttons
             HStack {
-                if let s = currentStep, canSkip(s) {
-                    Button("Skip") { goNext() }.buttonStyle(.bordered)
-                }
+                let canShowSkip = currentStep.map(canSkip) ?? false
+                Button("Skip") { goNext() }
+                    .buttonStyle(.bordered)
+                    .opacity(canShowSkip ? 1 : 0)   // <- keeps row height identical
 
                 Spacer()
 
@@ -96,11 +99,16 @@ struct KnockStepperPopupView: View {
                     Button("Next") {}.buttonStyle(.borderedProminent).disabled(true)
                 }
             }
+            .overlay(
+                Group { if showConfetti { ConfettiBurstView() } }    // <- add
+            )
+            
         }
         .padding(14)
         .background(.ultraThinMaterial)
         .cornerRadius(18)
         .shadow(radius: 10)
+        .frame(width: 340)
         .onAppear { configureSteps() }
         .onAppear {
             chosenOutcome = initialOutcome
@@ -289,11 +297,32 @@ struct KnockStepperPopupView: View {
 
         if step == .scheduleFollowUp, let p = workingProspect {
             saveFollowUp(p, followUpDate)
+            didScheduleFollowUp = true                    // <- add
         }
         if step == .note, let p = workingProspect,
            !noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             addNote(p, noteText)
         }
+        if step == .trip {                                // <- add
+            // Assume Next means "save the trip"
+            let end = endAddress.isEmpty ? context.address : endAddress
+            logTrip(startAddress, end, tripDate)
+
+            // Jump to final step and celebrate if a follow-up was scheduled
+            stepSequence = [.done]
+            stepIndex = 0
+            if didScheduleFollowUp {
+                showConfetti = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                    showConfetti = false
+                    onClose()                              // auto-close so you can knock the next home
+                }
+            } else {
+                // No follow-up scheduled; still allow manual Finish
+            }
+            return
+        }
+
         if stepIndex + 1 < stepSequence.count { stepIndex += 1 }
     }
 
