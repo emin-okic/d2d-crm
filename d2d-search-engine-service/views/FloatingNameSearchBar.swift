@@ -5,7 +5,6 @@
 //  Created by Emin Okic on 8/13/25.
 //
 
-
 import SwiftUI
 
 struct FloatingNameSearchBar: View {
@@ -14,37 +13,60 @@ struct FloatingNameSearchBar: View {
     @FocusState<Bool>.Binding var isFocused: Bool
 
     var body: some View {
-        VStack {
+        VStack(spacing: 10) {
             if isExpanded {
-                HStack {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.gray)
+
                     TextField("Search by name...", text: $searchText)
                         .focused($isFocused)
-                        .textFieldStyle(.roundedBorder)
+                        .foregroundColor(.primary)
+                        .autocapitalization(.words)
                         .submitLabel(.done)
 
-                    Button(action: {
+                    if !searchText.trimmingCharacters(in: .whitespaces).isEmpty {
+                        Button("Done") {
+                            withAnimation {
+                                isExpanded = false
+                                isFocused = false
+                            }
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 6)
+                        .background(Color.blue.opacity(0.8))
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                        .transition(.opacity)
+                    }
+
+                    Button {
                         withAnimation {
                             isExpanded = false
                             searchText = ""
+                            isFocused = false
                         }
-                    }) {
+                    } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(.gray)
+                            .font(.title3)
                     }
+                    .padding(.leading, 4)
                 }
-                .padding()
+                .padding(10)
                 .background(.ultraThinMaterial)
                 .cornerRadius(10)
-                .shadow(radius: 3)
+                .shadow(radius: 3, x: 0, y: 2)
                 .padding(.horizontal)
                 .transition(.move(edge: .trailing).combined(with: .opacity))
+
             } else {
-                Button(action: {
-                    withAnimation {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.25)) {
                         isExpanded = true
                         isFocused = true
                     }
-                }) {
+                } label: {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(.white)
                         .padding()
