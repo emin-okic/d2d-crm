@@ -90,18 +90,6 @@ struct RolodexView: View {
                         Text("Your \(selectedList)")
                             .font(.title)
                             .fontWeight(.bold)
-                        Spacer()
-                        if selectedList == "Prospects" {
-                            Button {
-                                showingAddProspect = true
-                            } label: {
-                                Image(systemName: "plus.circle.fill")
-                                    .font(.title2)
-                                    .foregroundColor(.blue)
-                                    .accessibilityLabel("Add Prospect")
-                            }
-                            .buttonStyle(.plain)
-                        }
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
@@ -173,10 +161,13 @@ struct RolodexView: View {
                     
                 }
                 
-                FloatingNameSearchBar(
+                ContactsToolbarView(
                     searchText: $searchText,
-                    isExpanded: $isSearchExpanded,
-                    isFocused: $isSearchFocused
+                    isSearchExpanded: $isSearchExpanded,
+                    isSearchFocused: $isSearchFocused,
+                    onAddTapped: {
+                        showingAddProspect = true
+                    }
                 )
             }
             .navigationTitle("")
