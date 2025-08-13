@@ -77,7 +77,7 @@ struct FloatingNameSearchBar: View {
             }
         }
         .padding(.bottom, 30)
-        .padding(.trailing, 20)
+        .padding(.horizontal, 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
         .zIndex(999)
     }
