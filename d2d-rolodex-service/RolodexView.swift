@@ -22,6 +22,10 @@ struct RolodexView: View {
     @State private var suggestionSourceIndex = 0 // Track which customer we’re pulling from
     
     @State private var showActivityOnboarding = false
+    
+    @State private var searchText: String = ""
+    @State private var isSearchExpanded: Bool = false
+    @FocusState private var isSearchFocused: Bool
 
     let availableLists = ["Prospects", "Customers"]
     @Query var prospects: [Prospect]
@@ -49,118 +53,131 @@ struct RolodexView: View {
 
     var body: some View {
         NavigationView {
-            VStack(alignment: .leading, spacing: 24) {
-                
-                // MARK: - Custom Header
-                HStack {
-                    Text("Contacts")
-                        .font(.title)
-                        .fontWeight(.bold)
-                    Spacer()
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                
-                // Summary cards at the top
-                HStack(spacing: 12) {
-                    Button {
-                        selectedList = "Prospects"
-                    } label: {
-                        SummaryCardView(title: "Total Prospects", count: totalProspects)
+            ZStack {
+                VStack(alignment: .leading, spacing: 24) {
+                    
+                    // MARK: - Custom Header
+                    HStack {
+                        Text("Contacts")
+                            .font(.title)
+                            .fontWeight(.bold)
+                        Spacer()
                     }
-                    .buttonStyle(.plain)
-
-                    Button {
-                        selectedList = "Customers"
-                    } label: {
-                        SummaryCardView(title: "Total Customers", count: totalCustomers)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
-                
-                // Title and list type selector + add button on the right (Prospects only)
-                HStack {
-                    Text("Your \(selectedList)")
-                        .font(.title)
-                        .fontWeight(.bold)
-                    Spacer()
-                    if selectedList == "Prospects" {
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
+                    
+                    // Summary cards at the top
+                    HStack(spacing: 12) {
                         Button {
-                            showingAddProspect = true
+                            selectedList = "Prospects"
                         } label: {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.title2)
-                                .foregroundColor(.blue)
-                                .accessibilityLabel("Add Prospect")
+                            SummaryCardView(title: "Total Prospects", count: totalProspects)
+                        }
+                        .buttonStyle(.plain)
+                        
+                        Button {
+                            selectedList = "Customers"
+                        } label: {
+                            SummaryCardView(title: "Total Customers", count: totalCustomers)
                         }
                         .buttonStyle(.plain)
                     }
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-                .padding(.bottom, 4)
-                
-                // Suggested Prospect card directly under the header action (Prospects only)
-                if selectedList == "Prospects", let suggestion = suggestedProspect {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Suggested Neighbor")
-                            .font(.headline)
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Label(suggestion.fullName, systemImage: "person.fill")
-                            Label(suggestion.address, systemImage: "mappin.and.ellipse")
-                        }
-                        .foregroundStyle(.secondary)
-
-                        Button {
-                            modelContext.insert(suggestion)
-                            suggestedProspect = nil
-                            onSave()
-
-                            Task {
-                                await fetchNextSuggestedNeighbor()
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
+                    
+                    // Title and list type selector + add button on the right (Prospects only)
+                    HStack {
+                        Text("Your \(selectedList)")
+                            .font(.title)
+                            .fontWeight(.bold)
+                        Spacer()
+                        if selectedList == "Prospects" {
+                            Button {
+                                showingAddProspect = true
+                            } label: {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.title2)
+                                    .foregroundColor(.blue)
+                                    .accessibilityLabel("Add Prospect")
                             }
-                        } label: {
-                            Label("Add This Prospect", systemImage: "plus.circle.fill")
-                                .font(.headline)
-                                .frame(maxWidth: .infinity)
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.blue)
                     }
                     .padding(.horizontal, 20)
-                }
-
-                // Main list of prospects
-                List {
-                    let filteredProspects = prospects.filter { $0.list == selectedList }
-
-                    ForEach(filteredProspects, id: \.persistentModelID) { prospect in
-                        ProspectRowView(
-                            prospect: prospect,
-                            onTap: {
-                                selectedProspectID = prospect.persistentModelID
-                            },
-                            onDoubleTap: {
-                                onDoubleTap?(prospect)
+                    .padding(.top, 8)
+                    .padding(.bottom, 4)
+                    
+                    // Suggested Prospect card directly under the header action (Prospects only)
+                    if selectedList == "Prospects", let suggestion = suggestedProspect {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Suggested Neighbor")
+                                .font(.headline)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Label(suggestion.fullName, systemImage: "person.fill")
+                                Label(suggestion.address, systemImage: "mappin.and.ellipse")
                             }
-                        )
-                        .background(
-                            NavigationLink(
-                                destination: ProspectDetailsView(prospect: prospect),
-                                tag: prospect.persistentModelID,
-                                selection: $selectedProspectID
-                            ) { EmptyView() }
-                            .hidden()
-                        )
+                            .foregroundStyle(.secondary)
+                            
+                            Button {
+                                modelContext.insert(suggestion)
+                                suggestedProspect = nil
+                                onSave()
+                                
+                                Task {
+                                    await fetchNextSuggestedNeighbor()
+                                }
+                            } label: {
+                                Label("Add This Prospect", systemImage: "plus.circle.fill")
+                                    .font(.headline)
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.blue)
+                        }
+                        .padding(.horizontal, 20)
                     }
                     
+                    // Main list of prospects
+                    List {
+                        
+                        let filteredProspects = prospects.filter {
+                            $0.list == selectedList &&
+                            (searchText.isEmpty ||
+                             $0.fullName.localizedCaseInsensitiveContains(searchText))
+                        }
+                        
+                        ForEach(filteredProspects, id: \.persistentModelID) { prospect in
+                            ProspectRowView(
+                                prospect: prospect,
+                                onTap: {
+                                    selectedProspectID = prospect.persistentModelID
+                                },
+                                onDoubleTap: {
+                                    onDoubleTap?(prospect)
+                                }
+                            )
+                            .background(
+                                NavigationLink(
+                                    destination: ProspectDetailsView(prospect: prospect),
+                                    tag: prospect.persistentModelID,
+                                    selection: $selectedProspectID
+                                ) { EmptyView() }
+                                    .hidden()
+                            )
+                        }
+                        
+                    }
+                    .listStyle(.plain)
+                    .padding(.top, 8) // <-- this is to separate from the header area
+                    
                 }
-                .listStyle(.plain)
-                .padding(.top, 8) // <-- this is to separate from the header area
                 
+                FloatingNameSearchBar(
+                    searchText: $searchText,
+                    isExpanded: $isSearchExpanded,
+                    isFocused: $isSearchFocused
+                )
             }
             .navigationTitle("")
             .sheet(isPresented: $showingAddProspect) {
