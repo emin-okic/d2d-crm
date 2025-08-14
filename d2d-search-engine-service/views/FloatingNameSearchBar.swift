@@ -58,7 +58,7 @@ struct FloatingNameSearchBar: View {
                 .cornerRadius(10)
                 .shadow(radius: 3, x: 0, y: 2)
                 .padding(.horizontal)
-                .transition(.move(edge: .trailing).combined(with: .opacity))
+                .transition(.move(edge: .leading).combined(with: .opacity))
 
             } else {
                 Button {
@@ -77,8 +77,8 @@ struct FloatingNameSearchBar: View {
             }
         }
         .padding(.bottom, 30)
-        .padding(.horizontal, 20)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        .padding(.leading, 20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
         .zIndex(999)
     }
 }
