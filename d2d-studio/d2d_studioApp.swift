@@ -47,6 +47,8 @@ struct d2d_studioApp: App {
                         }
                 }
             }
+            .preferredColorScheme(.light)
+            
         }
         .modelContainer(sharedModelContainer)
     }
