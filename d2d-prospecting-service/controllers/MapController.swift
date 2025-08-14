@@ -64,10 +64,14 @@ class MapController: ObservableObject {
                     )
                     self.markers.append(newPlace)
                 }
-                self.updateRegionToFitAllMarkers()
+                // self.updateRegionToFitAllMarkers()
             }
         }
     }
+    
+    func recenterToFitAllMarkers() {
+            updateRegionToFitAllMarkers()
+        }
     
     /// Updates the `region` property to fit all current markers on the map.
     private func updateRegionToFitAllMarkers() {
@@ -133,7 +137,7 @@ class MapController: ObservableObject {
                     list: list
                 )
                 self.markers.append(newPlace)
-                self.updateRegionToFitAllMarkers()
+                // self.updateRegionToFitAllMarkers()
             }
         }
     }

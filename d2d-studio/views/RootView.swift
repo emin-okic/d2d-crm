@@ -69,5 +69,18 @@ struct RootView: View {
             }
             .tag(2)
         }
+        .onChange(of: selectedTab) { newValue in
+                    if newValue == 0 {
+                        NotificationCenter.default.post(
+                            name: .mapShouldRecenterAllMarkers,
+                            object: nil
+                        )
+                    }
+                }
+        
     }
+}
+
+extension Notification.Name {
+    static let mapShouldRecenterAllMarkers = Notification.Name("MapShouldRecenterAllMarkers")
 }

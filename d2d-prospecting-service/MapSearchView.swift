@@ -229,10 +229,18 @@ struct MapSearchView: View {
               }
             )
         }
+        .onReceive(NotificationCenter.default.publisher(for: .mapShouldRecenterAllMarkers)) { _ in
+                    controller.recenterToFitAllMarkers()
+                }
         .onChange(of: searchText) { searchVM.updateQuery($0) }
         .onAppear {
             updateMarkers()
             knockController = KnockActionController(modelContext: modelContext, controller: controller)
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    NotificationCenter.default.post(name: .mapShouldRecenterAllMarkers, object: nil)
+                }
+            
         }
         .onChange(of: prospects) { _ in updateMarkers() }
         .onChange(of: selectedList) { _ in updateMarkers() }
