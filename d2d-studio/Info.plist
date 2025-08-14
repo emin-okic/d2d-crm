@@ -4,6 +4,9 @@
 <dict>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app uses the microphone to record knock conversations for training and review.</string>
+
+	<key>UIUserInterfaceStyle</key>
+	<string>Light</string>
 	
 	<key>CFBundleURLTypes</key>
 	<array>
