@@ -79,17 +79,29 @@ struct MapSearchView: View {
 
     // NEW: Stepper state (only used for Follow-Up Later)
     @State private var stepperState: KnockStepperState? = nil
-
-    private var hasSignedUp: Bool {
-        prospects.flatMap { $0.knockHistory }.contains { $0.status == "Converted To Sale" }
+    
+    private var hasCustomers: Bool {
+        // Show KP/S if *either* there is at least one Prospect flagged as a customer,
+        // or at least one Customer record exists.
+        !customers.isEmpty || prospects.contains { $0.list == "Customers" }
     }
+    
     private var totalKnocks: Int { prospects.flatMap { $0.knockHistory }.count }
+    
     private var averageKnocksPerCustomer: Int {
-        let customerKnocks = prospects.filter { $0.list == "Customers" }.map { $0.knockHistory.count }
-        guard !customerKnocks.isEmpty else { return 0 }
-        return Int(Double(customerKnocks.reduce(0, +)) / Double(customerKnocks.count))
-    }
+        // Prefer prospects that have been flipped to Customers; if none, fall back to Customer models
+        let countsFromProspects = prospects
+            .filter { $0.list == "Customers" }
+            .map { $0.knockHistory.count }
 
+        let countsFromCustomers = customers
+            .map { $0.knockHistory.count }
+
+        let counts = !countsFromProspects.isEmpty ? countsFromProspects : countsFromCustomers
+        guard !counts.isEmpty else { return 0 }
+        return Int(Double(counts.reduce(0, +)) / Double(counts.count))
+    }
+    
     init(searchText: Binding<String>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
@@ -148,9 +160,11 @@ struct MapSearchView: View {
                 .frame(maxHeight: .infinity)
                 .edgesIgnoringSafeArea(.horizontal)
 
-                ScorecardBar(totalKnocks: totalKnocks,
-                             avgKnocksPerSale: averageKnocksPerCustomer,
-                             hasSignedUp: hasSignedUp)
+                ScorecardBar(
+                    totalKnocks: totalKnocks,
+                    avgKnocksPerSale: averageKnocksPerCustomer,
+                    hasSignedUp: hasCustomers   // ← was: hasSignedUp
+                )
 
                 prospectPopup
 
