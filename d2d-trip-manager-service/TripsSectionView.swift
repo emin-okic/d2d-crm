@@ -5,7 +5,6 @@
 //  Created by Emin Okic on 6/29/25.
 //
 
-
 import SwiftUI
 import SwiftData
 
@@ -38,11 +37,51 @@ struct TripsSectionView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Trips")
-                    .font(.headline)
-                Spacer()
+        ZStack {
+            // CONTENT pinned to top-left
+            VStack(alignment: .leading, spacing: 12) {
+
+                if filteredTrips.isEmpty {
+                    Text("No trips logged yet.")
+                        .font(.headline)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 10)
+                    
+                } else {
+                    List(filteredTrips) { trip in
+                        Button {
+                            selectedTrip = trip
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(trip.date.formatted(date: .abbreviated, time: .shortened))
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Label(trip.startAddress, systemImage: "circle.fill")
+                                    Label(trip.endAddress, systemImage: "mappin.circle.fill")
+                                    HStack {
+                                        Image(systemName: "car.fill")
+                                        Text("\(trip.miles, specifier: "%.1f") miles")
+                                    }
+                                }
+                                .font(.subheadline)
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
+                    .listStyle(.plain)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 4)
+                }
+
+                Spacer(minLength: 0) // prevent pushing content downward when empty
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
+            // BOTTOM-LEFT FLOATING TOOLBAR (filter + add)
+            VStack(spacing: 10) {
+                // Filter as a compact Menu button
                 Menu {
                     Picker("Filter", selection: $filter) {
                         ForEach(TripFilter.allCases) { option in
@@ -51,49 +90,28 @@ struct TripsSectionView: View {
                     }
                 } label: {
                     Image(systemName: "line.3.horizontal.decrease.circle")
-                        .font(.title3)
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 50, height: 50)
+                        .background(Circle().fill(Color.blue))
+                        .shadow(radius: 4)
                 }
+
                 Button {
                     showingAddTrip = true
                 } label: {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title3)
+                    Image(systemName: "plus")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(width: 50, height: 50)
+                        .background(Circle().fill(Color.blue))
+                        .shadow(radius: 4)
                 }
             }
-            .padding(.horizontal, 20)
-
-            if filteredTrips.isEmpty {
-                Text("No trips logged yet.")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                    .padding(.horizontal, 20)
-            } else {
-                List(filteredTrips) { trip in
-                    Button {
-                        selectedTrip = trip
-                    } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(trip.date.formatted(date: .abbreviated, time: .shortened))
-                                .font(.caption)
-                                .foregroundColor(.gray)
-
-                            VStack(alignment: .leading, spacing: 6) {
-                                Label(trip.startAddress, systemImage: "circle.fill")
-                                Label(trip.endAddress, systemImage: "mappin.circle.fill")
-                                HStack {
-                                    Image(systemName: "car.fill")
-                                        .foregroundColor(.blue)
-                                    Text("\(trip.miles, specifier: "%.1f") miles")
-                                }
-                            }
-                            .font(.subheadline)
-                        }
-                        .padding(.vertical, 4)
-                    }
-                }
-                .listStyle(.plain)
-                .padding(.horizontal, 20)
-            }
+            .padding(.bottom, 30)
+            .padding(.leading, 20)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+            .zIndex(999)
         }
         .sheet(isPresented: $showingAddTrip) {
             NewTripView { showingAddTrip = false }
