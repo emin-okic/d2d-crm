@@ -38,8 +38,8 @@ struct FloatingSearchAndMicButtons: View {
             }
         }
         .padding(.bottom, 30)
-        .padding(.trailing, 20)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        .padding(.leading, 20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
         .zIndex(999)
     }
 }

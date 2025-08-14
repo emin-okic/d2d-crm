@@ -24,8 +24,7 @@ struct ContactsToolbarView: View {
             )
 
             if !isSearchExpanded {
-                VStack(spacing: 14) {
-                    
+                VStack(spacing: 10) {
                     Button(action: onAddTapped) {
                         Image(systemName: "plus")
                             .font(.system(size: 24, weight: .bold))
@@ -35,11 +34,11 @@ struct ContactsToolbarView: View {
                             .shadow(radius: 4)
                     }
                     
-                    Spacer().frame(height: 8) // Small gap before search icon (handled by FloatingNameSearchBar)
+                    // Spacer().frame(height: 8)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                .padding(.bottom, 100) // Offset to sit above search button
-                .padding(.trailing, 20)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                .padding(.bottom, 110)
+                .padding(.leading, 20)
                 .zIndex(998)
             }
         }
