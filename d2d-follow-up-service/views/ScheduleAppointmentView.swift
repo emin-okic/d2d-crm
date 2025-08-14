@@ -14,6 +14,8 @@ struct ScheduleAppointmentView: View {
     @Environment(\.modelContext) var context
 
     let prospect: Prospect
+    
+    var defaultDate: Date? = nil
 
     @State private var title = "Follow-Up"
     @State private var location = ""
@@ -21,6 +23,12 @@ struct ScheduleAppointmentView: View {
     @State private var date = Date()
     @State private var type = "Follow-Up"
     @State private var notes = ""
+    
+    init(prospect: Prospect, defaultDate: Date? = nil) {
+            self.prospect = prospect
+            self.defaultDate = defaultDate
+            _date = State(initialValue: defaultDate ?? Date())
+        }
 
     var body: some View {
         Form {
