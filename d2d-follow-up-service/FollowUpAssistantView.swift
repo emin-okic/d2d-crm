@@ -145,7 +145,7 @@ struct FollowUpAssistantView: View {
                         .navigationTitle("Trips")
                         .navigationBarTitleDisplayMode(.inline)
                         .toolbar {
-                            ToolbarItem(placement: .cancellationAction) {
+                            ToolbarItem(placement: .confirmationAction) { // right side
                                 Button("Done") {
                                     showTripsSheet = false
                                 }
@@ -159,7 +159,7 @@ struct FollowUpAssistantView: View {
                         .navigationTitle("Today's Appointments")
                         .navigationBarTitleDisplayMode(.inline)
                         .toolbar {
-                            ToolbarItem(placement: .cancellationAction) {
+                            ToolbarItem(placement: .confirmationAction) { // right side
                                 Button("Done") {
                                     showTodaysAppointmentsSheet = false
                                 }
@@ -167,6 +167,7 @@ struct FollowUpAssistantView: View {
                         }
                 }
             }
+            
         }
     }
 }

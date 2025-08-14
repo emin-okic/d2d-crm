@@ -41,12 +41,41 @@ struct TripsSectionView: View {
             // CONTENT pinned to top-left
             VStack(alignment: .leading, spacing: 12) {
 
+                // Filter chips (Day / Week / Month / Year)
+                HStack(spacing: 8) {
+                    ForEach(TripFilter.allCases) { option in
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                filter = option
+                            }
+                        } label: {
+                            Text(option.rawValue)
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 10)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(filter == option ? Color.blue : Color(.secondarySystemBackground))
+                                )
+                                .foregroundColor(filter == option ? .white : .primary)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(filter == option ? Color.blue.opacity(0.9) : Color.gray.opacity(0.25), lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, 4)
+
                 if filteredTrips.isEmpty {
                     Text("No trips logged yet.")
-                        .font(.headline)
+                        .font(.caption)
+                        .foregroundColor(.gray)
                         .padding(.horizontal, 20)
-                        .padding(.top, 10)
-                    
+                        .padding(.top, 4)
                 } else {
                     List(filteredTrips) { trip in
                         Button {
@@ -75,28 +104,12 @@ struct TripsSectionView: View {
                     .padding(.top, 4)
                 }
 
-                Spacer(minLength: 0) // prevent pushing content downward when empty
+                Spacer(minLength: 0) // keep content stuck to the top even when empty
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
-            // BOTTOM-LEFT FLOATING TOOLBAR (filter + add)
+            // Bottom-left floating "+" (matches your other screens)
             VStack(spacing: 10) {
-                // Filter as a compact Menu button
-                Menu {
-                    Picker("Filter", selection: $filter) {
-                        ForEach(TripFilter.allCases) { option in
-                            Text(option.rawValue).tag(option)
-                        }
-                    }
-                } label: {
-                    Image(systemName: "line.3.horizontal.decrease.circle")
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(width: 50, height: 50)
-                        .background(Circle().fill(Color.blue))
-                        .shadow(radius: 4)
-                }
-
                 Button {
                     showingAddTrip = true
                 } label: {
