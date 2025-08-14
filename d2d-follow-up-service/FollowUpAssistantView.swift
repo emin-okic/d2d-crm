@@ -93,7 +93,7 @@ struct FollowUpAssistantView: View {
                             Button {
                                 showTripsSheet = true
                             } label: {
-                                LeaderboardCardView(title: "Trips Made This Week", count: totalTrips)
+                                LeaderboardCardView(title: "Trips Made", count: totalTrips)
                             }
                             .buttonStyle(.plain) // So it looks like a card, not a button
                         }
