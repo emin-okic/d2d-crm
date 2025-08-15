@@ -151,7 +151,7 @@ struct ProspectDetailsView: View {
                     KnockingHistoryView(prospect: prospect)
 
                 case .notes:
-                    NotesThreadSection(prospect: prospect)
+                    NotesThreadSection(prospect: prospect, maxHeight: 180, maxVisibleNotes: 3, showChips: false)
                 }
             }
         }
