@@ -151,22 +151,7 @@ struct ProspectDetailsView: View {
                     KnockingHistoryView(prospect: prospect)
 
                 case .notes:
-                    let sortedNotes = prospect.notes.sorted { a, b in
-                        a.date > b.date
-                    }
-
-                    ForEach(sortedNotes, id: \.date) { note in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(note.content)
-                                .font(.body)
-                            Text("— \(note.date.formatted(.dateTime.month().day().hour().minute()))")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
-                        .padding(.vertical, 4)
-                    }
-
-                    AddNoteView(prospect: prospect)
+                    NotesThreadSection(prospect: prospect)
                 }
             }
         }
