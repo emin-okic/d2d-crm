@@ -46,6 +46,18 @@ struct FollowUpAssistantView: View {
 
         return appointments.filter { $0.date >= startOfWeek && $0.date < endOfWeek }.count
     }
+    
+    // 1) Add these to FollowUpAssistantView
+    @State private var showTopObjectionsSheet = false
+    @Query private var objections: [Objection]
+    
+    // 2) Compute the top objection (exclude "Converted To Sale")
+    private var topObjectionText: String {
+        objections
+            .filter { $0.text != "Converted To Sale" }
+            .sorted { $0.timesHeard > $1.timesHeard }
+            .first?.text ?? "—"
+    }
 
     var body: some View {
         let totalKnocks = FollowUpAssistantController.totalKnocks(from: prospects)
@@ -100,7 +112,14 @@ struct FollowUpAssistantView: View {
                     }
                     .padding(.horizontal, 20)
                     
-                    ObjectionsSectionView()
+                    // 3) Insert this right BELOW your HStack of two scorecards
+                    Button {
+                        showTopObjectionsSheet = true
+                    } label: {
+                        LeaderboardTextCardView(title: "Top Objection", text: topObjectionText)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 20)
                     
                     // MARK: - Tab Selector
                     // Show the segmented control only when recording features are active
@@ -139,6 +158,19 @@ struct FollowUpAssistantView: View {
             }
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
+            // 4) Add the sheet (same pattern as Trips/Today's Appointments)
+            .sheet(isPresented: $showTopObjectionsSheet) {
+                NavigationStack {
+                    ObjectionsSectionView()
+                        .navigationTitle("Top Objections")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button("Done") { showTopObjectionsSheet = false }
+                            }
+                        }
+                }
+            }
             .sheet(isPresented: $showTripsSheet) {
                 NavigationView {
                     TripsSectionView()
