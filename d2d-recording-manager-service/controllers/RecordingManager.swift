@@ -34,6 +34,7 @@ class RecordingManager {
 
         do {
             recorder = try AVAudioRecorder(url: url, settings: settings)
+            recorder?.isMeteringEnabled = true
             recorder?.record()
             currentFileName = fileName
             print("🎙️ Recording to: \(url.path)")
@@ -42,6 +43,16 @@ class RecordingManager {
             print("❌ Failed to start recording: \(error)")
             return (false, nil)
         }
+    }
+    
+    func currentLevel() -> CGFloat {
+        guard let r = recorder else { return 0 }
+        r.updateMeters()
+        // averagePower is in dB (−160 ... 0). Convert to linear 0...1
+        let dB = r.averagePower(forChannel: 0)
+        let clamped = max(dB, -60)                 // ignore very low noise floor
+        let linear = pow(10, clamped / 20)         // 0...1-ish
+        return CGFloat(linear)
     }
 
     func stop() {

@@ -39,8 +39,11 @@ struct RecordingsView: View {
     @State private var recordingStart: Date?
     private var elapsed: TimeInterval {
         guard let start = recordingStart, isRecording else { return 0 }
-        return Date().timeIntervalSince(start)
+        return nowTick.timeIntervalSince(start)    // 👈 recomputes as nowTick advances
     }
+    @State private var nowTick = Date()            // 👈 drives elapsed updates
+    @State private var level: CGFloat = 0          // 👈 live audio level 0...1
+    @State private var tickTimer: Timer?           // 👈 timer ref so we can stop it
 
     var body: some View {
         NavigationView {
@@ -66,6 +69,7 @@ struct RecordingsView: View {
                         RecordingNowCard(
                             objectionText: selectedObjection?.text,
                             elapsed: elapsed,
+                            level: level,                          // 👈 new param
                             onStop: {
                                 if let fileName = currentFileName {
                                     stopRecording(fileName: fileName)
@@ -307,13 +311,25 @@ struct RecordingsView: View {
         let result = recorder.start()
         currentFileName = result.fileName
         isRecording = result.started
-        if result.started { recordingStart = Date() }
+        if result.started {
+            recordingStart = Date()
+            // start UI tick + level polling
+            tickTimer?.invalidate()
+            tickTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { _ in
+                nowTick = Date()                   // 👈 forces body update for timer
+                level = recorder.currentLevel()    // 👈 pull mic level
+            }
+            RunLoop.current.add(tickTimer!, forMode: .common)
+        }
     }
 
     func stopRecording(fileName: String) {
         recorder.stop()
         isRecording = false
         recordingStart = nil
+        tickTimer?.invalidate()                    // 👈 stop ticking/polling
+        tickTimer = nil
+        level = 0
 
         guard let url = recorder.url(for: fileName) else { return }
 

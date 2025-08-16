@@ -12,6 +12,7 @@ import Speech
 struct RecordingNowCard: View {
     let objectionText: String?
     let elapsed: TimeInterval
+    let level: CGFloat
     let onStop: () -> Void
 
     @State private var phase: CGFloat = 0
@@ -41,7 +42,7 @@ struct RecordingNowCard: View {
             }
 
             // Animated “waveform”
-            InProgRecordingWaveView()
+            ReactiveWaveformView(level: level)
                 .frame(height: 36)
                 .padding(.horizontal, 18)
 
@@ -82,35 +83,34 @@ struct RecordingNowCard: View {
     }
 }
 
-private struct InProgRecordingWaveView: View {
-    // 14 bars with slight phase offsets for a “live” look
+private struct ReactiveWaveformView: View {
+    let level: CGFloat                 // 0...1 linear level
     private let barCount = 14
-    @State private var t: CGFloat = 0
+    @State private var jitterSeed: CGFloat = 0
 
     var body: some View {
-        TimelineView(.animation) { timeline in
-            let _ = update(timeline.date.timeIntervalSinceReferenceDate)
-
-            HStack(alignment: .center, spacing: 4) {
-                ForEach(0..<barCount, id: \.self) { i in
-                    Capsule()
-                        .fill(Color.blue.opacity(0.9))
-                        .frame(width: 6, height: barHeight(for: i))
-                        .animation(.easeInOut(duration: 0.25), value: t)
-                }
+        // Small animation on each level change for smoothness
+        HStack(alignment: .center, spacing: 4) {
+            ForEach(0..<barCount, id: \.self) { i in
+                Capsule()
+                    .fill(Color.blue.opacity(0.95))
+                    .frame(width: 6, height: barHeight(for: i))
+                    .animation(.easeOut(duration: 0.12), value: level)
             }
+        }
+        .onChange(of: level) { _ in
+            // tiny random jitter so bars don't move in perfect lockstep
+            jitterSeed = CGFloat.random(in: 0...1)
         }
     }
 
-    private func update(_ now: TimeInterval) { t = CGFloat(now) }
-
     private func barHeight(for index: Int) -> CGFloat {
-        // Sine waves with staggered phase/frequency = subtle lively motion
+        // Base + amplitude scaled by mic level with per-bar variance
         let base: CGFloat = 12
-        let amp: CGFloat = 18
-        let speed: CGFloat = 1.6
-        let phase = (CGFloat(index) * 0.45)
-        let v = sin(t * speed + phase) * 0.5 + 0.5  // 0...1
-        return base + amp * v
+        let maxAmp: CGFloat = 22
+        let variance = (sin(CGFloat(index) * 0.9 + jitterSeed * 6.28) * 0.5 + 0.5) // 0...1
+        let scaled = max(0, min(1, level))                                         // clamp
+        let amp = maxAmp * (0.35 + 0.65 * scaled) * (0.6 + 0.4 * variance)         // richer motion
+        return base + amp
     }
 }
