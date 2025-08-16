@@ -34,7 +34,7 @@ struct AppointmentsSectionView: View {
                 VStack(alignment: .leading, spacing: 12) {
 
                     // Header
-                    VStack(alignment: .center, spacing: 4) {
+                    VStack(alignment: .center, spacing: 5) {
                         Text("Appointments")
                             .font(.title2)
                             .fontWeight(.semibold)
@@ -57,39 +57,33 @@ struct AppointmentsSectionView: View {
 
                     // Empty / list
                     if filteredAppointments.isEmpty {
-                        Text("No \(filter.rawValue.lowercased()) appointments.")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 8)
+                        Text("No \(filter.rawValue) Appointments")
+                            .font(.title3)                // bigger, like a subtitle
+                            .fontWeight(.semibold)
+                            .foregroundColor(.secondary)  // subtle but readable
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, 24)       // more breathing room
                     } else {
-                        LazyVStack(spacing: 0) {
-                            ForEach(filteredAppointments) { appointment in
-                                Button { selectedAppointment = appointment } label: {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("Follow Up With \(appointment.prospect?.fullName ?? appointment.title)")
-                                            .font(.subheadline)
-                                            .fontWeight(.medium)
-
-                                        Text(appointment.prospect?.address ?? appointment.location)
-                                            .font(.caption)
-                                            .foregroundColor(.gray)
-
-                                        Text(appointment.date.formatted(date: .abbreviated, time: .shortened))
-                                            .font(.caption)
-                                            .foregroundColor(.gray)
+                        ScrollView {
+                            LazyVStack(spacing: 0) {
+                                ForEach(filteredAppointments) { appt in
+                                    Button {
+                                        selectedAppointment = appt
+                                    } label: {
+                                        AppointmentRowView(appt: appt)
                                     }
-                                    .padding(.vertical, 10)
-                                    .padding(.horizontal, 20)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    Divider().padding(.leading)
                                 }
-                                Divider().padding(.leading, 20)
                             }
                         }
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .topLeading)
                 .padding(.bottom, 12)
+                .sheet(item: $selectedAppointment) { appt in
+                            AppointmentDetailsView(appointment: appt)
+                        }
             }
             .scrollIndicators(.automatic)
         }
@@ -131,5 +125,20 @@ struct AppointmentsSectionView: View {
         }
         .buttonStyle(.plain)
         .animation(.easeInOut(duration: 0.15), value: isOn)
+    }
+}
+
+struct AppointmentRowView: View {
+    let appt: Appointment
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Follow Up With \(appt.prospect?.fullName ?? appt.title)")
+                .font(.body).fontWeight(.medium)
+            Text(appt.prospect?.address ?? appt.location)
+                .font(.caption).foregroundColor(.secondary)
+            Text(appt.date.formatted(date: .abbreviated, time: .shortened))
+                .font(.caption2).foregroundColor(.secondary)
+        }
+        .padding(.vertical, 10)
     }
 }
