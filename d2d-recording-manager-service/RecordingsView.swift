@@ -32,6 +32,9 @@ struct RecordingsView: View {
     private let playback = PlaybackManager()
     private let transcriber = Transcriber()
     private let scorer = PitchAnalyzer()
+    
+    @State private var showDeleteConfirm = false
+    @State private var trashPulse = false
 
     var body: some View {
         NavigationView {
@@ -130,28 +133,74 @@ struct RecordingsView: View {
 
                     // Trash (bottom)
                     Button {
-                        if isEditing, !selectedRecordings.isEmpty {
-                            deleteSelected()
+                        if isEditing {
+                            // Second tap: if nothing selected, exit edit mode; if selected, ask to confirm delete
+                            if selectedRecordings.isEmpty {
+                                withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
+                                    isEditing = false
+                                    trashPulse = false
+                                }
+                            } else {
+                                showDeleteConfirm = true
+                            }
                         } else {
-                            withAnimation(.easeInOut(duration: 0.15)) {
-                                isEditing.toggle()
-                                if !isEditing { selectedRecordings.removeAll() }
+                            // First tap: enter edit mode + start pulsing
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
+                                isEditing = true
+                                trashPulse = true
                             }
                         }
                     } label: {
-                        Image(systemName: (isEditing && !selectedRecordings.isEmpty) ? "trash.fill" : "trash")
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(width: 50, height: 50)
-                            .background(Circle().fill(Color.blue))
-                            .shadow(radius: 4)
+                        ZStack(alignment: .topTrailing) {
+                            Image(systemName: "trash.fill")
+                                .font(.system(size: 22, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(width: 50, height: 50)
+                                .background(
+                                    Circle()
+                                        .fill(isEditing ? Color.red : Color.blue)
+                                )
+                                .scaleEffect(isEditing ? (trashPulse ? 1.06 : 1.0) : 1.0) // subtle grow/shrink
+                                .rotationEffect(.degrees(isEditing ? (trashPulse ? 2 : -2) : 0)) // tiny wiggle
+                                .shadow(color: (isEditing ? Color.red.opacity(0.45) : Color.black.opacity(0.25)),
+                                        radius: 6, x: 0, y: 2)
+                                .animation(
+                                    isEditing
+                                    ? .easeInOut(duration: 0.75).repeatForever(autoreverses: true)
+                                    : .default,
+                                    value: trashPulse
+                                )
+
+                            // Selection count badge in delete mode
+                            if isEditing && !selectedRecordings.isEmpty {
+                                Text("\(selectedRecordings.count)")
+                                    .font(.caption2).bold()
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Capsule().fill(Color.black.opacity(0.7)))
+                                    .offset(x: 10, y: -10)
+                            }
+                        }
                     }
-                    .accessibilityLabel(isEditing ? "Delete selected recordings" : "Edit / select recordings")
+                    .accessibilityLabel(isEditing ? "Delete selected recordings" : "Enter delete mode")
                 }
                 .padding(.bottom, 30)
                 .padding(.leading, 20)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                 .zIndex(999)
+            }
+            .alert("Delete selected recordings?", isPresented: $showDeleteConfirm) {
+                Button("Delete", role: .destructive) {
+                    deleteSelected()
+                    withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
+                        isEditing = false
+                        trashPulse = false
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("This action can’t be undone.")
             }
             // Sheets stay the same
             .sheet(isPresented: $showingObjectionPicker) {
