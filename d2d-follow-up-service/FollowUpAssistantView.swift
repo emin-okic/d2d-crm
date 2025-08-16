@@ -158,7 +158,7 @@ struct FollowUpAssistantView: View {
             }
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
-            // 4) Add the sheet (same pattern as Trips/Today's Appointments)
+            // Add the sheet (same pattern as Trips/Today's Appointments)
             .sheet(isPresented: $showTopObjectionsSheet) {
                 NavigationStack {
                     ObjectionsSectionView()
