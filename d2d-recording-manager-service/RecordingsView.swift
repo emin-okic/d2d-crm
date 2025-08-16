@@ -34,110 +34,126 @@ struct RecordingsView: View {
     private let scorer = PitchAnalyzer()
 
     var body: some View {
-        
         NavigationView {
-            VStack(alignment: .leading, spacing: 12) {
-                // MARK: Header
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
+            ZStack {
+                // ========= MAIN CONTENT =========
+                VStack(alignment: .leading, spacing: 12) {
+                    // Header (no trailing buttons now)
+                    // Header
+                    VStack(alignment: .center, spacing: 5) {
                         Text("Recent Conversations")
-                            .font(.headline)
+                            .font(.title2)
+                            .fontWeight(.semibold)
 
-                        Text("\(totalRecordings) Recent Conversations")
-                            .font(.caption)
+                        Text("\(totalRecordings) Recordings")
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.top)
 
-                    Spacer()
+                    // List
+                    if recordings.isEmpty {
+                        Text("No Recordings Yet")
+                            .font(.title3)                // bigger, like a subtitle
+                            .fontWeight(.semibold)
+                            .foregroundColor(.secondary)  // subtle but readable
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, 24)       // more breathing room
+                        
+                    } else {
+                        List {
+                            ForEach(recordings) { recording in
+                                HStack {
+                                    if isEditing {
+                                        Image(systemName: selectedRecordings.contains(recording) ? "checkmark.circle.fill" : "circle")
+                                            .foregroundColor(.blue)
+                                            .onTapGesture {
+                                                toggleSelection(for: recording)
+                                            }
+                                    }
 
-                    Button {
-                        isEditing.toggle()
-                        if !isEditing {
-                            selectedRecordings.removeAll()
+                                    RecordingRowView(
+                                        recording: recording,
+                                        isEditing: editingRecording?.id == recording.id,
+                                        editedFileName: $editedFileName,
+                                        onRename: { newName in
+                                            if newName.isEmpty {
+                                                editingRecording = recording
+                                            } else {
+                                                recorder.rename(recording: recording, to: newName)
+                                                editingRecording = nil
+                                            }
+                                        },
+                                        onPlayToggle: {
+                                            playback.toggle(fileName: recording.fileName, currentlyPlayingFile: $currentlyPlayingFile)
+                                        },
+                                        isPlaying: currentlyPlayingFile == recording.fileName,
+                                        onSelect: {
+                                            if isEditing {
+                                                toggleSelection(for: recording)
+                                            } else {
+                                                selectedRecording = recording
+                                            }
+                                        }
+                                    )
+                                }
+                                .padding(.vertical, 4)
+                            }
                         }
-                    } label: {
-                        Image(systemName: isEditing ? "xmark.circle.fill" : "trash")
-                            .font(.title3)
+                        .listStyle(.plain)
+                        .padding(.horizontal, 20)
                     }
 
-                    if isEditing {
-                        Button {
-                            deleteSelected()
-                        } label: {
-                            Image(systemName: "trash.fill")
-                                .font(.title3)
-                        }
-                        .disabled(selectedRecordings.isEmpty)
+                    if isRecording {
+                        recordingIndicator
+                            .padding(.horizontal, 20)
                     }
 
+                    Spacer(minLength: 0)
+                }
+
+                // ========= FLOATING BOTTOM-LEFT TOOLBAR =========
+                VStack(spacing: 12) {
+                    // Add Recording (top)
                     Button {
                         showingObjectionPicker = true
                     } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title3)
+                        Image(systemName: "mic.fill")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(Circle().fill(Color.blue))
+                            .shadow(radius: 4)
                     }
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 10)
 
-                // MARK: List
-                if recordings.isEmpty {
-                    Text("No recordings yet.")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 10)
-                } else {
-                    List {
-                        ForEach(recordings) { recording in
-                            HStack {
-                                if isEditing {
-                                    Image(systemName: selectedRecordings.contains(recording) ? "checkmark.circle.fill" : "circle")
-                                        .foregroundColor(.blue)
-                                        .onTapGesture {
-                                            toggleSelection(for: recording)
-                                        }
-                                }
-
-                                RecordingRowView(
-                                    recording: recording,
-                                    isEditing: editingRecording?.id == recording.id,
-                                    editedFileName: $editedFileName,
-                                    onRename: { newName in
-                                        if newName.isEmpty {
-                                            editingRecording = recording
-                                        } else {
-                                            recorder.rename(recording: recording, to: newName)
-                                            editingRecording = nil
-                                        }
-                                    },
-                                    onPlayToggle: {
-                                        playback.toggle(fileName: recording.fileName, currentlyPlayingFile: $currentlyPlayingFile)
-                                    },
-                                    isPlaying: currentlyPlayingFile == recording.fileName,
-                                    onSelect: {
-                                        if isEditing {
-                                            toggleSelection(for: recording)
-                                        } else {
-                                            selectedRecording = recording
-                                        }
-                                    }
-                                )
+                    // Trash (bottom)
+                    Button {
+                        if isEditing, !selectedRecordings.isEmpty {
+                            deleteSelected()
+                        } else {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                isEditing.toggle()
+                                if !isEditing { selectedRecordings.removeAll() }
                             }
-                            .padding(.vertical, 4)
                         }
+                    } label: {
+                        Image(systemName: (isEditing && !selectedRecordings.isEmpty) ? "trash.fill" : "trash")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(Circle().fill(Color.blue))
+                            .shadow(radius: 4)
                     }
-                    .listStyle(.plain)
-                    .padding(.horizontal, 20)
+                    .accessibilityLabel(isEditing ? "Delete selected recordings" : "Edit / select recordings")
                 }
-
-                if isRecording {
-                    recordingIndicator
-                        .padding(.horizontal, 20)
-                }
-
-                Spacer()
+                .padding(.bottom, 30)
+                .padding(.leading, 20)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                .zIndex(999)
             }
+            // Sheets stay the same
             .sheet(isPresented: $showingObjectionPicker) {
                 ObjectionPickerView(objections: objections) { selected in
                     selectedObjection = selected

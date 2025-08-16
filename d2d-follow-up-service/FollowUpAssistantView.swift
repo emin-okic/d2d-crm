@@ -206,7 +206,7 @@ struct FollowUpAssistantView: View {
             .sheet(isPresented: $showRecordingsSheet) {
                 NavigationStack {
                     RecordingsView()
-                        .navigationTitle("Recent Conversations")
+                        .navigationTitle("The Recording Studio")
                         .navigationBarTitleDisplayMode(.inline)
                         .toolbar {
                             ToolbarItem(placement: .confirmationAction) {
