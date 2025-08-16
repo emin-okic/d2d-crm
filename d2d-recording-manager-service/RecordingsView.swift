@@ -35,13 +35,20 @@ struct RecordingsView: View {
     
     @State private var showDeleteConfirm = false
     @State private var trashPulse = false
+    
+    @State private var recordingStart: Date?
+    private var elapsed: TimeInterval {
+        guard let start = recordingStart, isRecording else { return 0 }
+        return Date().timeIntervalSince(start)
+    }
 
     var body: some View {
         NavigationView {
             ZStack {
                 // ========= MAIN CONTENT =========
                 VStack(alignment: .leading, spacing: 12) {
-                    // Header (no trailing buttons now)
+
+                    
                     // Header
                     VStack(alignment: .center, spacing: 5) {
                         Text("Recent Conversations")
@@ -54,6 +61,20 @@ struct RecordingsView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.top)
+                    
+                    if isRecording {
+                        RecordingNowCard(
+                            objectionText: selectedObjection?.text,
+                            elapsed: elapsed,
+                            onStop: {
+                                if let fileName = currentFileName {
+                                    stopRecording(fileName: fileName)
+                                }
+                            }
+                        )
+                        .padding(.horizontal, 20)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    }
 
                     // List
                     if recordings.isEmpty {
@@ -113,13 +134,6 @@ struct RecordingsView: View {
                         .listStyle(.plain)
                         .padding(.horizontal, 20)
                     }
-
-                    if isRecording {
-                        recordingIndicator
-                            .padding(.horizontal, 20)
-                    }
-
-                    Spacer(minLength: 0)
                 }
 
                 // ========= FLOATING BOTTOM-LEFT TOOLBAR =========
@@ -293,11 +307,13 @@ struct RecordingsView: View {
         let result = recorder.start()
         currentFileName = result.fileName
         isRecording = result.started
+        if result.started { recordingStart = Date() }
     }
 
     func stopRecording(fileName: String) {
         recorder.stop()
         isRecording = false
+        recordingStart = nil
 
         guard let url = recorder.url(for: fileName) else { return }
 
