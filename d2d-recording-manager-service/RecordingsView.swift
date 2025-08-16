@@ -102,7 +102,12 @@ struct RecordingsView: View {
                                         }
                                     )
                                 }
-                                .padding(.vertical, 4)
+                                .padding(.vertical, 5)
+                                .background(
+                                            (isEditing && selectedRecordings.contains(recording))
+                                            ? Color.red.opacity(0.06)
+                                            : Color.clear
+                                        )
                             }
                         }
                         .listStyle(.plain)
