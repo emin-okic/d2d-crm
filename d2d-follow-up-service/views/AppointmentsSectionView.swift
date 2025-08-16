@@ -34,23 +34,25 @@ struct AppointmentsSectionView: View {
                 VStack(alignment: .leading, spacing: 12) {
 
                     // Header
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .center, spacing: 4) {
                         Text("Appointments")
-                            .font(.headline)
+                            .font(.title2)
+                            .fontWeight(.semibold)
                         Text(filter == .upcoming
                              ? "\(upcomingCount) Upcoming Appointments"
                              : "\(pastCount) Past Appointments")
-                            .font(.caption)
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 12)
-
+                    .frame(maxWidth: .infinity)
+                    .padding(.top)
+                    
                     // Toggle chips
                     HStack(spacing: 8) {
                         toggleChip("Upcoming", isOn: filter == .upcoming) { filter = .upcoming }
                         toggleChip("Past",     isOn: filter == .past)     { filter = .past }
                     }
+                    .frame(maxWidth: .infinity)
                     .padding(.horizontal, 20)
 
                     // Empty / list
