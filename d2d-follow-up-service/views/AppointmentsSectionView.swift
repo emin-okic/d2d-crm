@@ -29,8 +29,8 @@ struct AppointmentsSectionView: View {
     }
 
     private var filteredAppointments: [Appointment] {
-        let ups = appointments.filter { $0.date >= now }.sorted { $0.date < $1.date }
-        let past = appointments.filter { $0.date < now }.sorted { $0.date > $1.date }
+        let ups  = appointments.filter { $0.date >= now }.sorted { $0.date < $1.date }  // soonest first
+        let past = appointments.filter { $0.date <  now }.sorted { $0.date > $1.date }  // most recent first
         return filter == .upcoming ? ups : past
     }
 
@@ -39,42 +39,29 @@ struct AppointmentsSectionView: View {
             // CONTENT pinned to top-left
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    // Header row
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Appointments")
-                                .font(.headline)
-                            Text(filter == .upcoming
-                                 ? "\(upcomingCount) Upcoming Appointments"
-                                 : "\(pastCount) Past Appointments")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
 
-                        Spacer()
+                    // Header
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Appointments")
+                            .font(.headline)
 
-                        Menu {
-                            Picker("Filter", selection: $filter) {
-                                ForEach(AppointmentFilter.allCases) {
-                                    Text($0.rawValue).tag($0)
-                                }
-                            }
-                        } label: {
-                            Image(systemName: "line.3.horizontal.decrease.circle")
-                                .font(.title3)
-                        }
-
-                        Button {
-                            showingProspectPicker = true
-                        } label: {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.title3)
-                        }
+                        Text(filter == .upcoming
+                             ? "\(upcomingCount) Upcoming Appointments"
+                             : "\(pastCount) Past Appointments")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
 
-                    // Empty state (no extra top gap)
+                    // Toggle chips (Upcoming / Past)
+                    HStack(spacing: 8) {
+                        toggleChip("Upcoming", isOn: filter == .upcoming) { filter = .upcoming }
+                        toggleChip("Past",     isOn: filter == .past)     { filter = .past }
+                    }
+                    .padding(.horizontal, 20)
+
+                    // Empty state
                     if filteredAppointments.isEmpty {
                         Text("No \(filter.rawValue.lowercased()) appointments.")
                             .font(.caption)
@@ -82,7 +69,7 @@ struct AppointmentsSectionView: View {
                             .padding(.horizontal, 20)
                             .padding(.bottom, 8)
                     } else {
-                        // List replacement: tight, top-pinned, no auto insets
+                        // Compact list replacement
                         LazyVStack(spacing: 0) {
                             ForEach(filteredAppointments) { appointment in
                                 Button {
@@ -114,7 +101,26 @@ struct AppointmentsSectionView: View {
                 .frame(maxWidth: .infinity, alignment: .topLeading)
                 .padding(.bottom, 12)
             }
+
+            // Floating bottom-left Add button
+            VStack(spacing: 12) {
+                Button {
+                    showingProspectPicker = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(width: 50, height: 50)
+                        .background(Circle().fill(Color.blue))
+                        .shadow(radius: 4)
+                }
+            }
+            .padding(.bottom, 30)
+            .padding(.leading, 20)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+            .zIndex(999)
         }
+        .frame(height: 300)
         .onAppear {
             if let saved = UserDefaults.standard.string(forKey: filterKey),
                let parsed = AppointmentFilter(rawValue: saved) {
@@ -153,5 +159,29 @@ struct AppointmentsSectionView: View {
         .sheet(item: $selectedAppointment) { appt in
             AppointmentDetailsView(appointment: appt)
         }
+    }
+
+    // MARK: - UI Helpers
+
+    @ViewBuilder
+    private func toggleChip(_ title: String, isOn: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .padding(.vertical, 6)
+                .padding(.horizontal, 12)
+                .frame(minWidth: 72)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(isOn ? Color.blue : Color(.secondarySystemBackground))
+                )
+                .foregroundColor(isOn ? .white : .primary)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(isOn ? Color.blue.opacity(0.9) : Color.gray.opacity(0.25), lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
     }
 }
