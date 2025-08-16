@@ -16,92 +16,103 @@ struct AppointmentsSectionView: View {
     @State private var selectedAppointment: Appointment?
 
     @State private var filter: AppointmentFilter = .upcoming
-
     private let filterKey = "lastSelectedAppointmentFilter"
 
+    private var now: Date { Date() }
+
     private var upcomingCount: Int {
-        appointments.filter { $0.date >= Date() }.count
+        appointments.filter { $0.date >= now }.count
     }
 
     private var pastCount: Int {
-        appointments.filter { $0.date < Date() }.count
+        appointments.filter { $0.date < now }.count
     }
 
     private var filteredAppointments: [Appointment] {
-        let now = Date()
-        return appointments
-            .filter {
-                switch filter {
-                case .upcoming: return $0.date >= now
-                case .past: return $0.date < now
-                }
-            }
-            .sorted(by: { $0.date < $1.date })
+        let ups = appointments.filter { $0.date >= now }.sorted { $0.date < $1.date }
+        let past = appointments.filter { $0.date < now }.sorted { $0.date > $1.date }
+        return filter == .upcoming ? ups : past
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Appointments")
-                        .font(.headline)
-
-                    Text(filter == .upcoming ? "\(upcomingCount) Upcoming Appointments" : "\(pastCount) Past Appointments")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
-                Menu {
-                    Picker("Filter", selection: $filter) {
-                        ForEach(AppointmentFilter.allCases) {
-                            Text($0.rawValue).tag($0)
-                        }
-                    }
-                } label: {
-                    Image(systemName: "line.3.horizontal.decrease.circle")
-                        .font(.title3)
-                }
-
-                Button {
-                    showingProspectPicker = true
-                } label: {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title3)
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 10)
-
-            if filteredAppointments.isEmpty {
-                Text("No \(filter.rawValue.lowercased()) appointments.")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                    .padding(.horizontal, 20)
-            } else {
-                List(filteredAppointments) { appointment in
-                    Button {
-                        selectedAppointment = appointment
-                    } label: {
+        ZStack {
+            // CONTENT pinned to top-left
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    // Header row
+                    HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Follow Up With \(appointment.prospect?.fullName ?? "Unknown")")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-
-                            Text(appointment.prospect?.address ?? "No Address")
+                            Text("Appointments")
+                                .font(.headline)
+                            Text(filter == .upcoming
+                                 ? "\(upcomingCount) Upcoming Appointments"
+                                 : "\(pastCount) Past Appointments")
                                 .font(.caption)
-                                .foregroundColor(.gray)
-
-                            Text(appointment.date.formatted(date: .abbreviated, time: .shortened))
-                                .font(.caption)
-                                .foregroundColor(.gray)
+                                .foregroundColor(.secondary)
                         }
-                        .padding(.vertical, 4)
+
+                        Spacer()
+
+                        Menu {
+                            Picker("Filter", selection: $filter) {
+                                ForEach(AppointmentFilter.allCases) {
+                                    Text($0.rawValue).tag($0)
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "line.3.horizontal.decrease.circle")
+                                .font(.title3)
+                        }
+
+                        Button {
+                            showingProspectPicker = true
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title3)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+
+                    // Empty state (no extra top gap)
+                    if filteredAppointments.isEmpty {
+                        Text("No \(filter.rawValue.lowercased()) appointments.")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 8)
+                    } else {
+                        // List replacement: tight, top-pinned, no auto insets
+                        LazyVStack(spacing: 0) {
+                            ForEach(filteredAppointments) { appointment in
+                                Button {
+                                    selectedAppointment = appointment
+                                } label: {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Follow Up With \(appointment.prospect?.fullName ?? appointment.title)")
+                                            .font(.subheadline)
+                                            .fontWeight(.medium)
+
+                                        Text(appointment.prospect?.address ?? appointment.location)
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+
+                                        Text(appointment.date.formatted(date: .abbreviated, time: .shortened))
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                    }
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 20)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                                Divider()
+                                    .padding(.leading, 20)
+                            }
+                        }
                     }
                 }
-                .listStyle(.plain)
-                .padding(.horizontal, 20)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .padding(.bottom, 12)
             }
         }
         .onAppear {
@@ -109,27 +120,15 @@ struct AppointmentsSectionView: View {
                let parsed = AppointmentFilter(rawValue: saved) {
                 filter = parsed
             } else {
-                filter = .upcoming // Default
+                filter = .upcoming
             }
         }
         .onChange(of: filter) {
             UserDefaults.standard.set(filter.rawValue, forKey: filterKey)
         }
+        // Sheets
         .sheet(isPresented: $showingProspectPicker) {
             NavigationStack {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Schedule Follow Up")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .padding(.vertical, 10)
-                    Text("Choose a prospect to schedule your follow-up appointment")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                        .padding(.vertical, 10)
-                }
-                .padding(.horizontal)
-                .padding(.top)
-
                 List(prospects) { prospect in
                     Button {
                         selectedProspect = prospect
@@ -141,23 +140,12 @@ struct AppointmentsSectionView: View {
                                 .font(.caption)
                                 .foregroundColor(.gray)
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 10)
-                        .padding(.horizontal)
-                        .background(Color.white)
-                        .cornerRadius(6)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 1.0)
-                        )
                     }
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets())
                 }
+                .navigationTitle("Pick Prospect")
                 .listStyle(.plain)
-                .scrollContentBackground(.hidden)
             }
-            .background(Color.white.ignoresSafeArea())
         }
         .sheet(item: $selectedProspect) { prospect in
             ScheduleAppointmentView(prospect: prospect)

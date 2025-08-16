@@ -138,12 +138,18 @@ struct FollowUpAssistantView: View {
                         if recordingFeaturesActive {
                             switch selectedTab {
                             case .appointments:
-                                AppointmentsSectionView().frame(minHeight: 300)
+                                ScrollView {
+                                    AppointmentsSectionView()
+                                }
+                                .frame(maxHeight: 300)
                             case .recordings:
                                 RecordingsView()
                             }
                         } else {
-                            AppointmentsSectionView().frame(minHeight: 300)
+                            ScrollView {
+                                AppointmentsSectionView()
+                            }
+                            .frame(maxHeight: 300)
                         }
                     }
                     
