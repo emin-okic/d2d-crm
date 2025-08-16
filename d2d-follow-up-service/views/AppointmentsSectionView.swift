@@ -9,10 +9,9 @@ import SwiftData
 
 struct AppointmentsSectionView: View {
     @Query private var appointments: [Appointment]
-    @Query private var prospects: [Prospect]
+    @Query private var prospects: [Prospect]   // can stay (not used here now, but harmless)
 
-    @State private var showingProspectPicker = false
-    @State private var selectedProspect: Prospect?
+    // Removed: showingProspectPicker / selectedProspect
     @State private var selectedAppointment: Appointment?
 
     @State private var filter: AppointmentFilter = .upcoming
@@ -20,23 +19,17 @@ struct AppointmentsSectionView: View {
 
     private var now: Date { Date() }
 
-    private var upcomingCount: Int {
-        appointments.filter { $0.date >= now }.count
-    }
-
-    private var pastCount: Int {
-        appointments.filter { $0.date < now }.count
-    }
+    private var upcomingCount: Int { appointments.filter { $0.date >= now }.count }
+    private var pastCount: Int { appointments.filter { $0.date <  now }.count }
 
     private var filteredAppointments: [Appointment] {
-        let ups  = appointments.filter { $0.date >= now }.sorted { $0.date < $1.date }  // soonest first
-        let past = appointments.filter { $0.date <  now }.sorted { $0.date > $1.date }  // most recent first
+        let ups  = appointments.filter { $0.date >= now }.sorted { $0.date < $1.date }
+        let past = appointments.filter { $0.date <  now }.sorted { $0.date > $1.date }
         return filter == .upcoming ? ups : past
     }
 
     var body: some View {
         ZStack {
-            // CONTENT pinned to top-left
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
 
@@ -44,7 +37,6 @@ struct AppointmentsSectionView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Appointments")
                             .font(.headline)
-
                         Text(filter == .upcoming
                              ? "\(upcomingCount) Upcoming Appointments"
                              : "\(pastCount) Past Appointments")
@@ -54,14 +46,14 @@ struct AppointmentsSectionView: View {
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
 
-                    // Toggle chips (Upcoming / Past)
+                    // Toggle chips
                     HStack(spacing: 8) {
                         toggleChip("Upcoming", isOn: filter == .upcoming) { filter = .upcoming }
                         toggleChip("Past",     isOn: filter == .past)     { filter = .past }
                     }
                     .padding(.horizontal, 20)
 
-                    // Empty state
+                    // Empty / list
                     if filteredAppointments.isEmpty {
                         Text("No \(filter.rawValue.lowercased()) appointments.")
                             .font(.caption)
@@ -69,12 +61,9 @@ struct AppointmentsSectionView: View {
                             .padding(.horizontal, 20)
                             .padding(.bottom, 8)
                     } else {
-                        // Compact list replacement
                         LazyVStack(spacing: 0) {
                             ForEach(filteredAppointments) { appointment in
-                                Button {
-                                    selectedAppointment = appointment
-                                } label: {
+                                Button { selectedAppointment = appointment } label: {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Follow Up With \(appointment.prospect?.fullName ?? appointment.title)")
                                             .font(.subheadline)
@@ -92,8 +81,7 @@ struct AppointmentsSectionView: View {
                                     .padding(.horizontal, 20)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 }
-                                Divider()
-                                    .padding(.leading, 20)
+                                Divider().padding(.leading, 20)
                             }
                         }
                     }
@@ -101,26 +89,8 @@ struct AppointmentsSectionView: View {
                 .frame(maxWidth: .infinity, alignment: .topLeading)
                 .padding(.bottom, 12)
             }
-
-            // Floating bottom-left Add button
-            VStack(spacing: 12) {
-                Button {
-                    showingProspectPicker = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(width: 50, height: 50)
-                        .background(Circle().fill(Color.blue))
-                        .shadow(radius: 4)
-                }
-            }
-            .padding(.bottom, 30)
-            .padding(.leading, 20)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-            .zIndex(999)
+            .scrollIndicators(.automatic)
         }
-        .frame(height: 300)
         .onAppear {
             if let saved = UserDefaults.standard.string(forKey: filterKey),
                let parsed = AppointmentFilter(rawValue: saved) {
@@ -132,36 +102,11 @@ struct AppointmentsSectionView: View {
         .onChange(of: filter) {
             UserDefaults.standard.set(filter.rawValue, forKey: filterKey)
         }
-        // Sheets
-        .sheet(isPresented: $showingProspectPicker) {
-            NavigationStack {
-                List(prospects) { prospect in
-                    Button {
-                        selectedProspect = prospect
-                        showingProspectPicker = false
-                    } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(prospect.fullName)
-                            Text(prospect.address)
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
-                        .padding(.vertical, 10)
-                    }
-                }
-                .navigationTitle("Pick Prospect")
-                .listStyle(.plain)
-            }
-        }
-        .sheet(item: $selectedProspect) { prospect in
-            ScheduleAppointmentView(prospect: prospect)
-        }
+        // Only appointment details sheet remains here
         .sheet(item: $selectedAppointment) { appt in
             AppointmentDetailsView(appointment: appt)
         }
     }
-
-    // MARK: - UI Helpers
 
     @ViewBuilder
     private func toggleChip(_ title: String, isOn: Bool, action: @escaping () -> Void) -> some View {
@@ -183,5 +128,6 @@ struct AppointmentsSectionView: View {
                 )
         }
         .buttonStyle(.plain)
+        .animation(.easeInOut(duration: 0.15), value: isOn)
     }
 }
