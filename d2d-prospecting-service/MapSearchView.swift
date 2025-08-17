@@ -102,6 +102,8 @@ struct MapSearchView: View {
         return Int(Double(counts.reduce(0, +)) / Double(counts.count))
     }
     
+    @State private var showConfetti = false
+    
     init(searchText: Binding<String>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
@@ -206,17 +208,17 @@ struct MapSearchView: View {
                         try? modelContext.save()
                       },
                       saveFollowUp: { prospect, date in
-                        let appt = Appointment(
-                          title: "Follow-Up",
-                          location: prospect.address,
-                          clientName: prospect.fullName,
-                          date: date,
-                          type: "Follow-Up",
-                          notes: prospect.notes.map { $0.content },
-                          prospect: prospect
-                        )
-                        modelContext.insert(appt)
-                        try? modelContext.save()
+                          let appt = Appointment(
+                            title: "Follow-Up",
+                            location: prospect.address,
+                            clientName: prospect.fullName,
+                            date: date,
+                            type: "Follow-Up",
+                            notes: prospect.notes.map { $0.content },
+                            prospect: prospect
+                          )
+                          modelContext.insert(appt)
+                          try? modelContext.save()
                       },
                       convertToCustomer: { prospect, done in
                         self.prospectToConvert = prospect
@@ -233,7 +235,11 @@ struct MapSearchView: View {
                         modelContext.insert(trip)
                         try? modelContext.save()
                       },
-                      onClose: { self.stepperState = nil }
+                      onClose: {
+                          self.stepperState = nil
+                          // 🎉 Confetti only now, after stepper has been dismissed
+                          withAnimation { showConfetti = true }
+                      }
                     )
                   .frame(width: 280, height: 280) // ⬅️ hard clamp
                   .position(x: geo.size.width / 2, y: geo.size.height * 0.42)
@@ -242,6 +248,20 @@ struct MapSearchView: View {
                 }
               }
             )
+            
+            if showConfetti {
+                ConfettiBurstView()
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                    .zIndex(5000)
+                    .onAppear {
+                        // Auto dismiss after a few seconds
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            withAnimation { showConfetti = false }
+                        }
+                    }
+            }
+            
         }
         .onReceive(NotificationCenter.default.publisher(for: .mapShouldRecenterAllMarkers)) { _ in
                     controller.recenterToFitAllMarkers()
@@ -383,6 +403,7 @@ struct MapSearchView: View {
                         initialPhone: prospect.contactPhone,
                         initialEmail: prospect.contactEmail
                     ) { newCustomer in
+                        // update prospect → customer
                         prospect.fullName = newCustomer.fullName
                         prospect.address = newCustomer.address
                         prospect.contactPhone = newCustomer.contactPhone
@@ -393,6 +414,11 @@ struct MapSearchView: View {
                         updateMarkers()
                         selectedList = "Customers"
                         showConversionSheet = false
+                        
+                        // ✅ Only now show confetti
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            withAnimation { showConfetti = true }
+                        }
                     } onCancel: {
                         showConversionSheet = false
                     }

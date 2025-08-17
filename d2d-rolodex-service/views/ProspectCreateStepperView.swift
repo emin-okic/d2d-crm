@@ -26,7 +26,6 @@ struct ProspectCreateStepperView: View {
     @StateObject private var searchVM = SearchCompleterViewModel()
     @FocusState private var isAddressFocused: Bool
     @State private var phoneError: String?
-    @State private var showConfetti = false
 
     var body: some View {
         VStack(spacing: 8) {
@@ -54,9 +53,7 @@ struct ProspectCreateStepperView: View {
                         let p = Prospect(fullName: fullName, address: address, count: 0, list: "Prospects")
                         p.contactEmail = contactEmail
                         p.contactPhone = contactPhone
-                        showConfetti = true
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                            showConfetti = false
                             onComplete(p)
                         }
                     }
@@ -65,7 +62,6 @@ struct ProspectCreateStepperView: View {
             }
         }
         .padding(12)
-        .overlay(Group { if showConfetti { FullScreenCelebrationView() } })
     }
 
     // MARK: Steps

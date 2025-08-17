@@ -41,7 +41,6 @@ struct KnockStepperPopupView: View {
     // Follow-up state
     @State private var followUpDate: Date = Calendar.current.date(byAdding: .day, value: 3, to: .now) ?? .now
     @State private var didScheduleFollowUp = false
-    @State private var showConfetti = false
 
     // Note state
     @State private var noteText: String = ""
@@ -97,7 +96,6 @@ struct KnockStepperPopupView: View {
               }
             }
           }
-          .overlay(Group { if showConfetti { ConfettiBurstView() } })
       }
       .padding(8)                              // was 14
       .background(.ultraThinMaterial)
@@ -123,9 +121,7 @@ struct KnockStepperPopupView: View {
         stepIndex = 0
 
         if didScheduleFollowUp {
-          showConfetti = true
           DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            showConfetti = false
             onClose()
           }
         } else {
@@ -403,9 +399,7 @@ struct KnockStepperPopupView: View {
           stepIndex = 0
 
           if didScheduleFollowUp {
-            showConfetti = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-              showConfetti = false
               onClose()                          // confetti path: close a bit later
             }
           } else {
