@@ -14,20 +14,21 @@ struct NotesThreadSection: View {
     @Bindable var prospect: Prospect
     @Environment(\.modelContext) private var context
 
-    // Tuning knobs for half-page use
     var maxHeight: CGFloat = 220
     var maxVisibleNotes: Int = 5
     var showChips: Bool = false
 
     @State private var draft: String = ""
     @State private var editingNote: Note? = nil
-    @State private var showAll: Bool = false
+
+    // NEW: sheet control
+    @State private var showNotesSheet = false
 
     private var sortedNotes: [Note] {
         prospect.notes.sorted { $0.date > $1.date }
     }
     private var visibleNotes: [Note] {
-        showAll ? sortedNotes : Array(sortedNotes.prefix(maxVisibleNotes))
+        Array(sortedNotes.prefix(maxVisibleNotes))
     }
 
     var body: some View {
@@ -44,12 +45,13 @@ struct NotesThreadSection: View {
                 }
                 Spacer()
                 if sortedNotes.count > maxVisibleNotes {
-                    Button(showAll ? "Show less" : "View all") { withAnimation { showAll.toggle() } }
+                    // NEW: open full-screen sheet
+                    Button("View all") { showNotesSheet = true }
                         .font(.caption)
                 }
             }
 
-            // Thread (fixed height for half-page use)
+            // Thread (fixed height for compact view)
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 8) {
                     ForEach(visibleNotes, id: \.self) { note in
@@ -60,17 +62,11 @@ struct NotesThreadSection: View {
                             accent: tagAccent(for: note.content)
                         )
                         .contextMenu {
-                            Button("Copy") {
-                                UIPasteboard.general.string = note.content
-                            }
-                            Button("Edit") {
-                                editingNote = note
-                            }
+                            Button("Copy") { UIPasteboard.general.string = note.content }
+                            Button("Edit") { editingNote = note }
                             Button(role: .destructive) {
                                 delete(note)
-                            } label: {
-                                Text("Delete")
-                            }
+                            } label: { Text("Delete") }
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) { delete(note) } label: {
@@ -94,7 +90,7 @@ struct NotesThreadSection: View {
                 }
                 .padding(.vertical, 2)
             }
-            .frame(maxHeight: maxHeight) // ⬅️ keeps it half-page
+            .frame(maxHeight: maxHeight)
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
             // Composer (compact)
@@ -104,6 +100,10 @@ struct NotesThreadSection: View {
                 onSubmit: { submitNote() },
                 quickChips: showChips ? quickChips() : []
             )
+        }
+        .sheet(isPresented: $showNotesSheet) {
+            // NEW: full notes view in a sheet
+            NotesThreadFullView(prospect: prospect)
         }
         .sheet(item: $editingNote) { note in
             EditNoteSheet(note: note) { try? context.save() }
