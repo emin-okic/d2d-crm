@@ -262,12 +262,6 @@ struct MapSearchView: View {
         .onTapGesture {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to:nil,from:nil,for:nil)
         }
-        // Keep existing conversion sheet
-        .sheet(isPresented: $showConversionSheet) {
-            if let prospect = prospectToConvert {
-                SignUpPopupView(prospect: prospect, isPresented: $showConversionSheet)
-            }
-        }
         // Keep existing sheets/alerts; they simply won't be used during Follow-Up stepper
         .alert("Knock Outcome", isPresented: $showOutcomePrompt) {
             if !isTappedAddressCustomer {
@@ -371,14 +365,48 @@ struct MapSearchView: View {
         .sheet(isPresented: $showTripPopup) {
             if let addr = pendingAddress { LogTripPopupView(endAddress: addr) }
         }
-        .sheet(isPresented: $showConversionSheet) {
-            if let prospect = prospectToConvert { SignUpPopupView(prospect: prospect, isPresented: $showConversionSheet) }
-        }
         .sheet(isPresented: $showingAddObjection, onDismiss: {
             if let _ = prospectToNote { showFollowUpSheet = true }
         }) {
             AddObjectionView()
         }
+        .overlay(
+            Group {
+                if showConversionSheet, let prospect = prospectToConvert {
+                    Color.black.opacity(0.25)
+                        .ignoresSafeArea()
+                        .onTapGesture { showConversionSheet = false }
+
+                    CustomerCreateStepperView(
+                        initialName: prospect.fullName,
+                        initialAddress: prospect.address,
+                        initialPhone: prospect.contactPhone,
+                        initialEmail: prospect.contactEmail
+                    ) { newCustomer in
+                        prospect.fullName = newCustomer.fullName
+                        prospect.address = newCustomer.address
+                        prospect.contactPhone = newCustomer.contactPhone
+                        prospect.contactEmail = newCustomer.contactEmail
+                        prospect.list = "Customers"
+
+                        try? modelContext.save()
+                        updateMarkers()
+                        selectedList = "Customers"
+                        showConversionSheet = false
+                    } onCancel: {
+                        showConversionSheet = false
+                    }
+                    .frame(width: 300, height: 300)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(16)
+                    .shadow(radius: 8)
+                    .position(x: UIScreen.main.bounds.midX,
+                              y: UIScreen.main.bounds.midY * 0.9)
+                    .transition(.scale.combined(with: .opacity))
+                    .zIndex(2000)
+                }
+            }
+        )
     }
 
     private func presentObjectionFlow(filtered: [Objection], for prospect: Prospect) {

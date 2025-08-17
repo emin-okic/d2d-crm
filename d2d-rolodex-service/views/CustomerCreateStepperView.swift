@@ -14,18 +14,46 @@ struct CustomerCreateStepperView: View {
     var onComplete: (Customer) -> Void
     var onCancel: () -> Void
 
+    // 👇 New optional defaults
+    var initialName: String?
+    var initialAddress: String?
+    var initialPhone: String?
+    var initialEmail: String?
+
     @State private var stepIndex: Int = 0
     private let totalSteps = 2
 
-    @State private var fullName = ""
-    @State private var address = ""
-    @State private var contactPhone = ""
-    @State private var contactEmail = ""
-
+    // 👇 Initialize state with passed-in values
+    @State private var fullName: String
+    @State private var address: String
+    @State private var contactPhone: String
+    @State private var contactEmail: String
+    
     @StateObject private var searchVM = SearchCompleterViewModel()
     @FocusState private var isAddressFocused: Bool
     @State private var phoneError: String?
     @State private var showConfetti = false
+
+    init(
+        initialName: String? = nil,
+        initialAddress: String? = nil,
+        initialPhone: String? = nil,
+        initialEmail: String? = nil,
+        onComplete: @escaping (Customer) -> Void,
+        onCancel: @escaping () -> Void
+    ) {
+        self.onComplete = onComplete
+        self.onCancel = onCancel
+        self.initialName = initialName
+        self.initialAddress = initialAddress
+        self.initialPhone = initialPhone
+        self.initialEmail = initialEmail
+
+        _fullName = State(initialValue: initialName ?? "")
+        _address = State(initialValue: initialAddress ?? "")
+        _contactPhone = State(initialValue: initialPhone ?? "")
+        _contactEmail = State(initialValue: initialEmail ?? "")
+    }
 
     var body: some View {
         VStack(spacing: 8) {
