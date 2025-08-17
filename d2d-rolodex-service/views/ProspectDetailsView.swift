@@ -95,7 +95,11 @@ struct ProspectDetailsView: View {
             }
             
             Section {
-                ProspectActionsToolbar(prospect: prospect)
+                if prospect.list == "Prospects" {
+                    ProspectActionsToolbar(prospect: prospect)
+                } else {
+                    CustomerActionsToolbar(prospect: prospect)
+                }
             }
             
             Section {

@@ -56,9 +56,21 @@ struct ProspectActionsToolbar: View {
 
                 // Create Sale
                 if prospect.list == "Prospects" {
-                    iconButton(systemName: "cart.fill.badge.plus") {
+                    Button(action: {
                         showCreateSaleSheet = true
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 34, height: 34)   // same as other icons
+
+                            Image(systemName: "checkmark.seal.fill")
+                                .font(.system(size: 24))        // ~25% smaller than .title2
+                                .foregroundColor(.white)
+                                .scaleEffect(0.75)              // shrink inside the circle
+                        }
                     }
+                    .buttonStyle(.plain)
                 }
 
                 // Export Contact
