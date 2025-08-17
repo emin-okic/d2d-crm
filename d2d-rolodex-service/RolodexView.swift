@@ -19,6 +19,7 @@ struct RolodexView: View {
     @State private var selectedProspectID: PersistentIdentifier?
     @State private var showingAddProspect = false
     @State private var suggestedProspect: Prospect?
+    @State private var showingAddCustomer = false
     @State private var suggestionSourceIndex = 0 // Track which customer we’re pulling from
     
     @State private var showActivityOnboarding = false
@@ -29,6 +30,7 @@ struct RolodexView: View {
 
     let availableLists = ["Prospects", "Customers"]
     @Query var prospects: [Prospect]
+    @Query private var customers: [Customer]
     
     var onDoubleTap: ((Prospect) -> Void)? = nil
 
@@ -41,6 +43,7 @@ struct RolodexView: View {
         self.onSave = onSave
         self.onDoubleTap = onDoubleTap
         _prospects = Query()
+        _customers = Query()
     }
     
     private var totalProspects: Int {
@@ -85,6 +88,27 @@ struct RolodexView: View {
                     .padding(.horizontal, 20)
                     .padding(.top, 16)
                     
+                    // Suggested Prospect scorecard (Prospects only)
+                    if selectedList == "Prospects", let suggestion = suggestedProspect {
+                        SuggestedProspectScorecardView(
+                            suggestion: suggestion,
+                            onAdd: {
+                                modelContext.insert(suggestion)
+                                try? modelContext.save()
+                                suggestedProspect = nil
+                                onSave()
+
+                                // pull the next suggestion in the background
+                                Task { await fetchNextSuggestedNeighbor() }
+                            },
+                            onDismiss: {
+                                // just close this one
+                                withAnimation { suggestedProspect = nil }
+                            }
+                        )
+                        .padding(.horizontal, 20)
+                    }
+                    
                     // Title and list type selector + add button on the right (Prospects only)
                     HStack {
                         Text("Your \(selectedList)")
@@ -95,91 +119,140 @@ struct RolodexView: View {
                     .padding(.top, 8)
                     .padding(.bottom, 4)
                     
-                    // Suggested Prospect card directly under the header action (Prospects only)
-                    if selectedList == "Prospects", let suggestion = suggestedProspect {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Suggested Neighbor")
-                                .font(.headline)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Label(suggestion.fullName, systemImage: "person.fill")
-                                Label(suggestion.address, systemImage: "mappin.and.ellipse")
-                            }
-                            .foregroundStyle(.secondary)
-                            
-                            Button {
-                                modelContext.insert(suggestion)
-                                suggestedProspect = nil
-                                onSave()
-                                
-                                Task {
-                                    await fetchNextSuggestedNeighbor()
-                                }
-                            } label: {
-                                Label("Add This Prospect", systemImage: "plus.circle.fill")
-                                    .font(.headline)
-                                    .frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(.blue)
-                        }
-                        .padding(.horizontal, 20)
-                    }
-                    
                     // Main list of prospects
                     List {
-                        
-                        let filteredProspects = prospects.filter {
-                            $0.list == selectedList &&
-                            (searchText.isEmpty ||
-                             $0.fullName.localizedCaseInsensitiveContains(searchText))
+                        if selectedList == "Customers" {
+                            let filtered = prospects.filter {
+                                $0.list == "Customers" &&
+                                (searchText.isEmpty ||
+                                 $0.fullName.localizedCaseInsensitiveContains(searchText))
+                            }
+
+                            ForEach(filtered, id: \.persistentModelID) { prospect in
+                                ProspectRowView(
+                                    prospect: prospect,
+                                    onTap: { selectedProspectID = prospect.persistentModelID },
+                                    onDoubleTap: { onDoubleTap?(prospect) }
+                                )
+                                .background(
+                                    NavigationLink(
+                                        destination: ProspectDetailsView(prospect: prospect),
+                                        tag: prospect.persistentModelID,
+                                        selection: $selectedProspectID
+                                    ) { EmptyView() }.hidden()
+                                )
+                            }
+                        } else {
+                            let filtered = prospects.filter {
+                                $0.list == "Prospects" &&
+                                (searchText.isEmpty ||
+                                 $0.fullName.localizedCaseInsensitiveContains(searchText))
+                            }
+
+                            ForEach(filtered, id: \.persistentModelID) { prospect in
+                                ProspectRowView(
+                                    prospect: prospect,
+                                    onTap: { selectedProspectID = prospect.persistentModelID },
+                                    onDoubleTap: { onDoubleTap?(prospect) }
+                                )
+                                .background(
+                                    NavigationLink(
+                                        destination: ProspectDetailsView(prospect: prospect),
+                                        tag: prospect.persistentModelID,
+                                        selection: $selectedProspectID
+                                    ) { EmptyView() }.hidden()
+                                )
+                            }
                         }
-                        
-                        ForEach(filteredProspects, id: \.persistentModelID) { prospect in
-                            ProspectRowView(
-                                prospect: prospect,
-                                onTap: {
-                                    selectedProspectID = prospect.persistentModelID
-                                },
-                                onDoubleTap: {
-                                    onDoubleTap?(prospect)
-                                }
-                            )
-                            .background(
-                                NavigationLink(
-                                    destination: ProspectDetailsView(prospect: prospect),
-                                    tag: prospect.persistentModelID,
-                                    selection: $selectedProspectID
-                                ) { EmptyView() }
-                                    .hidden()
-                            )
-                        }
-                        
                     }
                     .listStyle(.plain)
-                    .padding(.top, 8) // <-- this is to separate from the header area
+                    .padding(.top, 8)
                     
                 }
                 
+                // Floating toolbar with + action
                 ContactsToolbarView(
                     searchText: $searchText,
                     isSearchExpanded: $isSearchExpanded,
                     isSearchFocused: $isSearchFocused,
                     onAddTapped: {
-                        showingAddProspect = true
+                        if selectedList == "Customers" {
+                            showingAddCustomer = true
+                        } else {
+                            showingAddProspect = true
+                        }
                     }
                 )
             }
             .navigationTitle("")
-            .sheet(isPresented: $showingAddProspect) {
-                NewProspectView(
-                    selectedList: $selectedList,
-                    onSave: {
-                        showingAddProspect = false
-                        onSave()
+            .overlay(
+                Group {
+                    if showingAddProspect {
+                        Color.black.opacity(0.25)
+                            .ignoresSafeArea()
+                            .onTapGesture { showingAddProspect = false }
+
+                        ProspectCreateStepperView { newProspect in
+                            // Insert as a Prospect in the Prospects list
+                            modelContext.insert(newProspect)
+                            try? modelContext.save()
+
+                            selectedList = "Prospects"   // show Prospects tab
+                            searchText = ""              // avoid filtering it out
+                            showingAddProspect = false
+                            onSave()
+                        } onCancel: {
+                            showingAddProspect = false
+                        }
+                        .frame(width: 300, height: 300)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(16)
+                        .shadow(radius: 8)
+                        .position(x: UIScreen.main.bounds.midX,
+                                  y: UIScreen.main.bounds.midY * 0.9)
+                        .transition(.scale.combined(with: .opacity))
+                        .zIndex(2000)
                     }
-                )
-            }
+                }
+            )
+            // Customer stepper flow
+            .overlay(
+                Group {
+                    if showingAddCustomer {
+                        Color.black.opacity(0.25)
+                            .ignoresSafeArea()
+                            .onTapGesture { showingAddCustomer = false }
+
+                        CustomerCreateStepperView { newCustomer in
+                            // Instead of inserting a Customer, create a Prospect in the Customers list
+                            let p = Prospect(fullName: newCustomer.fullName,
+                                             address: newCustomer.address,
+                                             count: 0,
+                                             list: "Customers")
+                            p.contactEmail = newCustomer.contactEmail
+                            p.contactPhone = newCustomer.contactPhone
+
+                            modelContext.insert(p)
+                            try? modelContext.save()
+
+                            selectedList = "Customers"
+                            searchText = ""
+                            showingAddCustomer = false
+                            onSave()
+                        } onCancel: {
+                            showingAddCustomer = false
+                        }
+                        .frame(width: 300, height: 300)       // ⬅️ clamp size
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(16)
+                        .shadow(radius: 8)
+                        .position(x: UIScreen.main.bounds.midX,
+                                  y: UIScreen.main.bounds.midY * 0.9)
+                        .transition(.scale.combined(with: .opacity))
+                        .zIndex(2000)
+                    }
+                }
+            )
             .task {
                 if selectedList == "Prospects", suggestedProspect == nil {
                     await fetchNextSuggestedNeighbor()
