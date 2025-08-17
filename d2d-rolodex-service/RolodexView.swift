@@ -195,15 +195,36 @@ struct RolodexView: View {
                 )
             }
             .navigationTitle("")
-            .sheet(isPresented: $showingAddProspect) {
-                NewProspectView(
-                    selectedList: $selectedList,
-                    onSave: {
-                        showingAddProspect = false
-                        onSave()
+            .overlay(
+                Group {
+                    if showingAddProspect {
+                        Color.black.opacity(0.25)
+                            .ignoresSafeArea()
+                            .onTapGesture { showingAddProspect = false }
+
+                        ProspectCreateStepperView { newProspect in
+                            // Insert as a Prospect in the Prospects list
+                            modelContext.insert(newProspect)
+                            try? modelContext.save()
+
+                            selectedList = "Prospects"   // show Prospects tab
+                            searchText = ""              // avoid filtering it out
+                            showingAddProspect = false
+                            onSave()
+                        } onCancel: {
+                            showingAddProspect = false
+                        }
+                        .frame(width: 300, height: 300)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(16)
+                        .shadow(radius: 8)
+                        .position(x: UIScreen.main.bounds.midX,
+                                  y: UIScreen.main.bounds.midY * 0.9)
+                        .transition(.scale.combined(with: .opacity))
+                        .zIndex(2000)
                     }
-                )
-            }
+                }
+            )
             // Customer stepper flow
             .overlay(
                 Group {
