@@ -19,6 +19,7 @@ struct RolodexView: View {
     @State private var selectedProspectID: PersistentIdentifier?
     @State private var showingAddProspect = false
     @State private var suggestedProspect: Prospect?
+    @State private var showingAddCustomer = false
     @State private var suggestionSourceIndex = 0 // Track which customer we’re pulling from
     
     @State private var showActivityOnboarding = false
@@ -29,6 +30,7 @@ struct RolodexView: View {
 
     let availableLists = ["Prospects", "Customers"]
     @Query var prospects: [Prospect]
+    @Query private var customers: [Customer]
     
     var onDoubleTap: ((Prospect) -> Void)? = nil
 
@@ -41,6 +43,7 @@ struct RolodexView: View {
         self.onSave = onSave
         self.onDoubleTap = onDoubleTap
         _prospects = Query()
+        _customers = Query()
     }
     
     private var totalProspects: Int {
@@ -128,45 +131,66 @@ struct RolodexView: View {
                     
                     // Main list of prospects
                     List {
-                        
-                        let filteredProspects = prospects.filter {
-                            $0.list == selectedList &&
-                            (searchText.isEmpty ||
-                             $0.fullName.localizedCaseInsensitiveContains(searchText))
+                        if selectedList == "Customers" {
+                            let filtered = prospects.filter {
+                                $0.list == "Customers" &&
+                                (searchText.isEmpty ||
+                                 $0.fullName.localizedCaseInsensitiveContains(searchText))
+                            }
+
+                            ForEach(filtered, id: \.persistentModelID) { prospect in
+                                ProspectRowView(
+                                    prospect: prospect,
+                                    onTap: { selectedProspectID = prospect.persistentModelID },
+                                    onDoubleTap: { onDoubleTap?(prospect) }
+                                )
+                                .background(
+                                    NavigationLink(
+                                        destination: ProspectDetailsView(prospect: prospect),
+                                        tag: prospect.persistentModelID,
+                                        selection: $selectedProspectID
+                                    ) { EmptyView() }.hidden()
+                                )
+                            }
+                        } else {
+                            let filtered = prospects.filter {
+                                $0.list == "Prospects" &&
+                                (searchText.isEmpty ||
+                                 $0.fullName.localizedCaseInsensitiveContains(searchText))
+                            }
+
+                            ForEach(filtered, id: \.persistentModelID) { prospect in
+                                ProspectRowView(
+                                    prospect: prospect,
+                                    onTap: { selectedProspectID = prospect.persistentModelID },
+                                    onDoubleTap: { onDoubleTap?(prospect) }
+                                )
+                                .background(
+                                    NavigationLink(
+                                        destination: ProspectDetailsView(prospect: prospect),
+                                        tag: prospect.persistentModelID,
+                                        selection: $selectedProspectID
+                                    ) { EmptyView() }.hidden()
+                                )
+                            }
                         }
-                        
-                        ForEach(filteredProspects, id: \.persistentModelID) { prospect in
-                            ProspectRowView(
-                                prospect: prospect,
-                                onTap: {
-                                    selectedProspectID = prospect.persistentModelID
-                                },
-                                onDoubleTap: {
-                                    onDoubleTap?(prospect)
-                                }
-                            )
-                            .background(
-                                NavigationLink(
-                                    destination: ProspectDetailsView(prospect: prospect),
-                                    tag: prospect.persistentModelID,
-                                    selection: $selectedProspectID
-                                ) { EmptyView() }
-                                    .hidden()
-                            )
-                        }
-                        
                     }
                     .listStyle(.plain)
-                    .padding(.top, 8) // <-- this is to separate from the header area
+                    .padding(.top, 8)
                     
                 }
                 
+                // Floating toolbar with + action
                 ContactsToolbarView(
                     searchText: $searchText,
                     isSearchExpanded: $isSearchExpanded,
                     isSearchFocused: $isSearchFocused,
                     onAddTapped: {
-                        showingAddProspect = true
+                        if selectedList == "Customers" {
+                            showingAddCustomer = true
+                        } else {
+                            showingAddProspect = true
+                        }
                     }
                 )
             }
@@ -180,6 +204,44 @@ struct RolodexView: View {
                     }
                 )
             }
+            // Customer stepper flow
+            .overlay(
+                Group {
+                    if showingAddCustomer {
+                        Color.black.opacity(0.25)
+                            .ignoresSafeArea()
+                            .onTapGesture { showingAddCustomer = false }
+
+                        CustomerCreateStepperView { newCustomer in
+                            // Instead of inserting a Customer, create a Prospect in the Customers list
+                            let p = Prospect(fullName: newCustomer.fullName,
+                                             address: newCustomer.address,
+                                             count: 0,
+                                             list: "Customers")
+                            p.contactEmail = newCustomer.contactEmail
+                            p.contactPhone = newCustomer.contactPhone
+
+                            modelContext.insert(p)
+                            try? modelContext.save()
+
+                            selectedList = "Customers"
+                            searchText = ""
+                            showingAddCustomer = false
+                            onSave()
+                        } onCancel: {
+                            showingAddCustomer = false
+                        }
+                        .frame(width: 300, height: 300)       // ⬅️ clamp size
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(16)
+                        .shadow(radius: 8)
+                        .position(x: UIScreen.main.bounds.midX,
+                                  y: UIScreen.main.bounds.midY * 0.9)
+                        .transition(.scale.combined(with: .opacity))
+                        .zIndex(2000)
+                    }
+                }
+            )
             .task {
                 if selectedList == "Prospects", suggestedProspect == nil {
                     await fetchNextSuggestedNeighbor()
