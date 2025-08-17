@@ -47,14 +47,38 @@ struct ProspectDetailsView: View {
     @State private var selectedAppointmentDetails: Appointment?
     
     @State private var selectedTab: ProspectTab = .appointments
+    
+    // Keep a baseline snapshot to detect edits
+    private struct ProspectSnapshot: Equatable {
+        var fullName: String
+        var address: String
+        var phone: String
+        var email: String
+        var list: String
+    }
+    
+    @State private var baseline = ProspectSnapshot(fullName: "", address: "", phone: "", email: "", list: "")
+    
+    
+    // Computed dirty flag
+    private var isDirty: Bool {
+        let current = ProspectSnapshot(
+            fullName: prospect.fullName.trimmingCharacters(in: .whitespacesAndNewlines),
+            address: prospect.address.trimmingCharacters(in: .whitespacesAndNewlines),
+            phone: prospect.contactPhone.trimmingCharacters(in: .whitespacesAndNewlines),
+            email: prospect.contactEmail.trimmingCharacters(in: .whitespacesAndNewlines),
+            list: prospect.list
+        )
+        return current != baseline
+    }
 
     var body: some View {
         Form {
             // MARK: - Prospect Info Section
             Section(header: Text("Prospect Details")) {
                 TextField("Full Name", text: $prospect.fullName)
-                
-                // Address with auto suggest
+
+                // Address with auto suggest (unchanged)
                 VStack(alignment: .leading, spacing: 0) {
                     TextField("Address", text: $prospect.address)
                         .focused($isAddressFieldFocused)
@@ -72,20 +96,12 @@ struct ProspectDetailsView: View {
                                     isAddressFieldFocused = false
                                 } label: {
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text(result.title)
-                                            .font(.body)
-                                            .bold()
-                                            .lineLimit(1)
-
-                                        Text(result.subtitle)
-                                            .font(.subheadline)
-                                            .foregroundColor(.gray)
-                                            .lineLimit(1)
+                                        Text(result.title).font(.body).bold().lineLimit(1)
+                                        Text(result.subtitle).font(.subheadline).foregroundColor(.gray).lineLimit(1)
                                     }
                                     .padding()
                                 }
                                 .buttonStyle(.plain)
-
                                 Divider()
                             }
                         }
@@ -93,7 +109,7 @@ struct ProspectDetailsView: View {
                     }
                 }
             }
-            
+
             Section {
                 if prospect.list == "Prospects" {
                     ProspectActionsToolbar(prospect: prospect)
@@ -160,17 +176,40 @@ struct ProspectDetailsView: View {
             }
         }
         .navigationTitle("Edit Contact")
+        // Only show SAVE when there are edits; otherwise no trailing button (back arrow suffices)
         .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Done") {
-                    if validatePhoneNumber() {
-                        prospect.contactPhone = tempPhone
+            if isDirty {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        // If you later add phone/email editing on this screen,
+                        // do any validation here before saving.
+                        try? modelContext.save()
+
+                        // refresh baseline to the newly-saved values
+                        baseline = ProspectSnapshot(
+                            fullName: prospect.fullName.trimmingCharacters(in: .whitespacesAndNewlines),
+                            address: prospect.address.trimmingCharacters(in: .whitespacesAndNewlines),
+                            phone: prospect.contactPhone.trimmingCharacters(in: .whitespacesAndNewlines),
+                            email: prospect.contactEmail.trimmingCharacters(in: .whitespacesAndNewlines),
+                            list: prospect.list
+                        )
+
                         presentationMode.wrappedValue.dismiss()
                     }
                 }
             }
         }
+        // Capture the initial baseline
         .onAppear {
+            baseline = ProspectSnapshot(
+                fullName: prospect.fullName.trimmingCharacters(in: .whitespacesAndNewlines),
+                address: prospect.address.trimmingCharacters(in: .whitespacesAndNewlines),
+                phone: prospect.contactPhone.trimmingCharacters(in: .whitespacesAndNewlines),
+                email: prospect.contactEmail.trimmingCharacters(in: .whitespacesAndNewlines),
+                list: prospect.list
+            )
+
+            // keep your existing tempPhone setup if you still use it elsewhere
             tempPhone = prospect.contactPhone
         }
         // Sheet for conversion to customer
