@@ -88,6 +88,27 @@ struct RolodexView: View {
                     .padding(.horizontal, 20)
                     .padding(.top, 16)
                     
+                    // Suggested Prospect scorecard (Prospects only)
+                    if selectedList == "Prospects", let suggestion = suggestedProspect {
+                        SuggestedProspectScorecardView(
+                            suggestion: suggestion,
+                            onAdd: {
+                                modelContext.insert(suggestion)
+                                try? modelContext.save()
+                                suggestedProspect = nil
+                                onSave()
+
+                                // pull the next suggestion in the background
+                                Task { await fetchNextSuggestedNeighbor() }
+                            },
+                            onDismiss: {
+                                // just close this one
+                                withAnimation { suggestedProspect = nil }
+                            }
+                        )
+                        .padding(.horizontal, 20)
+                    }
+                    
                     // Title and list type selector + add button on the right (Prospects only)
                     HStack {
                         Text("Your \(selectedList)")
@@ -97,37 +118,6 @@ struct RolodexView: View {
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
                     .padding(.bottom, 4)
-                    
-                    // Suggested Prospect card directly under the header action (Prospects only)
-                    if selectedList == "Prospects", let suggestion = suggestedProspect {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Suggested Neighbor")
-                                .font(.headline)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Label(suggestion.fullName, systemImage: "person.fill")
-                                Label(suggestion.address, systemImage: "mappin.and.ellipse")
-                            }
-                            .foregroundStyle(.secondary)
-                            
-                            Button {
-                                modelContext.insert(suggestion)
-                                suggestedProspect = nil
-                                onSave()
-                                
-                                Task {
-                                    await fetchNextSuggestedNeighbor()
-                                }
-                            } label: {
-                                Label("Add This Prospect", systemImage: "plus.circle.fill")
-                                    .font(.headline)
-                                    .frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(.blue)
-                        }
-                        .padding(.horizontal, 20)
-                    }
                     
                     // Main list of prospects
                     List {
