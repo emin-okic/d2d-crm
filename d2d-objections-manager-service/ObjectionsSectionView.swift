@@ -8,17 +8,22 @@ import SwiftUI
 import SwiftData
 
 struct ObjectionsSectionView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query private var objections: [Objection]
+
     @State private var selectedObjection: Objection?
     @State private var showingAddObjection = false
 
+    // ✅ Multi-delete state
+    @State private var isEditing = false
+    @State private var selectedObjections: Set<Objection> = []
+    @State private var showDeleteConfirm = false
+    @State private var trashPulse = false
+
     var body: some View {
         ZStack {
-            // CONTENT pinned to top-left
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-
-                    // Header (no add button here anymore)
                     HStack {
                         Text("Biggest Objections")
                             .font(.headline)
@@ -40,27 +45,38 @@ struct ObjectionsSectionView: View {
 
                         VStack(spacing: 0) {
                             ForEach(ranked) { ranked in
-                                Button {
-                                    selectedObjection = ranked.objection
-                                } label: {
-                                    HStack {
-                                        Text("#\(ranked.rank)")
-                                            .frame(width: 40, alignment: .leading)
-                                        VStack(alignment: .leading) {
-                                            Text(ranked.objection.text)
-                                                .font(.headline)
-                                        }
-                                        .padding(.vertical, 10)
-                                        Spacer()
-                                        Text("×\(ranked.objection.timesHeard)")
-                                            .foregroundColor(.secondary)
+                                HStack {
+                                    if isEditing {
+                                        Image(systemName: selectedObjections.contains(ranked.objection) ? "checkmark.circle.fill" : "circle")
+                                            .foregroundColor(.blue)
                                     }
-                                    .padding(.vertical, 6)
-                                    .padding(.horizontal, 20)
+
+                                    Button {
+                                        if isEditing {
+                                            toggleSelection(for: ranked.objection)
+                                        } else {
+                                            selectedObjection = ranked.objection
+                                        }
+                                    } label: {
+                                        HStack {
+                                            Text("#\(ranked.rank)")
+                                                .frame(width: 40, alignment: .leading)
+                                            VStack(alignment: .leading) {
+                                                Text(ranked.objection.text)
+                                                    .font(.headline)
+                                            }
+                                            .padding(.vertical, 10)
+                                            Spacer()
+                                            Text("×\(ranked.objection.timesHeard)")
+                                                .foregroundColor(.secondary)
+                                        }
+                                        .padding(.vertical, 6)
+                                        .padding(.horizontal, 20)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
 
-                                Divider()
-                                    .padding(.leading, 60) // aligns with text stack
+                                Divider().padding(.leading, 60)
                             }
                         }
                     }
@@ -69,8 +85,9 @@ struct ObjectionsSectionView: View {
                 .padding(.top, 12)
             }
 
-            // Floating bottom-left toolbar (matches your other screens)
+            // Floating toolbar
             VStack(spacing: 12) {
+                // Add Objection
                 Button {
                     showingAddObjection = true
                 } label: {
@@ -81,6 +98,56 @@ struct ObjectionsSectionView: View {
                         .background(Circle().fill(Color.blue))
                         .shadow(radius: 4)
                 }
+
+                // Trash (multi-delete toggle/confirm)
+                Button {
+                    if isEditing {
+                        if selectedObjections.isEmpty {
+                            withAnimation {
+                                isEditing = false
+                                trashPulse = false
+                            }
+                        } else {
+                            showDeleteConfirm = true
+                        }
+                    } else {
+                        withAnimation {
+                            isEditing = true
+                            trashPulse = true
+                        }
+                    }
+                } label: {
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: "trash.fill")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(
+                                Circle().fill(isEditing ? Color.red : Color.blue)
+                            )
+                            .scaleEffect(isEditing ? (trashPulse ? 1.06 : 1.0) : 1.0)
+                            .rotationEffect(.degrees(isEditing ? (trashPulse ? 2 : -2) : 0))
+                            .shadow(color: (isEditing ? Color.red.opacity(0.45) : Color.black.opacity(0.25)),
+                                    radius: 6, x: 0, y: 2)
+                            .animation(
+                                isEditing
+                                ? .easeInOut(duration: 0.75).repeatForever(autoreverses: true)
+                                : .default,
+                                value: trashPulse
+                            )
+
+                        if isEditing && !selectedObjections.isEmpty {
+                            Text("\(selectedObjections.count)")
+                                .font(.caption2).bold()
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Capsule().fill(Color.black.opacity(0.7)))
+                                .offset(x: 10, y: -10)
+                        }
+                    }
+                }
+                .accessibilityLabel(isEditing ? "Delete selected objections" : "Enter delete mode")
             }
             .padding(.bottom, 30)
             .padding(.leading, 20)
@@ -93,8 +160,34 @@ struct ObjectionsSectionView: View {
         .sheet(isPresented: $showingAddObjection) {
             AddObjectionView()
         }
-        .onAppear {
-            print("📦 Loaded objections: \(objections.map(\.text))")
+        .alert("Delete selected objections?", isPresented: $showDeleteConfirm) {
+            Button("Delete", role: .destructive) {
+                deleteSelected()
+                withAnimation {
+                    isEditing = false
+                    trashPulse = false
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This action can’t be undone.")
         }
+    }
+
+    // MARK: - Helpers
+    private func toggleSelection(for obj: Objection) {
+        if selectedObjections.contains(obj) {
+            selectedObjections.remove(obj)
+        } else {
+            selectedObjections.insert(obj)
+        }
+    }
+
+    private func deleteSelected() {
+        for obj in selectedObjections {
+            modelContext.delete(obj)
+        }
+        try? modelContext.save()
+        selectedObjections.removeAll()
     }
 }
