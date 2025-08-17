@@ -45,6 +45,11 @@ struct FollowUpAssistantView: View {
             .first?.text ?? "—"
     }
 
+    // promo/walkthrough celebration state (same flow as Map)
+    @State private var showPromo = false
+    @State private var showWalkthrough = false
+    @State private var showCelebration = false
+
     var body: some View {
         NavigationView {
             ZStack {
@@ -95,18 +100,7 @@ struct FollowUpAssistantView: View {
 
                 // MARK: - Floating bottom-left toolbar (Mic above +)
                 VStack(spacing: 12) {
-                    // Mic (opens RecordingsView)
-                    Button {
-                        showRecordingsSheet = true
-                    } label: {
-                        Image(systemName: "mic.fill")
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(width: 50, height: 50)
-                            .background(Circle().fill(Color.blue))
-                            .shadow(radius: 4)
-                    }
-
+                    
                     // Plus (opens Prospect picker -> Schedule)
                     Button {
                         showingProspectPicker = true
@@ -118,6 +112,38 @@ struct FollowUpAssistantView: View {
                             .background(Circle().fill(Color.blue))
                             .shadow(radius: 4)
                     }
+                    
+                    // Mic (opens RecordingsView when unlocked; otherwise promo)
+                    Button {
+                        if studioUnlocked {
+                            showRecordingsSheet = true
+                        } else {
+                            showPromo = true
+                        }
+                    } label: {
+                        // Reuse your existing icons if these types are in scope.
+                        // If not, you can keep the simple colored circle like before.
+                        Group {
+                            if studioUnlocked {
+                                // Unlocked look
+                                Image(systemName: "mic.circle.fill")
+                                    .resizable()
+                                    .frame(width: 50, height: 50)
+                                    .symbolRenderingMode(.palette)
+                                    .foregroundStyle(.white, recordingFeaturesActive ? .blue : .red)
+                                    .shadow(radius: 4)
+                            } else {
+                                // Hidden/locked look
+                                Image(systemName: "mic.circle.fill")
+                                    .resizable()
+                                    .frame(width: 50, height: 50)
+                                    .symbolRenderingMode(.hierarchical)
+                                    .foregroundColor(Color(.darkGray))
+                                    .shadow(radius: 4)
+                            }
+                        }
+                    }
+
                 }
                 .padding(.bottom, 30)
                 .padding(.leading, 20)
@@ -133,6 +159,30 @@ struct FollowUpAssistantView: View {
             .navigationBarTitleDisplayMode(.inline)
 
             // SHEETS
+            
+            // Promo to request App Store review → unlock
+            .sheet(isPresented: $showPromo) {
+                RecordingStudioPromo {
+                    // onUnlock callback
+                    studioUnlocked = true
+                    showPromo = false
+                    showCelebration = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
+                        showCelebration = false
+                        showWalkthrough = true
+                    }
+                }
+            }
+
+            // Quick walkthrough after unlocking
+            .sheet(isPresented: $showWalkthrough) {
+                RecordingStudioWalkthrough { showWalkthrough = false }
+            }
+
+            // Full-screen confetti celebration when unlocked
+            .fullScreenCover(isPresented: $showCelebration) {
+                FullScreenCelebrationView(dimOpacity: 0.08)
+            }
 
             // Top Objections
             .sheet(isPresented: $showTopObjectionsSheet) {
