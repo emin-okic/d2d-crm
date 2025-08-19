@@ -91,11 +91,13 @@ struct FollowUpAssistantView: View {
                         // MARK: - Appointments (no tabs now)
                         // AppointmentsSectionView already scrolls and is clamped to 300pt
                         ScrollView {
-                            AppointmentsSectionView()
+                            AppointmentsContainerView()
+                                .frame(maxHeight: 400)
+                                .padding(.horizontal, 20)
                         }
-                        .frame(maxHeight: 400)
+                        .frame(maxHeight: 500)
                     }
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 5)
                 }
 
                 // MARK: - Floating bottom-left toolbar (Mic above +)

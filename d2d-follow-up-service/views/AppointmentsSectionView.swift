@@ -27,6 +27,8 @@ struct AppointmentsSectionView: View {
         let past = appointments.filter { $0.date <  now }.sorted { $0.date > $1.date }
         return filter == .upcoming ? ups : past
     }
+    
+    private let rowHeight: CGFloat = 74
 
     var body: some View {
         ZStack {
@@ -73,10 +75,12 @@ struct AppointmentsSectionView: View {
                                     } label: {
                                         AppointmentRowView(appt: appt)
                                     }
-                                    Divider().padding(.leading)
+                                    Divider()
                                 }
                             }
+                            .padding(.horizontal, 10)
                         }
+                        .frame(maxHeight: rowHeight * 3)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .topLeading)
