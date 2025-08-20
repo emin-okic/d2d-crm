@@ -1,5 +1,5 @@
 {
-  "originHash" : "21162e868c61f336269cf16f9db325f13c0f696fb118e6d822dca382faa8a894",
+  "originHash" : "d0cff75121b0214f256cda9cbe276fdda090b4e467302c8417501de673596cbe",
   "pins" : [
     {
       "identity" : "phonenumberkit",
@@ -8,6 +8,15 @@
       "state" : {
         "revision" : "4eda4fe8f3cf83411ee55a08adefba21b1557c3f",
         "version" : "4.1.3"
+      }
+    },
+    {
+      "identity" : "salesforcemobilesdk-ios-spm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/forcedotcom/SalesforceMobileSDK-iOS-SPM",
+      "state" : {
+        "revision" : "2ec4395299548c4e4d333c502d9d2f295b4efbd3",
+        "version" : "13.0.1"
       }
     },
     {

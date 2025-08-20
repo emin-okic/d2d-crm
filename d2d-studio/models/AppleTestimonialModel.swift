@@ -1,15 +1,14 @@
 //
-//  AppStoreReviewHelper.swift
+//  AppleTestimonialModel.swift
 //  d2d-studio
 //
-//  Created by Emin Okic on 8/8/25.
+//  Created by Emin Okic on 8/20/25.
 //
-
 
 import StoreKit
 import UIKit
 
-enum AppStoreReviewHelper {
+enum AppleTestimonialModel {
     /// Call this from a visible UI moment. If SKStoreReviewController
     /// decides not to show (quota), we deep-link to the review page.
     static func requestReviewOrOpenStore(appId: String) {

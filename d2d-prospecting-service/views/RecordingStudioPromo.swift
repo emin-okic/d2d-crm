@@ -83,7 +83,7 @@ struct RecordingStudioPromo: View {
                     Button {
                         openedReviewAt = Date()
                         pendingUnlockFromReview = true
-                        AppStoreReviewHelper.requestReviewOrOpenStore(appId: appId)
+                        AppleTestimonialModel.requestReviewOrOpenStore(appId: appId)
 
                         // Fallback unlock if Apple shows in-app prompt (no scene change)
                         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {

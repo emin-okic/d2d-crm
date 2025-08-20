@@ -9,6 +9,11 @@
 /* Begin PBXBuildFile section */
 		C53F34042DE9E60900372BEE /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = C53F34032DE9E60900372BEE /* SQLite */; };
 		C5855D892DF073A700B479AE /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = C5855D882DF073A300B479AE /* .gitignore */; };
+		C5D6A2482E565F4C002C41AF /* MobileSync in Frameworks */ = {isa = PBXBuildFile; productRef = C5D6A2472E565F4C002C41AF /* MobileSync */; };
+		C5D6A24A2E565F4C002C41AF /* SalesforceAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = C5D6A2492E565F4C002C41AF /* SalesforceAnalytics */; };
+		C5D6A24C2E565F4C002C41AF /* SalesforceSDKCommon in Frameworks */ = {isa = PBXBuildFile; productRef = C5D6A24B2E565F4C002C41AF /* SalesforceSDKCommon */; };
+		C5D6A24E2E565F4C002C41AF /* SalesforceSDKCore in Frameworks */ = {isa = PBXBuildFile; productRef = C5D6A24D2E565F4C002C41AF /* SalesforceSDKCore */; };
+		C5D6A2502E565F4C002C41AF /* SmartStore in Frameworks */ = {isa = PBXBuildFile; productRef = C5D6A24F2E565F4C002C41AF /* SmartStore */; };
 		C5E6A7202E2BE6CD00EC05F4 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C5E6A71F2E2BE6CD00EC05F4 /* WidgetKit.framework */; };
 		C5E6A7222E2BE6CD00EC05F4 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C5E6A7212E2BE6CD00EC05F4 /* SwiftUI.framework */; };
 		C5E6A72F2E2BE6CD00EC05F4 /* d2d-widget-serviceExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C5E6A71D2E2BE6CD00EC05F4 /* d2d-widget-serviceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -182,7 +187,12 @@
 			files = (
 				C5FB3DCF2E2D81FD00586E5D /* PhoneNumberKit-Static in Frameworks */,
 				C53F34042DE9E60900372BEE /* SQLite in Frameworks */,
+				C5D6A24A2E565F4C002C41AF /* SalesforceAnalytics in Frameworks */,
+				C5D6A24E2E565F4C002C41AF /* SalesforceSDKCore in Frameworks */,
 				C5FB3DCB2E2D81FD00586E5D /* PhoneNumberKit in Frameworks */,
+				C5D6A2482E565F4C002C41AF /* MobileSync in Frameworks */,
+				C5D6A2502E565F4C002C41AF /* SmartStore in Frameworks */,
+				C5D6A24C2E565F4C002C41AF /* SalesforceSDKCommon in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -300,6 +310,11 @@
 				C53F34032DE9E60900372BEE /* SQLite */,
 				C5FB3DCA2E2D81FD00586E5D /* PhoneNumberKit */,
 				C5FB3DCE2E2D81FD00586E5D /* PhoneNumberKit-Static */,
+				C5D6A2472E565F4C002C41AF /* MobileSync */,
+				C5D6A2492E565F4C002C41AF /* SalesforceAnalytics */,
+				C5D6A24B2E565F4C002C41AF /* SalesforceSDKCommon */,
+				C5D6A24D2E565F4C002C41AF /* SalesforceSDKCore */,
+				C5D6A24F2E565F4C002C41AF /* SmartStore */,
 			);
 			productName = "d2d-map-service";
 			productReference = C5BE4B342DE7CC9E005C37B1 /* d2d-studio.app */;
@@ -412,6 +427,7 @@
 			packageReferences = (
 				C53F34022DE9E5D900372BEE /* XCRemoteSwiftPackageReference "SQLite" */,
 				C5FB3DC92E2D81FD00586E5D /* XCRemoteSwiftPackageReference "PhoneNumberKit" */,
+				C5D6A2462E565F4C002C41AF /* XCRemoteSwiftPackageReference "SalesforceMobileSDK-iOS-SPM" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C5BE4B352DE7CC9E005C37B1 /* Products */;
@@ -914,6 +930,14 @@
 				minimumVersion = 0.15.3;
 			};
 		};
+		C5D6A2462E565F4C002C41AF /* XCRemoteSwiftPackageReference "SalesforceMobileSDK-iOS-SPM" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/forcedotcom/SalesforceMobileSDK-iOS-SPM";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 13.0.1;
+			};
+		};
 		C5FB3DC92E2D81FD00586E5D /* XCRemoteSwiftPackageReference "PhoneNumberKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/marmelroy/PhoneNumberKit";
@@ -929,6 +953,31 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C53F34022DE9E5D900372BEE /* XCRemoteSwiftPackageReference "SQLite" */;
 			productName = SQLite;
+		};
+		C5D6A2472E565F4C002C41AF /* MobileSync */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5D6A2462E565F4C002C41AF /* XCRemoteSwiftPackageReference "SalesforceMobileSDK-iOS-SPM" */;
+			productName = MobileSync;
+		};
+		C5D6A2492E565F4C002C41AF /* SalesforceAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5D6A2462E565F4C002C41AF /* XCRemoteSwiftPackageReference "SalesforceMobileSDK-iOS-SPM" */;
+			productName = SalesforceAnalytics;
+		};
+		C5D6A24B2E565F4C002C41AF /* SalesforceSDKCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5D6A2462E565F4C002C41AF /* XCRemoteSwiftPackageReference "SalesforceMobileSDK-iOS-SPM" */;
+			productName = SalesforceSDKCommon;
+		};
+		C5D6A24D2E565F4C002C41AF /* SalesforceSDKCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5D6A2462E565F4C002C41AF /* XCRemoteSwiftPackageReference "SalesforceMobileSDK-iOS-SPM" */;
+			productName = SalesforceSDKCore;
+		};
+		C5D6A24F2E565F4C002C41AF /* SmartStore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5D6A2462E565F4C002C41AF /* XCRemoteSwiftPackageReference "SalesforceMobileSDK-iOS-SPM" */;
+			productName = SmartStore;
 		};
 		C5FB3DCA2E2D81FD00586E5D /* PhoneNumberKit */ = {
 			isa = XCSwiftPackageProductDependency;
