@@ -49,7 +49,7 @@ struct RootView: View {
             }
             .tag(0)
 
-            RolodexView(
+            ContactsScreen(
                 selectedList: $selectedList,
                 onSave: { showingAddProspect = false },
                 onDoubleTap: { prospect in
