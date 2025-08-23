@@ -5,14 +5,12 @@
 //  Created by Emin Okic on 8/23/25.
 //
 
-
 import SwiftUI
 
 public struct AdImagePopupView: View {
     let ad: Ad
     let onDismiss: () -> Void
     let onClick: (Ad) -> Void
-
     @Environment(\.openURL) private var openURL
 
     public init(ad: Ad, onDismiss: @escaping () -> Void, onClick: @escaping (Ad) -> Void) {
@@ -23,44 +21,46 @@ public struct AdImagePopupView: View {
 
     public var body: some View {
         ZStack(alignment: .topTrailing) {
-            // Card container for depth + rounded corners
             VStack(spacing: 0) {
                 if let imageName = ad.imageName {
                     let tapAll = ad.tapEntireImage ?? true
-                    ZStack {
-                        Image(imageName)
-                            .resizable()
-                            .scaledToFit()
-                            .accessibilityLabel(Text(ad.title))
-                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                            .shadow(color: .black.opacity(0.1), radius: 14, y: 8)
-                        // Optional: subtle gradient at bottom if you ever add inline CTA button text
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        guard tapAll else { return }
-                        onClick(ad)
-                        openURL(ad.destination)
-                    }
+                    Image(imageName)
+                        .resizable()
+                        .scaledToFit()
+                        .accessibilityLabel(Text(ad.title))
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .shadow(color: .black.opacity(0.12), radius: 14, y: 8)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            guard tapAll else { return }
+                            onClick(ad)
+                            openURL(ad.destination)
+                        }
                 } else {
-                    // Fallback to text version if no imageName present
                     AdPopupView(ad: ad, onDismiss: onDismiss, onClick: onClick)
                 }
             }
-            .padding(0)
 
-            // Close (X)
+            // ✅ White X with depth (inner stroke + shadow) for light/white backgrounds
             Button(action: onDismiss) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(.secondary)
-                    .padding(8)
-                    .background(Color.clear)
+                ZStack {
+                    Circle()
+                        .fill(Color.white)
+                        .shadow(color: .black.opacity(0.25), radius: 6, y: 2)
+                    Circle()
+                        .stroke(Color.black.opacity(0.15), lineWidth: 1)
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.black.opacity(0.8))
+                }
+                .frame(width: 28, height: 28)
+                .padding(6)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(Text("Close"))
         }
         .onAppear { AdEngine.shared.notify(.impression, ad: ad) }
-        .frame(maxWidth: 360)   // good for 300x250 / 320x200 creative sizes
+        .frame(maxWidth: 360)
         .padding(.horizontal, 16)
     }
 }
