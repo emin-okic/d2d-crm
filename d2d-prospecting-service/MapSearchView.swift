@@ -180,6 +180,16 @@ struct MapSearchView: View {
                     onSelectResult: { handleCompletionTap($0) }
                 )
             }
+            // inside body chain where you had the presenter & lifecycle hooks
+            .presentRotatingAdsCentered()
+            .onAppear {
+                // 🔹 Show exactly one ad for this app session (centered). Will differ each launch.
+                AdEngine.shared.startSingleShot(inventory: AdDemoInventory.defaultAds)
+            }
+            .onDisappear {
+                // No-op for single-shot, but keep if you want to explicitly clear.
+                AdEngine.shared.stop()
+            }
             // Stepper overlay — presented ONLY when stepperState is set (Follow-Up Later path)
             .overlay(
               Group {
