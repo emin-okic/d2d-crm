@@ -180,6 +180,14 @@ struct MapSearchView: View {
                     onSelectResult: { handleCompletionTap($0) }
                 )
             }
+            // Somewhere in MapSearchView body chain, probably the top-level ZStack:
+            .presentRotatingAdsCentered()
+            .onAppear {
+                AdEngine.shared.start(inventory: AdDemoInventory.defaultAds, periodSeconds: 20)
+            }
+            .onDisappear {
+                AdEngine.shared.stop()
+            }
             // Stepper overlay — presented ONLY when stepperState is set (Follow-Up Later path)
             .overlay(
               Group {
