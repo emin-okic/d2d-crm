@@ -58,13 +58,33 @@ struct d2d_studioApp: App {
 
     /// Route incoming URLs into the correct state change
     private func handleDeepLink(_ url: URL) {
-        guard url.scheme == "d2dcrm",
-              url.host == "todaysappointments"
-        else { return }
+        guard url.scheme == "d2dcrm" else { return }
 
-        // trigger the sheet
-        showTodaysAppointments = true
+        if url.host == "todaysappointments" {
+            showTodaysAppointments = true
+            return
+        }
+
+        if url.host == "import" {
+            if let components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
+                let params = Dictionary(uniqueKeysWithValues: components.queryItems?.map { ($0.name, $0.value ?? "") } ?? [])
+                if let name = params["fullName"], let address = params["address"] {
+                    let phone = params["phone"] ?? ""
+                    let email = params["email"] ?? ""
+
+                    let newProspect = Prospect(fullName: name, address: address, list: "Prospects")
+                    newProspect.contactPhone = phone
+                    newProspect.contactEmail = email
+
+                    // Save into SwiftData
+                    let context = sharedModelContainer.mainContext
+                    context.insert(newProspect)
+                    try? context.save()
+                }
+            }
+        }
     }
+    
 }
 
 /// A shared SwiftData `ModelContainer` configured to store app data in a custom folder.

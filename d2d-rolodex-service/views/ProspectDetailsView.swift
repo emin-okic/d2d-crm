@@ -178,6 +178,7 @@ struct ProspectDetailsView: View {
         .navigationTitle("Edit Contact")
         // Only show SAVE when there are edits; otherwise no trailing button (back arrow suffices)
         .toolbar {
+            
             if isDirty {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
@@ -198,6 +199,15 @@ struct ProspectDetailsView: View {
                     }
                 }
             }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    shareProspect(prospect)
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                }
+            }
+            
         }
         // Capture the initial baseline
         .onAppear {
@@ -255,6 +265,34 @@ struct ProspectDetailsView: View {
         // Sheet for viewing appointment details
         .sheet(item: $selectedAppointmentDetails) { appointment in
             AppointmentDetailsView(appointment: appointment)
+        }
+    }
+    
+    private func shareProspect(_ prospect: Prospect) {
+        // Build deep link: d2dcrm://import?fullName=...&address=...&phone=...
+        var components = URLComponents()
+        components.scheme = "d2dcrm"
+        components.host = "import"
+        components.queryItems = [
+            URLQueryItem(name: "fullName", value: prospect.fullName),
+            URLQueryItem(name: "address", value: prospect.address),
+            URLQueryItem(name: "phone", value: prospect.contactPhone),
+            URLQueryItem(name: "email", value: prospect.contactEmail)
+        ]
+
+        guard let url = components.url else { return }
+
+        // Share both the deep link (works if app is installed)
+        // AND the App Store link (fallback if not installed)
+        let appStoreURL = URL(string: "https://apps.apple.com/us/app/d2d-studio/id6748091911")!
+        let activityVC = UIActivityViewController(
+            activityItems: [url, appStoreURL],
+            applicationActivities: nil
+        )
+
+        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let root = scene.windows.first?.rootViewController {
+            root.present(activityVC, animated: true)
         }
     }
     
