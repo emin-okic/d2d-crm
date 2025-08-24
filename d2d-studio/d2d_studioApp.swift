@@ -11,6 +11,9 @@ import Foundation
 
 @main
 struct d2d_studioApp: App {
+    
+    @State private var sessionId = UUID().uuidString
+    
     @State private var showSplash = true
     @State private var deepLinkURL: URL?
     @State private var showTodaysAppointments = false
@@ -89,7 +92,12 @@ let sharedModelContainer: ModelContainer = {
         Recording.self
     ])
 
-    let config = ModelConfiguration(schema: schema, url: url)
+    // ⬇️ Explicitly opt OUT of CloudKit mirroring
+    let config = ModelConfiguration(
+        schema: schema,
+        url: url,
+        cloudKitDatabase: .none   // keep local-only
+    )
 
     do {
         return try ModelContainer(for: schema, configurations: [config])

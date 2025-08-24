@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import UIKit
 
 public final class AdEngine: ObservableObject {
     public static let shared = AdEngine()
@@ -50,10 +51,30 @@ public final class AdEngine: ObservableObject {
     public func stop() { timerCancellable?.cancel(); timerCancellable = nil; currentAd = nil }
 
     public func notify(_ event: AdEvent, ad: Ad) {
+        // Local analytics stay the same
         switch event {
         case .impression: AdStorage.shared.recordImpression(ad)
         case .click:      AdStorage.shared.recordClick(ad)
         case .dismiss:    AdStorage.shared.recordDismiss(ad)
         }
+
+        // Map to CloudKit event strings:
+        // - .impression -> "impression"
+        // - .click      -> "click"
+        // - .dismiss    -> "cancel"   <-- changed from previous "click"
+        let cloudEvent: String
+        switch event {
+        case .impression: cloudEvent = "impression"
+        case .click:      cloudEvent = "click"
+        case .dismiss:    cloudEvent = "cancel"
+        }
+
+        let payload = ImpressionPayload(
+            adId: ad.id,
+            event: cloudEvent,
+            timestamp: Date()
+        )
+        CloudKitAdLogger.shared.log(payload)
     }
+    
 }
