@@ -9,7 +9,7 @@
 import CloudKit
 
 enum AdCloud {
-    static let container = CKContainer.default()
+    static let container = CKContainer(identifier: "iCloud.com.d2d-studio")
     static let db = container.publicCloudDatabase
 }
 
