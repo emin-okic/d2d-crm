@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import UIKit
 
 public final class AdEngine: ObservableObject {
     public static let shared = AdEngine()
@@ -49,11 +50,26 @@ public final class AdEngine: ObservableObject {
     public func start(inventory: [Ad], periodSeconds: TimeInterval = 20) { /* no-op in single-shot mode */ }
     public func stop() { timerCancellable?.cancel(); timerCancellable = nil; currentAd = nil }
 
+    private let sessionId = UUID().uuidString // or inject from App
+
     public func notify(_ event: AdEvent, ad: Ad) {
+        let mappedEvent = (event == .dismiss) ? AdEvent.click : event
+        // existing local storage hooks
         switch event {
         case .impression: AdStorage.shared.recordImpression(ad)
         case .click:      AdStorage.shared.recordClick(ad)
         case .dismiss:    AdStorage.shared.recordDismiss(ad)
         }
+
+        let payload = ImpressionPayload(
+            adId: ad.id,
+            event: mappedEvent.rawValue,
+            timestamp: Date(),
+            sessionId: sessionId,
+            appBuild: Bundle.main.infoDictionary?["CFBundleVersion"] as? String,
+            deviceModel: UIDevice.current.model
+        )
+        CloudKitAdLogger.shared.log(payload)
     }
+    
 }

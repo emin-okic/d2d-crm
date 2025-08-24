@@ -2,58 +2,37 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>This app uses the microphone to record knock conversations for training and review.</string>
-
-	<key>UIUserInterfaceStyle</key>
-	<string>Light</string>
-	
-	<key>CFBundleURLTypes</key>
-	<array>
-	<dict>
-		<!-- A unique identifier for this URL type -->
-		<key>CFBundleURLName</key>
-		<string>com.okic.d2dcrm</string>
-		<!-- The schemes your app will handle -->
-		<key>CFBundleURLSchemes</key>
-		<array>
-		<string>d2dcrm</string>
-		</array>
-	</dict>
-	</array>
-	<!-- Required for document support -->
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleTypeName</key>
 			<string>MKDirectionsRequest</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>com.apple.maps.directionsrequest</string>
 			</array>
-			<key>LSHandlerRank</key>
-			<string>Alternate</string>
 		</dict>
 	</array>
-
-	<!-- Required for document-based apps -->
-	<key>LSSupportsOpeningDocumentsInPlace</key>
-	<true/>
-
-	<!-- Directions support -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.okic.d2dcrm</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>d2dcrm</string>
+			</array>
+		</dict>
+	</array>
 	<key>MKDirectionsApplicationSupportedModes</key>
 	<array>
 		<string>MKDirectionsModeCar</string>
 	</array>
-
-	<!-- Encryption usage declaration -->
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
-
-	<key>NSCalendarsUsageDescription</key>
-	<string>This app uses your calendar to schedule follow-up appointments.</string>
-
-	<key>NSContactsUsageDescription</key>
-<string>This app uses contacts to export prospects.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>

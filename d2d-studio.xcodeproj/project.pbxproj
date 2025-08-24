@@ -642,14 +642,20 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "d2d-studio/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "D2D Studio";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "This app uses your calendar to schedule follow-up appointments.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "This app uses contacts to export prospects.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "\"This app needs access to your location to show it on the map.\"";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app uses the microphone to record knock conversations for training and review.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "We use your voice to improve sales objection handling.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -685,14 +691,20 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "d2d-studio/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "D2D Studio";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "This app uses your calendar to schedule follow-up appointments.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "This app uses contacts to export prospects.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "\"This app needs access to your location to show it on the map.\"";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app uses the microphone to record knock conversations for training and review.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "We use your voice to improve sales objection handling.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
