@@ -14,7 +14,7 @@ enum AdCloud {
 
 struct ImpressionPayload {
     let adId: String
-    let event: String   // "impression" or "click" (dismiss counts as click)
+    let event: String   // "impression" | "click" | "cancel"
     let timestamp: Date
 }
 

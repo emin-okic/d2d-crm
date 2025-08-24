@@ -51,19 +51,27 @@ public final class AdEngine: ObservableObject {
     public func stop() { timerCancellable?.cancel(); timerCancellable = nil; currentAd = nil }
 
     public func notify(_ event: AdEvent, ad: Ad) {
-        let mappedEvent = (event == .dismiss) ? AdEvent.click : event
-
-        // keep your local analytics
+        // Local analytics stay the same
         switch event {
         case .impression: AdStorage.shared.recordImpression(ad)
         case .click:      AdStorage.shared.recordClick(ad)
         case .dismiss:    AdStorage.shared.recordDismiss(ad)
         }
 
-        // simplified payload
+        // Map to CloudKit event strings:
+        // - .impression -> "impression"
+        // - .click      -> "click"
+        // - .dismiss    -> "cancel"   <-- changed from previous "click"
+        let cloudEvent: String
+        switch event {
+        case .impression: cloudEvent = "impression"
+        case .click:      cloudEvent = "click"
+        case .dismiss:    cloudEvent = "cancel"
+        }
+
         let payload = ImpressionPayload(
             adId: ad.id,
-            event: mappedEvent.rawValue,
+            event: cloudEvent,
             timestamp: Date()
         )
         CloudKitAdLogger.shared.log(payload)
