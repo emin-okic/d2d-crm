@@ -284,11 +284,19 @@ struct ProspectDetailsView: View {
 
         // Share both the deep link (works if app is installed)
         // AND the App Store link (fallback if not installed)
+        
+        let deepLink = components.url!
         let appStoreURL = URL(string: "https://apps.apple.com/us/app/d2d-studio/id6748091911")!
-        let activityVC = UIActivityViewController(
-            activityItems: [url, appStoreURL],
-            applicationActivities: nil
-        )
+
+        let message = """
+        Check out this contact in D2D CRM!
+        
+        Download here: \(appStoreURL.absoluteString)
+        
+        After installing, open this link to import: \(deepLink.absoluteString)
+        """
+
+        let activityVC = UIActivityViewController(activityItems: [message], applicationActivities: nil)
 
         if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let root = scene.windows.first?.rootViewController {
