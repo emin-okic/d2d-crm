@@ -64,7 +64,7 @@ struct RolodexView: View {
                     HStack {
                         Spacer()
                         VStack(spacing: 6) {
-                            Text("The Contacts Manager")
+                            Text("Contacts")
                                 .font(.title)
                                 .fontWeight(.bold)
                         }

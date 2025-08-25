@@ -38,13 +38,17 @@ struct ProspectsSectionView: View {
         let tableAreaHeight = max(containerHeight - headerAndChips, rowHeight * 2)
 
         VStack(alignment: .leading, spacing: 14) {
+            
             // Header (scaled up)
             VStack(spacing: 6) {
-                Text("Contacts")
-                    .font(.title)                 // ↑ from .title2
+                Text(selectedList == "Prospects"
+                     ? "Your Prospects"
+                     : "Your Customers")
+                    .font(.title)                  // strong, like a section header
                     .fontWeight(.bold)
-                Text(subtitle)
-                    .font(.callout)               // ↑ from .subheadline
+
+                Text(subtitle)                     // e.g. "23 Prospects" / "5 Customers"
+                    .font(.headline)               // bumped for emphasis
                     .foregroundColor(.secondary)
             }
             .frame(maxWidth: .infinity)
