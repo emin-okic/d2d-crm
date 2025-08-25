@@ -67,9 +67,10 @@ struct ProspectsSectionView: View {
                 if !filtered.isEmpty {
                     ScrollView {
                         LazyVStack(spacing: 0) {
+
                             ForEach(filtered) { p in
                                 Button { selectedProspect = p } label: {
-                                    ProspectRowCompact(prospect: p)
+                                    ProspectRowFull(prospect: p)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .padding(.horizontal, 12)
                                         .contentShape(Rectangle())
@@ -77,7 +78,7 @@ struct ProspectsSectionView: View {
                                 .buttonStyle(.plain)
 
                                 Divider()
-                                    .padding(.leading, 12)
+                                    .padding(.leading, 12)   // aligns with row text
                             }
                         }
                         .transaction { $0.disablesAnimations = true }
