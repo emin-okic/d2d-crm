@@ -29,8 +29,11 @@ struct ProspectsSectionView: View {
     private let rowHeight: CGFloat = 74
     
     var body: some View {
+        // how tall the table area should be, ~3 rows
+        let tableAreaHeight = rowHeight * 3
+
         VStack(alignment: .leading, spacing: 12) {
-            // Centered header
+            // Header (static)
             VStack(spacing: 5) {
                 Text("Contacts")
                     .font(.title2)
@@ -40,9 +43,9 @@ struct ProspectsSectionView: View {
                     .foregroundColor(.secondary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.top)
+            .padding(.top, 8) // small, fixed padding (doesn't change)
 
-            // Toggle chips (Prospects / Customers)
+            // Toggle chips (static)
             HStack(spacing: 8) {
                 toggleChip("Prospects", isOn: selectedList == "Prospects") { selectedList = "Prospects" }
                 toggleChip("Customers", isOn: selectedList == "Customers") { selectedList = "Customers" }
@@ -50,41 +53,49 @@ struct ProspectsSectionView: View {
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 20)
 
-            if filtered.isEmpty {
-                Text("No \(selectedList)")
-                    .font(.title3).fontWeight(.semibold)
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 24)
-            } else {
-                // Scrollable table area (≈ 3 rows)
-                ScrollView {
-                    // ⛔️ No row animations when the list switches
-                    LazyVStack(spacing: 0) {
-                        ForEach(filtered) { p in
-                            Button {
-                                selectedProspect = p
-                            } label: {
-                                ProspectRowCompact(prospect: p)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.horizontal, 12)          // uniform left/right
-                                    .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
+            // 🔒 STATIC HEIGHT TABLE AREA — never changes size
+            ZStack {
+                // Scrollable list when we have rows
+                if !filtered.isEmpty {
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(filtered) { p in
+                                Button { selectedProspect = p } label: {
+                                    ProspectRowCompact(prospect: p)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding(.horizontal, 12)
+                                        .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
 
-                            Divider()
-                                .padding(.leading, 12)                // align with row text
+                                Divider()
+                                    .padding(.leading, 12)
+                            }
                         }
+                        // No insert/remove animations when switching lists
+                        .transaction { $0.disablesAnimations = true }
+                        .contentTransition(.identity)
                     }
-                    // Kill implicit insert/remove animations on toggle
-                    .transaction { t in t.disablesAnimations = true }
-                    .contentTransition(.identity)                      // iOS 17+: no fancy transitions
+                    .scrollIndicators(.automatic)
                 }
-                .frame(maxHeight: rowHeight * 3)                       // clamp to ~3 rows
-                // Do NOT attach .animation to this ScrollView/VStack
+
+                // Centered empty state, rendered IN the same fixed area
+                if filtered.isEmpty {
+                    VStack(spacing: 8) {
+                        Text("No \(selectedList)")
+                            .font(.title3).fontWeight(.semibold)
+                            .foregroundColor(.secondary)
+                        Text("Add a contact to get started.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .multilineTextAlignment(.center)
+                    .allowsHitTesting(false) // so the area still feels static
+                }
             }
+            .frame(height: tableAreaHeight) // <-- the magic: fixed height
         }
-        // Detail sheet
+        // Details sheet
         .sheet(item: $selectedProspect) { p in
             NavigationStack {
                 ProspectDetailsView(prospect: p)
