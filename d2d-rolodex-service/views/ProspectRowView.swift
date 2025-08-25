@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 
-struct ProspectRowFull: View {
+struct ProspectRowView: View {
     let prospect: Prospect
     private let minRowHeight: CGFloat = 96   // a touch taller for breathing room
 

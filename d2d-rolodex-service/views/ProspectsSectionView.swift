@@ -70,7 +70,7 @@ struct ProspectsSectionView: View {
 
                             ForEach(filtered) { p in
                                 Button { selectedProspect = p } label: {
-                                    ProspectRowFull(prospect: p)
+                                    ProspectRowView(prospect: p)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .padding(.horizontal, 12)
                                         .contentShape(Rectangle())
