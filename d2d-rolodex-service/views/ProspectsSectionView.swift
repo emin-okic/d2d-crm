@@ -38,29 +38,6 @@ struct ProspectsSectionView: View {
         let tableAreaHeight = max(containerHeight - headerAndChips, rowHeight * 2)
 
         VStack(alignment: .leading, spacing: 14) {
-            
-            // Header (scaled up)
-            VStack(spacing: 6) {
-                Text(selectedList == "Prospects"
-                     ? "Your Prospects"
-                     : "Your Customers")
-                    .font(.title)                  // strong, like a section header
-                    .fontWeight(.bold)
-
-                Text(subtitle)                     // e.g. "23 Prospects" / "5 Customers"
-                    .font(.headline)               // bumped for emphasis
-                    .foregroundColor(.secondary)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.top, 8)
-
-            // Toggle chips (slightly larger)
-            HStack(spacing: 10) {
-                toggleChip("Prospects", isOn: selectedList == "Prospects") { selectedList = "Prospects" }
-                toggleChip("Customers", isOn: selectedList == "Customers") { selectedList = "Customers" }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal, 20)
 
             // Fixed-height table area
             ZStack(alignment: .top) {
@@ -105,28 +82,5 @@ struct ProspectsSectionView: View {
                     .navigationBarTitleDisplayMode(.inline)
             }
         }
-    }
-
-    @ViewBuilder
-    private func toggleChip(_ title: String, isOn: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.callout)                 // ↑ from .caption
-                .fontWeight(.semibold)
-                .padding(.vertical, 7)
-                .padding(.horizontal, 14)
-                .frame(minWidth: 110)           // a bit wider
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(isOn ? Color.blue : Color(.secondarySystemBackground))
-                )
-                .foregroundColor(isOn ? .white : .primary)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(isOn ? Color.blue.opacity(0.9) : Color.gray.opacity(0.25), lineWidth: 1)
-                )
-        }
-        .buttonStyle(.plain)
-        .animation(.easeInOut(duration: 0.15), value: isOn)
     }
 }

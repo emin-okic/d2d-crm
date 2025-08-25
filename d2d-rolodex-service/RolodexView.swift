@@ -59,23 +59,33 @@ struct RolodexView: View {
             ZStack {
                 
                 // In RolodexView.body, inside NavigationView > ZStack > VStack:
-                VStack(alignment: .center, spacing: 16) {
-                    // Centered header (title only — subtitle lives in the table)
-                    HStack {
-                        Spacer()
-                        VStack(spacing: 6) {
-                            Text("Contacts")
-                                .font(.title)
-                                .fontWeight(.bold)
-                        }
-                        Spacer()
+                VStack(spacing: 16) {
+                    // Page Header
+                    VStack(spacing: 10) {
+                        
+                        Text("Contacts")
+                            .font(.largeTitle).fontWeight(.bold)
+                            .padding(.top, 10)
+
+                        Text(selectedList == "Prospects"
+                             ? "\(prospects.filter { $0.list == "Prospects" }.count) Prospects"
+                             : "\(prospects.filter { $0.list == "Customers" }.count) Customers")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
                     }
-                    .padding(.vertical, 20)
+
+                    // Toggle chips
+                    HStack(spacing: 10) {
+                        toggleChip("Prospects", isOn: selectedList == "Prospects") { selectedList = "Prospects" }
+                        toggleChip("Customers", isOn: selectedList == "Customers") { selectedList = "Customers" }
+                    }
                     .padding(.horizontal, 20)
-                    
-                    // The carded, scroll-clamped contacts table (the star of the show)
+
+                    // Contacts table card
                     ContactsContainerView(selectedList: $selectedList)
                         .padding(.horizontal, 20)
+
+                    Spacer()
                     
                 }
                 
@@ -168,6 +178,29 @@ struct RolodexView: View {
                 }
             }
         }
+    }
+    
+    @ViewBuilder
+    private func toggleChip(_ title: String, isOn: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.callout)                 // ↑ from .caption
+                .fontWeight(.semibold)
+                .padding(.vertical, 7)
+                .padding(.horizontal, 14)
+                .frame(minWidth: 110)           // a bit wider
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isOn ? Color.blue : Color(.secondarySystemBackground))
+                )
+                .foregroundColor(isOn ? .white : .primary)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(isOn ? Color.blue.opacity(0.9) : Color.gray.opacity(0.25), lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
+        .animation(.easeInOut(duration: 0.15), value: isOn)
     }
 
     private func formatPhoneNumber(_ raw: String) -> String {
