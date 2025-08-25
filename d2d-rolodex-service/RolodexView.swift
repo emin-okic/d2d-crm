@@ -70,7 +70,7 @@ struct RolodexView: View {
                         Text(selectedList == "Prospects"
                              ? "\(prospects.filter { $0.list == "Prospects" }.count) Prospects"
                              : "\(prospects.filter { $0.list == "Customers" }.count) Customers")
-                            .font(.headline)
+                            .font(.title2)
                             .foregroundColor(.secondary)
                     }
 
@@ -84,8 +84,7 @@ struct RolodexView: View {
                     // Contacts table card
                     ContactsContainerView(selectedList: $selectedList)
                         .padding(.horizontal, 20)
-
-                    Spacer()
+                        .padding(.vertical, 10)
                     
                 }
                 
