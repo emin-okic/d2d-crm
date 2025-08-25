@@ -70,15 +70,13 @@ struct RolodexView: View {
                         }
                         Spacer()
                     }
-                    .padding(.top, 20)
+                    .padding(.vertical, 20)
                     .padding(.horizontal, 20)
                     
                     // The carded, scroll-clamped contacts table (the star of the show)
                     ContactsContainerView(selectedList: $selectedList)
                         .padding(.horizontal, 20)
                     
-                    // Optional: leave a little breathing space so the FAB doesn’t overlap
-                    Spacer()
                 }
                 
                 // Floating toolbar with + action

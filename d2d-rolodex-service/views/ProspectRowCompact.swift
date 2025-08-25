@@ -9,37 +9,35 @@ import SwiftUI
 import SwiftData
 
 struct ProspectRowCompact: View {
-    
     let prospect: Prospect
-    private let minRowHeight: CGFloat = 74
+    private let minRowHeight: CGFloat = 88   // ↑ from 74
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) { // a bit more breathing room
             Text(prospect.fullName)
-                .font(.body).fontWeight(.medium)
-                .lineLimit(1)
+                .font(.title3).fontWeight(.semibold)   // ↑ from .body
 
             Text(prospect.address)
-                .font(.caption)
+                .font(.footnote)                       // ↑ from .caption
                 .foregroundColor(.secondary)
-                .lineLimit(1)
 
-            HStack(spacing: 10) {
+            HStack(spacing: 12) {
                 if !prospect.contactPhone.isEmpty {
                     Text("📞 \(formatPhoneNumber(prospect.contactPhone))")
-                        .font(.caption2)
+                        .font(.caption)                // ↑ from .caption2
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                 }
                 if !prospect.contactEmail.isEmpty {
                     Text("✉️ \(prospect.contactEmail)")
-                        .font(.caption2)
+                        .font(.caption)                // ↑ from .caption2
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                 }
             }
         }
-        .frame(maxWidth: .infinity, minHeight: minRowHeight, alignment: .leading) // uniform width & height
+        .padding(.vertical, 4)
+        .frame(maxWidth: .infinity, minHeight: minRowHeight, alignment: .leading)
     }
 
     private func formatPhoneNumber(_ raw: String) -> String {
