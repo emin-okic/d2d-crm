@@ -82,7 +82,7 @@ struct RolodexView: View {
                     .padding(.horizontal, 20)
 
                     // Contacts table card
-                    ContactsContainerView(selectedList: $selectedList)
+                    ContactsContainerView(selectedList: $selectedList, searchText: $searchText)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 10)
                     
