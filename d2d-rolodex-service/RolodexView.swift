@@ -57,117 +57,28 @@ struct RolodexView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                VStack(alignment: .leading, spacing: 24) {
-                    
-                    // MARK: - Custom Header
+                
+                // In RolodexView.body, inside NavigationView > ZStack > VStack:
+                VStack(alignment: .center, spacing: 16) {
+                    // Centered header (title only — subtitle lives in the table)
                     HStack {
-                        Text("Contacts")
-                            .font(.title)
-                            .fontWeight(.bold)
+                        Spacer()
+                        VStack(spacing: 6) {
+                            Text("The Contacts Manager")
+                                .font(.title)
+                                .fontWeight(.bold)
+                        }
                         Spacer()
                     }
-                    .padding(.horizontal, 20)
                     .padding(.top, 20)
-                    
-                    // Summary cards at the top
-                    HStack(spacing: 12) {
-                        Button {
-                            selectedList = "Prospects"
-                        } label: {
-                            SummaryCardView(title: "Total Prospects", count: totalProspects)
-                        }
-                        .buttonStyle(.plain)
-                        
-                        Button {
-                            selectedList = "Customers"
-                        } label: {
-                            SummaryCardView(title: "Total Customers", count: totalCustomers)
-                        }
-                        .buttonStyle(.plain)
-                    }
                     .padding(.horizontal, 20)
-                    .padding(.top, 16)
                     
-                    // Suggested Prospect scorecard (Prospects only)
-                    if selectedList == "Prospects", let suggestion = suggestedProspect {
-                        SuggestedProspectScorecardView(
-                            suggestion: suggestion,
-                            onAdd: {
-                                modelContext.insert(suggestion)
-                                try? modelContext.save()
-                                suggestedProspect = nil
-                                onSave()
-
-                                // pull the next suggestion in the background
-                                Task { await fetchNextSuggestedNeighbor() }
-                            },
-                            onDismiss: {
-                                // just close this one
-                                withAnimation { suggestedProspect = nil }
-                            }
-                        )
+                    // The carded, scroll-clamped contacts table (the star of the show)
+                    ContactsContainerView(selectedList: $selectedList)
                         .padding(.horizontal, 20)
-                    }
                     
-                    // Title and list type selector + add button on the right (Prospects only)
-                    HStack {
-                        Text("Your \(selectedList)")
-                            .font(.title)
-                            .fontWeight(.bold)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 8)
-                    .padding(.bottom, 4)
-                    
-                    // Main list of prospects
-                    List {
-                        if selectedList == "Customers" {
-                            let filtered = prospects.filter {
-                                $0.list == "Customers" &&
-                                (searchText.isEmpty ||
-                                 $0.fullName.localizedCaseInsensitiveContains(searchText))
-                            }
-
-                            ForEach(filtered, id: \.persistentModelID) { prospect in
-                                ProspectRowView(
-                                    prospect: prospect,
-                                    onTap: { selectedProspectID = prospect.persistentModelID },
-                                    onDoubleTap: { onDoubleTap?(prospect) }
-                                )
-                                .background(
-                                    NavigationLink(
-                                        destination: ProspectDetailsView(prospect: prospect),
-                                        tag: prospect.persistentModelID,
-                                        selection: $selectedProspectID
-                                    ) { EmptyView() }.hidden()
-                                )
-                            }
-                        } else {
-                            let filtered = prospects.filter {
-                                $0.list == "Prospects" &&
-                                (searchText.isEmpty ||
-                                 $0.fullName.localizedCaseInsensitiveContains(searchText))
-                            }
-
-                            ForEach(filtered, id: \.persistentModelID) { prospect in
-                                ProspectRowView(
-                                    prospect: prospect,
-                                    onTap: { selectedProspectID = prospect.persistentModelID },
-                                    onDoubleTap: { onDoubleTap?(prospect) }
-                                )
-                                .background(
-                                    NavigationLink(
-                                        destination: ProspectDetailsView(prospect: prospect),
-                                        tag: prospect.persistentModelID,
-                                        selection: $selectedProspectID
-                                    ) { EmptyView() }.hidden()
-                                )
-                            }
-                        }
-                    }
-                    .listStyle(.plain)
-                    .padding(.top, 8)
-                    
+                    // Optional: leave a little breathing space so the FAB doesn’t overlap
+                    Spacer()
                 }
                 
                 // Floating toolbar with + action
