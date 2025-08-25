@@ -57,116 +57,34 @@ struct RolodexView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                VStack(alignment: .leading, spacing: 24) {
-                    
-                    // MARK: - Custom Header
-                    HStack {
-                        Text("Contacts")
-                            .font(.title)
-                            .fontWeight(.bold)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 20)
-                    
-                    // Summary cards at the top
-                    HStack(spacing: 12) {
-                        Button {
-                            selectedList = "Prospects"
-                        } label: {
-                            SummaryCardView(title: "Total Prospects", count: totalProspects)
-                        }
-                        .buttonStyle(.plain)
+                
+                // In RolodexView.body, inside NavigationView > ZStack > VStack:
+                VStack(spacing: 16) {
+                    // Page Header
+                    VStack(spacing: 10) {
                         
-                        Button {
-                            selectedList = "Customers"
-                        } label: {
-                            SummaryCardView(title: "Total Customers", count: totalCustomers)
-                        }
-                        .buttonStyle(.plain)
+                        Text("Contacts")
+                            .font(.largeTitle).fontWeight(.bold)
+                            .padding(.top, 10)
+
+                        Text(selectedList == "Prospects"
+                             ? "\(prospects.filter { $0.list == "Prospects" }.count) Prospects"
+                             : "\(prospects.filter { $0.list == "Customers" }.count) Customers")
+                            .font(.title2)
+                            .foregroundColor(.secondary)
+                    }
+
+                    // Toggle chips
+                    HStack(spacing: 10) {
+                        toggleChip("Prospects", isOn: selectedList == "Prospects") { selectedList = "Prospects" }
+                        toggleChip("Customers", isOn: selectedList == "Customers") { selectedList = "Customers" }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    
-                    // Suggested Prospect scorecard (Prospects only)
-                    if selectedList == "Prospects", let suggestion = suggestedProspect {
-                        SuggestedProspectScorecardView(
-                            suggestion: suggestion,
-                            onAdd: {
-                                modelContext.insert(suggestion)
-                                try? modelContext.save()
-                                suggestedProspect = nil
-                                onSave()
 
-                                // pull the next suggestion in the background
-                                Task { await fetchNextSuggestedNeighbor() }
-                            },
-                            onDismiss: {
-                                // just close this one
-                                withAnimation { suggestedProspect = nil }
-                            }
-                        )
+                    // Contacts table card
+                    ContactsContainerView(selectedList: $selectedList, searchText: $searchText)
                         .padding(.horizontal, 20)
-                    }
-                    
-                    // Title and list type selector + add button on the right (Prospects only)
-                    HStack {
-                        Text("Your \(selectedList)")
-                            .font(.title)
-                            .fontWeight(.bold)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 8)
-                    .padding(.bottom, 4)
-                    
-                    // Main list of prospects
-                    List {
-                        if selectedList == "Customers" {
-                            let filtered = prospects.filter {
-                                $0.list == "Customers" &&
-                                (searchText.isEmpty ||
-                                 $0.fullName.localizedCaseInsensitiveContains(searchText))
-                            }
-
-                            ForEach(filtered, id: \.persistentModelID) { prospect in
-                                ProspectRowView(
-                                    prospect: prospect,
-                                    onTap: { selectedProspectID = prospect.persistentModelID },
-                                    onDoubleTap: { onDoubleTap?(prospect) }
-                                )
-                                .background(
-                                    NavigationLink(
-                                        destination: ProspectDetailsView(prospect: prospect),
-                                        tag: prospect.persistentModelID,
-                                        selection: $selectedProspectID
-                                    ) { EmptyView() }.hidden()
-                                )
-                            }
-                        } else {
-                            let filtered = prospects.filter {
-                                $0.list == "Prospects" &&
-                                (searchText.isEmpty ||
-                                 $0.fullName.localizedCaseInsensitiveContains(searchText))
-                            }
-
-                            ForEach(filtered, id: \.persistentModelID) { prospect in
-                                ProspectRowView(
-                                    prospect: prospect,
-                                    onTap: { selectedProspectID = prospect.persistentModelID },
-                                    onDoubleTap: { onDoubleTap?(prospect) }
-                                )
-                                .background(
-                                    NavigationLink(
-                                        destination: ProspectDetailsView(prospect: prospect),
-                                        tag: prospect.persistentModelID,
-                                        selection: $selectedProspectID
-                                    ) { EmptyView() }.hidden()
-                                )
-                            }
-                        }
-                    }
-                    .listStyle(.plain)
-                    .padding(.top, 8)
+                        .padding(.vertical, 10)
                     
                 }
                 
@@ -259,6 +177,29 @@ struct RolodexView: View {
                 }
             }
         }
+    }
+    
+    @ViewBuilder
+    private func toggleChip(_ title: String, isOn: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.callout)                 // ↑ from .caption
+                .fontWeight(.semibold)
+                .padding(.vertical, 7)
+                .padding(.horizontal, 14)
+                .frame(minWidth: 110)           // a bit wider
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isOn ? Color.blue : Color(.secondarySystemBackground))
+                )
+                .foregroundColor(isOn ? .white : .primary)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(isOn ? Color.blue.opacity(0.9) : Color.gray.opacity(0.25), lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
+        .animation(.easeInOut(duration: 0.15), value: isOn)
     }
 
     private func formatPhoneNumber(_ raw: String) -> String {
