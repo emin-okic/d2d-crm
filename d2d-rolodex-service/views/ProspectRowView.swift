@@ -13,7 +13,7 @@ struct ProspectRowView: View {
     private let minRowHeight: CGFloat = 96   // a touch taller for breathing room
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(prospect.fullName)
                 .font(.headline)
 
@@ -39,7 +39,7 @@ struct ProspectRowView: View {
                 KnockDotsView(knocks: prospect.sortedKnocks)
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
         .frame(maxWidth: .infinity, minHeight: minRowHeight, alignment: .leading)
         .contentShape(Rectangle())
     }
