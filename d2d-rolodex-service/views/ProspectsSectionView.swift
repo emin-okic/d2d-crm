@@ -54,7 +54,7 @@ struct ProspectsSectionView: View {
             .padding(.horizontal, 20)
 
             // 🔒 STATIC HEIGHT TABLE AREA — never changes size
-            ZStack {
+            ZStack(alignment: .top) {
                 // Scrollable list when we have rows
                 if !filtered.isEmpty {
                     ScrollView {
@@ -72,28 +72,22 @@ struct ProspectsSectionView: View {
                                     .padding(.leading, 12)
                             }
                         }
-                        // No insert/remove animations when switching lists
                         .transaction { $0.disablesAnimations = true }
                         .contentTransition(.identity)
                     }
                     .scrollIndicators(.automatic)
                 }
 
-                // Centered empty state, rendered IN the same fixed area
+                // 🧰 Original-looking empty state (same place & style)
                 if filtered.isEmpty {
-                    VStack(spacing: 8) {
-                        Text("No \(selectedList)")
-                            .font(.title3).fontWeight(.semibold)
-                            .foregroundColor(.secondary)
-                        Text("Add a contact to get started.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .multilineTextAlignment(.center)
-                    .allowsHitTesting(false) // so the area still feels static
+                    Text("No \(selectedList)")
+                        .font(.title3).fontWeight(.semibold)
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 24)        // top-only, like your original
                 }
             }
-            .frame(height: tableAreaHeight) // <-- the magic: fixed height
+            .frame(height: tableAreaHeight)
         }
         // Details sheet
         .sheet(item: $selectedProspect) { p in
