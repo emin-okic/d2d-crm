@@ -22,7 +22,7 @@ struct d2d_studioApp: App {
         WindowGroup {
             ZStack {
                 if showSplash {
-                    SplashView()
+                    SplashPeelView()
                         .onAppear {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
                                 withAnimation { showSplash = false }
