@@ -124,32 +124,39 @@ struct RolodexView: View {
                         }
                     }
                 )
-
-                // Options menu
-                if showAddOptionsMenu {
-                    AddProspectOptionsMenu(
-                        onAddManually: {
-                            withAnimation {
-                                showAddOptionsMenu = false
-                            }
-                            showingAddProspect = true
-                        },
-                        onImportFromContacts: {
-                            withAnimation {
-                                showAddOptionsMenu = false
-                            }
-                            showingImportFromContacts = true
-                        }
-                    )
-                    .transition(.scale.combined(with: .opacity))
-                    .zIndex(1000)
-                }
                 
             }
             .navigationTitle("")
             .overlay(importOverlay)
             .overlay(addProspectOverlay)
             .overlay(addCustomerOverlay)
+            .overlay(
+                Group {
+                    if showAddOptionsMenu {
+                        VStack {
+                            Spacer()
+                            HStack {
+                                AddProspectOptionsMenu(
+                                    onAddManually: {
+                                        withAnimation { showAddOptionsMenu = false }
+                                        showingAddProspect = true
+                                    },
+                                    onImportFromContacts: {
+                                        withAnimation { showAddOptionsMenu = false }
+                                        showingImportFromContacts = true
+                                    }
+                                )
+                                .transition(.scale.combined(with: .opacity))
+                                .zIndex(1000)
+                                Spacer()
+                            }
+                            .padding(.leading, 40)
+                            .padding(.bottom, 80)
+                        }
+                        .ignoresSafeArea()
+                    }
+                }
+            )
             .task {
                 if selectedList == "Prospects", suggestedProspect == nil {
                     await fetchNextSuggestedNeighbor()
@@ -371,6 +378,5 @@ struct AddProspectOptionsMenu: View {
         .shadow(radius: 6)
         // position it near the + button
         .frame(maxWidth: 200)
-        .position(x: UIScreen.main.bounds.width - 180, y: UIScreen.main.bounds.height - 360) // adjust
     }
 }
