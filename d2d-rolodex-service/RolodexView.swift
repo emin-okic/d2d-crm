@@ -171,6 +171,34 @@ struct RolodexView: View {
             ContactsImportView(
                 onComplete: { contacts in
                     showingImportFromContacts = false
+
+                    for contact in contacts {
+                        let fullName = CNContactFormatter.string(from: contact, style: .fullName) ?? "No Name"
+
+                        // Extract address string
+                        let addressString = contact.postalAddresses.first.map { postal -> String in
+                            CNPostalAddressFormatter.string(from: postal.value, style: .mailingAddress)
+                                .replacingOccurrences(of: "\n", with: ", ")
+                        } ?? "No Address"
+
+                        // Extract phone number
+                        let phoneNumber = contact.phoneNumbers.first?.value.stringValue ?? ""
+
+                        // Extract email address
+                        let email = contact.emailAddresses.first?.value as String? ?? ""
+
+                        // Create new prospect
+                        let newProspect = Prospect(fullName: fullName, address: addressString, count: 0, list: "Prospects")
+                        newProspect.contactEmail = email
+                        newProspect.contactPhone = phoneNumber
+
+                        modelContext.insert(newProspect)
+                    }
+
+                    try? modelContext.save()
+                    selectedList = "Prospects"
+                    searchText = ""
+                    onSave()
                 },
                 onCancel: {
                     showingImportFromContacts = false
