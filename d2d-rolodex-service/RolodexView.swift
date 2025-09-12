@@ -192,7 +192,13 @@ struct RolodexView: View {
                         newProspect.contactEmail = email
                         newProspect.contactPhone = phoneNumber
 
-                        modelContext.insert(newProspect)
+                        let isDuplicate = prospects.contains {
+                            $0.fullName == fullName && $0.address == addressString
+                        }
+
+                        if !isDuplicate {
+                            modelContext.insert(newProspect)
+                        }
                     }
 
                     try? modelContext.save()

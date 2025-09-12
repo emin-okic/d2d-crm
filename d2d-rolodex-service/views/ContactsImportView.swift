@@ -16,6 +16,9 @@ struct ContactsImportView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> CNContactPickerViewController {
         let picker = CNContactPickerViewController()
         picker.delegate = context.coordinator
+        // Enable multi-select
+        picker.predicateForEnablingContact = NSPredicate(value: true)
+        picker.displayedPropertyKeys = [CNContactGivenNameKey, CNContactFamilyNameKey, CNContactPhoneNumbersKey, CNContactEmailAddressesKey, CNContactPostalAddressesKey]
         return picker
     }
 
@@ -32,8 +35,9 @@ struct ContactsImportView: UIViewControllerRepresentable {
             self.parent = parent
         }
 
-        func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {
-            parent.onComplete([contact]) // ✅ fixed here
+        // ✅ MULTI-SELECTION support
+        func contactPicker(_ picker: CNContactPickerViewController, didSelect contacts: [CNContact]) {
+            parent.onComplete(contacts)
         }
 
         func contactPickerDidCancel(_ picker: CNContactPickerViewController) {
