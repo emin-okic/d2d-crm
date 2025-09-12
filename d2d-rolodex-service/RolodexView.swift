@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import ContactsUI
 
 /// A view that displays and manages a list of prospects
 /// Users can filter by list type (e.g., "Prospects", "Customers"), add new prospects, and tap
@@ -33,6 +34,9 @@ struct RolodexView: View {
     @Query private var customers: [Customer]
     
     var onDoubleTap: ((Prospect) -> Void)? = nil
+    
+    @State private var showAddOptionsMenu = false
+    @State private var showingImportFromContacts = false
 
     init(
         selectedList: Binding<String>,
@@ -53,6 +57,14 @@ struct RolodexView: View {
     private var totalCustomers: Int {
         prospects.filter { $0.list == "Customers" }.count
     }
+    
+    private var filteredCountText: String {
+        let count = selectedList == "Prospects"
+            ? prospects.filter { $0.list == "Prospects" }.count
+            : prospects.filter { $0.list == "Customers" }.count
+        let label = selectedList
+        return "\(count) \(label)"
+    }
 
     var body: some View {
         NavigationView {
@@ -67,9 +79,7 @@ struct RolodexView: View {
                             .font(.largeTitle).fontWeight(.bold)
                             .padding(.top, 10)
 
-                        Text(selectedList == "Prospects"
-                             ? "\(prospects.filter { $0.list == "Prospects" }.count) Prospects"
-                             : "\(prospects.filter { $0.list == "Customers" }.count) Customers")
+                        Text(filteredCountText)
                             .font(.title2)
                             .foregroundColor(.secondary)
                     }
@@ -88,94 +98,146 @@ struct RolodexView: View {
                     
                 }
                 
-                // Floating toolbar with + action
+
+                // Dim background if menu is open
+                if showAddOptionsMenu {
+                    Color.black.opacity(0.25)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                        .onTapGesture {
+                            withAnimation { showAddOptionsMenu = false }
+                        }
+                }
+
+                // The + toolbar
                 ContactsToolbarView(
                     searchText: $searchText,
                     isSearchExpanded: $isSearchExpanded,
                     isSearchFocused: $isSearchFocused,
                     onAddTapped: {
-                        if selectedList == "Customers" {
-                            showingAddCustomer = true
+                        if selectedList == "Prospects" {
+                            withAnimation(.spring()) {
+                                showAddOptionsMenu = true
+                            }
                         } else {
-                            showingAddProspect = true
+                            showingAddCustomer = true
                         }
                     }
                 )
+
+                // Options menu
+                if showAddOptionsMenu {
+                    AddProspectOptionsMenu(
+                        onAddManually: {
+                            withAnimation {
+                                showAddOptionsMenu = false
+                            }
+                            showingAddProspect = true
+                        },
+                        onImportFromContacts: {
+                            withAnimation {
+                                showAddOptionsMenu = false
+                            }
+                            showingImportFromContacts = true
+                        }
+                    )
+                    .transition(.scale.combined(with: .opacity))
+                    .zIndex(1000)
+                }
+                
             }
             .navigationTitle("")
-            .overlay(
-                Group {
-                    if showingAddProspect {
-                        Color.black.opacity(0.25)
-                            .ignoresSafeArea()
-                            .onTapGesture { showingAddProspect = false }
-
-                        ProspectCreateStepperView { newProspect in
-                            // Insert as a Prospect in the Prospects list
-                            modelContext.insert(newProspect)
-                            try? modelContext.save()
-
-                            selectedList = "Prospects"   // show Prospects tab
-                            searchText = ""              // avoid filtering it out
-                            showingAddProspect = false
-                            onSave()
-                        } onCancel: {
-                            showingAddProspect = false
-                        }
-                        .frame(width: 300, height: 300)
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(16)
-                        .shadow(radius: 8)
-                        .position(x: UIScreen.main.bounds.midX,
-                                  y: UIScreen.main.bounds.midY * 0.9)
-                        .transition(.scale.combined(with: .opacity))
-                        .zIndex(2000)
-                    }
-                }
-            )
-            // Customer stepper flow
-            .overlay(
-                Group {
-                    if showingAddCustomer {
-                        Color.black.opacity(0.25)
-                            .ignoresSafeArea()
-                            .onTapGesture { showingAddCustomer = false }
-
-                        CustomerCreateStepperView { newCustomer in
-                            // Instead of inserting a Customer, create a Prospect in the Customers list
-                            let p = Prospect(fullName: newCustomer.fullName,
-                                             address: newCustomer.address,
-                                             count: 0,
-                                             list: "Customers")
-                            p.contactEmail = newCustomer.contactEmail
-                            p.contactPhone = newCustomer.contactPhone
-
-                            modelContext.insert(p)
-                            try? modelContext.save()
-
-                            selectedList = "Customers"
-                            searchText = ""
-                            showingAddCustomer = false
-                            onSave()
-                        } onCancel: {
-                            showingAddCustomer = false
-                        }
-                        .frame(width: 300, height: 300)       // ⬅️ clamp size
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(16)
-                        .shadow(radius: 8)
-                        .position(x: UIScreen.main.bounds.midX,
-                                  y: UIScreen.main.bounds.midY * 0.9)
-                        .transition(.scale.combined(with: .opacity))
-                        .zIndex(2000)
-                    }
-                }
-            )
+            .overlay(importOverlay)
+            .overlay(addProspectOverlay)
+            .overlay(addCustomerOverlay)
             .task {
                 if selectedList == "Prospects", suggestedProspect == nil {
                     await fetchNextSuggestedNeighbor()
                 }
             }
+        }
+    }
+    
+    @ViewBuilder
+    private var importOverlay: some View {
+        if showingImportFromContacts {
+            ContactsImportView(
+                onComplete: { contacts in
+                    showingImportFromContacts = false
+                },
+                onCancel: {
+                    showingImportFromContacts = false
+                }
+            )
+            .frame(width: 300, height: 400)
+            .background(.ultraThinMaterial)
+            .cornerRadius(16)
+            .shadow(radius: 8)
+            .position(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY)
+            .transition(.scale.combined(with: .opacity))
+            .zIndex(2000)
+        }
+    }
+
+    @ViewBuilder
+    private var addProspectOverlay: some View {
+        if showingAddProspect {
+            Color.black.opacity(0.25)
+                .ignoresSafeArea()
+                .onTapGesture { showingAddProspect = false }
+
+            ProspectCreateStepperView { newProspect in
+                modelContext.insert(newProspect)
+                try? modelContext.save()
+                selectedList = "Prospects"
+                searchText = ""
+                showingAddProspect = false
+                onSave()
+            } onCancel: {
+                showingAddProspect = false
+            }
+            .frame(width: 300, height: 300)
+            .background(.ultraThinMaterial)
+            .cornerRadius(16)
+            .shadow(radius: 8)
+            .position(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY * 0.9)
+            .transition(.scale.combined(with: .opacity))
+            .zIndex(2000)
+        }
+    }
+
+    @ViewBuilder
+    private var addCustomerOverlay: some View {
+        if showingAddCustomer {
+            Color.black.opacity(0.25)
+                .ignoresSafeArea()
+                .onTapGesture { showingAddCustomer = false }
+
+            CustomerCreateStepperView { newCustomer in
+                let p = Prospect(fullName: newCustomer.fullName,
+                                 address: newCustomer.address,
+                                 count: 0,
+                                 list: "Customers")
+                p.contactEmail = newCustomer.contactEmail
+                p.contactPhone = newCustomer.contactPhone
+
+                modelContext.insert(p)
+                try? modelContext.save()
+
+                selectedList = "Customers"
+                searchText = ""
+                showingAddCustomer = false
+                onSave()
+            } onCancel: {
+                showingAddCustomer = false
+            }
+            .frame(width: 300, height: 300)
+            .background(.ultraThinMaterial)
+            .cornerRadius(16)
+            .shadow(radius: 8)
+            .position(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY * 0.9)
+            .transition(.scale.combined(with: .opacity))
+            .zIndex(2000)
         }
     }
     
@@ -272,5 +334,43 @@ struct RolodexView: View {
         }
 
         suggestedProspect = found
+    }
+}
+
+struct AddProspectOptionsMenu: View {
+    let onAddManually: () -> Void
+    let onImportFromContacts: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Button {
+                onAddManually()
+            } label: {
+                HStack {
+                    Image(systemName: "pencil")
+                    Text("Add Manually")
+                }
+                .padding()
+            }
+            .buttonStyle(.borderedProminent)
+
+            Button {
+                onImportFromContacts()
+            } label: {
+                HStack {
+                    Image(systemName: "person.icloud") // icon for import
+                    Text("Import From iPhone")
+                }
+                .padding()
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding()
+        .background(.ultraThinMaterial)
+        .cornerRadius(12)
+        .shadow(radius: 6)
+        // position it near the + button
+        .frame(maxWidth: 200)
+        .position(x: 80, y: UIScreen.main.bounds.height - 180) // adjust
     }
 }
