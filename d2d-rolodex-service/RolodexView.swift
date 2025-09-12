@@ -37,6 +37,8 @@ struct RolodexView: View {
     
     @State private var showAddOptionsMenu = false
     @State private var showingImportFromContacts = false
+    
+    @State private var showImportSuccess = false
 
     init(
         selectedList: Binding<String>,
@@ -128,6 +130,24 @@ struct RolodexView: View {
             }
             .navigationTitle("")
             .overlay(importOverlay)
+            .overlay(
+                Group {
+                    if showImportSuccess {
+                        VStack {
+                            Text("Contacts imported successfully!")
+                                .padding()
+                                .background(Color.green.opacity(0.95))
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                                .shadow(radius: 6)
+                                .transition(.scale.combined(with: .opacity))
+                                .zIndex(9999)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .contentShape(Rectangle()) // make it tappable (optional)
+                    }
+                }
+            )
             .overlay(addProspectOverlay)
             .overlay(addCustomerOverlay)
             .overlay(
@@ -205,6 +225,11 @@ struct RolodexView: View {
                     selectedList = "Prospects"
                     searchText = ""
                     onSave()
+                    
+                    showImportSuccess = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        showImportSuccess = false
+                    }
                 },
                 onCancel: {
                     showingImportFromContacts = false
