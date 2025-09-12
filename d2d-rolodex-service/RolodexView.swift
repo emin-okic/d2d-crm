@@ -371,6 +371,6 @@ struct AddProspectOptionsMenu: View {
         .shadow(radius: 6)
         // position it near the + button
         .frame(maxWidth: 200)
-        .position(x: 80, y: UIScreen.main.bounds.height - 180) // adjust
+        .position(x: UIScreen.main.bounds.width - 180, y: UIScreen.main.bounds.height - 360) // adjust
     }
 }
