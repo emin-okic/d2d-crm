@@ -129,7 +129,17 @@ struct RolodexView: View {
                 
             }
             .navigationTitle("")
-            .overlay(importOverlay)
+            .overlay(
+                ImportOverlayView(
+                    showingImportFromContacts: $showingImportFromContacts,
+                    showImportSuccess: $showImportSuccess,
+                    selectedList: $selectedList,
+                    searchText: $searchText,
+                    prospects: prospects,
+                    modelContext: modelContext,
+                    onSave: onSave
+                )
+            )
             .overlay(
                 Group {
                     if showImportSuccess {
@@ -182,66 +192,6 @@ struct RolodexView: View {
                     await fetchNextSuggestedNeighbor()
                 }
             }
-        }
-    }
-    
-    @ViewBuilder
-    private var importOverlay: some View {
-        if showingImportFromContacts {
-            ContactsImportView(
-                onComplete: { contacts in
-                    showingImportFromContacts = false
-
-                    for contact in contacts {
-                        let fullName = CNContactFormatter.string(from: contact, style: .fullName) ?? "No Name"
-
-                        // Extract address string
-                        let addressString = contact.postalAddresses.first.map { postal -> String in
-                            CNPostalAddressFormatter.string(from: postal.value, style: .mailingAddress)
-                                .replacingOccurrences(of: "\n", with: ", ")
-                        } ?? "No Address"
-
-                        // Extract phone number
-                        let phoneNumber = contact.phoneNumbers.first?.value.stringValue ?? ""
-
-                        // Extract email address
-                        let email = contact.emailAddresses.first?.value as String? ?? ""
-
-                        // Create new prospect
-                        let newProspect = Prospect(fullName: fullName, address: addressString, count: 0, list: "Prospects")
-                        newProspect.contactEmail = email
-                        newProspect.contactPhone = phoneNumber
-
-                        let isDuplicate = prospects.contains {
-                            $0.fullName == fullName && $0.address == addressString
-                        }
-
-                        if !isDuplicate {
-                            modelContext.insert(newProspect)
-                        }
-                    }
-
-                    try? modelContext.save()
-                    selectedList = "Prospects"
-                    searchText = ""
-                    onSave()
-                    
-                    showImportSuccess = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        showImportSuccess = false
-                    }
-                },
-                onCancel: {
-                    showingImportFromContacts = false
-                }
-            )
-            .frame(width: 300, height: 400)
-            .background(.ultraThinMaterial)
-            .cornerRadius(16)
-            .shadow(radius: 8)
-            .position(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY)
-            .transition(.scale.combined(with: .opacity))
-            .zIndex(2000)
         }
     }
 
