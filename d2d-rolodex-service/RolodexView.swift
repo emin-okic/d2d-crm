@@ -75,6 +75,25 @@ struct RolodexView: View {
                 // In RolodexView.body, inside NavigationView > ZStack > VStack:
                 VStack(spacing: 16) {
                     
+                    // Page Header
+                    VStack(spacing: 10) {
+                        
+                        Text("Contacts")
+                            .font(.largeTitle).fontWeight(.bold)
+                            .padding(.top, 10)
+
+                        Text(filteredCountText)
+                            .font(.title2)
+                            .foregroundColor(.secondary)
+                    }
+
+                    // Toggle chips
+                    HStack(spacing: 10) {
+                        toggleChip("Prospects", isOn: selectedList == "Prospects") { selectedList = "Prospects" }
+                        toggleChip("Customers", isOn: selectedList == "Customers") { selectedList = "Customers" }
+                    }
+                    .padding(.horizontal, 20)
+                    
                     // Suggested Prospect Card
                     Group {
                         
@@ -99,25 +118,6 @@ struct RolodexView: View {
                         
                     }
                     .animation(.easeInOut(duration: 0.3), value: suggestedProspect)
-                    .padding(.horizontal, 20)
-                    
-                    // Page Header
-                    VStack(spacing: 10) {
-                        
-                        Text("Contacts")
-                            .font(.largeTitle).fontWeight(.bold)
-                            .padding(.top, 10)
-
-                        Text(filteredCountText)
-                            .font(.title2)
-                            .foregroundColor(.secondary)
-                    }
-
-                    // Toggle chips
-                    HStack(spacing: 10) {
-                        toggleChip("Prospects", isOn: selectedList == "Prospects") { selectedList = "Prospects" }
-                        toggleChip("Customers", isOn: selectedList == "Customers") { selectedList = "Customers" }
-                    }
                     .padding(.horizontal, 20)
 
                     // Contacts table card
