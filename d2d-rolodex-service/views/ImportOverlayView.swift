@@ -13,10 +13,12 @@ import ContactsUI
 struct ImportOverlayView: View {
     @Binding var showingImportFromContacts: Bool
     @Binding var showImportSuccess: Bool
+    @Binding var showAchievementBar: Bool
     @Binding var selectedList: String
     @Binding var searchText: String
     var prospects: [Prospect]
     var modelContext: ModelContext
+    var achievements: [Achievements]
     var onSave: () -> Void
 
     var body: some View {
@@ -24,6 +26,8 @@ struct ImportOverlayView: View {
             ContactsImportView(
                 onComplete: { contacts in
                     showingImportFromContacts = false
+
+                    var newProspectsCount = 0
 
                     for contact in contacts {
                         let fullName = CNContactFormatter.string(from: contact, style: .fullName) ?? "No Name"
@@ -43,6 +47,7 @@ struct ImportOverlayView: View {
 
                         if !isDuplicate {
                             modelContext.insert(newProspect)
+                            newProspectsCount += 1 // ✅ Count newly added prospects
                         }
                     }
 
@@ -51,9 +56,35 @@ struct ImportOverlayView: View {
                     searchText = ""
                     onSave()
 
+                    // ✅ Achievement logic for First10
+                    if let ap = achievements.first(where: { $0.id == "First10" }), !ap.isCompleted {
+                        ap.currentCount += newProspectsCount
+                        if ap.currentCount >= ap.goalCount {
+                            ap.isCompleted = true
+                        }
+                        try? modelContext.save()
+                    }
+
                     showImportSuccess = true
+
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                         showImportSuccess = false
+
+                        // ✅ Show achievement bar AFTER toast, if achievement not yet completed
+                        if let ap = achievements.first(where: { $0.id == "First10" }), !ap.isCompleted {
+                            withAnimation {
+                                showAchievementBar = true
+                            }
+
+                            // Auto-hide achievement bar after 2 seconds (only if not completed yet)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                if !ap.isCompleted {
+                                    withAnimation {
+                                        showAchievementBar = false
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 onCancel: {

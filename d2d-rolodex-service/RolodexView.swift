@@ -39,6 +39,29 @@ struct RolodexView: View {
     @State private var showingImportFromContacts = false
     
     @State private var showImportSuccess = false
+    
+    @State private var showAchievementBar: Bool = false
+    @State private var recentlyAdded: Bool = false
+    
+    @Query private var achievements: [Achievements]
+    
+    @State private var firstTen: Achievements?
+    
+    private var importOverlay: some View {
+        ImportOverlayView(
+            showingImportFromContacts: $showingImportFromContacts,
+            showImportSuccess: $showImportSuccess,
+            showAchievementBar: $showAchievementBar,
+            selectedList: $selectedList,
+            searchText: $searchText,
+            prospects: prospects,
+            modelContext: modelContext,
+            achievements: achievements,
+            onSave: onSave
+        )
+    }
+    
+    @State private var showConfetti = false
 
     init(
         selectedList: Binding<String>,
@@ -129,17 +152,7 @@ struct RolodexView: View {
                 
             }
             .navigationTitle("")
-            .overlay(
-                ImportOverlayView(
-                    showingImportFromContacts: $showingImportFromContacts,
-                    showImportSuccess: $showImportSuccess,
-                    selectedList: $selectedList,
-                    searchText: $searchText,
-                    prospects: prospects,
-                    modelContext: modelContext,
-                    onSave: onSave
-                )
-            )
+            .overlay(importOverlay)
             .overlay(
                 Group {
                     if showImportSuccess {
@@ -191,6 +204,40 @@ struct RolodexView: View {
                 if selectedList == "Prospects", suggestedProspect == nil {
                     await fetchNextSuggestedNeighbor()
                 }
+
+                // ✅ Load or create achievement progress
+                if firstTen == nil {
+                    if let ap = achievements.first(where: { $0.id == "First10" }) {
+                        firstTen = ap
+                    } else {
+                        let new = Achievements(id: "First10", goalCount: 10)
+                        modelContext.insert(new)
+                        try? modelContext.save()
+                        firstTen = new
+                    }
+                }
+            }
+            .overlay(achievementOverlay)
+        }
+    }
+    
+    @ViewBuilder
+    private var achievementOverlay: some View {
+        if showAchievementBar, let ap = firstTen {
+            ZStack {
+                AchievementBarView(
+                    progress: ap.currentCount,
+                    goal: ap.goalCount,
+                    isCompleted: ap.isCompleted
+                )
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .zIndex(9999)
+
+                if showConfetti {
+                    ConfettiBurstView()
+                        .transition(.opacity)
+                        .zIndex(10000)
+                }
             }
         }
     }
@@ -203,8 +250,47 @@ struct RolodexView: View {
                 .onTapGesture { showingAddProspect = false }
 
             ProspectCreateStepperView { newProspect in
+                // Save the new prospect
                 modelContext.insert(newProspect)
                 try? modelContext.save()
+
+                // 🎯 Achievement tracking for "First10"
+                if let ap = firstTen, !ap.isCompleted {
+                    ap.currentCount += 1
+
+                    if ap.currentCount >= ap.goalCount {
+                        ap.isCompleted = true
+                        try? modelContext.save()
+
+                        showAchievementBar = true
+                        showConfetti = true
+
+                        // Confetti + dismiss bar after delay
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                            withAnimation {
+                                showConfetti = false
+                            }
+                        }
+
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+                            withAnimation {
+                                showAchievementBar = false
+                            }
+                        }
+
+                    } else {
+                        try? modelContext.save()
+                        showAchievementBar = true
+
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            withAnimation {
+                                showAchievementBar = false
+                            }
+                        }
+                    }
+                }
+
+                // Reset state
                 selectedList = "Prospects"
                 searchText = ""
                 showingAddProspect = false
