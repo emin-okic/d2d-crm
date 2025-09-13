@@ -43,11 +43,23 @@ struct RolodexView: View {
     @State private var showAchievementBar: Bool = false
     @State private var recentlyAdded: Bool = false
     
-    @Query private var achievements: [AchievementProgress]
+    @Query private var achievements: [Achievements]
     
-    @State private var firstTen: AchievementProgress?
+    @State private var firstTen: Achievements?
     
-    @State private var showCoins: Bool = false
+    private var importOverlay: some View {
+        ImportOverlayView(
+            showingImportFromContacts: $showingImportFromContacts,
+            showImportSuccess: $showImportSuccess,
+            showAchievementBar: $showAchievementBar,
+            selectedList: $selectedList,
+            searchText: $searchText,
+            prospects: prospects,
+            modelContext: modelContext,
+            achievements: achievements,
+            onSave: onSave
+        )
+    }
 
     init(
         selectedList: Binding<String>,
@@ -138,17 +150,7 @@ struct RolodexView: View {
                 
             }
             .navigationTitle("")
-            .overlay(
-                ImportOverlayView(
-                    showingImportFromContacts: $showingImportFromContacts,
-                    showImportSuccess: $showImportSuccess,
-                    selectedList: $selectedList,
-                    searchText: $searchText,
-                    prospects: prospects,
-                    modelContext: modelContext,
-                    onSave: onSave
-                )
-            )
+            .overlay(importOverlay)
             .overlay(
                 Group {
                     if showImportSuccess {
@@ -201,12 +203,12 @@ struct RolodexView: View {
                     await fetchNextSuggestedNeighbor()
                 }
 
-                // Initialize firstTen achievement
+                // ✅ Load or create achievement progress
                 if firstTen == nil {
                     if let ap = achievements.first(where: { $0.id == "First10" }) {
                         firstTen = ap
                     } else {
-                        let new = AchievementProgress(id: "First10", goalCount: 10)
+                        let new = Achievements(id: "First10", goalCount: 10)
                         modelContext.insert(new)
                         try? modelContext.save()
                         firstTen = new
@@ -246,7 +248,6 @@ struct RolodexView: View {
                     }
                     try? modelContext.save()
 
-                    showCoins = true
                     showAchievementBar = true
 
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
@@ -255,7 +256,6 @@ struct RolodexView: View {
                                 showAchievementBar = false
                             }
                         }
-                        showCoins = false
                     }
                 }
 

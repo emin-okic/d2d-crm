@@ -9,9 +9,12 @@ import SwiftUI
 struct AchievementBarView: View {
     var progress: Int
     var goal: Int
+    
+    var isCompleted: Bool = false
 
     var body: some View {
         VStack {
+            
            HStack(spacing: 8) {
               Text("First \(goal) Prospects")
                  .font(.headline)
@@ -19,8 +22,15 @@ struct AchievementBarView: View {
               Text("\(progress)/\(goal)")
                  .font(.subheadline)
            }
+            
            ProgressView(value: Double(progress), total: Double(goal))
               .progressViewStyle(LinearProgressViewStyle(tint: .blue))
+            
+            if isCompleted {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                        .transition(.scale)
+                }
         }
         .padding()
         .background(.ultraThinMaterial)

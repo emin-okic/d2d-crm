@@ -109,7 +109,8 @@ let sharedModelContainer: ModelContainer = {
         Objection.self,
         Appointment.self,
         Note.self,
-        Recording.self
+        Recording.self,
+        Achievements.self
     ])
 
     // ⬇️ Explicitly opt OUT of CloudKit mirroring

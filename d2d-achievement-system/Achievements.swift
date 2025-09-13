@@ -8,7 +8,7 @@ import SwiftUI
 import SwiftData
 
 @Model
-class AchievementProgress {
+class Achievements {
     var id: String
     var goalCount: Int
     var currentCount: Int
