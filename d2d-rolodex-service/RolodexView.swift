@@ -74,6 +74,33 @@ struct RolodexView: View {
                 
                 // In RolodexView.body, inside NavigationView > ZStack > VStack:
                 VStack(spacing: 16) {
+                    
+                    // Suggested Prospect Card
+                    Group {
+                        
+                        if selectedList == "Prospects", let suggestion = suggestedProspect {
+                                            SuggestedProspectBannerView(
+                                                suggestion: suggestion,
+                                                onAdd: {
+                                                    modelContext.insert(suggestion)
+                                                    try? modelContext.save()
+                                                    // Reset
+                                                    suggestedProspect = nil
+                                                    selectedList = "Prospects"
+                                                    searchText = ""
+                                                    onSave()
+                                                },
+                                                onDismiss: {
+                                                    suggestedProspect = nil
+                                                }
+                                            )
+                                            .animation(.easeInOut(duration: 0.25), value: suggestedProspect)
+                                        }
+                        
+                    }
+                    .animation(.easeInOut(duration: 0.3), value: suggestedProspect)
+                    .padding(.horizontal, 20)
+                    
                     // Page Header
                     VStack(spacing: 10) {
                         
@@ -91,26 +118,6 @@ struct RolodexView: View {
                         toggleChip("Prospects", isOn: selectedList == "Prospects") { selectedList = "Prospects" }
                         toggleChip("Customers", isOn: selectedList == "Customers") { selectedList = "Customers" }
                     }
-                    .padding(.horizontal, 20)
-                    
-                    // Suggested Prospect Card
-                    Group {
-                        if selectedList == "Prospects", let suggestion = suggestedProspect {
-                            SuggestedProspectScorecardView(suggestion: suggestion) {
-                                // onAdd
-                                modelContext.insert(suggestion)
-                                try? modelContext.save()
-                                selectedList = "Prospects"
-                                searchText = ""
-                                suggestedProspect = nil
-                                onSave()
-                            } onDismiss: {
-                                suggestedProspect = nil
-                            }
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                        }
-                    }
-                    .animation(.easeInOut(duration: 0.3), value: suggestedProspect)
                     .padding(.horizontal, 20)
 
                     // Contacts table card
