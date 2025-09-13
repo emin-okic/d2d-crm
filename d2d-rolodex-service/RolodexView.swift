@@ -92,6 +92,26 @@ struct RolodexView: View {
                         toggleChip("Customers", isOn: selectedList == "Customers") { selectedList = "Customers" }
                     }
                     .padding(.horizontal, 20)
+                    
+                    // Suggested Prospect Card
+                    Group {
+                        if selectedList == "Prospects", let suggestion = suggestedProspect {
+                            SuggestedProspectScorecardView(suggestion: suggestion) {
+                                // onAdd
+                                modelContext.insert(suggestion)
+                                try? modelContext.save()
+                                selectedList = "Prospects"
+                                searchText = ""
+                                suggestedProspect = nil
+                                onSave()
+                            } onDismiss: {
+                                suggestedProspect = nil
+                            }
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
+                    }
+                    .animation(.easeInOut(duration: 0.3), value: suggestedProspect)
+                    .padding(.horizontal, 20)
 
                     // Contacts table card
                     ContactsContainerView(selectedList: $selectedList, searchText: $searchText)
@@ -187,9 +207,11 @@ struct RolodexView: View {
                     }
                 }
             )
-            .task {
-                if selectedList == "Prospects", suggestedProspect == nil {
-                    await fetchNextSuggestedNeighbor()
+            .onChange(of: selectedList) { newValue in
+                if newValue == "Prospects" {
+                    Task {
+                        await fetchNextSuggestedNeighbor()
+                    }
                 }
             }
         }
@@ -224,26 +246,30 @@ struct RolodexView: View {
 
     @ViewBuilder
     private var addCustomerOverlay: some View {
+        
         if showingAddCustomer {
             Color.black.opacity(0.25)
                 .ignoresSafeArea()
                 .onTapGesture { showingAddCustomer = false }
 
             CustomerCreateStepperView { newCustomer in
-                let p = Prospect(fullName: newCustomer.fullName,
-                                 address: newCustomer.address,
-                                 count: 0,
-                                 list: "Customers")
-                p.contactEmail = newCustomer.contactEmail
-                p.contactPhone = newCustomer.contactPhone
-
-                modelContext.insert(p)
-                try? modelContext.save()
-
-                selectedList = "Customers"
-                searchText = ""
-                showingAddCustomer = false
-                onSave()
+                Task {
+                    let p = Prospect(fullName: newCustomer.fullName,
+                                     address: newCustomer.address,
+                                     count: 0,
+                                     list: "Customers")
+                    p.contactEmail = newCustomer.contactEmail
+                    p.contactPhone = newCustomer.contactPhone
+                    
+                    modelContext.insert(p)
+                    try? modelContext.save()
+                    
+                    selectedList = "Customers"
+                    searchText = ""
+                    showingAddCustomer = false
+                    await fetchNextSuggestedNeighbor()
+                    onSave()
+                }
             } onCancel: {
                 showingAddCustomer = false
             }
