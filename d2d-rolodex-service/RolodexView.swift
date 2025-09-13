@@ -39,6 +39,15 @@ struct RolodexView: View {
     @State private var showingImportFromContacts = false
     
     @State private var showImportSuccess = false
+    
+    @State private var showAchievementBar: Bool = false
+    @State private var recentlyAdded: Bool = false
+    
+    @Query private var achievements: [AchievementProgress]
+    
+    @State private var firstTen: AchievementProgress?
+    
+    @State private var showCoins: Bool = false
 
     init(
         selectedList: Binding<String>,
@@ -191,7 +200,29 @@ struct RolodexView: View {
                 if selectedList == "Prospects", suggestedProspect == nil {
                     await fetchNextSuggestedNeighbor()
                 }
+
+                // Initialize firstTen achievement
+                if firstTen == nil {
+                    if let ap = achievements.first(where: { $0.id == "First10" }) {
+                        firstTen = ap
+                    } else {
+                        let new = AchievementProgress(id: "First10", goalCount: 10)
+                        modelContext.insert(new)
+                        try? modelContext.save()
+                        firstTen = new
+                    }
+                }
             }
+            .overlay(achievementOverlay)
+        }
+    }
+    
+    @ViewBuilder
+    private var achievementOverlay: some View {
+        if showAchievementBar, let ap = firstTen {
+            AchievementBarView(progress: ap.currentCount, goal: ap.goalCount)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .zIndex(9999)
         }
     }
 
@@ -203,8 +234,32 @@ struct RolodexView: View {
                 .onTapGesture { showingAddProspect = false }
 
             ProspectCreateStepperView { newProspect in
+                // Save the new prospect
                 modelContext.insert(newProspect)
                 try? modelContext.save()
+
+                // 🎯 Achievement tracking for "First10"
+                if let ap = firstTen, !ap.isCompleted {
+                    ap.currentCount += 1
+                    if ap.currentCount >= ap.goalCount {
+                        ap.isCompleted = true
+                    }
+                    try? modelContext.save()
+
+                    showCoins = true
+                    showAchievementBar = true
+
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        if !ap.isCompleted {
+                            withAnimation {
+                                showAchievementBar = false
+                            }
+                        }
+                        showCoins = false
+                    }
+                }
+
+                // Reset state
                 selectedList = "Prospects"
                 searchText = ""
                 showingAddProspect = false
