@@ -60,6 +60,8 @@ struct RolodexView: View {
             onSave: onSave
         )
     }
+    
+    @State private var showConfetti = false
 
     init(
         selectedList: Binding<String>,
@@ -222,9 +224,21 @@ struct RolodexView: View {
     @ViewBuilder
     private var achievementOverlay: some View {
         if showAchievementBar, let ap = firstTen {
-            AchievementBarView(progress: ap.currentCount, goal: ap.goalCount)
+            ZStack {
+                AchievementBarView(
+                    progress: ap.currentCount,
+                    goal: ap.goalCount,
+                    isCompleted: ap.isCompleted
+                )
                 .transition(.move(edge: .top).combined(with: .opacity))
                 .zIndex(9999)
+
+                if showConfetti {
+                    ConfettiBurstView()
+                        .transition(.opacity)
+                        .zIndex(10000)
+                }
+            }
         }
     }
 
@@ -243,15 +257,32 @@ struct RolodexView: View {
                 // 🎯 Achievement tracking for "First10"
                 if let ap = firstTen, !ap.isCompleted {
                     ap.currentCount += 1
+
                     if ap.currentCount >= ap.goalCount {
                         ap.isCompleted = true
-                    }
-                    try? modelContext.save()
+                        try? modelContext.save()
 
-                    showAchievementBar = true
+                        showAchievementBar = true
+                        showConfetti = true
 
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        if !ap.isCompleted {
+                        // Confetti + dismiss bar after delay
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                            withAnimation {
+                                showConfetti = false
+                            }
+                        }
+
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+                            withAnimation {
+                                showAchievementBar = false
+                            }
+                        }
+
+                    } else {
+                        try? modelContext.save()
+                        showAchievementBar = true
+
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                             withAnimation {
                                 showAchievementBar = false
                             }
