@@ -35,8 +35,11 @@ struct ProgressBarWrapper: View {
     }
 
     private var previousBreakpoint: Int {
-        if currentLevelIndex == 0 { return 0 }
-        return breakpoints[currentLevelIndex - 1]
+        if currentLevelIndex == 0 {
+            return 0
+        } else {
+            return breakpoints[currentLevelIndex - 1]
+        }
     }
 
     private var nextBreakpoint: Int {
@@ -59,13 +62,14 @@ struct ProgressBarWrapper: View {
             let totalWidth = proxy.size.width
 
             VStack(alignment: .leading, spacing: 4) {
+                // Label
                 Text("\(current)/\(displayedNext > 0 ? displayedNext : nextBreakpoint)")
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundColor(
                         current >= (displayedNext > 0 ? displayedNext : nextBreakpoint)
-                        ? Color.green
-                        : Color.primary
+                         ? Color.green
+                         : Color.primary
                     )
 
                 ZStack(alignment: .leading) {
@@ -75,14 +79,12 @@ struct ProgressBarWrapper: View {
 
                     Capsule()
                         .fill(
-                            current >= (displayedNext > 0 ? displayedNext : nextBreakpoint)
+                            (current >= (displayedNext > 0 ? displayedNext : nextBreakpoint))
                             ? Color.green
                             : Color.blue
                         )
                         .frame(
-                            width: ((displayedNext > 0 ? displayedNext : nextBreakpoint) > 0
-                                    ? totalWidth * fractionInLevel
-                                    : 0),
+                            width: totalWidth * fractionInLevel,
                             height: 12
                         )
                         .scaleEffect(animateLevelUp ? 1.1 : 1.0, anchor: .center)
@@ -91,17 +93,14 @@ struct ProgressBarWrapper: View {
             }
             .padding(.horizontal)
             .onAppear {
-                // initialize
+                // initialize displayedNext
                 displayedNext = nextBreakpoint
             }
             .onChange(of: current) { newValue in
                 let lvl = currentLevelIndex
                 let newNext = breakpoints[lvl]
-                // Debugging prints
-                // print("current changed to \(newValue), newNext = \(newNext), displayedNext = \(displayedNext)")
-
                 if newValue >= newNext && displayedNext < newNext {
-                    // Level up
+                    // level up
                     animateLevelUp = true
 
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -122,6 +121,12 @@ struct ProgressBarWrapper_Previews: PreviewProvider {
             ProgressBarWrapper(current: 0, listType: .prospects)
             ProgressBarWrapper(current: 1, listType: .prospects)
             ProgressBarWrapper(current: 2, listType: .prospects)
+            ProgressBarWrapper(current: 3, listType: .prospects)
+            ProgressBarWrapper(current: 4, listType: .prospects)
+            ProgressBarWrapper(current: 5, listType: .prospects)
+            ProgressBarWrapper(current: 8, listType: .prospects)
+            ProgressBarWrapper(current: 10, listType: .prospects)
+            ProgressBarWrapper(current: 12, listType: .prospects)
         }
         .padding()
         .previewLayout(.sizeThatFits)
