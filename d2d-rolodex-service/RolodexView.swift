@@ -85,6 +85,13 @@ struct RolodexView: View {
                         Text(filteredCountText)
                             .font(.title2)
                             .foregroundColor(.secondary)
+                        
+                        ProgressBarWrapper(
+                            current: selectedList == "Prospects" ? totalProspects : totalCustomers,
+                            listType: selectedList == "Prospects" ? .prospects : .customers
+                        )
+                        .padding(.horizontal, 20)
+                        
                     }
 
                     // Toggle chips
