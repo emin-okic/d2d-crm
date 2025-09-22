@@ -18,32 +18,30 @@ struct ProgressBarWrapper: View {
 
     private var breakpoints: [Int] {
         switch listType {
-        case .prospects:
-            return [1, 2, 3, 5, 8, 10]
-        case .customers:
-            return [1, 2, 3, 5, 10]
+        case .prospects: return [0, 5, 10, 25]
+        case .customers: return [0, 5, 10, 25]
         }
     }
 
+    // Work out what tier we’re in
     private var currentLevelIndex: Int {
         for (i, bp) in breakpoints.enumerated() {
             if current < bp {
-                return i
+                return max(i - 1, 0)
             }
         }
         return breakpoints.count - 1
     }
 
     private var previousBreakpoint: Int {
-        if currentLevelIndex == 0 {
-            return 0
-        } else {
-            return breakpoints[currentLevelIndex - 1]
-        }
+        breakpoints[currentLevelIndex]
     }
 
     private var nextBreakpoint: Int {
-        breakpoints[min(currentLevelIndex, breakpoints.count - 1)]
+        if currentLevelIndex + 1 < breakpoints.count {
+            return breakpoints[currentLevelIndex + 1]
+        }
+        return breakpoints.last ?? previousBreakpoint
     }
 
     private var fractionInLevel: Double {
@@ -55,7 +53,7 @@ struct ProgressBarWrapper: View {
     }
 
     @State private var displayedNext: Int = 0
-    @State private var animateLevelUp: Bool = false
+    @State private var animateLevelUp = false
 
     var body: some View {
         GeometryReader { proxy in
@@ -63,14 +61,10 @@ struct ProgressBarWrapper: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 // Label
-                Text("\(current)/\(displayedNext > 0 ? displayedNext : nextBreakpoint)")
+                Text("\(current)/\(displayedNext)")
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(
-                        current >= (displayedNext > 0 ? displayedNext : nextBreakpoint)
-                         ? Color.green
-                         : Color.primary
-                    )
+                    .foregroundColor(current >= displayedNext ? .green : .primary)
 
                 ZStack(alignment: .leading) {
                     Capsule()
@@ -78,31 +72,21 @@ struct ProgressBarWrapper: View {
                         .frame(height: 12)
 
                     Capsule()
-                        .fill(
-                            (current >= (displayedNext > 0 ? displayedNext : nextBreakpoint))
-                            ? Color.green
-                            : Color.blue
-                        )
-                        .frame(
-                            width: totalWidth * fractionInLevel,
-                            height: 12
-                        )
+                        .fill(current >= displayedNext ? .green : .blue)
+                        .frame(width: totalWidth * fractionInLevel, height: 12)
                         .scaleEffect(animateLevelUp ? 1.1 : 1.0, anchor: .center)
                         .animation(.easeInOut(duration: 0.3), value: animateLevelUp)
                 }
             }
             .padding(.horizontal)
             .onAppear {
-                // initialize displayedNext
                 displayedNext = nextBreakpoint
             }
             .onChange(of: current) { newValue in
-                let lvl = currentLevelIndex
-                let newNext = breakpoints[lvl]
-                if newValue >= newNext && displayedNext < newNext {
+                let newNext = nextBreakpoint
+                if newValue >= displayedNext && displayedNext < newNext {
                     // level up
                     animateLevelUp = true
-
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         animateLevelUp = false
                         displayedNext = newNext
@@ -114,19 +98,16 @@ struct ProgressBarWrapper: View {
     }
 }
 
-// Preview
+// MARK: - Preview
 struct ProgressBarWrapper_Previews: PreviewProvider {
     static var previews: some View {
         VStack(spacing: 20) {
-            ProgressBarWrapper(current: 0, listType: .prospects)
-            ProgressBarWrapper(current: 1, listType: .prospects)
-            ProgressBarWrapper(current: 2, listType: .prospects)
-            ProgressBarWrapper(current: 3, listType: .prospects)
-            ProgressBarWrapper(current: 4, listType: .prospects)
-            ProgressBarWrapper(current: 5, listType: .prospects)
-            ProgressBarWrapper(current: 8, listType: .prospects)
-            ProgressBarWrapper(current: 10, listType: .prospects)
-            ProgressBarWrapper(current: 12, listType: .prospects)
+            ProgressBarWrapper(current: 0, listType: .prospects)   // 0/5
+            ProgressBarWrapper(current: 5, listType: .prospects)   // 5/10
+            ProgressBarWrapper(current: 9, listType: .prospects)   // 9/10
+            ProgressBarWrapper(current: 10, listType: .prospects)  // 10/25
+            ProgressBarWrapper(current: 20, listType: .prospects)  // 20/25
+            ProgressBarWrapper(current: 25, listType: .prospects)  // capped
         }
         .padding()
         .previewLayout(.sizeThatFits)
