@@ -108,20 +108,13 @@ class ProspectController: ObservableObject {
     
     @discardableResult
     func validatePhoneNumber() -> Bool {
-        let raw = tempPhone.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !raw.isEmpty else {
-            phoneError = nil
-            return true
-        }
-        
-        let utility = PhoneNumberUtility()
-        do {
-            _ = try utility.parse(raw)
-            phoneError = nil
-            return true
-        } catch {
-            phoneError = "Invalid phone number."
+        if let error = PhoneValidator.validate(tempPhone) {
+            phoneError = error
             return false
+        } else {
+            phoneError = nil
+            return true
         }
     }
+    
 }

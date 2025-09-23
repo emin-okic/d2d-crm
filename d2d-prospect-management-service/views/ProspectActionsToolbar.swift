@@ -290,21 +290,12 @@ struct ProspectActionsToolbar: View {
     }
     
     private func validatePhoneNumber() -> Bool {
-        let raw = newPhone.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !raw.isEmpty else {
-            phoneError = nil
-            return true
-        }
-
-        let utility = PhoneNumberUtility()
-
-        do {
-            _ = try utility.parse(raw)
-            phoneError = nil
-            return true
-        } catch {
-            phoneError = "Invalid phone number."
+        if let error = PhoneValidator.validate(newPhone) {
+            phoneError = error
             return false
+        } else {
+            phoneError = nil
+            return true
         }
     }
 
