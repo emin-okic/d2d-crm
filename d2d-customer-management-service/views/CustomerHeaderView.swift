@@ -19,6 +19,9 @@ struct CustomerHeaderView: View {
             Text("\(totalCustomers) Customers")
                 .font(.title2)
                 .foregroundColor(.secondary)
+
+            CustomerProgressBarView(current: totalCustomers)
+                .padding(.horizontal, 20)
         }
     }
 }
