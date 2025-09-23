@@ -11,6 +11,7 @@ import SwiftData
 struct CustomerManagementView: View {
     @Environment(\.modelContext) private var modelContext
     @Binding var searchText: String
+    @Binding var selectedList: String
     var onSave: () -> Void
 
     @State private var showingAddCustomer = false
@@ -22,20 +23,13 @@ struct CustomerManagementView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            // Header
-            VStack(spacing: 10) {
-                Text("Contacts")
-                    .font(.largeTitle).fontWeight(.bold)
-                    .padding(.top, 10)
+            CustomerHeaderView(totalCustomers: totalCustomers)
 
-                Text("\(totalCustomers) Customers")
-                    .font(.title2)
-                    .foregroundColor(.secondary)
-            }
+            // Toggle chips under header (shared binding)
+            ToggleChipsView(selectedList: $selectedList)
 
-            // Customers table
             ContactsContainerView(
-                selectedList: .constant("Customers"),
+                selectedList: $selectedList,  // 👈 use binding
                 searchText: $searchText
             )
             .padding(.horizontal, 20)
@@ -43,7 +37,7 @@ struct CustomerManagementView: View {
         }
         .overlay(addCustomerOverlay)
     }
-
+    
     // MARK: - Overlays
     @ViewBuilder
     private var addCustomerOverlay: some View {
@@ -71,16 +65,5 @@ struct CustomerManagementView: View {
             .transition(.scale.combined(with: .opacity))
             .zIndex(2000)
         }
-    }
-}
-
-// MARK: - Preview
-struct CustomerManagementView_Previews: PreviewProvider {
-    @State static var searchText = ""
-
-    static var previews: some View {
-        CustomerManagementView(searchText: $searchText, onSave: {})
-            .modelContainer(for: Customer.self, inMemory: true)
-            .previewDisplayName("Customer Management")
     }
 }

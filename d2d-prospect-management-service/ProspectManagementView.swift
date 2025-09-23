@@ -12,6 +12,7 @@ struct ProspectManagementView: View {
     @Environment(\.modelContext) private var modelContext
     @Binding var searchText: String
     @Binding var suggestedProspect: Prospect?
+    @Binding var selectedList: String   // 👈 add this
     var onSave: () -> Void
 
     @Query private var prospects: [Prospect]
@@ -22,24 +23,11 @@ struct ProspectManagementView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            // Header
-            VStack(spacing: 10) {
-                Text("Contacts")
-                    .font(.largeTitle).fontWeight(.bold)
-                    .padding(.top, 10)
+            ProspectHeaderView(totalProspects: totalProspects)
 
-                Text("\(totalProspects) Prospects")
-                    .font(.title2)
-                    .foregroundColor(.secondary)
+            // Toggle chips under header (uses shared binding now)
+            ToggleChipsView(selectedList: $selectedList)
 
-                ProgressBarWrapper(
-                    current: totalProspects,
-                    listType: .prospects
-                )
-                .padding(.horizontal, 20)
-            }
-
-            // Suggested Prospect Banner
             if let suggestion = suggestedProspect {
                 SuggestedProspectBannerView(
                     suggestion: suggestion,
@@ -58,10 +46,12 @@ struct ProspectManagementView: View {
                 .padding(.horizontal, 20)
             }
 
-            // Contacts table
-            ContactsContainerView(selectedList: .constant("Prospects"), searchText: $searchText)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 10)
+            ContactsContainerView(
+                selectedList: $selectedList,  // 👈 use binding instead of .constant
+                searchText: $searchText
+            )
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
         }
     }
 }

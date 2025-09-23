@@ -9,161 +9,65 @@ import SwiftUI
 import SwiftData
 import ContactsUI
 
-/// A view that displays and manages a list of prospects
-/// Users can filter by list type (e.g., "Prospects", "Customers"), add new prospects, and tap
-/// a prospect to edit its details.
 struct ContactManagementView: View {
     @Environment(\.modelContext) private var modelContext
     @Binding var selectedList: String
     var onSave: () -> Void
 
-    @State private var selectedProspectID: PersistentIdentifier?
-    @State private var showingAddProspect = false
-    @State private var suggestedProspect: Prospect?
-    @State private var showingAddCustomer = false
-    @State private var suggestionSourceIndex = 0 // Track which customer we’re pulling from
-    
-    @State private var showActivityOnboarding = false
-    
+    // Shared state
     @State private var searchText: String = ""
+    @State private var suggestedProspect: Prospect?
+    @State private var suggestionSourceIndex = 0
+
     @State private var isSearchExpanded: Bool = false
     @FocusState private var isSearchFocused: Bool
 
-    let availableLists = ["Prospects", "Customers"]
-    @Query var prospects: [Prospect]
-    @Query private var customers: [Customer]
-    
-    var onDoubleTap: ((Prospect) -> Void)? = nil
-    
+    // Menu + overlays
     @State private var showAddOptionsMenu = false
     @State private var showingImportFromContacts = false
-    
     @State private var showImportSuccess = false
 
-    init(
-        selectedList: Binding<String>,
-        onSave: @escaping () -> Void,
-        onDoubleTap: ((Prospect) -> Void)? = nil
-    ) {
-        _selectedList = selectedList
-        self.onSave = onSave
-        self.onDoubleTap = onDoubleTap
-        _prospects = Query()
-        _customers = Query()
-    }
-    
-    private var totalProspects: Int {
-        prospects.filter { $0.list == "Prospects" }.count
-    }
-
-    private var totalCustomers: Int {
-        prospects.filter { $0.list == "Customers" }.count
-    }
-    
-    private var filteredCountText: String {
-        let count = selectedList == "Prospects"
-            ? prospects.filter { $0.list == "Prospects" }.count
-            : prospects.filter { $0.list == "Customers" }.count
-        let label = selectedList
-        return "\(count) \(label)"
-    }
+    @Query private var prospects: [Prospect]
 
     var body: some View {
         NavigationView {
             ZStack {
-                
-                // In RolodexView.body, inside NavigationView > ZStack > VStack:
-                VStack(spacing: 16) {
-                    
-                    // Page Header
-                    VStack(spacing: 10) {
-                        
-                        Text("Contacts")
-                            .font(.largeTitle).fontWeight(.bold)
-                            .padding(.top, 10)
-
-                        Text(filteredCountText)
-                            .font(.title2)
-                            .foregroundColor(.secondary)
-                        
-                        // The progress bar 
-                        if selectedList == "Prospects" {
-                            ProgressBarWrapper(
-                                current: totalProspects,
-                                listType: .prospects
-                            )
-                            .padding(.horizontal, 20)
-                        }
-                        
-                    }
-
-                    // Toggle chips
-                    HStack(spacing: 10) {
-                        toggleChip("Prospects", isOn: selectedList == "Prospects") { selectedList = "Prospects" }
-                        toggleChip("Customers", isOn: selectedList == "Customers") { selectedList = "Customers" }
-                    }
-                    .padding(.horizontal, 20)
-                    
-                    // Suggested Prospect Card
-                    Group {
-                        
-                        if selectedList == "Prospects", let suggestion = suggestedProspect {
-                                            SuggestedProspectBannerView(
-                                                suggestion: suggestion,
-                                                onAdd: {
-                                                    modelContext.insert(suggestion)
-                                                    try? modelContext.save()
-                                                    // Reset
-                                                    suggestedProspect = nil
-                                                    selectedList = "Prospects"
-                                                    searchText = ""
-                                                    onSave()
-                                                },
-                                                onDismiss: {
-                                                    suggestedProspect = nil
-                                                }
-                                            )
-                                            .animation(.easeInOut(duration: 0.25), value: suggestedProspect)
-                                        }
-                        
-                    }
-                    .animation(.easeInOut(duration: 0.3), value: suggestedProspect)
-                    .padding(.horizontal, 20)
-
-                    // Contacts table card
-                    ContactsContainerView(selectedList: $selectedList, searchText: $searchText)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 10)
-                    
+                if selectedList == "Prospects" {
+                    ProspectManagementView(
+                        searchText: $searchText,
+                        suggestedProspect: $suggestedProspect,
+                        selectedList: $selectedList,
+                        onSave: onSave
+                    )
+                } else {
+                    CustomerManagementView(
+                        searchText: $searchText,
+                        selectedList: $selectedList,
+                        onSave: onSave
+                    )
                 }
-                
 
                 // Dim background if menu is open
                 if showAddOptionsMenu {
                     Color.black.opacity(0.25)
                         .ignoresSafeArea()
                         .transition(.opacity)
-                        .onTapGesture {
-                            withAnimation { showAddOptionsMenu = false }
-                        }
+                        .onTapGesture { withAnimation { showAddOptionsMenu = false } }
                 }
 
-                // The + toolbar
+                // Toolbar
                 ContactsToolbarView(
                     searchText: $searchText,
                     isSearchExpanded: $isSearchExpanded,
                     isSearchFocused: $isSearchFocused,
                     onAddTapped: {
                         if selectedList == "Prospects" {
-                            withAnimation(.spring()) {
-                                showAddOptionsMenu = true
-                            }
+                            withAnimation(.spring()) { showAddOptionsMenu = true }
                         } else {
-                            showingAddCustomer = true
+                            // Customer add flow is inside CustomerManagementView
                         }
                     }
                 )
-                
             }
             .navigationTitle("")
             .overlay(
@@ -191,12 +95,10 @@ struct ContactManagementView: View {
                                 .zIndex(9999)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .contentShape(Rectangle()) // make it tappable (optional)
+                        .contentShape(Rectangle())
                     }
                 }
             )
-            .overlay(addProspectOverlay)
-            .overlay(addCustomerOverlay)
             .overlay(
                 Group {
                     if showAddOptionsMenu {
@@ -206,7 +108,7 @@ struct ContactManagementView: View {
                                 AddProspectOptionsMenu(
                                     onAddManually: {
                                         withAnimation { showAddOptionsMenu = false }
-                                        showingAddProspect = true
+                                        // Prospect create flow handled in ProspectManagementView
                                     },
                                     onImportFromContacts: {
                                         withAnimation { showAddOptionsMenu = false }
@@ -226,132 +128,14 @@ struct ContactManagementView: View {
             )
             .onChange(of: selectedList) { newValue in
                 if newValue == "Prospects" {
-                    Task {
-                        await fetchNextSuggestedNeighbor()
-                    }
+                    Task { await fetchNextSuggestedNeighbor() }
                 }
             }
         }
     }
 
-    @ViewBuilder
-    private var addProspectOverlay: some View {
-        if showingAddProspect {
-            Color.black.opacity(0.25)
-                .ignoresSafeArea()
-                .onTapGesture { showingAddProspect = false }
-
-            ProspectCreateStepperView { newProspect in
-                modelContext.insert(newProspect)
-                try? modelContext.save()
-                selectedList = "Prospects"
-                searchText = ""
-                showingAddProspect = false
-                onSave()
-            } onCancel: {
-                showingAddProspect = false
-            }
-            .frame(width: 300, height: 300)
-            .background(.ultraThinMaterial)
-            .cornerRadius(16)
-            .shadow(radius: 8)
-            .position(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY * 0.9)
-            .transition(.scale.combined(with: .opacity))
-            .zIndex(2000)
-        }
-    }
-
-    @ViewBuilder
-    private var addCustomerOverlay: some View {
-        
-        if showingAddCustomer {
-            Color.black.opacity(0.25)
-                .ignoresSafeArea()
-                .onTapGesture { showingAddCustomer = false }
-
-            CustomerCreateStepperView { newCustomer in
-                Task {
-                    let p = Prospect(fullName: newCustomer.fullName,
-                                     address: newCustomer.address,
-                                     count: 0,
-                                     list: "Customers")
-                    p.contactEmail = newCustomer.contactEmail
-                    p.contactPhone = newCustomer.contactPhone
-                    
-                    modelContext.insert(p)
-                    try? modelContext.save()
-                    
-                    selectedList = "Customers"
-                    searchText = ""
-                    showingAddCustomer = false
-                    await fetchNextSuggestedNeighbor()
-                    onSave()
-                }
-            } onCancel: {
-                showingAddCustomer = false
-            }
-            .frame(width: 300, height: 300)
-            .background(.ultraThinMaterial)
-            .cornerRadius(16)
-            .shadow(radius: 8)
-            .position(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY * 0.9)
-            .transition(.scale.combined(with: .opacity))
-            .zIndex(2000)
-        }
-    }
-    
-    @ViewBuilder
-    private func toggleChip(_ title: String, isOn: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.callout)                 // ↑ from .caption
-                .fontWeight(.semibold)
-                .padding(.vertical, 7)
-                .padding(.horizontal, 14)
-                .frame(minWidth: 110)           // a bit wider
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(isOn ? Color.blue : Color(.secondarySystemBackground))
-                )
-                .foregroundColor(isOn ? .white : .primary)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(isOn ? Color.blue.opacity(0.9) : Color.gray.opacity(0.25), lineWidth: 1)
-                )
-        }
-        .buttonStyle(.plain)
-        .animation(.easeInOut(duration: 0.15), value: isOn)
-    }
-
-    private func formatPhoneNumber(_ raw: String) -> String {
-        let digits = raw.filter { $0.isNumber }
-        if digits.count == 10 {
-            return "\(digits.prefix(3))-\(digits.dropFirst(3).prefix(3))-\(digits.suffix(4))"
-        } else {
-            return raw
-        }
-    }
-
-    func fetchSuggestedNeighbor(from customer: Prospect) async {
-        let controller = DatabaseController.shared
-
-        let neighbor = await withCheckedContinuation { (continuation: CheckedContinuation<Prospect?, Never>) in
-            controller.geocodeAndSuggestNeighbor(from: customer.address) { address in
-                if let addr = address {
-                    let suggested = Prospect(fullName: "Suggested Neighbor", address: addr, count: 0, list: "Prospects")
-                    continuation.resume(returning: suggested)
-                } else {
-                    continuation.resume(returning: nil)
-                }
-            }
-        }
-
-        if let neighbor = neighbor {
-            suggestedProspect = neighbor
-        }
-    }
-    
-    func fetchNextSuggestedNeighbor() async {
+    // MARK: - Suggestion fetching
+    private func fetchNextSuggestedNeighbor() async {
         let controller = DatabaseController.shared
         let customerProspects = prospects.filter { $0.list == "Customers" }
         guard !customerProspects.isEmpty else {
@@ -367,7 +151,6 @@ struct ContactManagementView: View {
 
             let result = await withCheckedContinuation { (continuation: CheckedContinuation<Prospect?, Never>) in
                 controller.geocodeAndSuggestNeighbor(from: customer.address) { address in
-                    // NEW: Check SwiftData for duplicates
                     if let addr = address,
                        !prospects.contains(where: { $0.address.caseInsensitiveCompare(addr) == .orderedSame }) {
                         let suggested = Prospect(
