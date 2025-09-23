@@ -23,7 +23,7 @@ struct ProgressBarWrapper: View {
         }
     }
 
-    // Work out what tier we’re in
+    // Which tier are we in now?
     private var currentLevelIndex: Int {
         for (i, bp) in breakpoints.enumerated() {
             if current < bp {
@@ -88,7 +88,6 @@ struct ProgressBarWrapper: View {
                 }
                 .padding(.horizontal)
 
-                // Confetti overlay
                 if showConfetti {
                     ConfettiView()
                         .allowsHitTesting(false)
@@ -100,24 +99,30 @@ struct ProgressBarWrapper: View {
             }
             .onChange(of: current) { newValue in
                 let newNext = nextBreakpoint
-                if newValue >= displayedNext && displayedNext < newNext {
-                    // Trigger level-up animations
+                let newPrev = previousBreakpoint
+
+                if newValue == displayedNext {   // ✅ trigger on exact milestone
                     animateLevelUp = true
                     showConfetti = true
                     draining = true
                     drainFraction = 1.0
 
-                    // Run drain animation
+                    // Drain animation
                     withAnimation(.easeInOut(duration: 1.0)) {
                         drainFraction = 0.0
                     }
 
-                    // After drain, reset to new tier
+                    // After drain, expand tier
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                         draining = false
                         animateLevelUp = false
-                        displayedNext = newNext
+                        displayedNext = newNext   // now 5/10 instead of stuck at 5/5
                         showConfetti = false
+                    }
+                } else if newValue < newPrev {
+                    // ⬇️ Downgrade tier
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        displayedNext = newNext
                     }
                 }
             }
@@ -163,21 +168,5 @@ struct ConfettiParticle: Identifiable, Equatable {
 
     func start(in size: CGSize) -> CGPoint {
         CGPoint(x: x * size.width, y: y * size.height / 4)
-    }
-}
-
-// MARK: - Preview
-struct ProgressBarWrapper_Previews: PreviewProvider {
-    static var previews: some View {
-        VStack(spacing: 20) {
-            ProgressBarWrapper(current: 0, listType: .prospects)   // 0/5
-            ProgressBarWrapper(current: 5, listType: .prospects)   // 5/10
-            ProgressBarWrapper(current: 9, listType: .prospects)   // 9/10
-            ProgressBarWrapper(current: 10, listType: .prospects)  // 10/25
-            ProgressBarWrapper(current: 20, listType: .prospects)  // 20/25
-            ProgressBarWrapper(current: 25, listType: .prospects)  // capped
-        }
-        .padding()
-        .previewLayout(.sizeThatFits)
     }
 }
