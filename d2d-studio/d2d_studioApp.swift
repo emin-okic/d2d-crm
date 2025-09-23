@@ -104,6 +104,7 @@ let sharedModelContainer: ModelContainer = {
 
     let schema = Schema([
         Prospect.self,
+        Customer.self,
         Knock.self,
         Trip.self,
         Objection.self,
