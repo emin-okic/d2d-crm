@@ -49,13 +49,9 @@ struct RootView: View {
             }
             .tag(0)
 
-            RolodexView(
+            ContactManagementView(
                 selectedList: $selectedList,
-                onSave: { showingAddProspect = false },
-                onDoubleTap: { prospect in
-                    selectedTab = 0
-                    addressToCenter = prospect.address
-                }
+                onSave: { showingAddProspect = false }
             )
             .tabItem {
                 Label("Contacts", systemImage: "person.3.fill")

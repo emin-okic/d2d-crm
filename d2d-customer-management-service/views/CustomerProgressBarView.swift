@@ -1,25 +1,17 @@
 //
-//  ProgressBarView.swift
+//  CustomerProgressBarView.swift
 //  d2d-studio
 //
-//  Created by Emin Okic on 9/21/25.
+//  Created by Emin Okic on 9/23/25.
 //
 
 import SwiftUI
 
-enum ContactListType {
-    case prospects
-}
-
-struct ProgressBarWrapper: View {
+struct CustomerProgressBarView: View {
     let current: Int
-    let listType: ContactListType
 
     private var breakpoints: [Int] {
-        switch listType {
-        case .prospects:
-            return [0, 5, 10, 25]
-        }
+        [0, 1, 3, 5, 10]   // 👈 milestones for customers
     }
 
     // MARK: - State
@@ -72,7 +64,6 @@ struct ProgressBarWrapper: View {
                 }
                 .padding(.horizontal)
 
-                // Confetti
                 if showConfetti {
                     ConfettiView()
                         .allowsHitTesting(false)
@@ -80,32 +71,27 @@ struct ProgressBarWrapper: View {
                 }
             }
             .onAppear {
-                // Initialize to the correct tier
                 setTier(for: current)
             }
             .onChange(of: current) { newValue in
-                if newValue == displayedNext {   // ✅ Only fire when exactly hitting milestone
+                if newValue == displayedNext {
                     if let idx = breakpoints.firstIndex(of: displayedNext),
                        idx + 1 < breakpoints.count {
                         let newPrev = displayedNext
                         let newNext = breakpoints[idx + 1]
 
-                        // Trigger animations
                         animateLevelUp = true
                         showConfetti = true
                         draining = true
                         drainFraction = 1.0
 
-                        // Update tier immediately (e.g. 5/5 → 5/10)
                         displayedPrev = newPrev
                         displayedNext = newNext
 
-                        // Drain effect
                         withAnimation(.easeInOut(duration: 1.0)) {
                             drainFraction = 0.0
                         }
 
-                        // Cleanup
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                             draining = false
                             animateLevelUp = false
@@ -113,7 +99,6 @@ struct ProgressBarWrapper: View {
                         }
                     }
                 } else {
-                    // Just recalc tier if not exactly at milestone
                     setTier(for: newValue)
                 }
             }
@@ -121,7 +106,7 @@ struct ProgressBarWrapper: View {
         .frame(height: 40)
     }
 
-    // Helper to pick the right tier based on current value
+    // MARK: - Helper
     private func setTier(for value: Int) {
         for i in 1..<breakpoints.count {
             if value < breakpoints[i] {
@@ -132,45 +117,5 @@ struct ProgressBarWrapper: View {
         }
         displayedPrev = breakpoints[breakpoints.count - 2]
         displayedNext = breakpoints.last ?? 0
-    }
-}
-
-// MARK: - Confetti
-struct ConfettiView: View {
-    @State private var particles: [ConfettiParticle] = (0..<20).map { _ in ConfettiParticle.random }
-
-    var body: some View {
-        GeometryReader { geo in
-            ForEach(particles) { particle in
-                Circle()
-                    .fill(particle.color)
-                    .frame(width: 6, height: 6)
-                    .position(particle.start(in: geo.size))
-                    .animation(
-                        .easeOut(duration: 1.0)
-                            .delay(Double.random(in: 0...0.3)),
-                        value: particles
-                    )
-            }
-        }
-    }
-}
-
-struct ConfettiParticle: Identifiable, Equatable {
-    let id = UUID()
-    let color: Color
-    let x: CGFloat
-    let y: CGFloat
-
-    static var random: ConfettiParticle {
-        ConfettiParticle(
-            color: [Color.red, .green, .blue, .yellow, .purple, .orange].randomElement()!,
-            x: CGFloat.random(in: 0...1),
-            y: CGFloat.random(in: 0...1)
-        )
-    }
-
-    func start(in size: CGSize) -> CGPoint {
-        CGPoint(x: x * size.width, y: y * size.height / 4)
     }
 }
