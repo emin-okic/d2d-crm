@@ -101,26 +101,29 @@ struct ProgressBarWrapper: View {
                 let newNext = nextBreakpoint
                 let newPrev = previousBreakpoint
 
-                if newValue == displayedNext {   // ✅ trigger on exact milestone
+                if newValue == displayedNext {
+                    // 🚀 milestone reached
                     animateLevelUp = true
                     showConfetti = true
                     draining = true
                     drainFraction = 1.0
 
-                    // Drain animation
+                    // Immediately bump the tier label
+                    displayedNext = newNext
+
+                    // Run drain animation
                     withAnimation(.easeInOut(duration: 1.0)) {
                         drainFraction = 0.0
                     }
 
-                    // After drain, expand tier
+                    // Cleanup after drain
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                         draining = false
                         animateLevelUp = false
-                        displayedNext = newNext   // now 5/10 instead of stuck at 5/5
                         showConfetti = false
                     }
                 } else if newValue < newPrev {
-                    // ⬇️ Downgrade tier
+                    // ⬇️ downgrade tier
                     withAnimation(.easeInOut(duration: 0.5)) {
                         displayedNext = newNext
                     }
