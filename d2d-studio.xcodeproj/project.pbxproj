@@ -169,6 +169,11 @@
 			path = "d2d-map-serviceUITests";
 			sourceTree = "<group>";
 		};
+		C5E346E02E82F62D00CAE776 /* d2d-prospect-management-service */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "d2d-prospect-management-service";
+			sourceTree = "<group>";
+		};
 		C5E6A7232E2BE6CD00EC05F4 /* d2d-widget-service */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -228,6 +233,7 @@
 				C5E6A7232E2BE6CD00EC05F4 /* d2d-widget-service */,
 				C55449012E5A104300677585 /* d2d-ad-engine-service */,
 				C59705F92E198214006C3B55 /* d2d-rolodex-service */,
+				C5E346E02E82F62D00CAE776 /* d2d-prospect-management-service */,
 				C56CD3852E1993CB00232EF7 /* d2d-prospecting-service */,
 				C55E795A2E450CB400D1EA0C /* d2d-activity-management-service */,
 				C511E0372E40F502001BAA36 /* d2d-search-engine-service */,
@@ -291,6 +297,7 @@
 				C5B1B5652E3FC3A6004766E8 /* d2d-objections-manager-service */,
 				C5B1B5662E3FC3AE004766E8 /* d2d-recording-manager-service */,
 				C5BE4B362DE7CC9E005C37B1 /* d2d-studio */,
+				C5E346E02E82F62D00CAE776 /* d2d-prospect-management-service */,
 			);
 			name = "d2d-studio";
 			packageProductDependencies = (
