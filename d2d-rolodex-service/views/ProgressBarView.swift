@@ -9,7 +9,6 @@ import SwiftUI
 
 enum ContactListType {
     case prospects
-    case customers
 }
 
 struct ProgressBarWrapper: View {
@@ -18,62 +17,47 @@ struct ProgressBarWrapper: View {
 
     private var breakpoints: [Int] {
         switch listType {
-        case .prospects: return [0, 5, 10, 25]
-        case .customers: return [0, 5, 10, 25]
+        case .prospects:
+            return [0, 5, 10, 25]
         }
     }
 
-    // Which tier are we in now?
-    private var currentLevelIndex: Int {
-        for (i, bp) in breakpoints.enumerated() {
-            if current < bp {
-                return max(i - 1, 0)
-            }
-        }
-        return breakpoints.count - 1
-    }
-
-    private var previousBreakpoint: Int {
-        breakpoints[currentLevelIndex]
-    }
-
-    private var nextBreakpoint: Int {
-        if currentLevelIndex + 1 < breakpoints.count {
-            return breakpoints[currentLevelIndex + 1]
-        }
-        return breakpoints.last ?? previousBreakpoint
-    }
-
-    private var fractionInLevel: Double {
-        let prev = Double(previousBreakpoint)
-        let next = Double(nextBreakpoint)
-        guard next > prev else { return 1.0 }
-        let progress = Double(current) - prev
-        return min(max(progress / (next - prev), 0.0), 1.0)
-    }
-
+    // MARK: - State
     @State private var displayedNext: Int = 0
+    @State private var displayedPrev: Int = 0
+
     @State private var animateLevelUp = false
     @State private var showConfetti = false
     @State private var draining = false
     @State private var drainFraction: Double = 1.0
 
-    private var effectiveFraction: Double {
-        draining ? drainFraction : fractionInLevel
+    // MARK: - Progress Calculation
+    private var fractionInDisplayedTier: Double {
+        let prev = Double(displayedPrev)
+        let next = Double(displayedNext)
+        guard next > prev else { return 0.0 }
+        let progress = Double(current) - prev
+        return min(max(progress / (next - prev), 0.0), 1.0)
     }
 
+    private var effectiveFraction: Double {
+        draining ? drainFraction : fractionInDisplayedTier
+    }
+
+    // MARK: - Body
     var body: some View {
         GeometryReader { proxy in
             let totalWidth = proxy.size.width
 
             ZStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    // Label
+                    // Counter
                     Text("\(current)/\(displayedNext)")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(current >= displayedNext ? .green : .primary)
 
+                    // Progress bar
                     ZStack(alignment: .leading) {
                         Capsule()
                             .fill(Color.gray.opacity(0.3))
@@ -88,6 +72,7 @@ struct ProgressBarWrapper: View {
                 }
                 .padding(.horizontal)
 
+                // Confetti
                 if showConfetti {
                     ConfettiView()
                         .allowsHitTesting(false)
@@ -95,42 +80,58 @@ struct ProgressBarWrapper: View {
                 }
             }
             .onAppear {
-                displayedNext = nextBreakpoint
+                // Initialize to the correct tier
+                setTier(for: current)
             }
             .onChange(of: current) { newValue in
-                let newNext = nextBreakpoint
-                let newPrev = previousBreakpoint
+                if newValue == displayedNext {   // ✅ Only fire when exactly hitting milestone
+                    if let idx = breakpoints.firstIndex(of: displayedNext),
+                       idx + 1 < breakpoints.count {
+                        let newPrev = displayedNext
+                        let newNext = breakpoints[idx + 1]
 
-                if newValue == displayedNext {
-                    // 🚀 milestone reached
-                    animateLevelUp = true
-                    showConfetti = true
-                    draining = true
-                    drainFraction = 1.0
+                        // Trigger animations
+                        animateLevelUp = true
+                        showConfetti = true
+                        draining = true
+                        drainFraction = 1.0
 
-                    // Immediately bump the tier label
-                    displayedNext = newNext
-
-                    // Run drain animation
-                    withAnimation(.easeInOut(duration: 1.0)) {
-                        drainFraction = 0.0
-                    }
-
-                    // Cleanup after drain
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                        draining = false
-                        animateLevelUp = false
-                        showConfetti = false
-                    }
-                } else if newValue < newPrev {
-                    // ⬇️ downgrade tier
-                    withAnimation(.easeInOut(duration: 0.5)) {
+                        // Update tier immediately (e.g. 5/5 → 5/10)
+                        displayedPrev = newPrev
                         displayedNext = newNext
+
+                        // Drain effect
+                        withAnimation(.easeInOut(duration: 1.0)) {
+                            drainFraction = 0.0
+                        }
+
+                        // Cleanup
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            draining = false
+                            animateLevelUp = false
+                            showConfetti = false
+                        }
                     }
+                } else {
+                    // Just recalc tier if not exactly at milestone
+                    setTier(for: newValue)
                 }
             }
         }
         .frame(height: 40)
+    }
+
+    // Helper to pick the right tier based on current value
+    private func setTier(for value: Int) {
+        for i in 1..<breakpoints.count {
+            if value < breakpoints[i] {
+                displayedPrev = breakpoints[i - 1]
+                displayedNext = breakpoints[i]
+                return
+            }
+        }
+        displayedPrev = breakpoints[breakpoints.count - 2]
+        displayedNext = breakpoints.last ?? 0
     }
 }
 
@@ -147,7 +148,7 @@ struct ConfettiView: View {
                     .position(particle.start(in: geo.size))
                     .animation(
                         .easeOut(duration: 1.0)
-                        .delay(Double.random(in: 0...0.3)),
+                            .delay(Double.random(in: 0...0.3)),
                         value: particles
                     )
             }
