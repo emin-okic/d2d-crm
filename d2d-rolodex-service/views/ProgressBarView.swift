@@ -54,47 +54,115 @@ struct ProgressBarWrapper: View {
 
     @State private var displayedNext: Int = 0
     @State private var animateLevelUp = false
+    @State private var showConfetti = false
+    @State private var draining = false
+    @State private var drainFraction: Double = 1.0
+
+    private var effectiveFraction: Double {
+        draining ? drainFraction : fractionInLevel
+    }
 
     var body: some View {
         GeometryReader { proxy in
             let totalWidth = proxy.size.width
 
-            VStack(alignment: .leading, spacing: 4) {
-                // Label
-                Text("\(current)/\(displayedNext)")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(current >= displayedNext ? .green : .primary)
+            ZStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    // Label
+                    Text("\(current)/\(displayedNext)")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(current >= displayedNext ? .green : .primary)
 
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(height: 12)
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(height: 12)
 
-                    Capsule()
-                        .fill(current >= displayedNext ? .green : .blue)
-                        .frame(width: totalWidth * fractionInLevel, height: 12)
-                        .scaleEffect(animateLevelUp ? 1.1 : 1.0, anchor: .center)
-                        .animation(.easeInOut(duration: 0.3), value: animateLevelUp)
+                        Capsule()
+                            .fill(current >= displayedNext ? .green : .blue)
+                            .frame(width: totalWidth * effectiveFraction, height: 12)
+                            .scaleEffect(animateLevelUp ? 1.1 : 1.0, anchor: .center)
+                            .animation(.easeInOut(duration: 0.3), value: animateLevelUp)
+                    }
+                }
+                .padding(.horizontal)
+
+                // Confetti overlay
+                if showConfetti {
+                    ConfettiView()
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
                 }
             }
-            .padding(.horizontal)
             .onAppear {
                 displayedNext = nextBreakpoint
             }
             .onChange(of: current) { newValue in
                 let newNext = nextBreakpoint
                 if newValue >= displayedNext && displayedNext < newNext {
-                    // level up
+                    // Trigger level-up animations
                     animateLevelUp = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    showConfetti = true
+                    draining = true
+                    drainFraction = 1.0
+
+                    // Run drain animation
+                    withAnimation(.easeInOut(duration: 1.0)) {
+                        drainFraction = 0.0
+                    }
+
+                    // After drain, reset to new tier
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        draining = false
                         animateLevelUp = false
                         displayedNext = newNext
+                        showConfetti = false
                     }
                 }
             }
         }
         .frame(height: 40)
+    }
+}
+
+// MARK: - Confetti
+struct ConfettiView: View {
+    @State private var particles: [ConfettiParticle] = (0..<20).map { _ in ConfettiParticle.random }
+
+    var body: some View {
+        GeometryReader { geo in
+            ForEach(particles) { particle in
+                Circle()
+                    .fill(particle.color)
+                    .frame(width: 6, height: 6)
+                    .position(particle.start(in: geo.size))
+                    .animation(
+                        .easeOut(duration: 1.0)
+                        .delay(Double.random(in: 0...0.3)),
+                        value: particles
+                    )
+            }
+        }
+    }
+}
+
+struct ConfettiParticle: Identifiable, Equatable {
+    let id = UUID()
+    let color: Color
+    let x: CGFloat
+    let y: CGFloat
+
+    static var random: ConfettiParticle {
+        ConfettiParticle(
+            color: [Color.red, .green, .blue, .yellow, .purple, .orange].randomElement()!,
+            x: CGFloat.random(in: 0...1),
+            y: CGFloat.random(in: 0...1)
+        )
+    }
+
+    func start(in size: CGSize) -> CGPoint {
+        CGPoint(x: x * size.width, y: y * size.height / 4)
     }
 }
 
