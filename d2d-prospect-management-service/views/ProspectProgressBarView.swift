@@ -11,7 +11,7 @@ enum ContactListType {
     case prospects
 }
 
-struct ProgressBarWrapper: View {
+struct ProspectProgressBarView: View {
     let current: Int
     let listType: ContactListType
 

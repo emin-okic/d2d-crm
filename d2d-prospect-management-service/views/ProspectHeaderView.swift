@@ -20,7 +20,7 @@ struct ProspectHeaderView: View {
                 .font(.title2)
                 .foregroundColor(.secondary)
 
-            ProgressBarWrapper(
+            ProspectProgressBarView(
                 current: totalProspects,
                 listType: .prospects
             )
