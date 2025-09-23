@@ -12,7 +12,7 @@ import ContactsUI
 /// A view that displays and manages a list of prospects
 /// Users can filter by list type (e.g., "Prospects", "Customers"), add new prospects, and tap
 /// a prospect to edit its details.
-struct RolodexView: View {
+struct ContactManagementView: View {
     @Environment(\.modelContext) private var modelContext
     @Binding var selectedList: String
     var onSave: () -> Void
