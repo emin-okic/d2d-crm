@@ -86,11 +86,14 @@ struct RolodexView: View {
                             .font(.title2)
                             .foregroundColor(.secondary)
                         
-                        ProgressBarWrapper(
-                            current: selectedList == "Prospects" ? totalProspects : totalCustomers,
-                            listType: selectedList == "Prospects" ? .prospects : .customers
-                        )
-                        .padding(.horizontal, 20)
+                        // The progress bar 
+                        if selectedList == "Prospects" {
+                            ProgressBarWrapper(
+                                current: totalProspects,
+                                listType: .prospects
+                            )
+                            .padding(.horizontal, 20)
+                        }
                         
                     }
 
