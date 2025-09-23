@@ -116,6 +116,11 @@
 			path = "d2d-search-engine-service";
 			sourceTree = "<group>";
 		};
+		C51C3CC42E82FAA80081B571 /* d2d-customer-management-service */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "d2d-customer-management-service";
+			sourceTree = "<group>";
+		};
 		C5328C812E1B1D180057F68E /* d2d-follow-up-service */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "d2d-follow-up-service";
@@ -234,6 +239,7 @@
 				C55449012E5A104300677585 /* d2d-ad-engine-service */,
 				C59705F92E198214006C3B55 /* d2d-rolodex-service */,
 				C5E346E02E82F62D00CAE776 /* d2d-prospect-management-service */,
+				C51C3CC42E82FAA80081B571 /* d2d-customer-management-service */,
 				C56CD3852E1993CB00232EF7 /* d2d-prospecting-service */,
 				C55E795A2E450CB400D1EA0C /* d2d-activity-management-service */,
 				C511E0372E40F502001BAA36 /* d2d-search-engine-service */,
@@ -289,6 +295,7 @@
 			fileSystemSynchronizedGroups = (
 				C511DEA22E40EF5C001BAA36 /* d2d-trip-manager-service */,
 				C511E0372E40F502001BAA36 /* d2d-search-engine-service */,
+				C51C3CC42E82FAA80081B571 /* d2d-customer-management-service */,
 				C5328C812E1B1D180057F68E /* d2d-follow-up-service */,
 				C55449012E5A104300677585 /* d2d-ad-engine-service */,
 				C55E795A2E450CB400D1EA0C /* d2d-activity-management-service */,
