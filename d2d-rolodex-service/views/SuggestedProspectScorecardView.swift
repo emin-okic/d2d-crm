@@ -62,6 +62,7 @@ struct SuggestedProspectScorecardView: View {
 }
 
 struct SuggestedProspectBannerView: View {
+    
     let suggestion: Prospect
     var onAdd: () -> Void
     var onDismiss: () -> Void
