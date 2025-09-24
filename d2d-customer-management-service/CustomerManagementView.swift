@@ -29,41 +29,19 @@ struct CustomerManagementView: View {
             ToggleChipsView(selectedList: $selectedList)
 
             ContactsContainerView(
-                selectedList: $selectedList,  // 👈 use binding
+                selectedList: $selectedList,
                 searchText: $searchText
             )
             .padding(.horizontal, 20)
             .padding(.vertical, 10)
         }
-        .overlay(addCustomerOverlay)
-    }
-    
-    // MARK: - Overlays
-    @ViewBuilder
-    private var addCustomerOverlay: some View {
-        if showingAddCustomer {
-            Color.black.opacity(0.25)
-                .ignoresSafeArea()
-                .onTapGesture { showingAddCustomer = false }
-
-            CustomerCreateStepperView { newCustomer in
-                modelContext.insert(newCustomer)
-                try? modelContext.save()
-
-                searchText = ""
-                showingAddCustomer = false
-                onSave()
-            } onCancel: {
-                showingAddCustomer = false
-            }
-            .frame(width: 300, height: 300)
-            .background(.ultraThinMaterial)
-            .cornerRadius(16)
-            .shadow(radius: 8)
-            .position(x: UIScreen.main.bounds.midX,
-                      y: UIScreen.main.bounds.midY * 0.9)
-            .transition(.scale.combined(with: .opacity))
-            .zIndex(2000)
-        }
+        .overlay(
+            AddCustomerOverlay(
+                isPresented: $showingAddCustomer,
+                searchText: $searchText,
+                onSave: onSave
+            )
+        )
     }
 }
+
