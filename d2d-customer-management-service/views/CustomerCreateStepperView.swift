@@ -14,24 +14,8 @@ struct CustomerCreateStepperView: View {
     var onComplete: (Customer) -> Void
     var onCancel: () -> Void
 
-    // 👇 New optional defaults
-    var initialName: String?
-    var initialAddress: String?
-    var initialPhone: String?
-    var initialEmail: String?
-
-    @State private var stepIndex: Int = 0
-    private let totalSteps = 2
-
-    // 👇 Initialize state with passed-in values
-    @State private var fullName: String
-    @State private var address: String
-    @State private var contactPhone: String
-    @State private var contactEmail: String
-    
-    @StateObject private var searchVM = SearchCompleterViewModel()
+    @StateObject private var controller: CustomerCreationController
     @FocusState private var isAddressFocused: Bool
-    @State private var phoneError: String?
 
     init(
         initialName: String? = nil,
@@ -43,86 +27,76 @@ struct CustomerCreateStepperView: View {
     ) {
         self.onComplete = onComplete
         self.onCancel = onCancel
-        self.initialName = initialName
-        self.initialAddress = initialAddress
-        self.initialPhone = initialPhone
-        self.initialEmail = initialEmail
-
-        _fullName = State(initialValue: initialName ?? "")
-        _address = State(initialValue: initialAddress ?? "")
-        _contactPhone = State(initialValue: initialPhone ?? "")
-        _contactEmail = State(initialValue: initialEmail ?? "")
+        _controller = StateObject(
+            wrappedValue: CustomerCreationController(
+                initialName: initialName,
+                initialAddress: initialAddress,
+                initialPhone: initialPhone,
+                initialEmail: initialEmail
+            )
+        )
     }
 
     var body: some View {
         VStack(spacing: 8) {
-            // header
+            // Header
             HStack {
-                Text("New Customer")
-                    .font(.headline)
+                Text("New Customer").font(.headline)
                 Spacer()
                 Button(action: onCancel) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.secondary)
+                    Image(systemName: "xmark.circle.fill").foregroundColor(.secondary)
                 }
             }
 
-            DotStepBar(total: totalSteps, index: stepIndex)
+            DotStepBar(total: controller.totalStepCount, index: controller.stepIndex)
 
-            // content
+            // Content
             Group {
-                if stepIndex == 0 { stepOne }
+                if controller.stepIndex == 0 { stepOne }
                 else { stepTwo }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
+            // Navigation buttons
             HStack {
-                if stepIndex > 0 {
-                    Button("Back") { stepIndex = 0 }
+                if controller.stepIndex > 0 {
+                    Button("Back") { controller.backStep() }
                 }
                 Spacer()
-                if stepIndex == 0 {
-                    Button("Next") { stepIndex = 1 }
-                        .disabled(!canProceedStepOne)
+                if controller.stepIndex == 0 {
+                    Button("Next") { controller.nextStep() }
+                        .disabled(!controller.canProceedStepOne)
                 } else {
                     Button("Finish") {
-                        guard validatePhoneNumber() else { return }
-                        let c = Customer(fullName: fullName, address: address)
-                        c.contactEmail = contactEmail
-                        c.contactPhone = contactPhone
+                        guard controller.validatePhoneNumber() else { return }
+                        let customer = controller.buildCustomer()
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) {
-                            onComplete(c)
+                            onComplete(customer)
                         }
                     }
-                    .disabled(!canProceedStepTwo)
+                    .disabled(!controller.canProceedStepTwo)
                 }
             }
         }
         .padding(12)
     }
 
-    // MARK: - Steps
-
+    // Step One
     private var stepOne: some View {
         Form {
             Section(header: Text("Step 1 • Name & Address")) {
-                TextField("Full Name", text: $fullName)
-
+                TextField("Full Name", text: $controller.fullName)
                 VStack(alignment: .leading, spacing: 4) {
-                    TextField("Address", text: $address)
-                        .focused($isAddressFocused)
-                        .onChange(of: address) { searchVM.updateQuery($0) }
+                    TextField("Address", text: $controller.address)
+                        .focused($isAddressFocused)   // 👈 use FocusState here
+                        .onChange(of: controller.address) { controller.searchVM.updateQuery($0) }
 
-                    if isAddressFocused && !searchVM.results.isEmpty {
-                        ForEach(searchVM.results.prefix(4), id: \.self) { result in
-                            Button {
-                                handleAddressSelection(result)
-                            } label: {
+                    if isAddressFocused && !controller.searchVM.results.isEmpty { // 👈 check focus from view
+                        ForEach(controller.searchVM.results.prefix(4), id: \.self) { result in
+                            Button { controller.handleAddressSelection(result) } label: {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(result.title).bold()
-                                    Text(result.subtitle)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
+                                    Text(result.subtitle).font(.caption).foregroundColor(.secondary)
                                 }
                                 .padding(.vertical, 6)
                             }
@@ -133,62 +107,22 @@ struct CustomerCreateStepperView: View {
         }
     }
 
+    // Step Two
     private var stepTwo: some View {
         Form {
             Section(header: Text("Step 2 • Contact Details")) {
-                TextField("Phone (Optional)", text: $contactPhone)
+                TextField("Phone (Optional)", text: $controller.contactPhone)
                     .keyboardType(.phonePad)
-                    .onChange(of: contactPhone) { _ in _ = validatePhoneNumber() }
+                    .onChange(of: controller.contactPhone) { _ in _ = controller.validatePhoneNumber() }
 
-                if let phoneError = phoneError {
+                if let phoneError = controller.phoneError {
                     Text(phoneError).foregroundColor(.red).font(.caption)
                 }
 
-                TextField("Email (Optional)", text: $contactEmail)
+                TextField("Email (Optional)", text: $controller.contactEmail)
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
             }
-
-            // Extend “the rest” here later as needed
-            // Section(header: Text("Other Details")) { ... }
-        }
-    }
-
-    // MARK: - Helpers
-
-    private var canProceedStepOne: Bool {
-        !fullName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !address.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-
-    private var canProceedStepTwo: Bool {
-        // Phone/email optional; only reject on explicit invalid phone
-        phoneError == nil
-    }
-
-    private func handleAddressSelection(_ result: MKLocalSearchCompletion) {
-        Task {
-            if let resolved = await SearchBarController.resolveAddress(from: result) {
-                address = resolved
-                searchVM.results = []
-                isAddressFocused = false
-            }
-        }
-    }
-
-    @discardableResult
-    private func validatePhoneNumber() -> Bool {
-        let raw = contactPhone.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !raw.isEmpty else { phoneError = nil; return true }
-
-        let utility = PhoneNumberUtility()
-        do {
-            _ = try utility.parse(raw)
-            phoneError = nil
-            return true
-        } catch {
-            phoneError = "Invalid phone number."
-            return false
         }
     }
 }
