@@ -14,6 +14,8 @@ import PhoneNumberKit
 struct ProspectActionsToolbar: View {
     @Bindable var prospect: Prospect
     @Environment(\.modelContext) private var modelContext
+    
+    var onCustomerCreated: ((Customer) -> Void)? = nil
 
     @State private var showAddPhoneSheet = false
     @State private var newPhone = ""
@@ -181,10 +183,23 @@ struct ProspectActionsToolbar: View {
                     }
 
                     Section {
+                        
                         Button("Confirm Sale") {
-                            prospect.list = "Customers"
+                            let customer = Customer(fullName: prospect.fullName, address: prospect.address)
+                            customer.contactPhone = prospect.contactPhone
+                            customer.contactEmail = prospect.contactEmail
+                            customer.notes = prospect.notes
+                            customer.appointments = prospect.appointments
+                            customer.knockHistory = prospect.knockHistory
+
+                            modelContext.insert(customer)
+                            modelContext.delete(prospect)
+
                             try? modelContext.save()
                             showCreateSaleSheet = false
+
+                            // 🔑 fire callback
+                            onCustomerCreated?(customer)
                         }
                         .disabled(prospect.fullName.isEmpty || prospect.address.isEmpty)
                     }

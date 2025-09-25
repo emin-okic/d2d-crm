@@ -19,9 +19,18 @@ class Note {
     @Relationship(inverse: \Prospect.notes)
     var prospect: Prospect?
 
-    init(content: String, date: Date = Date(), prospect: Prospect? = nil) {
+    @Relationship(inverse: \Customer.notes)
+    var customer: Customer?
+
+    init(
+        content: String,
+        date: Date = Date(),
+        prospect: Prospect? = nil,
+        customer: Customer? = nil
+    ) {
         self.date = date
         self.content = content
         self.prospect = prospect
+        self.customer = customer
     }
 }

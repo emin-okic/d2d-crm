@@ -23,12 +23,14 @@ struct CustomerManagementView: View {
 
     var body: some View {
         VStack(spacing: 16) {
+            // ✅ Header showing total customers
             CustomerHeaderView(totalCustomers: totalCustomers)
 
-            // Toggle chips under header (shared binding)
+            // ✅ Shared toggle chips
             ToggleChipsView(selectedList: $selectedList)
 
-            ContactsContainerView(
+            // ✅ Use customer container (identical style as prospects)
+            CustomerContainerView(
                 selectedList: $selectedList,
                 searchText: $searchText
             )
@@ -36,6 +38,7 @@ struct CustomerManagementView: View {
             .padding(.vertical, 10)
         }
         .overlay(
+            // ✅ Add-customer overlay (same as prospects, but for Customer)
             AddCustomerOverlay(
                 isPresented: $showingAddCustomer,
                 searchText: $searchText,
@@ -44,4 +47,3 @@ struct CustomerManagementView: View {
         )
     }
 }
-

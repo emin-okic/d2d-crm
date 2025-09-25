@@ -68,6 +68,28 @@ class ProspectController: ObservableObject {
         try? modelContext.save()
     }
     
+    func convertToCustomerFromDetailsScreen(_ prospect: Prospect, modelContext: ModelContext) -> Customer? {
+        // Build new customer
+        let customer = Customer(fullName: prospect.fullName, address: prospect.address)
+        customer.contactPhone = tempPhone
+        customer.contactEmail = tempEmail
+        customer.notes = prospect.notes
+        customer.appointments = prospect.appointments
+        customer.knockHistory = prospect.knockHistory
+
+        // Insert into DB
+        modelContext.insert(customer)
+        modelContext.delete(prospect)
+
+        do {
+            try modelContext.save()
+            return customer
+        } catch {
+            print("❌ Failed to convert prospect: \(error)")
+            return nil
+        }
+    }
+    
     func shareProspect(_ prospect: Prospect) {
         var components = URLComponents()
         components.scheme = "d2dcrm"

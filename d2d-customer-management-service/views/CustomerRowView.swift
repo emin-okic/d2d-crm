@@ -4,6 +4,7 @@
 //
 //  Created by Emin Okic on 8/17/25.
 //
+
 import SwiftUI
 import SwiftData
 
@@ -32,7 +33,6 @@ struct CustomerRowView: View {
             }
         }
         .padding(.vertical, 4)
-        .contentShape(Rectangle())
     }
 
     private func formatPhoneNumber(_ raw: String) -> String {

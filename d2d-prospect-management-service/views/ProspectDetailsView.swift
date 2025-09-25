@@ -59,11 +59,7 @@ struct ProspectDetailsView: View {
             
             // Actions
             Section {
-                if prospect.list == "Prospects" {
-                    ProspectActionsToolbar(prospect: prospect)
-                } else {
-                    CustomerActionsToolbar(prospect: prospect)
-                }
+                ProspectActionsToolbar(prospect: prospect)
             }
             
             // Tabs
