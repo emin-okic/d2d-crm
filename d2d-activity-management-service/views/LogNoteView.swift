@@ -1,12 +1,10 @@
 //
-//  AddNoteView.swift
+//  LogNoteView.swift
 //  d2d-studio
 //
 //  Created by Emin Okic on 7/11/25.
 //
 
-
-// Views/AddNoteView.swift
 import SwiftUI
 import SwiftData
 
