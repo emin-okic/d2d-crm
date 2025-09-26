@@ -29,6 +29,8 @@ struct ContactManagementView: View {
     @State private var showImportSuccess = false
 
     @Query private var prospects: [Prospect]
+    
+    @State private var showingAddProspect = false
 
     var body: some View {
         NavigationView {
@@ -99,6 +101,7 @@ struct ContactManagementView: View {
                                     onAddManually: {
                                         withAnimation { showAddOptionsMenu = false }
                                         // Prospect create flow handled in ProspectManagementView
+                                        showingAddProspect = true
                                     },
                                     onImportFromContacts: {
                                         withAnimation { showAddOptionsMenu = false }
@@ -113,6 +116,30 @@ struct ContactManagementView: View {
                             .padding(.bottom, 80)
                         }
                         .ignoresSafeArea()
+                    }
+                }
+            )
+            .overlay(
+                Group {
+                    if showingAddProspect {
+                        ProspectCreateStepperView { newProspect in
+                            modelContext.insert(newProspect)
+                            try? modelContext.save()
+
+                            searchText = ""
+                            showingAddProspect = false
+                            onSave()
+                        } onCancel: {
+                            showingAddProspect = false
+                        }
+                        .frame(width: 300, height: 300)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(16)
+                        .shadow(radius: 8)
+                        .position(x: UIScreen.main.bounds.midX,
+                                  y: UIScreen.main.bounds.midY * 0.9)
+                        .transition(.scale.combined(with: .opacity))
+                        .zIndex(2000)
                     }
                 }
             )
