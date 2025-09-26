@@ -141,9 +141,9 @@
 			path = "d2d-territory-management-service";
 			sourceTree = "<group>";
 		};
-		C59705F92E198214006C3B55 /* d2d-rolodex-service */ = {
+		C59705F92E198214006C3B55 /* d2d-contact-management-service */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "d2d-rolodex-service";
+			path = "d2d-contact-management-service";
 			sourceTree = "<group>";
 		};
 		C5B1B5652E3FC3A6004766E8 /* d2d-objections-manager-service */ = {
@@ -237,7 +237,7 @@
 				C5BE4B362DE7CC9E005C37B1 /* d2d-studio */,
 				C5E6A7232E2BE6CD00EC05F4 /* d2d-widget-service */,
 				C55449012E5A104300677585 /* d2d-ad-engine-service */,
-				C59705F92E198214006C3B55 /* d2d-rolodex-service */,
+				C59705F92E198214006C3B55 /* d2d-contact-management-service */,
 				C5E346E02E82F62D00CAE776 /* d2d-prospect-management-service */,
 				C51C3CC42E82FAA80081B571 /* d2d-customer-management-service */,
 				C56CD3852E1993CB00232EF7 /* d2d-territory-management-service */,
@@ -300,7 +300,7 @@
 				C55449012E5A104300677585 /* d2d-ad-engine-service */,
 				C55E795A2E450CB400D1EA0C /* d2d-activity-management-service */,
 				C56CD3852E1993CB00232EF7 /* d2d-territory-management-service */,
-				C59705F92E198214006C3B55 /* d2d-rolodex-service */,
+				C59705F92E198214006C3B55 /* d2d-contact-management-service */,
 				C5B1B5652E3FC3A6004766E8 /* d2d-objections-manager-service */,
 				C5B1B5662E3FC3AE004766E8 /* d2d-recording-manager-service */,
 				C5BE4B362DE7CC9E005C37B1 /* d2d-studio */,
