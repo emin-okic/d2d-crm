@@ -20,8 +20,6 @@ struct CustomerHeaderView: View {
                 .font(.title2)
                 .foregroundColor(.secondary)
 
-            CustomerProgressBarView(current: totalCustomers)
-                .padding(.horizontal, 20)
         }
     }
 }

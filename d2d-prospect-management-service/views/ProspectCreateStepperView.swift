@@ -2,11 +2,9 @@
 //  ProspectCreateStepperView.swift
 //  d2d-studio
 //
-//  Created by Emin Okic on 8/17/25.
+//  Created by Emin Okic on 9/26/25.
 //
 
-
-// ProspectCreateStepperView.swift
 import SwiftUI
 import MapKit
 import PhoneNumberKit
