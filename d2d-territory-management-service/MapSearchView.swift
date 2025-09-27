@@ -493,36 +493,23 @@ struct MapSearchView: View {
 
     private func handleOutcome(_ status: String, recordingFileName: String?) {
         if status == "Converted To Sale" {
+            // Log objection + recording as before
             let objection = Objection(text: "Converted To Sale", response: "Handled successfully", timesHeard: 0)
             modelContext.insert(objection)
             if let name = recordingFileName {
                 let newRecording = Recording(fileName: name, date: .now, objection: objection, rating: 5)
                 modelContext.insert(newRecording)
             }
+
+            // Just show conversion form — don’t create customer yet
             if let addr = pendingAddress {
-                knockController?.handleKnockAndConvertToCustomer(
-                    address: addr,
-                    status: "Converted To Sale",
-                    prospects: prospects,
-                    onUpdateMarkers: { updateMarkers() },
-                    onSetCustomerMarker: {
-                        if let index = controller.markers.firstIndex(where: {
-                            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
-                            addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-                        }) {
-                            controller.markers[index] = IdentifiablePlace(
-                                address: addr,
-                                location: controller.markers[index].location,
-                                count: controller.markers[index].count,
-                                list: "Customers"
-                            )
-                        }
-                    },
-                    onShowConversionSheet: { prospect in
-                        prospectToConvert = prospect
-                        showConversionSheet = true
-                    }
-                )
+                if let prospect = prospects.first(where: {
+                    $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
+                    addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                }) {
+                    prospectToConvert = prospect
+                    showConversionSheet = true
+                }
             }
         } else if status == "Follow Up Later" {
             // NEW: Route to stepper instead of the old flow
