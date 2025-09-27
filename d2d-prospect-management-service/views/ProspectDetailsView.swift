@@ -58,11 +58,17 @@ struct ProspectDetailsView: View {
             }
             
             // Actions
-            Section {
-                if prospect.list == "Prospects" {
+            if prospect.list == "Prospects" {
+                Section {
                     ProspectActionsToolbar(prospect: prospect)
-                } else {
-                    CustomerActionsToolbar(prospect: prospect)
+                }
+            } else {
+                Section {
+                    CustomerActionsToolbar(customer: Customer(
+                        fullName: prospect.fullName,
+                        address: prospect.address,
+                        count: prospect.count
+                    ))
                 }
             }
             

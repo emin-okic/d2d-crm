@@ -29,8 +29,11 @@ struct ContactManagementView: View {
     @State private var showImportSuccess = false
 
     @Query private var prospects: [Prospect]
+    @Query private var customers: [Customer]
     
     @State private var showingAddProspect = false
+    
+    @State private var showingAddCustomer = false
 
     var body: some View {
         NavigationView {
@@ -46,7 +49,8 @@ struct ContactManagementView: View {
                     CustomerManagementView(
                         searchText: $searchText,
                         selectedList: $selectedList,
-                        onSave: onSave
+                        onSave: onSave,
+                        showingAddCustomer: $showingAddCustomer
                     )
                 }
 
@@ -68,6 +72,7 @@ struct ContactManagementView: View {
                             withAnimation(.spring()) { showAddOptionsMenu = true }
                         } else {
                             // Customer add flow is inside CustomerManagementView
+                            showingAddCustomer = true
                         }
                     }
                 )
@@ -145,7 +150,12 @@ struct ContactManagementView: View {
             )
             .onChange(of: selectedList) { newValue in
                 if newValue == "Prospects" {
-                    Task { await controller.fetchNextSuggestedNeighbor(from: prospects) }
+                    Task {
+                        await controller.fetchNextSuggestedNeighbor(
+                            from: customers,
+                            existingProspects: prospects
+                        )
+                    }
                 }
             }
         }

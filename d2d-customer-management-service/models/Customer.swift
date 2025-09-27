@@ -32,3 +32,19 @@ final class Customer: ContactProtocol {
         self.knockHistory = []
     }
 }
+
+extension Customer {
+    static func fromProspect(_ prospect: Prospect) -> Customer {
+        let customer = Customer(
+            fullName: prospect.fullName,
+            address: prospect.address,
+            count: prospect.count
+        )
+        customer.contactPhone = prospect.contactPhone
+        customer.contactEmail = prospect.contactEmail
+        customer.notes = prospect.notes
+        customer.appointments = prospect.appointments
+        customer.knockHistory = prospect.knockHistory
+        return customer
+    }
+}

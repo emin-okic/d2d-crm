@@ -13,10 +13,9 @@ class ContactManagerController: ObservableObject {
     @Published var suggestedProspect: Prospect?
     private var suggestionSourceIndex = 0
     
-    func fetchNextSuggestedNeighbor(from prospects: [Prospect]) async {
-        let controller = DatabaseController.shared
-        let customerProspects = prospects.filter { $0.list == "Customers" }
-        guard !customerProspects.isEmpty else {
+    // 🔑 Now uses customers directly
+    func fetchNextSuggestedNeighbor(from customers: [Customer], existingProspects: [Prospect]) async {
+        guard !customers.isEmpty else {
             suggestedProspect = nil
             return
         }
@@ -24,13 +23,13 @@ class ContactManagerController: ObservableObject {
         var attemptIndex = suggestionSourceIndex
         var found: Prospect?
 
-        for _ in 0..<customerProspects.count {
-            let customer = customerProspects[attemptIndex]
+        for _ in 0..<customers.count {
+            let customer = customers[attemptIndex]
 
             let result = await withCheckedContinuation { (continuation: CheckedContinuation<Prospect?, Never>) in
-                controller.geocodeAndSuggestNeighbor(from: customer.address) { address in
+                DatabaseController.shared.geocodeAndSuggestNeighbor(from: customer.address) { address in
                     if let addr = address,
-                       !prospects.contains(where: { $0.address.caseInsensitiveCompare(addr) == .orderedSame }) {
+                       !existingProspects.contains(where: { $0.address.caseInsensitiveCompare(addr) == .orderedSame }) {
                         let suggested = Prospect(
                             fullName: "Suggested Neighbor",
                             address: addr,
@@ -46,11 +45,11 @@ class ContactManagerController: ObservableObject {
 
             if let valid = result {
                 found = valid
-                suggestionSourceIndex = (attemptIndex + 1) % customerProspects.count
+                suggestionSourceIndex = (attemptIndex + 1) % customers.count
                 break
             }
 
-            attemptIndex = (attemptIndex + 1) % customerProspects.count
+            attemptIndex = (attemptIndex + 1) % customers.count
         }
 
         suggestedProspect = found

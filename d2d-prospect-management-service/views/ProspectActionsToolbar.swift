@@ -181,12 +181,13 @@ struct ProspectActionsToolbar: View {
                     }
 
                     Section {
+                        
                         Button("Confirm Sale") {
-                            prospect.list = "Customers"
-                            try? modelContext.save()
+                            createCustomer(from: prospect)
                             showCreateSaleSheet = false
                         }
                         .disabled(prospect.fullName.isEmpty || prospect.address.isEmpty)
+                        
                     }
                 }
                 .navigationTitle("Create Sale")
@@ -286,6 +287,42 @@ struct ProspectActionsToolbar: View {
                     }
                 }
             }
+        }
+    }
+    
+    private func createCustomer(from prospect: Prospect) {
+        // Clone notes
+        let clonedNotes = prospect.notes.map { note in
+            Note(content: note.content, date: note.date)
+        }
+
+        // Clone knocks with correct fields
+        let clonedKnocks = prospect.knockHistory.map { knock in
+            Knock(date: knock.date, status: knock.status, latitude: knock.latitude, longitude: knock.longitude)
+        }
+
+        // Build customer
+        let customer = Customer(
+            fullName: prospect.fullName,
+            address: prospect.address,
+            count: prospect.count
+        )
+        customer.contactEmail = prospect.contactEmail
+        customer.contactPhone = prospect.contactPhone
+        customer.notes = clonedNotes
+        customer.knockHistory = clonedKnocks
+        customer.appointments = prospect.appointments // carry over directly
+
+        // Insert customer
+        modelContext.insert(customer)
+
+        // Delete prospect
+        modelContext.delete(prospect)
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("❌ Failed to create customer: \(error)")
         }
     }
     

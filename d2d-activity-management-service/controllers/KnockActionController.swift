@@ -67,19 +67,21 @@ class KnockActionController {
         address: String,
         status: String,
         prospects: [Prospect],
-        onUpdateMarkers: @escaping () -> Void,
-        onSetCustomerMarker: @escaping () -> Void,
+        onUpdateMarkers: () -> Void,
+        onSetCustomerMarker: () -> Void,
         onShowConversionSheet: @escaping (Prospect) -> Void
     ) {
-        let prospect = saveKnock(address: address, status: status, prospects: prospects)
+        if let prospect = prospects.first(where: {
+            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
+            address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        }) {
+            
+            onShowConversionSheet(prospect)
 
-        onSetCustomerMarker()
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            // Update map marker
+            onSetCustomerMarker()
             onUpdateMarkers()
         }
-
-        onShowConversionSheet(prospect)
     }
 
     private func saveKnock(address: String, status: String, prospects: [Prospect]) -> Prospect {
