@@ -54,10 +54,9 @@ struct CustomersSectionView: View {
         }
         .sheet(item: $selectedCustomer) { c in
             NavigationStack {
-                // Temporary reuse ProspectDetailsView
-                ProspectDetailsView(
-                    prospect: Prospect(fullName: c.fullName, address: c.address)
-                )
+
+                CustomerDetailsView(customer: c)
+                
             }
         }
     }

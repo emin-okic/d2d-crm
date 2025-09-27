@@ -9,7 +9,7 @@ import SwiftUI
 import Contacts
 
 struct CustomerActionsToolbar: View {
-    @Bindable var prospect: Prospect
+    @Bindable var customer: Customer
     @Environment(\.modelContext) private var modelContext
     
     @State private var showDeleteConfirmation = false
@@ -22,17 +22,17 @@ struct CustomerActionsToolbar: View {
             HStack {
                 Spacer()
                 
-                HStack(spacing: 32) {   // wider spacing looks balanced
+                HStack(spacing: 32) {
                     // Phone
                     iconButton(systemName: "phone.fill") {
-                        if let url = URL(string: "tel://\(prospect.contactPhone.filter(\.isNumber))") {
+                        if let url = URL(string: "tel://\(customer.contactPhone.filter(\.isNumber))") {
                             UIApplication.shared.open(url)
                         }
                     }
                     
                     // Email
                     iconButton(systemName: "envelope.fill") {
-                        if let url = URL(string: "mailto:\(prospect.contactEmail)") {
+                        if let url = URL(string: "mailto:\(customer.contactEmail)") {
                             UIApplication.shared.open(url)
                         }
                     }
@@ -80,7 +80,7 @@ struct CustomerActionsToolbar: View {
         .confirmationDialog("Delete this customer?",
                             isPresented: $showDeleteConfirmation,
                             titleVisibility: .visible) {
-            Button("Delete", role: .destructive) { deleteProspect() }
+            Button("Delete", role: .destructive) { deleteCustomer() }
             Button("Cancel", role: .cancel) {}
         }
     }
@@ -96,7 +96,6 @@ struct CustomerActionsToolbar: View {
     }
     
     private func exportToContacts() {
-        // (same as your existing export logic, reuse helper if desired)
         showExportFeedback("Contact saved to Contacts.")
     }
     
@@ -108,8 +107,8 @@ struct CustomerActionsToolbar: View {
         }
     }
     
-    private func deleteProspect() {
-        modelContext.delete(prospect)
+    private func deleteCustomer() {
+        modelContext.delete(customer)
         try? modelContext.save()
     }
 }
