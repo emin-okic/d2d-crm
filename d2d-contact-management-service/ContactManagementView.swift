@@ -29,6 +29,7 @@ struct ContactManagementView: View {
     @State private var showImportSuccess = false
 
     @Query private var prospects: [Prospect]
+    @Query private var customers: [Customer]
     
     @State private var showingAddProspect = false
     
@@ -149,7 +150,12 @@ struct ContactManagementView: View {
             )
             .onChange(of: selectedList) { newValue in
                 if newValue == "Prospects" {
-                    Task { await controller.fetchNextSuggestedNeighbor(from: prospects) }
+                    Task {
+                        await controller.fetchNextSuggestedNeighbor(
+                            from: customers,
+                            existingProspects: prospects
+                        )
+                    }
                 }
             }
         }
