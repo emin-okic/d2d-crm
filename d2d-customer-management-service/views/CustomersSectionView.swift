@@ -33,21 +33,17 @@ struct CustomersSectionView: View {
             if !filtered.isEmpty {
                 ScrollView {
                     LazyVStack(spacing: 0) {
+                        
                         ForEach(filtered) { c in
                             Button { selectedCustomer = c } label: {
-                                ProspectRowView(
-                                    prospect: Prospect(
-                                        fullName: c.fullName,
-                                        address: c.address,
-                                        count: c.count
-                                    )
-                                )
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, 12)
+                                CustomerRowView(customer: c)   // 👈 use dedicated row
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.horizontal, 12)
                             }
                             .buttonStyle(.plain)
                             Divider().padding(.leading, 15)
                         }
+                        
                     }
                 }
             } else {
