@@ -31,6 +31,8 @@ struct ContactManagementView: View {
     @Query private var prospects: [Prospect]
     
     @State private var showingAddProspect = false
+    
+    @State private var showingAddCustomer = false
 
     var body: some View {
         NavigationView {
@@ -46,7 +48,8 @@ struct ContactManagementView: View {
                     CustomerManagementView(
                         searchText: $searchText,
                         selectedList: $selectedList,
-                        onSave: onSave
+                        onSave: onSave,
+                        showingAddCustomer: $showingAddCustomer
                     )
                 }
 
@@ -68,6 +71,7 @@ struct ContactManagementView: View {
                             withAnimation(.spring()) { showAddOptionsMenu = true }
                         } else {
                             // Customer add flow is inside CustomerManagementView
+                            showingAddCustomer = true
                         }
                     }
                 )

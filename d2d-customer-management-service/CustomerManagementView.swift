@@ -14,7 +14,7 @@ struct CustomerManagementView: View {
     @Binding var selectedList: String
     var onSave: () -> Void
 
-    @State private var showingAddCustomer = false
+    @Binding var showingAddCustomer: Bool   // 👈 comes from parent now
     @Query private var customers: [Customer]
 
     private var totalCustomers: Int {
@@ -24,24 +24,24 @@ struct CustomerManagementView: View {
     var body: some View {
         VStack(spacing: 16) {
             CustomerHeaderView(totalCustomers: totalCustomers)
-
-            // Toggle chips under header (shared binding)
             ToggleChipsView(selectedList: $selectedList)
 
-            ContactsContainerView(
-                selectedList: $selectedList,
-                searchText: $searchText
-            )
-            .padding(.horizontal, 20)
-            .padding(.vertical, 10)
+            CustomersSectionView(searchText: $searchText)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
         }
-        .overlay(
-            AddCustomerOverlay(
-                isPresented: $showingAddCustomer,
-                searchText: $searchText,
-                onSave: onSave
-            )
-        )
+        .sheet(isPresented: $showingAddCustomer) {
+            CustomerCreateStepperView { newCustomer in
+                modelContext.insert(newCustomer)
+                try? modelContext.save()
+
+                searchText = ""
+                showingAddCustomer = false
+                onSave()
+            } onCancel: {
+                showingAddCustomer = false
+            }
+            .presentationDetents([.medium, .large])
+        }
     }
 }
-
