@@ -295,31 +295,17 @@ struct MapSearchView: View {
         // Keep existing sheets/alerts; they simply won't be used during Follow-Up stepper
         .alert("Knock Outcome", isPresented: $showOutcomePrompt) {
             if !isTappedAddressCustomer {
+                
                 Button("Converted To Sale") {
                     if let addr = pendingAddress {
-                        knockController?.handleKnockAndConvertToCustomer(
-                            address: addr,
-                            status: "Converted To Sale",
-                            prospects: prospects,
-                            onUpdateMarkers: { updateMarkers() },
-                            onSetCustomerMarker: {
-                                if let index = controller.markers.firstIndex(where: {
-                                    $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
-                                    addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-                                }) {
-                                    controller.markers[index] = IdentifiablePlace(
-                                        address: addr,
-                                        location: controller.markers[index].location,
-                                        count: controller.markers[index].count,
-                                        list: "Customers"
-                                    )
-                                }
-                            },
-                            onShowConversionSheet: { prospect in
-                                prospectToConvert = prospect
-                                showConversionSheet = true
-                            }
-                        )
+                        if let prospect = prospects.first(where: {
+                            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
+                            addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                        }) {
+                            // Don’t convert right away — just stage for the stepper
+                            prospectToConvert = prospect
+                            showConversionSheet = true
+                        }
                     }
                 }
             }
@@ -412,20 +398,36 @@ struct MapSearchView: View {
                         initialAddress: prospect.address,
                         initialPhone: prospect.contactPhone,
                         initialEmail: prospect.contactEmail
-                    ) { newCustomer in
-                        // update prospect → customer
-                        prospect.fullName = newCustomer.fullName
-                        prospect.address = newCustomer.address
-                        prospect.contactPhone = newCustomer.contactPhone
-                        prospect.contactEmail = newCustomer.contactEmail
-                        prospect.list = "Customers"
+                    )
+                    { newCustomer in
+                        // 1) Pull over anything useful from the original prospect
+                        if let prospect = prospectToConvert {
+                            // Carry over history/notes/contact if your models have these
+                            newCustomer.knockHistory = prospect.knockHistory
+                            newCustomer.notes = prospect.notes
+                            if newCustomer.contactPhone.isEmpty { newCustomer.contactPhone = prospect.contactPhone }
+                            if newCustomer.contactEmail.isEmpty { newCustomer.contactEmail = prospect.contactEmail }
+                        }
 
+                        // 2) Persist the new Customer record
+                        modelContext.insert(newCustomer)
+
+                        // 3) Retire the old prospect to avoid duplicate markers
+                        if let prospect = prospectToConvert {
+                            // Option A: delete it (cleanest UI/no duplicate pins)
+                            modelContext.delete(prospect)
+
+                            // Option B (if you prefer to keep it): flip list flag instead of deleting
+                            // prospect.list = "Customers"
+                        }
+
+                        // 4) Save + refresh UI
                         try? modelContext.save()
                         updateMarkers()
                         selectedList = "Customers"
                         showConversionSheet = false
-                        
-                        // ✅ Only now show confetti
+
+                        // 5) Celebrate 🎉
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                             withAnimation { showConfetti = true }
                         }
@@ -493,43 +495,23 @@ struct MapSearchView: View {
 
     private func handleOutcome(_ status: String, recordingFileName: String?) {
         if status == "Converted To Sale" {
-            let objection = Objection(text: "Converted To Sale", response: "Handled successfully", timesHeard: 0)
-            modelContext.insert(objection)
-            if let name = recordingFileName {
-                let newRecording = Recording(fileName: name, date: .now, objection: objection, rating: 5)
-                modelContext.insert(newRecording)
-            }
             if let addr = pendingAddress {
-                knockController?.handleKnockAndConvertToCustomer(
-                    address: addr,
-                    status: "Converted To Sale",
-                    prospects: prospects,
-                    onUpdateMarkers: { updateMarkers() },
-                    onSetCustomerMarker: {
-                        if let index = controller.markers.firstIndex(where: {
-                            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
-                            addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-                        }) {
-                            controller.markers[index] = IdentifiablePlace(
-                                address: addr,
-                                location: controller.markers[index].location,
-                                count: controller.markers[index].count,
-                                list: "Customers"
-                            )
-                        }
-                    },
-                    onShowConversionSheet: { prospect in
-                        prospectToConvert = prospect
-                        showConversionSheet = true
-                    }
+                if let prospect = prospects.first(where: {
+                    $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
+                    addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                }) {
+                    prospectToConvert = prospect
+                    showConversionSheet = true
+                }
+            }
+
+        } else if status == "Follow Up Later" {
+            if let addr = pendingAddress {
+                stepperState = .init(
+                    ctx: .init(address: addr, isCustomer: isTappedAddressCustomer, prospect: nil)
                 )
             }
-        } else if status == "Follow Up Later" {
-            // NEW: Route to stepper instead of the old flow
-            pendingRecordingFileName = recordingFileName
-            if let addr = pendingAddress {
-                stepperState = .init(ctx: .init(address: addr, isCustomer: isTappedAddressCustomer, prospect: nil))
-            }
+
         } else if status == "Wasn't Home" {
             if let addr = pendingAddress {
                 knockController?.handleKnockAndPromptNote(
@@ -546,7 +528,7 @@ struct MapSearchView: View {
         }
         try? modelContext.save()
     }
-
+    
     private func handleMapCenterChange(newAddress: String?) {
         guard let query = newAddress else { return }
         Task {

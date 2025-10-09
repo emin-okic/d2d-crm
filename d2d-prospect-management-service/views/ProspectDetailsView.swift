@@ -12,20 +12,18 @@ struct ProspectDetailsView: View {
     @Bindable var prospect: Prospect
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.modelContext) private var modelContext
-    
+
     @StateObject private var controller = ProspectController()
     @StateObject private var searchViewModel = SearchCompleterViewModel()
     @FocusState private var isAddressFieldFocused: Bool
-    
-    let allLists = ["Prospects", "Customers"]
-    
+
     var body: some View {
         Form {
             // Prospect info
             Section(header: Text("Prospect Details")) {
                 TextField("Full Name", text: $prospect.fullName)
-                
-                // Address field with auto-complete
+
+                // Address with autocomplete
                 VStack(alignment: .leading, spacing: 0) {
                     TextField("Address", text: $prospect.address)
                         .focused($isAddressFieldFocused)
@@ -34,7 +32,7 @@ struct ProspectDetailsView: View {
                         }
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.words)
-                    
+
                     if isAddressFieldFocused && !searchViewModel.results.isEmpty {
                         VStack(spacing: 0) {
                             ForEach(searchViewModel.results.prefix(3), id: \.self) { result in
@@ -43,10 +41,15 @@ struct ProspectDetailsView: View {
                                     isAddressFieldFocused = false
                                 } label: {
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text(result.title).font(.body).bold().lineLimit(1)
-                                        Text(result.subtitle).font(.subheadline).foregroundColor(.gray).lineLimit(1)
+                                        Text(result.title)
+                                            .font(.body).bold().lineLimit(1)
+                                        Text(result.subtitle)
+                                            .font(.subheadline)
+                                            .foregroundColor(.gray)
+                                            .lineLimit(1)
                                     }
-                                    .padding()
+                                    .padding(.horizontal)
+                                    .padding(.vertical, 4)
                                 }
                                 .buttonStyle(.plain)
                                 Divider()
@@ -56,17 +59,13 @@ struct ProspectDetailsView: View {
                     }
                 }
             }
-            
-            // Actions
+
+            // ✅ Actions Toolbar (original layout)
             Section {
-                if prospect.list == "Prospects" {
-                    ProspectActionsToolbar(prospect: prospect)
-                } else {
-                    CustomerActionsToolbar(prospect: prospect)
-                }
+                ProspectActionsToolbar(prospect: prospect)
             }
-            
-            // Tabs
+
+            // Tabs for Appointments / Knocks / Notes
             Section {
                 Picker("View", selection: $controller.selectedTab) {
                     ForEach(ProspectTab.allCases, id: \.self) { tab in
@@ -74,27 +73,28 @@ struct ProspectDetailsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .padding(.bottom)
-                
+                .padding(.bottom, 6)
+
                 switch controller.selectedTab {
                 case .appointments:
-                    let upcomingAppointments = prospect.appointments
+                    let upcoming = prospect.appointments
                         .filter { $0.date >= Date() }
                         .sorted { $0.date < $1.date }
                         .prefix(3)
-                    
-                    if upcomingAppointments.isEmpty {
+
+                    if upcoming.isEmpty {
                         Text("No upcoming follow-ups.")
                             .foregroundColor(.gray)
                     } else {
-                        ForEach(upcomingAppointments) { appt in
+                        ForEach(upcoming) { appt in
                             Button {
                                 controller.selectedAppointmentDetails = appt
                             } label: {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Follow Up With \(prospect.fullName)")
                                         .font(.subheadline).fontWeight(.medium)
-                                    Text(prospect.address).font(.caption).foregroundColor(.gray)
+                                    Text(prospect.address)
+                                        .font(.caption).foregroundColor(.gray)
                                     Text(appt.date.formatted(date: .abbreviated, time: .shortened))
                                         .font(.caption).foregroundColor(.gray)
                                 }
@@ -103,17 +103,23 @@ struct ProspectDetailsView: View {
                             .buttonStyle(.plain)
                         }
                     }
-                    
+
                     Button {
                         controller.showAppointmentSheet = true
                     } label: {
                         Label("Add Appointment", systemImage: "calendar.badge.plus")
                     }
-                    
+
                 case .knocks:
                     KnockingHistoryView(prospect: prospect)
+
                 case .notes:
-                    NotesThreadSection(prospect: prospect, maxHeight: 180, maxVisibleNotes: 3, showChips: false)
+                    NotesThreadSection(
+                        prospect: prospect,
+                        maxHeight: 180,
+                        maxVisibleNotes: 3,
+                        showChips: false
+                    )
                 }
             }
         }
@@ -128,9 +134,9 @@ struct ProspectDetailsView: View {
                 }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
+                Button {
                     controller.shareProspect(prospect)
-                }) {
+                } label: {
                     Image(systemName: "square.and.arrow.up")
                 }
             }
