@@ -76,29 +76,53 @@ struct CustomerDetailsView: View {
 // MARK: - Subviews
 
 private struct AppointmentsView: View {
-    let customer: Customer
+    @Bindable var customer: Customer
+    @Environment(\.modelContext) private var modelContext
+    @State private var showAppointmentSheet = false
+    @State private var selectedAppointment: Appointment?
 
     var body: some View {
         let upcoming = customer.appointments
             .filter { $0.date >= Date() }
             .sorted { $0.date < $1.date }
-            .prefix(3)
 
-        if upcoming.isEmpty {
-            Text("No upcoming follow-ups.")
-                .foregroundColor(.gray)
-        } else {
-            ForEach(upcoming) { appt in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Follow Up With \(customer.fullName)")
-                        .font(.subheadline).fontWeight(.medium)
-                    Text(customer.address)
-                        .font(.caption).foregroundColor(.gray)
-                    Text(appt.date.formatted(date: .abbreviated, time: .shortened))
-                        .font(.caption).foregroundColor(.gray)
+        VStack(alignment: .leading, spacing: 10) {
+            if upcoming.isEmpty {
+                Text("No upcoming follow-ups.")
+                    .foregroundColor(.gray)
+            } else {
+                ForEach(upcoming) { appt in
+                    Button {
+                        selectedAppointment = appt
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Follow Up With \(customer.fullName)")
+                                .font(.subheadline).fontWeight(.medium)
+                            Text(customer.address)
+                                .font(.caption).foregroundColor(.gray)
+                            Text(appt.date.formatted(date: .abbreviated, time: .shortened))
+                                .font(.caption).foregroundColor(.gray)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .padding(.vertical, 4)
             }
+
+            Button {
+                showAppointmentSheet = true
+            } label: {
+                Label("Add Appointment", systemImage: "calendar.badge.plus")
+            }
+        }
+        // ✅ identical to Prospect version
+        .sheet(isPresented: $showAppointmentSheet) {
+            NavigationStack {
+                ScheduleCustomerAppointmentView(customer: customer)
+            }
+        }
+        .sheet(item: $selectedAppointment) { appointment in
+            AppointmentDetailsView(appointment: appointment)
         }
     }
 }

@@ -28,7 +28,7 @@ class Appointment: Identifiable {
         date: Date,
         type: String,
         notes: [String] = [],
-        prospect: Prospect
+        prospect: Prospect? = nil
     ) {
         self.id = UUID()
         self.title = title
