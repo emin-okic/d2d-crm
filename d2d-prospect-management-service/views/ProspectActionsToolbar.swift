@@ -291,13 +291,19 @@ struct ProspectActionsToolbar: View {
     }
     
     private func createCustomer(from prospect: Prospect) {
-        // Clone notes and knocks
+        // ✅ Deep copy notes and knocks
         let clonedNotes = prospect.notes.map { Note(content: $0.content, date: $0.date) }
+
         let clonedKnocks = prospect.knockHistory.map {
-            Knock(date: $0.date, status: $0.status, latitude: $0.latitude, longitude: $0.longitude)
+            Knock(
+                date: $0.date,
+                status: $0.status,
+                latitude: $0.latitude,
+                longitude: $0.longitude
+            )
         }
 
-        // Create Customer
+        // ✅ Create Customer record
         let customer = Customer(
             fullName: prospect.fullName,
             address: prospect.address,
@@ -306,17 +312,17 @@ struct ProspectActionsToolbar: View {
         customer.contactEmail = prospect.contactEmail
         customer.contactPhone = prospect.contactPhone
         customer.notes = clonedNotes
-        customer.knockHistory = clonedKnocks
         customer.appointments = prospect.appointments
+        customer.knockHistory = clonedKnocks   // ✅ Now copies knock history
 
-        // Save changes
+        // ✅ Persist changes
         modelContext.insert(customer)
         modelContext.delete(prospect)
 
         do {
             try modelContext.save()
 
-            // ✅ Dismiss the ProspectDetailsView
+            // ✅ Close the ProspectDetailsView immediately
             DispatchQueue.main.async {
                 if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                    let root = scene.windows.first?.rootViewController {
