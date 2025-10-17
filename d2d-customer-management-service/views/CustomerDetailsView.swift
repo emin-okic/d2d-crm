@@ -19,10 +19,10 @@ struct CustomerDetailsView: View {
         Form {
             // ✅ Customer core info
             Section(header: Text("Customer Details")) {
+                
                 TextField("Full Name", text: $customer.fullName)
+                
                 TextField("Address", text: $customer.address)
-                TextField("Phone", text: $customer.contactPhone)
-                TextField("Email", text: $customer.contactEmail)
             }
 
             // ✅ Toolbar without "Convert to Sale"
