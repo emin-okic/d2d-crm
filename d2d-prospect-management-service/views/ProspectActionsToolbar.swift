@@ -291,17 +291,13 @@ struct ProspectActionsToolbar: View {
     }
     
     private func createCustomer(from prospect: Prospect) {
-        // Clone notes
-        let clonedNotes = prospect.notes.map { note in
-            Note(content: note.content, date: note.date)
+        // Clone notes and knocks
+        let clonedNotes = prospect.notes.map { Note(content: $0.content, date: $0.date) }
+        let clonedKnocks = prospect.knockHistory.map {
+            Knock(date: $0.date, status: $0.status, latitude: $0.latitude, longitude: $0.longitude)
         }
 
-        // Clone knocks with correct fields
-        let clonedKnocks = prospect.knockHistory.map { knock in
-            Knock(date: knock.date, status: knock.status, latitude: knock.latitude, longitude: knock.longitude)
-        }
-
-        // Build customer
+        // Create Customer
         let customer = Customer(
             fullName: prospect.fullName,
             address: prospect.address,
@@ -311,16 +307,22 @@ struct ProspectActionsToolbar: View {
         customer.contactPhone = prospect.contactPhone
         customer.notes = clonedNotes
         customer.knockHistory = clonedKnocks
-        customer.appointments = prospect.appointments // carry over directly
+        customer.appointments = prospect.appointments
 
-        // Insert customer
+        // Save changes
         modelContext.insert(customer)
-
-        // Delete prospect
         modelContext.delete(prospect)
 
         do {
             try modelContext.save()
+
+            // ✅ Dismiss the ProspectDetailsView
+            DispatchQueue.main.async {
+                if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let root = scene.windows.first?.rootViewController {
+                    root.dismiss(animated: true)
+                }
+            }
         } catch {
             print("❌ Failed to create customer: \(error)")
         }
