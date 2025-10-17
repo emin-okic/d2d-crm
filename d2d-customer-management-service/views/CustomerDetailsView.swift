@@ -82,30 +82,48 @@ private struct AppointmentsView: View {
     @State private var selectedAppointment: Appointment?
 
     var body: some View {
+        // sort by date like Prospect version
         let upcoming = customer.appointments
             .filter { $0.date >= Date() }
             .sorted { $0.date < $1.date }
 
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             if upcoming.isEmpty {
                 Text("No upcoming follow-ups.")
                     .foregroundColor(.gray)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 4)
             } else {
-                ForEach(upcoming) { appt in
-                    Button {
-                        selectedAppointment = appt
-                    } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Follow Up With \(customer.fullName)")
-                                .font(.subheadline).fontWeight(.medium)
-                            Text(customer.address)
-                                .font(.caption).foregroundColor(.gray)
-                            Text(appt.date.formatted(date: .abbreviated, time: .shortened))
-                                .font(.caption).foregroundColor(.gray)
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(upcoming) { appt in
+                        Button {
+                            selectedAppointment = appt
+                        } label: {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Follow Up With \(customer.fullName)")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.primary)
+                                    .lineLimit(nil)
+                                    .fixedSize(horizontal: false, vertical: true)
+
+                                Text(customer.address)
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                                    .lineLimit(nil)
+                                    .fixedSize(horizontal: false, vertical: true)
+
+                                Text(appt.date.formatted(date: .abbreviated, time: .shortened))
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .padding(.vertical, 4)
+                        .buttonStyle(.plain)
+
+                        Divider()
                     }
-                    .buttonStyle(.plain)
                 }
             }
 
@@ -113,9 +131,12 @@ private struct AppointmentsView: View {
                 showAppointmentSheet = true
             } label: {
                 Label("Add Appointment", systemImage: "calendar.badge.plus")
+                    .font(.subheadline)
             }
+            .padding(.top, 6)
         }
-        // ✅ identical to Prospect version
+        // ✅ padding gives breathing room like Prospect view
+        .padding(.vertical, 4)
         .sheet(isPresented: $showAppointmentSheet) {
             NavigationStack {
                 ScheduleCustomerAppointmentView(customer: customer)
