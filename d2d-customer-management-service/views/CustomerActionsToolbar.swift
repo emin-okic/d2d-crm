@@ -230,10 +230,16 @@ struct CustomerActionsToolbar: View {
     }
 
     private func deleteCustomer() {
+        // ✅ Delete all appointments belonging to this customer
+        for appointment in customer.appointments {
+            modelContext.delete(appointment)
+        }
+
+        // ✅ Delete the customer itself
         modelContext.delete(customer)
         try? modelContext.save()
 
-        // ✅ Close the Customer Details screen after deletion
+        // ✅ Dismiss the details view
         DispatchQueue.main.async {
             if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                let root = scene.windows.first?.rootViewController {
