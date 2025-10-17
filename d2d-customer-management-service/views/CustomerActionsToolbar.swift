@@ -232,6 +232,14 @@ struct CustomerActionsToolbar: View {
     private func deleteCustomer() {
         modelContext.delete(customer)
         try? modelContext.save()
+
+        // ✅ Close the Customer Details screen after deletion
+        DispatchQueue.main.async {
+            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let root = scene.windows.first?.rootViewController {
+                root.dismiss(animated: true)
+            }
+        }
     }
 
     private func exportToContacts() {
