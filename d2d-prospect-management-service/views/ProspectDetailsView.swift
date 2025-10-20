@@ -17,50 +17,25 @@ struct ProspectDetailsView: View {
     @StateObject private var searchViewModel = SearchCompleterViewModel()
     @FocusState private var isAddressFieldFocused: Bool
 
+    // 🔑 Local editable copies for deferred saving
+    @State private var tempFullName: String = ""
+    @State private var tempAddress: String = ""
+
     var body: some View {
         Form {
             // Prospect info
             Section(header: Text("Prospect Details")) {
-                TextField("Full Name", text: $prospect.fullName)
+                TextField("Full Name", text: $tempFullName)
 
                 // Address with autocomplete
-                VStack(alignment: .leading, spacing: 0) {
-                    TextField("Address", text: $prospect.address)
-                        .focused($isAddressFieldFocused)
-                        .onChange(of: prospect.address) { newValue in
-                            searchViewModel.updateQuery(newValue)
-                        }
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.words)
-
-                    if isAddressFieldFocused && !searchViewModel.results.isEmpty {
-                        VStack(spacing: 0) {
-                            ForEach(searchViewModel.results.prefix(3), id: \.self) { result in
-                                Button {
-                                    controller.fetchAddress(for: result, prospect: prospect)
-                                    isAddressFieldFocused = false
-                                } label: {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(result.title)
-                                            .font(.body).bold().lineLimit(1)
-                                        Text(result.subtitle)
-                                            .font(.subheadline)
-                                            .foregroundColor(.gray)
-                                            .lineLimit(1)
-                                    }
-                                    .padding(.horizontal)
-                                    .padding(.vertical, 4)
-                                }
-                                .buttonStyle(.plain)
-                                Divider()
-                            }
-                        }
-                        .background(Color(.systemBackground))
-                    }
-                }
+                AddressAutocompleteField(
+                    addressText: $tempAddress,
+                    isFocused: $isAddressFieldFocused,
+                    searchViewModel: searchViewModel
+                )
             }
 
-            // ✅ Actions Toolbar (original layout)
+            // ✅ Actions Toolbar (unchanged)
             Section {
                 ProspectActionsToolbar(prospect: prospect)
             }
@@ -125,16 +100,16 @@ struct ProspectDetailsView: View {
         }
         .navigationTitle("Edit Contact")
         .toolbar {
-            // 👈 1. Back button (top-left)
+            // Back Button
             ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: {
+                Button {
                     presentationMode.wrappedValue.dismiss()
-                }) {
+                } label: {
                     Label("Back", systemImage: "chevron.left")
                 }
             }
 
-            // 👈 2. Share button (always visible, right side)
+            // Share Button (always visible)
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     controller.shareProspect(prospect)
@@ -143,12 +118,12 @@ struct ProspectDetailsView: View {
                 }
             }
 
-            // 👈 3. Save button (only visible when there are unsaved changes)
-            if controller.isDirty(prospect: prospect) {
+            // Save Button (only appears if name/address changed)
+            if hasUnsavedEdits {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         withAnimation(.easeInOut(duration: 0.25)) {
-                            controller.saveProspect(prospect, modelContext: modelContext)
+                            commitEdits()
                         }
                     }
                     .buttonStyle(.borderedProminent)
@@ -157,8 +132,10 @@ struct ProspectDetailsView: View {
         }
         .onAppear {
             controller.captureBaseline(from: prospect)
+            // Initialize local edit copies
+            tempFullName = prospect.fullName
+            tempAddress = prospect.address
         }
-        // Sheets
         .sheet(isPresented: $controller.showConversionSheet) {
             NavigationView {
                 Form {
@@ -193,6 +170,18 @@ struct ProspectDetailsView: View {
         .sheet(item: $controller.selectedAppointmentDetails) { appointment in
             AppointmentDetailsView(appointment: appointment)
         }
+    }
+
+    // MARK: - Logic
+    private var hasUnsavedEdits: Bool {
+        tempFullName.trimmingCharacters(in: .whitespacesAndNewlines) != prospect.fullName.trimmingCharacters(in: .whitespacesAndNewlines) ||
+        tempAddress.trimmingCharacters(in: .whitespacesAndNewlines) != prospect.address.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func commitEdits() {
+        prospect.fullName = tempFullName.trimmingCharacters(in: .whitespacesAndNewlines)
+        prospect.address = tempAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        controller.saveProspect(prospect, modelContext: modelContext)
     }
 }
 
