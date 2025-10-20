@@ -69,6 +69,7 @@ class ProspectController: ObservableObject {
     }
     
     func shareProspect(_ prospect: Prospect) {
+        // Construct deep link
         var components = URLComponents()
         components.scheme = "d2dcrm"
         components.host = "import"
@@ -78,23 +79,44 @@ class ProspectController: ObservableObject {
             URLQueryItem(name: "phone", value: prospect.contactPhone),
             URLQueryItem(name: "email", value: prospect.contactEmail)
         ]
-        
-        guard let deepLink = components.url else { return }
+
+        guard let deepLink = components.url else {
+            print("❌ Failed to generate deep link")
+            return
+        }
+
         let appStoreURL = URL(string: "https://apps.apple.com/us/app/d2d-studio/id6748091911")!
-        
         let message = """
-        Check out this contact in D2D CRM!
-        
-        Download here: \(appStoreURL.absoluteString)
-        
-        After installing, open this link to import: \(deepLink.absoluteString)
+        Check out this contact in D2D Studio CRM!
+
+        Download the app:
+        \(appStoreURL.absoluteString)
+
+        Then tap this link to import:
+        \(deepLink.absoluteString)
         """
-        
+
+        // Use modern iOS presentation-safe share sheet
         let activityVC = UIActivityViewController(activityItems: [message], applicationActivities: nil)
-        
-        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let root = scene.windows.first?.rootViewController {
-            root.present(activityVC, animated: true)
+
+        // ✅ Find top-most view controller for presentation
+        DispatchQueue.main.async {
+            guard let scene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .first(where: { $0.activationState == .foregroundActive }),
+                  let window = scene.windows.first(where: { $0.isKeyWindow }),
+                  let root = window.rootViewController else {
+                print("❌ Could not find active window to present share sheet")
+                return
+            }
+
+            // Traverse presented stack to top-most controller
+            var topController = root
+            while let presented = topController.presentedViewController {
+                topController = presented
+            }
+
+            topController.present(activityVC, animated: true)
         }
     }
     
