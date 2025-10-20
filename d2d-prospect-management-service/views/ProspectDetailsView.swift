@@ -125,19 +125,33 @@ struct ProspectDetailsView: View {
         }
         .navigationTitle("Edit Contact")
         .toolbar {
-            if controller.isDirty(prospect: prospect) {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        controller.saveProspect(prospect, modelContext: modelContext)
-                        presentationMode.wrappedValue.dismiss()
-                    }
+            // 👈 1. Back button (top-left)
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: {
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    Label("Back", systemImage: "chevron.left")
                 }
             }
+
+            // 👈 2. Share button (always visible, right side)
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     controller.shareProspect(prospect)
                 } label: {
                     Image(systemName: "square.and.arrow.up")
+                }
+            }
+
+            // 👈 3. Save button (only visible when there are unsaved changes)
+            if controller.isDirty(prospect: prospect) {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            controller.saveProspect(prospect, modelContext: modelContext)
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
             }
         }
