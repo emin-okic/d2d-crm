@@ -179,10 +179,35 @@ struct ProspectDetailsView: View {
     }
 
     private func commitEdits() {
-        prospect.fullName = tempFullName.trimmingCharacters(in: .whitespacesAndNewlines)
-        prospect.address = tempAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedName = tempFullName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedAddress = tempAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        var changeNotes: [String] = []
+
+        // Detect name change
+        if trimmedName != prospect.fullName {
+            let note = "Name changed from \(prospect.fullName.isEmpty ? "Unknown" : prospect.fullName) to \(trimmedName)."
+            changeNotes.append(note)
+            prospect.fullName = trimmedName
+        }
+
+        // Detect address change
+        if trimmedAddress != prospect.address {
+            let note = "Address changed from \(prospect.address.isEmpty ? "Unknown" : prospect.address) to \(trimmedAddress)."
+            changeNotes.append(note)
+            prospect.address = trimmedAddress
+        }
+
+        // Append automatic notes (if any)
+        for change in changeNotes {
+            let autoNote = Note(content: change, date: Date(), prospect: prospect)
+            prospect.notes.append(autoNote)
+        }
+
+        // Save prospect + notes
         controller.saveProspect(prospect, modelContext: modelContext)
     }
+    
 }
 
 enum ProspectTab: String, CaseIterable {
