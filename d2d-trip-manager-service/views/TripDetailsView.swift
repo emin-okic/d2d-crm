@@ -17,10 +17,13 @@ struct TripDetailsView: View {
     @State private var endAddress: String
     @State private var miles: String
     @State private var date: Date
-    
+
     @FocusState private var focusedField: Field?
     @StateObject private var searchVM = SearchCompleterViewModel()
 
+    @State private var showDeleteConfirmation = false
+
+    // MARK: - Init
     init(trip: Trip) {
         self.trip = trip
         _startAddress = State(initialValue: trip.startAddress)
@@ -29,69 +32,122 @@ struct TripDetailsView: View {
         _date = State(initialValue: trip.date)
     }
 
+    // MARK: - Dirty check
+    private var hasUnsavedEdits: Bool {
+        startAddress.trimmingCharacters(in: .whitespacesAndNewlines) != trip.startAddress.trimmingCharacters(in: .whitespacesAndNewlines) ||
+        endAddress.trimmingCharacters(in: .whitespacesAndNewlines) != trip.endAddress.trimmingCharacters(in: .whitespacesAndNewlines) ||
+        date != trip.date
+    }
+
     var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("General Trip Details")) {
+        ZStack {
+            NavigationStack {
+                Form {
+                    Section(header: Text("General Trip Details")) {
+                        TripAddressFieldView(
+                            iconName: "circle",
+                            placeholder: "Start Address",
+                            iconColor: .blue,
+                            addressText: $startAddress,
+                            focusedField: $focusedField,
+                            fieldType: .start,
+                            searchVM: searchVM
+                        )
 
-                    TripAddressFieldView(
-                        iconName: "circle",
-                        placeholder: "Start Address",
-                        iconColor: .blue,
-                        addressText: $startAddress,
-                        focusedField: $focusedField,
-                        fieldType: .start,
-                        searchVM: searchVM
-                    )
+                        TripAddressFieldView(
+                            iconName: "mappin.circle.fill",
+                            placeholder: "End Address",
+                            iconColor: .red,
+                            addressText: $endAddress,
+                            focusedField: $focusedField,
+                            fieldType: .end,
+                            searchVM: searchVM
+                        )
 
-                    TripAddressFieldView(
-                        iconName: "mappin.circle.fill",
-                        placeholder: "End Address",
-                        iconColor: .red,
-                        addressText: $endAddress,
-                        focusedField: $focusedField,
-                        fieldType: .end,
-                        searchVM: searchVM
-                    )
-                    
-                    // Prettified date picker bar
-                    HStack {
-                        Image(systemName: "calendar")
-                            .foregroundColor(.blue)
-                        DatePicker("Trip Date", selection: $date, displayedComponents: [.date])
-                            .labelsHidden()
-                    }
-                }
-                
-                Section(header: Text("Route Details")) {
-                    RouteMapView(startAddress: startAddress, endAddress: endAddress)
-                        .frame(height: 200)
-                        .cornerRadius(12)
-                        .padding(.vertical, 8)
-                }
-
-                Section {
-                    Button("Save Changes") {
-                        Task {
-                            let distance = await TripsController.shared.calculateMiles(from: startAddress, to: endAddress)
-
-                            await MainActor.run {
-                                trip.startAddress = startAddress
-                                trip.endAddress = endAddress
-                                trip.miles = distance
-                                trip.date = date
-                                try? context.save()
-                                dismiss()
-                            }
+                        HStack {
+                            Image(systemName: "calendar")
+                                .foregroundColor(.blue)
+                            DatePicker("Trip Date", selection: $date, displayedComponents: [.date])
+                                .labelsHidden()
                         }
                     }
 
-                    Button("Cancel", role: .cancel) {
-                        dismiss()
+                    Section(header: Text("Route Details")) {
+                        RouteMapView(startAddress: startAddress, endAddress: endAddress)
+                            .frame(height: 200)
+                            .cornerRadius(12)
+                            .padding(.vertical, 8)
+                    }
+                }
+                .navigationTitle("Trip Details")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    // Back button top-left
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Label("Back", systemImage: "chevron.left")
+                        }
+                    }
+
+                    // Save button top-right (conditional)
+                    if hasUnsavedEdits {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Save Changes") {
+                                Task {
+                                    let distance = await TripsController.shared.calculateMiles(
+                                        from: startAddress,
+                                        to: endAddress
+                                    )
+                                    await MainActor.run {
+                                        trip.startAddress = startAddress
+                                        trip.endAddress = endAddress
+                                        trip.miles = distance
+                                        trip.date = date
+                                        try? context.save()
+                                        dismiss()
+                                    }
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
                     }
                 }
             }
-            .navigationTitle("Trip Details")
+
+            // Floating circular trash button (bottom-left)
+            VStack {
+                Spacer()
+                HStack {
+                    Button(role: .destructive) {
+                        showDeleteConfirmation = true
+                    } label: {
+                        Image(systemName: "trash.fill")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(Circle().fill(Color.red))
+                            .shadow(radius: 4)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.leading, 20)
+                    .padding(.bottom, 30)
+
+                    Spacer()
+                }
+            }
+        }
+        // Delete confirmation alert
+        .alert("Delete Trip?", isPresented: $showDeleteConfirmation) {
+            Button("Delete", role: .destructive) {
+                context.delete(trip)
+                try? context.save()
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This trip will be permanently deleted.")
         }
     }
 }
