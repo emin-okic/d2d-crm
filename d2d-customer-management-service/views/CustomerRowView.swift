@@ -9,9 +9,10 @@ import SwiftUI
 
 struct CustomerRowView: View {
     let customer: Customer
+    private let minRowHeight: CGFloat = 96   // identical to ProspectRowView
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(customer.fullName)
                 .font(.headline)
 
@@ -23,15 +24,24 @@ struct CustomerRowView: View {
                 Text("📞 \(formatPhoneNumber(customer.contactPhone))")
                     .font(.subheadline)
                     .foregroundColor(.blue)
+                    .lineLimit(1)
             }
 
             if !customer.contactEmail.isEmpty {
                 Text("✉️ \(customer.contactEmail)")
                     .font(.subheadline)
                     .foregroundColor(.blue)
+                    .lineLimit(1)
             }
+
+            // Optional knock history dots for parity (if you want parity)
+            if !customer.knockHistory.isEmpty {
+                KnockDotsView(knocks: customer.knockHistory)
+            }
+            
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, minHeight: minRowHeight, alignment: .leading)
         .contentShape(Rectangle())
     }
 
