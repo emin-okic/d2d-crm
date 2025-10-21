@@ -7,7 +7,9 @@
 
 import SwiftUI
 import SwiftData
+import MapKit
 
+@available(iOS 18.0, *)
 struct CustomerDetailsView: View {
     @Bindable var customer: Customer
     @Environment(\.presentationMode) private var presentationMode
@@ -15,17 +17,35 @@ struct CustomerDetailsView: View {
 
     @State private var selectedTab: CustomerTab = .appointments
 
+    // Local editable copies
+    @State private var tempFullName: String = ""
+    @State private var tempAddress: String = ""
+
+    // For address autocomplete
+    @StateObject private var searchViewModel = SearchCompleterViewModel()
+    @FocusState private var isAddressFieldFocused: Bool
+
+    // Detect unsaved edits
+    private var hasUnsavedEdits: Bool {
+        tempFullName.trimmingCharacters(in: .whitespacesAndNewlines) != customer.fullName.trimmingCharacters(in: .whitespacesAndNewlines) ||
+        tempAddress.trimmingCharacters(in: .whitespacesAndNewlines) != customer.address.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     var body: some View {
         Form {
             // ✅ Customer core info
             Section(header: Text("Customer Details")) {
-                
-                TextField("Full Name", text: $customer.fullName)
-                
-                TextField("Address", text: $customer.address)
+                TextField("Full Name", text: $tempFullName)
+
+                // 👇 Autocomplete-enabled address field
+                AddressAutocompleteField(
+                    addressText: $tempAddress,
+                    isFocused: $isAddressFieldFocused,
+                    searchViewModel: searchViewModel
+                )
             }
 
-            // ✅ Toolbar without "Convert to Sale"
+            // ✅ Actions Toolbar
             Section {
                 CustomerActionsToolbar(customer: customer)
             }
@@ -45,16 +65,57 @@ struct CustomerDetailsView: View {
         }
         .navigationTitle("Customer Details")
         .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    try? modelContext.save()
+            // Back Button
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button {
                     presentationMode.wrappedValue.dismiss()
+                } label: {
+                    Label("Back", systemImage: "chevron.left")
+                }
+            }
+
+            // Conditional Save Button
+            if hasUnsavedEdits {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        commitEdits()
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
             }
         }
+        .onAppear {
+            tempFullName = customer.fullName
+            tempAddress = customer.address
+        }
     }
 
-    // 👇 Switch between tab content
+    // MARK: - Logic
+    private func commitEdits() {
+        let trimmedName = tempFullName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedAddress = tempAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        var changeNotes: [String] = []
+
+        if trimmedName != customer.fullName {
+            let note = "Name changed from \(customer.fullName.isEmpty ? "Unknown" : customer.fullName) to \(trimmedName)."
+            changeNotes.append(note)
+            customer.fullName = trimmedName
+        }
+
+        if trimmedAddress != customer.address {
+            let note = "Address changed from \(customer.address.isEmpty ? "Unknown" : customer.address) to \(trimmedAddress)."
+            changeNotes.append(note)
+            customer.address = trimmedAddress
+        }
+
+        for note in changeNotes {
+            customer.notes.append(Note(content: note, date: Date()))
+        }
+
+        try? modelContext.save()
+    }
+
+    // MARK: - Tab Content
     @ViewBuilder
     private var tabContent: some View {
         switch selectedTab {
