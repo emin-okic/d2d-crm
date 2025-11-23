@@ -7,6 +7,7 @@
 
 import Foundation
 
+@MainActor
 public enum AdDemoInventory {
     public static var defaultAds: [Ad] = {
         let funnelURL = URL(string: "https://www.clickfunnels.com/signup-flow?aff=ee8160b4...7995")!

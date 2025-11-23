@@ -529,12 +529,20 @@ struct MapSearchView: View {
         try? modelContext.save()
     }
     
+    @MainActor
     private func handleMapCenterChange(newAddress: String?) {
+        
         guard let query = newAddress else { return }
-        Task {
+        
+        Task { @MainActor [controller] in
+            
             if let coord = await controller.geocodeAddress(query) {
                 withAnimation {
-                    controller.region = MKCoordinateRegion(center: coord, latitudinalMeters: 1609.34, longitudinalMeters: 1609.34)
+                    controller.region = MKCoordinateRegion(
+                        center: coord,
+                        latitudinalMeters: 1609.34,
+                        longitudinalMeters: 1609.34
+                    )
                 }
             }
             addressToCenter = nil

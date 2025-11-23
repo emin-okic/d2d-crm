@@ -10,6 +10,7 @@ import Foundation
 import SwiftData
 import MapKit
 
+@MainActor
 class KnockActionController {
     private let modelContext: ModelContext
     private let controller: MapController

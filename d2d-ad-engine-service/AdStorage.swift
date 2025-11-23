@@ -7,6 +7,7 @@
 
 import Foundation
 
+@MainActor
 final class AdStorage {
     static let shared = AdStorage()
     private init() {}

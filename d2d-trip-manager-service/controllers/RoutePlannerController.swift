@@ -167,12 +167,14 @@ enum RoutePlannerController {
         return parts.isEmpty ? fallback : parts.joined(separator: " ")
     }
 
+    @MainActor
     private static func geocode(_ addresses: [String]) async -> [CLPlacemark] {
         await withTaskGroup(of: CLPlacemark?.self) { group in
-            let geocoder = CLGeocoder()
             for addr in addresses {
-                group.addTask {
+                group.addTask { @Sendable in
                     do {
+                        // Create a NEW geocoder inside the task
+                        let geocoder = CLGeocoder()
                         let results = try await geocoder.geocodeAddressString(addr)
                         return results.first
                     } catch {
@@ -181,6 +183,7 @@ enum RoutePlannerController {
                     }
                 }
             }
+
             var output: [CLPlacemark] = []
             for await pm in group {
                 if let pm { output.append(pm) }

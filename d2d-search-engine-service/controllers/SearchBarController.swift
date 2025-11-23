@@ -9,6 +9,7 @@ import Foundation
 import MapKit
 import Contacts
 
+@MainActor
 enum SearchBarController {
     /// Resolves a selected search completion to a general address string (e.g., map title).
     static func resolveAddress(from completion: MKLocalSearchCompletion) async -> String? {
@@ -45,9 +46,10 @@ enum SearchBarController {
         }
     }
     
+    @MainActor
     static func handleResolvedSearch(
         query: String,
-        onResolved: (String) -> Void
+        onResolved: @MainActor (String) -> Void
     ) {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }

@@ -10,6 +10,7 @@ import Foundation
 import MapKit
 import Combine
 
+@MainActor
 class SearchCompleterViewModel: NSObject, ObservableObject, MKLocalSearchCompleterDelegate {
     @Published var results: [MKLocalSearchCompletion] = []
 
@@ -26,13 +27,14 @@ class SearchCompleterViewModel: NSObject, ObservableObject, MKLocalSearchComplet
         completer.queryFragment = query
     }
 
-    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
-        DispatchQueue.main.async {
-            self.results = completer.results
+    nonisolated func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        // Delegate callback is nonisolated → marshal to MainActor
+        Task { @MainActor in
+            self.results = self.completer.results
         }
     }
 
-    func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
+    nonisolated func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
         print("Search completer failed: \(error)")
     }
 }

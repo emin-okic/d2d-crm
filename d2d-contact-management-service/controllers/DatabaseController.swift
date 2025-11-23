@@ -12,6 +12,8 @@ import CoreLocation
 ///
 /// This controller handles the creation, insertion, and retrieval of `Prospect` and `Knock` data
 /// using SQLite. It supports both production and in-memory configurations (for testing).
+
+@MainActor
 class DatabaseController {
 
     /// Shared singleton instance used across the app.

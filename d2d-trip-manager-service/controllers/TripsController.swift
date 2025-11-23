@@ -7,6 +7,7 @@
 import Foundation
 import MapKit
 
+@MainActor
 class TripsController {
     static let shared = TripsController()
 
