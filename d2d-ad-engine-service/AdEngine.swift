@@ -9,6 +9,7 @@ import Foundation
 import Combine
 import UIKit
 
+@MainActor
 public final class AdEngine: ObservableObject {
     public static let shared = AdEngine()
     private init() {}

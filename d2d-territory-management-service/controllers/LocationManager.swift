@@ -11,6 +11,9 @@ import CoreLocation
 ///
 /// `LocationManager` is used to request location permissions, start updating location,
 /// and publish the latest coordinates for use throughout the app (e.g. logging knocks).
+///
+
+@MainActor
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
 
     /// Shared instance used throughout the app.
@@ -34,7 +37,13 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     /// - Parameters:
     ///   - manager: The location manager providing updates.
     ///   - locations: Array of recent location updates.
+    nonisolated(unsafe)
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        currentLocation = locations.last?.coordinate
+        // Hop back onto the main actor
+        Task { @MainActor in
+            self.currentLocation = locations.last?.coordinate
+            
+        }
+        
     }
 }

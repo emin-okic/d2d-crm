@@ -18,6 +18,7 @@ struct ImpressionPayload {
     let timestamp: Date
 }
 
+@MainActor
 final class CloudKitAdLogger {
     static let shared = CloudKitAdLogger()
     private init() {}
