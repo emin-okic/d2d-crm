@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import Foundation
+import CoreLocation
 
 @main
 struct d2d_studioApp: App {
@@ -68,21 +69,42 @@ struct d2d_studioApp: App {
         if url.host == "import" {
             if let components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
                 let params = Dictionary(uniqueKeysWithValues: components.queryItems?.map { ($0.name, $0.value ?? "") } ?? [])
+
                 if let name = params["fullName"], let address = params["address"] {
                     let phone = params["phone"] ?? ""
                     let email = params["email"] ?? ""
 
-                    let newProspect = Prospect(fullName: name, address: address, list: "Prospects")
-                    newProspect.contactPhone = phone
-                    newProspect.contactEmail = email
+                    Task {   // 👈 Run geocode asynchronously
+                        var lat = 0.0
+                        var lon = 0.0
 
-                    // Save into SwiftData
-                    let context = sharedModelContainer.mainContext
-                    context.insert(newProspect)
-                    try? context.save()
+                        let geocoder = CLGeocoder()
+                        if let marks = try? await geocoder.geocodeAddressString(address),
+                           let c = marks.first?.location?.coordinate {
+                            lat = c.latitude
+                            lon = c.longitude
+                        }
+
+                        let newProspect = Prospect(
+                            fullName: name,
+                            address: address,
+                            count: 0,
+                            latitude: lat,
+                            longitude: lon,
+                            list: "Prospects"
+                        )
+
+                        newProspect.contactPhone = phone
+                        newProspect.contactEmail = email
+
+                        let context = sharedModelContainer.mainContext
+                        context.insert(newProspect)
+                        try? context.save()
+                    }
                 }
             }
         }
+        
     }
     
 }

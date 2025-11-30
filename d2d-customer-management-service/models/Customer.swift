@@ -13,18 +13,34 @@ final class Customer: ContactProtocol {
     var fullName: String
     var address: String
     var count: Int
+    
+    // MARK: — Contact
     var contactEmail: String
     var contactPhone: String
+
+    // MARK: — Notes & appointments
     var notes: [Note]
     var appointments: [Appointment]
+
+    // MARK: — Knock history
     var knockHistory: [Knock]
 
-    init(fullName: String,
-         address: String,
-         count: Int = 0) {
+    // MARK: — Critical for mapping (NEW)
+    var latitude: Double
+    var longitude: Double
+
+    init(
+        fullName: String,
+        address: String,
+        count: Int = 0,
+        latitude: Double = 0,
+        longitude: Double = 0
+    ) {
         self.fullName = fullName
         self.address = address
         self.count = count
+        self.latitude = latitude
+        self.longitude = longitude
         self.contactEmail = ""
         self.contactPhone = ""
         self.notes = []
@@ -35,16 +51,18 @@ final class Customer: ContactProtocol {
 
 extension Customer {
     static func fromProspect(_ prospect: Prospect) -> Customer {
-        let customer = Customer(
+        let c = Customer(
             fullName: prospect.fullName,
             address: prospect.address,
-            count: prospect.count
+            count: prospect.count,
+            latitude: prospect.latitude,
+            longitude: prospect.longitude
         )
-        customer.contactPhone = prospect.contactPhone
-        customer.contactEmail = prospect.contactEmail
-        customer.notes = prospect.notes
-        customer.appointments = prospect.appointments
-        customer.knockHistory = prospect.knockHistory
-        return customer
+        c.contactPhone = prospect.contactPhone
+        c.contactEmail = prospect.contactEmail
+        c.notes = prospect.notes
+        c.appointments = prospect.appointments
+        c.knockHistory = prospect.knockHistory
+        return c
     }
 }

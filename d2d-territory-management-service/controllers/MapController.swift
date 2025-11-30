@@ -110,14 +110,34 @@ class MapController: ObservableObject {
     /// - Parameter prospects: Array of `Prospect` objects to display.
     func setMarkers(prospects: [Prospect], customers: [Customer]) {
         clearMarkers()
-        
-        let all: [(String, Int, String)] =
-            prospects.map { ($0.address, $0.count, $0.list) } +
-            customers.map { ($0.address, $0.count, "Customers") }
 
-        for (address, count, list) in all {
-            geocodeAndAdd(address: address, count: count, list: list)
+        // Prospects → markers
+        let prospectMarkers = prospects.compactMap { p -> IdentifiablePlace? in
+            guard p.latitude != 0, p.longitude != 0 else { return nil }
+
+            return IdentifiablePlace(
+                address: p.address,
+                location: CLLocationCoordinate2D(latitude: p.latitude,
+                                                 longitude: p.longitude),
+                count: p.count,
+                list: p.list
+            )
         }
+
+        // Customers → markers
+        let customerMarkers = customers.compactMap { c -> IdentifiablePlace? in
+            guard c.latitude != 0, c.longitude != 0 else { return nil }
+
+            return IdentifiablePlace(
+                address: c.address,
+                location: CLLocationCoordinate2D(latitude: c.latitude,
+                                                 longitude: c.longitude),
+                count: c.count,
+                list: "Customers"
+            )
+        }
+
+        markers = prospectMarkers + customerMarkers
     }
     
     private func geocodeAndAdd(address: String, count: Int, list: String) {

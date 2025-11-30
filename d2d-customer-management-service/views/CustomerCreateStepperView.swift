@@ -32,6 +32,9 @@ struct CustomerCreateStepperView: View {
     @StateObject private var searchVM = SearchCompleterViewModel()
     @FocusState private var isAddressFocused: Bool
     @State private var phoneError: String?
+    
+    @State private var latitude: Double = 0
+    @State private var longitude: Double = 0
 
     init(
         initialName: String? = nil,
@@ -87,7 +90,15 @@ struct CustomerCreateStepperView: View {
                 } else {
                     Button("Finish") {
                         guard validatePhoneNumber() else { return }
-                        let c = Customer(fullName: fullName, address: address)
+                        
+                        let c = Customer(
+                            fullName: fullName,
+                            address: address,
+                            count: 0,
+                            latitude: latitude,
+                            longitude: longitude
+                        )
+                        
                         c.contactEmail = contactEmail
                         c.contactPhone = contactPhone
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) {
@@ -167,13 +178,28 @@ struct CustomerCreateStepperView: View {
     }
 
     private func handleAddressSelection(_ result: MKLocalSearchCompletion) {
+        
         Task {
             if let resolved = await SearchBarController.resolveAddress(from: result) {
                 address = resolved
+
+                // NEW: geocode to get coordinates
+                let geocoder = CLGeocoder()
+                do {
+                    let placemarks = try await geocoder.geocodeAddressString(resolved)
+                    if let loc = placemarks.first?.location?.coordinate {
+                        latitude = loc.latitude
+                        longitude = loc.longitude
+                    }
+                } catch {
+                    print("❌ Could not resolve coordinates for customer: \(error)")
+                }
+
                 searchVM.results = []
                 isAddressFocused = false
             }
         }
+        
     }
 
     @discardableResult

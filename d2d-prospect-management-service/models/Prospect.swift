@@ -13,22 +13,38 @@ final class Prospect: ContactProtocol {
     var fullName: String
     var address: String
     var count: Int
+    
+    // MARK: — Contact
     var contactEmail: String
     var contactPhone: String
+
+    // MARK: — Notes & appointments
     var notes: [Note]
     var appointments: [Appointment]
+
+    // MARK: — Knock history
     var knockHistory: [Knock]
 
-    /// keep your list flag if you still use it elsewhere
+    // MARK: — Critical for mapping (NEW)
+    var latitude: Double
+    var longitude: Double
+
+    // MARK: — List flag (Prospects | Customers)
     var list: String
 
-    init(fullName: String,
-         address: String,
-         count: Int = 0,
-         list: String = "Prospects") {
+    init(
+        fullName: String,
+        address: String,
+        count: Int = 0,
+        latitude: Double = 0,
+        longitude: Double = 0,
+        list: String = "Prospects"
+    ) {
         self.fullName = fullName
         self.address = address
         self.count = count
+        self.latitude = latitude
+        self.longitude = longitude
         self.list = list
         self.contactEmail = ""
         self.contactPhone = ""

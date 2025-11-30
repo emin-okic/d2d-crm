@@ -21,6 +21,8 @@ class KnockActionController {
         self.controller = controller
     }
 
+    // MARK: - OUTCOME HANDLERS
+
     func handleKnockAndPromptNote(
         address: String,
         status: String,
@@ -76,58 +78,89 @@ class KnockActionController {
             $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
             address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         }) {
-            
             onShowConversionSheet(prospect)
-
-            // Update map marker
             onSetCustomerMarker()
             onUpdateMarkers()
         }
     }
 
+    // MARK: - CORE SAVE LOGIC
+
     private func saveKnock(address: String, status: String, prospects: [Prospect]) -> Prospect {
         let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         let now = Date()
-        let location = locationManager.currentLocation
-        let lat = location?.latitude ?? 0.0
-        let lon = location?.longitude ?? 0.0
 
-        var prospectId: Int64?
-        var updated: Prospect
+        // Pull current GPS coordinates once
+        let coord = locationManager.currentLocation
+        let lat = coord?.latitude ?? 0
+        let lon = coord?.longitude ?? 0
 
+        var prospectId: Int64? = nil
+        let updated: Prospect
+
+        // UPDATE EXISTING PROSPECT
         if let existing = prospects.first(where: {
             $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
         }) {
             existing.count += 1
+            existing.latitude = lat      // NEW
+            existing.longitude = lon     // NEW
             existing.knockHistory.append(Knock(date: now, status: status, latitude: lat, longitude: lon))
             updated = existing
+
+        // CREATE NEW PROSPECT
         } else {
-            let new = Prospect(fullName: "New Prospect", address: address, count: 1, list: "Prospects")
-            new.knockHistory = [Knock(date: now, status: status, latitude: lat, longitude: lon)]
+            let new = Prospect(
+                fullName: "New Prospect",
+                address: address,
+                count: 1,
+                latitude: lat,            // NEW
+                longitude: lon,           // NEW
+                list: "Prospects"
+            )
+            new.knockHistory = [
+                Knock(date: now, status: status, latitude: lat, longitude: lon)
+            ]
             modelContext.insert(new)
             updated = new
 
+            // Legacy external DB (optional)
             if let newId = DatabaseController.shared.addProspect(name: new.fullName, addr: new.address) {
                 prospectId = newId
             }
         }
 
+        // External DB knock logging (optional)
         if let id = prospectId {
-            DatabaseController.shared.addKnock(for: id, date: now, status: status, latitude: lat, longitude: lon)
+            DatabaseController.shared.addKnock(
+                for: id,
+                date: now,
+                status: status,
+                latitude: lat,
+                longitude: lon
+            )
         }
 
-        controller.performSearch(query: address)
         try? modelContext.save()
 
         return updated
     }
 }
 
+// MARK: - Save Knock Only
+
 extension KnockActionController {
     @discardableResult
-    func saveKnockOnly(address: String, status: String, prospects: [Prospect], onUpdateMarkers: @escaping () -> Void) -> Prospect {
+    func saveKnockOnly(
+        address: String,
+        status: String,
+        prospects: [Prospect],
+        onUpdateMarkers: @escaping () -> Void
+    ) -> Prospect {
         let p = saveKnock(address: address, status: status, prospects: prospects)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { onUpdateMarkers() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            onUpdateMarkers()
+        }
         return p
     }
 }

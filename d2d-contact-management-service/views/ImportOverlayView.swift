@@ -9,6 +9,7 @@
 import SwiftUI
 import SwiftData
 import ContactsUI
+import CoreLocation
 
 struct ImportOverlayView: View {
     @Binding var showingImportFromContacts: Bool
@@ -22,38 +23,68 @@ struct ImportOverlayView: View {
     var body: some View {
         if showingImportFromContacts {
             ContactsImportView(
+                
                 onComplete: { contacts in
                     showingImportFromContacts = false
 
-                    for contact in contacts {
-                        let fullName = CNContactFormatter.string(from: contact, style: .fullName) ?? "No Name"
-                        let addressString = contact.postalAddresses.first.map {
-                            CNPostalAddressFormatter.string(from: $0.value, style: .mailingAddress).replacingOccurrences(of: "\n", with: ", ")
-                        } ?? "No Address"
-                        let phoneNumber = contact.phoneNumbers.first?.value.stringValue ?? ""
-                        let email = contact.emailAddresses.first?.value as String? ?? ""
+                    Task {   // 👈 Run async work here
+                        for contact in contacts {
+                            let fullName = CNContactFormatter.string(from: contact, style: .fullName) ?? "No Name"
+                            let addressString = contact.postalAddresses.first.map {
+                                CNPostalAddressFormatter
+                                    .string(from: $0.value, style: .mailingAddress)
+                                    .replacingOccurrences(of: "\n", with: ", ")
+                            } ?? "No Address"
+                            let phoneNumber = contact.phoneNumbers.first?.value.stringValue ?? ""
+                            let email = contact.emailAddresses.first?.value as String? ?? ""
 
-                        let newProspect = Prospect(fullName: fullName, address: addressString, count: 0, list: "Prospects")
-                        newProspect.contactEmail = email
-                        newProspect.contactPhone = phoneNumber
+                            var lat = 0.0
+                            var lon = 0.0
 
-                        let isDuplicate = prospects.contains {
-                            $0.fullName == fullName && $0.address == addressString
+                            if let firstAddress = contact.postalAddresses.first {
+                                let formatted = CNPostalAddressFormatter
+                                    .string(from: firstAddress.value, style: .mailingAddress)
+                                    .replacingOccurrences(of: "\n", with: ", ")
+
+                                let geocoder = CLGeocoder()
+                                if let marks = try? await geocoder.geocodeAddressString(formatted),
+                                   let coord = marks.first?.location?.coordinate {
+                                    lat = coord.latitude
+                                    lon = coord.longitude
+                                }
+                            }
+
+                            let newProspect = Prospect(
+                                fullName: fullName,
+                                address: addressString,
+                                count: 0,
+                                latitude: lat,
+                                longitude: lon,
+                                list: "Prospects"
+                            )
+
+                            newProspect.contactEmail = email
+                            newProspect.contactPhone = phoneNumber
+
+                            let isDuplicate = prospects.contains {
+                                $0.fullName == fullName &&
+                                $0.address == addressString
+                            }
+
+                            if !isDuplicate {
+                                modelContext.insert(newProspect)
+                            }
                         }
 
-                        if !isDuplicate {
-                            modelContext.insert(newProspect)
+                        try? modelContext.save()
+                        selectedList = "Prospects"
+                        searchText = ""
+                        onSave()
+
+                        showImportSuccess = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            showImportSuccess = false
                         }
-                    }
-
-                    try? modelContext.save()
-                    selectedList = "Prospects"
-                    searchText = ""
-                    onSave()
-
-                    showImportSuccess = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        showImportSuccess = false
                     }
                 },
                 onCancel: {

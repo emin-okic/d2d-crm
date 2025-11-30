@@ -24,6 +24,9 @@ struct ProspectCreateStepperView: View {
     @StateObject private var searchVM = SearchCompleterViewModel()
     @FocusState private var isAddressFocused: Bool
     @State private var phoneError: String?
+    
+    @State private var latitude: Double = 0
+    @State private var longitude: Double = 0
 
     var body: some View {
         VStack(spacing: 8) {
@@ -48,7 +51,16 @@ struct ProspectCreateStepperView: View {
                 } else {
                     Button("Finish") {
                         guard validatePhoneNumber() else { return }
-                        let p = Prospect(fullName: fullName, address: address, count: 0, list: "Prospects")
+                        
+                        let p = Prospect(
+                            fullName: fullName,
+                            address: address,
+                            count: 0,
+                            latitude: latitude,
+                            longitude: longitude,
+                            list: "Prospects"
+                        )
+                        
                         p.contactEmail = contactEmail
                         p.contactPhone = contactPhone
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -115,14 +127,30 @@ struct ProspectCreateStepperView: View {
     private var canProceedStepTwo: Bool { phoneError == nil }
 
     private func handleAddressSelection(_ result: MKLocalSearchCompletion) {
+        
         Task {
             if let resolved = await SearchBarController.resolveAddress(from: result) {
                 address = resolved
+
+                // NEW — geocode coordinate
+                let geocoder = CLGeocoder()
+                do {
+                    let placemarks = try await geocoder.geocodeAddressString(resolved)
+                    if let loc = placemarks.first?.location?.coordinate {
+                        latitude = loc.latitude
+                        longitude = loc.longitude
+                    }
+                } catch {
+                    print("❌ Prospect geocode failed: \(error)")
+                }
+
                 searchVM.results = []
                 isAddressFocused = false
             }
         }
+        
     }
+    
     @discardableResult
     private func validatePhoneNumber() -> Bool {
         let raw = contactPhone.trimmingCharacters(in: .whitespacesAndNewlines)
