@@ -90,19 +90,31 @@ struct CustomerCreateStepperView: View {
                 } else {
                     Button("Finish") {
                         guard validatePhoneNumber() else { return }
-                        
-                        let c = Customer(
-                            fullName: fullName,
-                            address: address,
-                            count: 0,
-                            latitude: latitude,
-                            longitude: longitude
-                        )
-                        
-                        c.contactEmail = contactEmail
-                        c.contactPhone = contactPhone
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) {
-                            onComplete(c)
+
+                        Task {
+                            var lat = 0.0
+                            var lon = 0.0
+
+                            let geocoder = CLGeocoder()
+                            if let marks = try? await geocoder.geocodeAddressString(address),
+                               let c = marks.first?.location?.coordinate {
+                                lat = c.latitude
+                                lon = c.longitude
+                            }
+
+                            let newCustomer = Customer(
+                                fullName: fullName,
+                                address: address,
+                                count: 0,
+                                latitude: lat,
+                                longitude: lon
+                            )
+                            newCustomer.contactEmail = contactEmail
+                            newCustomer.contactPhone = contactPhone
+
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) {
+                                onComplete(newCustomer)
+                            }
                         }
                     }
                     .disabled(!canProceedStepTwo)
@@ -215,6 +227,28 @@ struct CustomerCreateStepperView: View {
         } catch {
             phoneError = "Invalid phone number."
             return false
+        }
+    }
+    
+    func updateCustomerCoordinatesIfAddressChanged(
+        _ customer: Customer,
+        oldAddress: String,
+        modelContext: ModelContext
+    ) async {
+        let newAddress = customer.address.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanOld = oldAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard newAddress.caseInsensitiveCompare(cleanOld) != .orderedSame else { return }
+
+        let geocoder = CLGeocoder()
+        if let marks = try? await geocoder.geocodeAddressString(newAddress),
+           let coord = marks.first?.location?.coordinate {
+
+            customer.latitude = coord.latitude
+            customer.longitude = coord.longitude
+            try? modelContext.save()
+
+            NotificationCenter.default.post(name: .mapShouldRecenterAllMarkers, object: nil)
         }
     }
 }

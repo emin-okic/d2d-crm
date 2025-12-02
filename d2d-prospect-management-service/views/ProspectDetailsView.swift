@@ -193,9 +193,18 @@ struct ProspectDetailsView: View {
 
         // Detect address change
         if trimmedAddress != prospect.address {
+            let oldAddress = prospect.address
             let note = "Address changed from \(prospect.address.isEmpty ? "Unknown" : prospect.address) to \(trimmedAddress)."
             changeNotes.append(note)
             prospect.address = trimmedAddress
+
+            Task { @MainActor in
+                await controller.updateCoordinatesIfAddressChanged(
+                    prospect,
+                    oldAddress: oldAddress,
+                    modelContext: modelContext
+                )
+            }
         }
 
         // Append automatic notes (if any)

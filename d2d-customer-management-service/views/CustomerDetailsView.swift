@@ -94,25 +94,66 @@ struct CustomerDetailsView: View {
     private func commitEdits() {
         let trimmedName = tempFullName.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedAddress = tempAddress.trimmingCharacters(in: .whitespacesAndNewlines)
-        var changeNotes: [String] = []
 
+        var changeNotes: [String] = []
+        let oldAddress = customer.address
+
+        // Name change
         if trimmedName != customer.fullName {
             let note = "Name changed from \(customer.fullName.isEmpty ? "Unknown" : customer.fullName) to \(trimmedName)."
             changeNotes.append(note)
             customer.fullName = trimmedName
         }
 
+        // Address change
         if trimmedAddress != customer.address {
             let note = "Address changed from \(customer.address.isEmpty ? "Unknown" : customer.address) to \(trimmedAddress)."
             changeNotes.append(note)
             customer.address = trimmedAddress
+
+            Task { @MainActor in
+                await updateCustomerCoordinatesIfAddressChanged(
+                    customer,
+                    oldAddress: oldAddress,
+                    modelContext: modelContext
+                )
+            }
         }
 
-        for note in changeNotes {
-            customer.notes.append(Note(content: note, date: Date()))
+        // Add notes
+        for text in changeNotes {
+            customer.notes.append(Note(content: text, date: Date()))
         }
 
         try? modelContext.save()
+    }
+    
+    @MainActor
+    func updateCustomerCoordinatesIfAddressChanged(
+        _ customer: Customer,
+        oldAddress: String,
+        modelContext: ModelContext
+    ) async {
+
+        let newAddress = customer.address.trimmingCharacters(in: .whitespacesAndNewlines)
+        let oldClean = oldAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard newAddress.caseInsensitiveCompare(oldClean) != .orderedSame else { return }
+
+        let geocoder = CLGeocoder()
+        if let marks = try? await geocoder.geocodeAddressString(newAddress),
+           let coord = marks.first?.location?.coordinate {
+
+            customer.latitude = coord.latitude
+            customer.longitude = coord.longitude
+
+            try? modelContext.save()
+
+            NotificationCenter.default.post(
+                name: .mapShouldRecenterAllMarkers,
+                object: nil
+            )
+        }
     }
 
     // MARK: - Tab Content

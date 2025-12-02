@@ -10,6 +10,7 @@ import SwiftUI
 import SwiftData
 import PhoneNumberKit
 import MapKit
+import CoreLocation
 
 @MainActor
 class ProspectController: ObservableObject {
@@ -139,4 +140,37 @@ class ProspectController: ObservableObject {
         }
     }
     
+}
+
+extension ProspectController {
+
+    /// Re-geocode the address after edits and update latitude/longitude.
+    @MainActor
+    func updateCoordinatesIfAddressChanged(_ prospect: Prospect,
+                                           oldAddress: String,
+                                           modelContext: ModelContext) async {
+
+        let newAddress = prospect.address.trimmingCharacters(in: .whitespacesAndNewlines)
+        let oldAddressClean = oldAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard newAddress.caseInsensitiveCompare(oldAddressClean) != .orderedSame else {
+            return  // Address not changed — no geocoding needed
+        }
+
+        let geocoder = CLGeocoder()
+        if let marks = try? await geocoder.geocodeAddressString(newAddress),
+           let coord = marks.first?.location?.coordinate {
+
+            prospect.latitude = coord.latitude
+            prospect.longitude = coord.longitude
+
+            try? modelContext.save()
+
+            // Notify map to refresh markers
+            NotificationCenter.default.post(
+                name: .mapShouldRecenterAllMarkers,
+                object: nil
+            )
+        }
+    }
 }
