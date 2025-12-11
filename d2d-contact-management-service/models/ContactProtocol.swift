@@ -10,7 +10,7 @@ import Foundation
 protocol ContactProtocol {
     var fullName: String { get set }
     var address: String { get set }
-    var count: Int { get set }
+    var knockCount: Int { get set }
     var contactEmail: String { get set }
     var contactPhone: String { get set }
     var notes: [Note] { get set }
