@@ -98,7 +98,7 @@ class KnockActionController {
         if let existing = prospects.first(where: {
             $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
         }) {
-            existing.count += 1
+            existing.knockCount += 1
             existing.knockHistory.append(Knock(date: now, status: status, latitude: lat, longitude: lon))
             updated = existing
         } else {

@@ -12,7 +12,7 @@ import SwiftData
 final class Prospect: ContactProtocol {
     var fullName: String
     var address: String
-    var count: Int
+    var knockCount: Int
     var contactEmail: String
     var contactPhone: String
     var notes: [Note]
@@ -28,7 +28,7 @@ final class Prospect: ContactProtocol {
          list: String = "Prospects") {
         self.fullName = fullName
         self.address = address
-        self.count = count
+        self.knockCount = count
         self.list = list
         self.contactEmail = ""
         self.contactPhone = ""

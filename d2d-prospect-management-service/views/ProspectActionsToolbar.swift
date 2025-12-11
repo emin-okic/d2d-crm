@@ -310,7 +310,7 @@ struct ProspectActionsToolbar: View {
         }
 
         // ✅ Create Customer record
-        let customer = Customer(fullName: prospect.fullName, address: prospect.address, count: prospect.count)
+        let customer = Customer(fullName: prospect.fullName, address: prospect.address, count: prospect.knockCount)
         customer.contactEmail = prospect.contactEmail
         customer.contactPhone = prospect.contactPhone
         customer.notes = clonedNotes

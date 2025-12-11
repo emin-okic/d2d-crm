@@ -112,8 +112,8 @@ class MapController: ObservableObject {
         clearMarkers()
         
         let all: [(String, Int, String)] =
-            prospects.map { ($0.address, $0.count, $0.list) } +
-            customers.map { ($0.address, $0.count, "Customers") }
+            prospects.map { ($0.address, $0.knockCount, $0.list) } +
+            customers.map { ($0.address, $0.knockCount, "Customers") }
 
         for (address, count, list) in all {
             geocodeAndAdd(address: address, count: count, list: list)
