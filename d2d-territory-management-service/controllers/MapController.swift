@@ -17,6 +17,7 @@ import CoreLocation
 /// - Performing geocoded address searches
 /// - Centering and zooming the map to fit all markers
 /// - Dynamically updating markers based on prospects
+@MainActor
 class MapController: ObservableObject {
     
     /// Published list of markers (used in SwiftUI map annotations)
@@ -24,6 +25,11 @@ class MapController: ObservableObject {
 
     /// Current visible region of the map
     @Published var region: MKCoordinateRegion
+    
+    /// Geocode Helpers
+    private let geocodeQueue = DispatchQueue(label: "com.d2d.geocode.serial")
+    private var cache: [String: CLLocationCoordinate2D] = [:]
+    private let geocoder = CLGeocoder()
     
     /// Initializes the controller with a given map region.
     init(region: MKCoordinateRegion) {
@@ -44,27 +50,43 @@ class MapController: ObservableObject {
     /// - Parameter query: The address string to geocode.
     func performSearch(query: String) {
         let key = normalized(query)
-        let geocoder = CLGeocoder()
-        
-        geocoder.geocodeAddressString(query) { [weak self] placemarks, error in
-            guard let self = self else { return }
-            guard let placemark = placemarks?.first,
-                  let location = placemark.location else {
-                return
-            }
-            
+
+        // 1. Cache hit → instant placement
+        if let coord = cache[key] {
             DispatchQueue.main.async {
-                if let existingIndex = self.markers.firstIndex(where: { self.normalized($0.address) == key }) {
-                    self.markers[existingIndex].count += 1
+                if let idx = self.markers.firstIndex(where: { self.normalized($0.address) == key }) {
+                    self.markers[idx].count += 1
                 } else {
-                    let newPlace = IdentifiablePlace(
-                        address: query,
-                        location: location.coordinate,
-                        count: 1
+                    self.markers.append(
+                        IdentifiablePlace(address: query,
+                                          location: coord,
+                                          count: 1)
                     )
-                    self.markers.append(newPlace)
                 }
-                // self.updateRegionToFitAllMarkers()
+            }
+            return
+        }
+
+        // 2. Throttled geocode → serial queue
+        geocodeQueue.async {
+            self.geocoder.geocodeAddressString(query) { [weak self] placemarks, _ in
+                guard let self else { return }
+                guard let loc = placemarks?.first?.location else { return }
+
+                let coord = loc.coordinate
+                self.cache[key] = coord
+
+                DispatchQueue.main.async {
+                    if let idx = self.markers.firstIndex(where: { self.normalized($0.address) == key }) {
+                        self.markers[idx].count += 1
+                    } else {
+                        self.markers.append(
+                            IdentifiablePlace(address: query,
+                                              location: coord,
+                                              count: 1)
+                        )
+                    }
+                }
             }
         }
     }
@@ -108,15 +130,53 @@ class MapController: ObservableObject {
     
     /// Replaces existing markers with those derived from the provided list of prospects.
     /// - Parameter prospects: Array of `Prospect` objects to display.
+
     func setMarkers(prospects: [Prospect], customers: [Customer]) {
-        clearMarkers()
-        
-        let all: [(String, Int, String)] =
-            prospects.map { ($0.address, $0.knockCount, $0.list) } +
+        let items: [(String, Int, String)] =
+            prospects.map { ($0.address, $0.knockCount, "Prospects") } +
             customers.map { ($0.address, $0.knockCount, "Customers") }
 
-        for (address, count, list) in all {
-            geocodeAndAdd(address: address, count: count, list: list)
+        var temp: [IdentifiablePlace] = []
+        let group = DispatchGroup()
+
+        for (address, count, list) in items {
+            let key = normalized(address)
+
+            // Cache hit: immediate append
+            if let coord = cache[key] {
+                temp.append(
+                    IdentifiablePlace(address: address,
+                                      location: coord,
+                                      count: count,
+                                      list: list)
+                )
+                continue
+            }
+
+            // No cache → throttle geocode
+            group.enter()
+            geocodeQueue.async {
+                self.geocoder.geocodeAddressString(address) { [weak self] placemarks, _ in
+                    guard let self else { group.leave(); return }
+                    defer { group.leave() }
+
+                    guard let loc = placemarks?.first?.location else { return }
+                    let coord = loc.coordinate
+                    self.cache[key] = coord
+
+                    temp.append(
+                        IdentifiablePlace(address: address,
+                                          location: coord,
+                                          count: count,
+                                          list: list)
+                    )
+                }
+            }
+        }
+
+        // Atomic update when all geocodes finish
+        group.notify(queue: .main) {
+            self.markers = temp
         }
     }
     
