@@ -179,6 +179,28 @@ class MapController: ObservableObject {
             self.markers = temp
         }
     }
+    
+    private func geocodeAndAdd(address: String, count: Int, list: String) {
+        let geocoder = CLGeocoder()
+        geocoder.geocodeAddressString(address) { [weak self] placemarks, error in
+            guard let self = self else { return }
+            guard let placemark = placemarks?.first,
+                  let location = placemark.location else {
+                return
+            }
+
+            DispatchQueue.main.async {
+                let newPlace = IdentifiablePlace(
+                    address: address,
+                    location: location.coordinate,
+                    count: count,
+                    list: list
+                )
+                self.markers.append(newPlace)
+                // self.updateRegionToFitAllMarkers()
+            }
+        }
+    }
 }
 
 extension MapController {
