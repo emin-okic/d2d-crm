@@ -132,6 +132,9 @@ class MapController: ObservableObject {
     /// - Parameter prospects: Array of `Prospect` objects to display.
 
     func setMarkers(prospects: [Prospect], customers: [Customer]) {
+
+        clearMarkers()   // ← ADD THIS LINE (same behavior as the old version)
+
         let items: [(String, Int, String)] =
             prospects.map { ($0.address, $0.knockCount, "Prospects") } +
             customers.map { ($0.address, $0.knockCount, "Customers") }
