@@ -6,6 +6,7 @@
 //
 import SwiftUI
 
+/// This class provides the essential UI for adding new properties to the map screen
 struct AddPropertyConfirmationSheet: View {
     let address: String
     let onConfirm: () -> Void

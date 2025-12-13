@@ -7,10 +7,9 @@
 import SwiftUI
 import MapKit
 import CoreLocation
-import SwiftData
-import Combine
-import Contacts
 
+/// This class provides the UI for the snapshot needed in the new address popup view
+/// This class is used in the AddPropertyConfirmationSheet
 struct MapSnapshotView: View {
     let address: String
 
