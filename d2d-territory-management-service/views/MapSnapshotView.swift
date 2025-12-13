@@ -28,6 +28,14 @@ struct MapSnapshotView: View {
                     .foregroundColor(.red)
                     .shadow(radius: 2)
                     .offset(y: -12)
+
+                    // ✨ polish
+                    .scaleEffect(1.1)
+                    .transition(.scale.combined(with: .opacity))
+                    .animation(
+                        .spring(response: 0.4, dampingFraction: 0.7),
+                        value: place.id
+                    )
             }
         }
         .onAppear {
