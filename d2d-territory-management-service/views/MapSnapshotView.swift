@@ -15,19 +15,19 @@ struct MapSnapshotView: View {
     let address: String
 
     @State private var region = MKCoordinateRegion()
-    @State private var coordinate: CLLocationCoordinate2D?
+    @State private var place: IdentifiablePlace?
 
     var body: some View {
         Map(
             coordinateRegion: $region,
-            annotationItems: coordinate.map { [IdentifiableCoord(coord: $0)] } ?? []
-        ) { item in
-            MapAnnotation(coordinate: item.coord) {
+            annotationItems: place.map { [$0] } ?? []
+        ) { place in
+            MapAnnotation(coordinate: place.location) {
                 Image(systemName: "mappin.circle.fill")
                     .font(.title)
                     .foregroundColor(.red)
                     .shadow(radius: 2)
-                    .offset(y: -12) // makes it feel like a dropped pin
+                    .offset(y: -12)
             }
         }
         .onAppear {
@@ -40,7 +40,13 @@ struct MapSnapshotView: View {
             guard let coord = placemarks?.first?.location?.coordinate else { return }
 
             DispatchQueue.main.async {
-                self.coordinate = coord
+                self.place = IdentifiablePlace(
+                    address: address,
+                    location: coord,
+                    count: 0,
+                    list: "Preview"
+                )
+
                 self.region = MKCoordinateRegion(
                     center: coord,
                     latitudinalMeters: 500,
@@ -49,9 +55,4 @@ struct MapSnapshotView: View {
             }
         }
     }
-}
-
-private struct IdentifiableCoord: Identifiable {
-    let id = UUID()
-    let coord: CLLocationCoordinate2D
 }
