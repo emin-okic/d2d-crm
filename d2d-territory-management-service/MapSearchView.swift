@@ -291,7 +291,9 @@ struct MapSearchView: View {
                 }
             
         }
-        .onChange(of: prospects) { _ in updateMarkers() }
+        .onAppear {
+            controller.hydrateMarkers(prospects: prospects, customers: customers)
+        }
         .onChange(of: selectedList) { _ in updateMarkers() }
         .onChange(of: addressToCenter) { handleMapCenterChange(newAddress: $0) }
         .onTapGesture {
@@ -435,14 +437,13 @@ struct MapSearchView: View {
         let newProspect = Prospect(
             fullName: "New Prospect",
             address: address,
-            count: 0,
-            list: "Prospects"
+            count: 0
         )
 
         modelContext.insert(newProspect)
         try? modelContext.save()
 
-        controller.performSearch(query: address)
+        controller.addMarker(address: address)
     }
 
     private func presentObjectionFlow(filtered: [Objection], for prospect: Prospect) {
@@ -578,8 +579,9 @@ struct MapSearchView: View {
     }
 
     private func updateMarkers() {
-        controller.setMarkers(prospects: prospects, customers: customers)
+        controller.hydrateMarkers(prospects: prospects, customers: customers)
     }
+    
 }
 
 // MARK: - Stepper types used here

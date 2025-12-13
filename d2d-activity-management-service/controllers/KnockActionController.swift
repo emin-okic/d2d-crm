@@ -95,9 +95,7 @@ class KnockActionController {
         var prospectId: Int64?
         var updated: Prospect
 
-        if let existing = prospects.first(where: {
-            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
-        }) {
+        if let existing = prospects.first(where: { $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized }) {
             existing.knockCount += 1
             existing.knockHistory.append(Knock(date: now, status: status, latitude: lat, longitude: lon))
             updated = existing
@@ -116,9 +114,10 @@ class KnockActionController {
             DatabaseController.shared.addKnock(for: id, date: now, status: status, latitude: lat, longitude: lon)
         }
 
-        controller.performSearch(query: address)
-        try? modelContext.save()
+        // ← Here’s the fix:
+        controller.addMarker(address: updated.address, count: updated.knockCount, list: updated.list)
 
+        try? modelContext.save()
         return updated
     }
 }
