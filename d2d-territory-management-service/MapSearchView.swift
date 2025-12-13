@@ -299,17 +299,21 @@ struct MapSearchView: View {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to:nil,from:nil,for:nil)
         }
         // This is the menu option for new properties - all else is handled during the popup
-        .alert("Add Property?", isPresented: $showAddPropertyPrompt) {
-            Button("Yes") {
-                addProspectFromMapTap()
-            }
-
-            Button("No", role: .cancel) {
-                pendingAddress = nil
-            }
-        } message: {
+        .sheet(isPresented: $showAddPropertyPrompt) {
             if let address = pendingAddress {
-                Text("Do you want to add \(address) to your contacts?")
+                AddPropertyConfirmationSheet(
+                    address: address,
+                    onConfirm: {
+                        addProspectFromMapTap()
+                        showAddPropertyPrompt = false
+                    },
+                    onCancel: {
+                        pendingAddress = nil
+                        showAddPropertyPrompt = false
+                    }
+                )
+                .presentationDetents([.height(260)])
+                .presentationDragIndicator(.visible)
             }
         }
         .sheet(isPresented: $showNoteInput) {
