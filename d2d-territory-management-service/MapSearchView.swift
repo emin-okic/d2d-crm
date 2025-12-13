@@ -104,6 +104,8 @@ struct MapSearchView: View {
     
     @State private var showConfetti = false
     
+    @State private var pendingAddProperty: PendingAddProperty?
+    
     init(searchText: Binding<String>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
@@ -140,18 +142,21 @@ struct MapSearchView: View {
                         }
                     },
                     onMapTapped: { coordinate in
-                        // Keep existing alert for outcomes
                         tapManager.handleTap(at: coordinate)
+
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                             let tapped = tapManager.tappedAddress
-                            if !tapped.isEmpty {
-                                pendingAddress = tapped
-                                isTappedAddressCustomer = customers.contains {
-                                    $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
-                                    tapped.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-                                }
-                                showOutcomePrompt = true
+                            guard !tapped.isEmpty else { return }
+
+                            // If this address already exists, do nothing
+                            let normalized = tapped.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                            let exists = prospects.contains {
+                                $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
                             }
+
+                            guard !exists else { return }
+
+                            pendingAddProperty = PendingAddProperty(address: tapped)
                         }
                     },
                     onRegionChange: { newRegion in
@@ -292,45 +297,21 @@ struct MapSearchView: View {
         .onTapGesture {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to:nil,from:nil,for:nil)
         }
-        // Keep existing sheets/alerts; they simply won't be used during Follow-Up stepper
-        .alert("Knock Outcome", isPresented: $showOutcomePrompt) {
-            if !isTappedAddressCustomer {
-                
-                Button("Converted To Sale") {
-                    if let addr = pendingAddress {
-                        if let prospect = prospects.first(where: {
-                            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
-                            addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-                        }) {
-                            // Don’t convert right away — just stage for the stepper
-                            prospectToConvert = prospect
-                            showConversionSheet = true
-                        }
-                    }
+        // This is the menu option for new properties - all else is handled during the popup
+        .sheet(item: $pendingAddProperty) { item in
+            AddPropertyConfirmationSheet(
+                address: item.address,
+                onConfirm: {
+                    addProspectFromMapTap(address: item.address)
+                    pendingAddProperty = nil
+                },
+                onCancel: {
+                    pendingAddProperty = nil
                 }
-            }
-            Button("Wasn't Home") {
-                if let addr = pendingAddress {
-                    knockController?.handleKnockAndPromptNote(
-                        address: addr,
-                        status: "Wasn't Home",
-                        prospects: prospects,
-                        onUpdateMarkers: { updateMarkers() },
-                        onShowNoteInput: { prospect in
-                            prospectToNote = prospect
-                            showNoteInput = true
-                        }
-                    )
-                }
-            }
-            Button("Follow-Up Later") {
-                if let addr = pendingAddress {
-                    // ➜ NEW: Open the stepper instead of the old objection/follow-up prompts
-                    stepperState = .init(ctx: .init(address: addr, isCustomer: isTappedAddressCustomer, prospect: nil))
-                }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: { Text("Did someone answer at \(pendingAddress ?? "this address")?") }
+            )
+            .presentationDetents([.height(260)])
+            .presentationDragIndicator(.visible)
+        }
         .sheet(isPresented: $showNoteInput) {
             if let prospect = prospectToNote {
                 LogNoteView(
@@ -446,6 +427,23 @@ struct MapSearchView: View {
             }
         )
     }
+    
+    /// This function handles adding new prospects to the map
+    /// It will simply ask if the prospect selected should be added or not
+    /// The assumption is that sales reps will want to pre-load their prospects the day before they knock it
+    private func addProspectFromMapTap(address: String) {
+        let newProspect = Prospect(
+            fullName: "New Prospect",
+            address: address,
+            count: 0,
+            list: "Prospects"
+        )
+
+        modelContext.insert(newProspect)
+        try? modelContext.save()
+
+        controller.performSearch(query: address)
+    }
 
     private func presentObjectionFlow(filtered: [Objection], for prospect: Prospect) {
         objectionOptions = filtered
@@ -527,6 +525,11 @@ struct MapSearchView: View {
             }
         }
         try? modelContext.save()
+    }
+    
+    struct PendingAddProperty: Identifiable {
+        let id = UUID()
+        let address: String
     }
     
     @MainActor
