@@ -80,8 +80,6 @@ struct MapSearchView: View {
     // NEW: Stepper state (only used for Follow-Up Later)
     @State private var stepperState: KnockStepperState? = nil
     
-    @State private var showAddPropertyPrompt = false
-    
     private var hasCustomers: Bool {
         // Show KP/S if *either* there is at least one Prospect flagged as a customer,
         // or at least one Customer record exists.
@@ -105,6 +103,8 @@ struct MapSearchView: View {
     }
     
     @State private var showConfetti = false
+    
+    @State private var pendingAddProperty: PendingAddProperty?
     
     init(searchText: Binding<String>,
          region: Binding<MKCoordinateRegion>,
@@ -156,8 +156,7 @@ struct MapSearchView: View {
 
                             guard !exists else { return }
 
-                            pendingAddress = tapped
-                            showAddPropertyPrompt = true
+                            pendingAddProperty = PendingAddProperty(address: tapped)
                         }
                     },
                     onRegionChange: { newRegion in
@@ -299,22 +298,19 @@ struct MapSearchView: View {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to:nil,from:nil,for:nil)
         }
         // This is the menu option for new properties - all else is handled during the popup
-        .sheet(isPresented: $showAddPropertyPrompt) {
-            if let address = pendingAddress {
-                AddPropertyConfirmationSheet(
-                    address: address,
-                    onConfirm: {
-                        addProspectFromMapTap()
-                        showAddPropertyPrompt = false
-                    },
-                    onCancel: {
-                        pendingAddress = nil
-                        showAddPropertyPrompt = false
-                    }
-                )
-                .presentationDetents([.height(260)])
-                .presentationDragIndicator(.visible)
-            }
+        .sheet(item: $pendingAddProperty) { item in
+            AddPropertyConfirmationSheet(
+                address: item.address,
+                onConfirm: {
+                    addProspectFromMapTap(address: item.address)
+                    pendingAddProperty = nil
+                },
+                onCancel: {
+                    pendingAddProperty = nil
+                }
+            )
+            .presentationDetents([.height(260)])
+            .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showNoteInput) {
             if let prospect = prospectToNote {
@@ -435,9 +431,7 @@ struct MapSearchView: View {
     /// This function handles adding new prospects to the map
     /// It will simply ask if the prospect selected should be added or not
     /// The assumption is that sales reps will want to pre-load their prospects the day before they knock it
-    private func addProspectFromMapTap() {
-        guard let address = pendingAddress else { return }
-
+    private func addProspectFromMapTap(address: String) {
         let newProspect = Prospect(
             fullName: "New Prospect",
             address: address,
@@ -448,10 +442,7 @@ struct MapSearchView: View {
         modelContext.insert(newProspect)
         try? modelContext.save()
 
-        // Add marker (gray by default)
         controller.performSearch(query: address)
-
-        pendingAddress = nil
     }
 
     private func presentObjectionFlow(filtered: [Objection], for prospect: Prospect) {
@@ -534,6 +525,11 @@ struct MapSearchView: View {
             }
         }
         try? modelContext.save()
+    }
+    
+    struct PendingAddProperty: Identifiable {
+        let id = UUID()
+        let address: String
     }
     
     @MainActor
