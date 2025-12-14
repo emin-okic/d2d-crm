@@ -32,6 +32,9 @@ struct ProspectActionsToolbar: View {
     @State private var showExportPrompt = false
     @State private var showExportSuccessBanner = false
     @State private var exportSuccessMessage = ""
+    
+    // This variable is used for keeping track of the original phone # on changing it for note taking purposes
+    @State private var originalPhone: String?
 
     var body: some View {
         ZStack {
@@ -39,6 +42,10 @@ struct ProspectActionsToolbar: View {
                 // Phone
                 iconButton(systemName: "phone.fill") {
                     if prospect.contactPhone.isEmpty {
+                        
+                        // Set the original phone number to nil for note taking purposes
+                        originalPhone = nil
+
                         showAddPhoneSheet = true
                     } else {
                         showCallConfirmation = true
@@ -134,7 +141,13 @@ struct ProspectActionsToolbar: View {
             }
 
             Button("Edit Number") {
+                
+                // Set the original phone # value for note taking purposes
+                originalPhone = prospect.contactPhone
+                
+                // Update the new phone number and keep this for note taking purposes
                 newPhone = prospect.contactPhone
+                
                 showAddPhoneSheet = true
             }
 
@@ -226,8 +239,12 @@ struct ProspectActionsToolbar: View {
 
                     Button("Save Number") {
                         if validatePhoneNumber() {
+                            let previous = originalPhone
                             prospect.contactPhone = newPhone
                             try? modelContext.save()
+
+                            // ✅ Log add/change note
+                            logPhoneChangeNote(old: previous, new: newPhone)
 
                             if let url = URL(string: "tel://\(newPhone.filter(\.isNumber))") {
                                 UIApplication.shared.open(url)
@@ -299,7 +316,25 @@ struct ProspectActionsToolbar: View {
     /// This function is intended to log call activity for prospects
     private func logCallNote() {
         let formatted = formattedPhone(prospect.contactPhone)
-        let content = "Called prospect at \(formatted)."
+        let content = "Called prospect at \(formatted) on \(Date().formatted(date: .abbreviated, time: .shortened))."
+
+        let note = Note(content: content, date: Date(), prospect: prospect)
+        prospect.notes.append(note)
+
+        try? modelContext.save()
+    }
+    
+    /// Logs when a phone number is added or changed
+    private func logPhoneChangeNote(old: String?, new: String) {
+        let formattedNew = formattedPhone(new)
+
+        let content: String
+        if let old = old, !old.isEmpty {
+            let formattedOld = formattedPhone(old)
+            content = "Updated phone number from \(formattedOld) to \(formattedNew)."
+        } else {
+            content = "Added phone number \(formattedNew)."
+        }
 
         let note = Note(content: content, date: Date(), prospect: prospect)
         prospect.notes.append(note)
