@@ -17,7 +17,8 @@ struct ProspectActionsToolbar: View {
 
     @State private var showAddPhoneSheet = false
     @State private var newPhone = ""
-    @State private var showCallConfirmation = false
+    
+    @State private var showCallSheet = false
 
     @State private var showAddEmailSheet = false
     @State private var newEmail = ""
@@ -48,7 +49,7 @@ struct ProspectActionsToolbar: View {
 
                         showAddPhoneSheet = true
                     } else {
-                        showCallConfirmation = true
+                        showCallSheet = true
                     }
                 }
 
@@ -125,33 +126,30 @@ struct ProspectActionsToolbar: View {
         }
 
         // Phone confirmation
-        .confirmationDialog(
-            "Call \(formattedPhone(prospect.contactPhone))?",
-            isPresented: $showCallConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Call") {
-                // ✅ Log the action first
-                logCallNote()
+        .sheet(isPresented: $showCallSheet) {
+            CallActionBottomSheet(
+                phone: formattedPhone(prospect.contactPhone),
+                onCall: {
+                    logCallNote()
 
-                // 📞 Then initiate the call
-                if let url = URL(string: "tel://\(prospect.contactPhone.filter(\.isNumber))") {
-                    UIApplication.shared.open(url)
+                    if let url = URL(string: "tel://\(prospect.contactPhone.filter(\.isNumber))") {
+                        UIApplication.shared.open(url)
+                    }
+
+                    showCallSheet = false
+                },
+                onEdit: {
+                    originalPhone = prospect.contactPhone
+                    newPhone = prospect.contactPhone
+                    showCallSheet = false
+                    showAddPhoneSheet = true
+                },
+                onCancel: {
+                    showCallSheet = false
                 }
-            }
-
-            Button("Edit Number") {
-                
-                // Set the original phone # value for note taking purposes
-                originalPhone = prospect.contactPhone
-                
-                // Update the new phone number and keep this for note taking purposes
-                newPhone = prospect.contactPhone
-                
-                showAddPhoneSheet = true
-            }
-
-            Button("Cancel", role: .cancel) { }
+            )
+            .presentationDetents([.fraction(0.25)])
+            .presentationDragIndicator(.visible)
         }
 
         // Email confirmation
@@ -551,6 +549,56 @@ struct ProspectActionsToolbar: View {
                     .frame(maxWidth: .infinity)
                     .buttonStyle(.borderedProminent)
                     .disabled(phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                .padding(.top, 4)
+
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 12)
+        }
+    }
+    
+    private struct CallActionBottomSheet: View {
+        let phone: String
+        let onCall: () -> Void
+        let onEdit: () -> Void
+        let onCancel: () -> Void
+
+        var body: some View {
+            VStack(spacing: 16) {
+                Capsule()
+                    .fill(Color.secondary.opacity(0.4))
+                    .frame(width: 36, height: 5)
+                    .padding(.top, 8)
+
+                Text("Call")
+                    .font(.headline)
+
+                Text(phone)
+                    .font(.title3)
+                    .fontWeight(.semibold)
+
+                VStack(spacing: 12) {
+                    Button {
+                        onCall()
+                    } label: {
+                        Label("Call", systemImage: "phone.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button {
+                        onEdit()
+                    } label: {
+                        Label("Edit Number", systemImage: "pencil")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                }
+
+                Button("Cancel") {
+                    onCancel()
                 }
                 .padding(.top, 4)
 
