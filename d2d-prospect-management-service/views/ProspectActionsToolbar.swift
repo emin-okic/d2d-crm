@@ -595,47 +595,61 @@ struct ProspectActionsToolbar: View {
         let onCancel: () -> Void
 
         var body: some View {
-            VStack(spacing: 16) {
-                Capsule()
-                    .fill(Color.secondary.opacity(0.4))
-                    .frame(width: 36, height: 5)
-                    .padding(.top, 8)
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 16) {
 
-                Text("Call")
-                    .font(.headline)
+                    Text("Call")
+                        .font(.headline)
 
-                Text(phone)
-                    .font(.title3)
-                    .fontWeight(.semibold)
+                    Text(phone)
+                        .font(.title3)
+                        .fontWeight(.semibold)
 
-                VStack(spacing: 12) {
-                    Button {
-                        onCall()
-                    } label: {
-                        Label("Call", systemImage: "phone.fill")
-                            .frame(maxWidth: .infinity)
+                    // 🔁 Side-by-side actions
+                    HStack(spacing: 12) {
+                        Button {
+                            onCall()
+                        } label: {
+                            Label("Call", systemImage: "phone.fill")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+
+                        Button {
+                            onEdit()
+                        } label: {
+                            Label("Edit", systemImage: "pencil")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
                     }
-                    .buttonStyle(.borderedProminent)
 
-                    Button {
-                        onEdit()
-                    } label: {
-                        Label("Edit Number", systemImage: "pencil")
-                            .frame(maxWidth: .infinity)
+                    Spacer(minLength: 0)
+                }
+                .padding(.top, 32)
+                .padding(.horizontal)
+                .padding(.bottom, 12)
+
+                // ❌ Close button (top-right)
+                Button(action: onCancel) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white)
+                            .shadow(color: .black.opacity(0.25), radius: 6, y: 2)
+
+                        Circle()
+                            .stroke(Color.black.opacity(0.15), lineWidth: 1)
+
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.black.opacity(0.8))
                     }
-                    .buttonStyle(.bordered)
+                    .frame(width: 28, height: 28)
+                    .padding(8)
                 }
-
-                Button("Cancel") {
-                    onCancel()
-                }
-                .padding(.top, 4)
-
-                Spacer(minLength: 0)
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("Close"))
             }
-            .padding(.top, 32)
-            .padding(.horizontal)
-            .padding(.bottom, 12)
         }
     }
 
