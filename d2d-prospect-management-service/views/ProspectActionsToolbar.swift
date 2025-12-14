@@ -216,58 +216,30 @@ struct ProspectActionsToolbar: View {
 
         // Add phone sheet
         .sheet(isPresented: $showAddPhoneSheet) {
-            NavigationView {
-                VStack(spacing: 16) {
-                    Text("Add Phone Number")
-                        .font(.headline)
+            AddPhoneBottomSheet(
+                phone: $newPhone,
+                error: $phoneError,
+                onSave: {
+                    if validatePhoneNumber() {
+                        let previous = originalPhone
+                        prospect.contactPhone = newPhone
+                        try? modelContext.save()
 
-                    TextField("Enter phone number", text: $newPhone)
-                        .keyboardType(.phonePad)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(12)
-                        .onChange(of: newPhone) { _ in
-                            validatePhoneNumber()
+                        logPhoneChangeNote(old: previous, new: newPhone)
+
+                        if let url = URL(string: "tel://\(newPhone.filter(\.isNumber))") {
+                            UIApplication.shared.open(url)
                         }
 
-                    if let error = phoneError {
-                        Text(error)
-                            .foregroundColor(.red)
+                        showAddPhoneSheet = false
                     }
-
-                    Button("Save Number") {
-                        if validatePhoneNumber() {
-                            let previous = originalPhone
-                            prospect.contactPhone = newPhone
-                            try? modelContext.save()
-
-                            // ✅ Log add/change note
-                            logPhoneChangeNote(old: previous, new: newPhone)
-
-                            if let url = URL(string: "tel://\(newPhone.filter(\.isNumber))") {
-                                UIApplication.shared.open(url)
-                            }
-
-                            showAddPhoneSheet = false
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(newPhone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-
-                    Spacer()
+                },
+                onCancel: {
+                    showAddPhoneSheet = false
                 }
-                .padding()
-                .navigationTitle("Phone Number")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            showAddPhoneSheet = false
-                        }
-                    }
-                }
-            }
+            )
+            .presentationDetents([.fraction(0.25)])
+            .presentationDragIndicator(.visible)
         }
 
         // Add email sheet
@@ -534,5 +506,60 @@ struct ProspectActionsToolbar: View {
         }
 
     }
+    
+    private struct AddPhoneBottomSheet: View {
+        @Binding var phone: String
+        @Binding var error: String?
+
+        let onSave: () -> Void
+        let onCancel: () -> Void
+
+        var body: some View {
+            VStack(spacing: 16) {
+                // Drag handle spacing
+                Capsule()
+                    .fill(Color.secondary.opacity(0.4))
+                    .frame(width: 36, height: 5)
+                    .padding(.top, 8)
+
+                Text("Phone Number")
+                    .font(.headline)
+
+                TextField("Enter phone number", text: $phone)
+                    .keyboardType(.phonePad)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(12)
+
+                if let error {
+                    Text(error)
+                        .font(.footnote)
+                        .foregroundColor(.red)
+                }
+
+                HStack(spacing: 12) {
+                    Button("Cancel") {
+                        onCancel()
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    Button("Save") {
+                        onSave()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                .padding(.top, 4)
+
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 12)
+        }
+    }
+
     
 }
