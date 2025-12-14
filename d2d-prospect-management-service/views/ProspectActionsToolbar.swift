@@ -124,14 +124,20 @@ struct ProspectActionsToolbar: View {
             titleVisibility: .visible
         ) {
             Button("Call") {
+                // ✅ Log the action first
+                logCallNote()
+
+                // 📞 Then initiate the call
                 if let url = URL(string: "tel://\(prospect.contactPhone.filter(\.isNumber))") {
                     UIApplication.shared.open(url)
                 }
             }
+
             Button("Edit Number") {
-                newPhone = prospect.contactPhone // Pre-fill current value
+                newPhone = prospect.contactPhone
                 showAddPhoneSheet = true
             }
+
             Button("Cancel", role: .cancel) { }
         }
 
@@ -288,6 +294,17 @@ struct ProspectActionsToolbar: View {
                 }
             }
         }
+    }
+    
+    /// This function is intended to log call activity for prospects
+    private func logCallNote() {
+        let formatted = formattedPhone(prospect.contactPhone)
+        let content = "Called prospect at \(formatted)."
+
+        let note = Note(content: content, date: Date(), prospect: prospect)
+        prospect.notes.append(note)
+
+        try? modelContext.save()
     }
     
     // MARK: - Core: Convert to Customer (Appointments Clone Fix)
