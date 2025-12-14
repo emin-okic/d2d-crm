@@ -560,6 +560,14 @@ struct ProspectActionsToolbar: View {
                 .padding()
                 .background(Color(.secondarySystemBackground))
                 .cornerRadius(12)
+                .onChange(of: phone) { _ in
+                    // ✅ Validate phone as user types
+                    if let errorMessage = PhoneValidator.validate(phone) {
+                        error = errorMessage
+                    } else {
+                        error = nil
+                    }
+                }
 
                 if let error {
                     Text(error)
@@ -578,7 +586,7 @@ struct ProspectActionsToolbar: View {
                     }
                     .frame(maxWidth: .infinity)
                     .buttonStyle(.borderedProminent)
-                    .disabled(phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || error != nil)
                 }
 
                 Spacer(minLength: 0)
