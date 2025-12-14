@@ -36,6 +36,11 @@ struct ProspectActionsToolbar: View {
     
     // This variable is used for keeping track of the original phone # on changing it for note taking purposes
     @State private var originalPhone: String?
+    
+    private enum PhoneSheetMode {
+        case add
+        case edit
+    }
 
     var body: some View {
         ZStack {
@@ -215,6 +220,7 @@ struct ProspectActionsToolbar: View {
         // Add phone sheet
         .sheet(isPresented: $showAddPhoneSheet) {
             AddPhoneBottomSheet(
+                mode: originalPhone == nil ? .add : .edit,
                 phone: $newPhone,
                 error: $phoneError,
                 onSave: {
@@ -506,30 +512,54 @@ struct ProspectActionsToolbar: View {
     }
     
     private struct AddPhoneBottomSheet: View {
+        let mode: PhoneSheetMode
+
         @Binding var phone: String
         @Binding var error: String?
 
         let onSave: () -> Void
         let onCancel: () -> Void
 
+        private var title: String {
+            mode == .add ? "Add Phone Number" : "Edit Phone Number"
+        }
+
+        private var subtitle: String {
+            mode == .add
+                ? "Add a phone number for this contact."
+                : "Update the existing phone number."
+        }
+
+        private var primaryButtonTitle: String {
+            mode == .add ? "Add Number" : "Save Changes"
+        }
+
         var body: some View {
             VStack(spacing: 16) {
-                // Drag handle spacing
                 Capsule()
                     .fill(Color.secondary.opacity(0.4))
                     .frame(width: 36, height: 5)
                     .padding(.top, 8)
 
-                Text("Phone Number")
-                    .font(.headline)
+                VStack(spacing: 4) {
+                    Text(title)
+                        .font(.headline)
 
-                TextField("Enter phone number", text: $phone)
-                    .keyboardType(.phonePad)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(12)
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+
+                TextField(
+                    mode == .add ? "Enter phone number" : "Update phone number",
+                    text: $phone
+                )
+                .keyboardType(.phonePad)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .padding()
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(12)
 
                 if let error {
                     Text(error)
@@ -543,14 +573,13 @@ struct ProspectActionsToolbar: View {
                     }
                     .frame(maxWidth: .infinity)
 
-                    Button("Save") {
+                    Button(primaryButtonTitle) {
                         onSave()
                     }
                     .frame(maxWidth: .infinity)
                     .buttonStyle(.borderedProminent)
                     .disabled(phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
-                .padding(.top, 4)
 
                 Spacer(minLength: 0)
             }
