@@ -17,7 +17,8 @@ struct ProspectActionsToolbar: View {
 
     @State private var showAddPhoneSheet = false
     @State private var newPhone = ""
-    @State private var showCallConfirmation = false
+    
+    @State private var showCallSheet = false
 
     @State private var showAddEmailSheet = false
     @State private var newEmail = ""
@@ -32,6 +33,14 @@ struct ProspectActionsToolbar: View {
     @State private var showExportPrompt = false
     @State private var showExportSuccessBanner = false
     @State private var exportSuccessMessage = ""
+    
+    // This variable is used for keeping track of the original phone # on changing it for note taking purposes
+    @State private var originalPhone: String?
+    
+    private enum PhoneSheetMode {
+        case add
+        case edit
+    }
 
     var body: some View {
         ZStack {
@@ -39,9 +48,13 @@ struct ProspectActionsToolbar: View {
                 // Phone
                 iconButton(systemName: "phone.fill") {
                     if prospect.contactPhone.isEmpty {
+                        
+                        // Set the original phone number to nil for note taking purposes
+                        originalPhone = nil
+
                         showAddPhoneSheet = true
                     } else {
-                        showCallConfirmation = true
+                        showCallSheet = true
                     }
                 }
 
@@ -118,21 +131,30 @@ struct ProspectActionsToolbar: View {
         }
 
         // Phone confirmation
-        .confirmationDialog(
-            "Call \(formattedPhone(prospect.contactPhone))?",
-            isPresented: $showCallConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Call") {
-                if let url = URL(string: "tel://\(prospect.contactPhone.filter(\.isNumber))") {
-                    UIApplication.shared.open(url)
+        .sheet(isPresented: $showCallSheet) {
+            CallActionBottomSheet(
+                phone: formattedPhone(prospect.contactPhone),
+                onCall: {
+                    logCallNote()
+
+                    if let url = URL(string: "tel://\(prospect.contactPhone.filter(\.isNumber))") {
+                        UIApplication.shared.open(url)
+                    }
+
+                    showCallSheet = false
+                },
+                onEdit: {
+                    originalPhone = prospect.contactPhone
+                    newPhone = prospect.contactPhone
+                    showCallSheet = false
+                    showAddPhoneSheet = true
+                },
+                onCancel: {
+                    showCallSheet = false
                 }
-            }
-            Button("Edit Number") {
-                newPhone = prospect.contactPhone // Pre-fill current value
-                showAddPhoneSheet = true
-            }
-            Button("Cancel", role: .cancel) { }
+            )
+            .presentationDetents([.fraction(0.25)])
+            .presentationDragIndicator(.visible)
         }
 
         // Email confirmation
@@ -197,54 +219,31 @@ struct ProspectActionsToolbar: View {
 
         // Add phone sheet
         .sheet(isPresented: $showAddPhoneSheet) {
-            NavigationView {
-                VStack(spacing: 16) {
-                    Text("Add Phone Number")
-                        .font(.headline)
+            AddPhoneBottomSheet(
+                mode: originalPhone == nil ? .add : .edit,
+                phone: $newPhone,
+                error: $phoneError,
+                onSave: {
+                    if validatePhoneNumber() {
+                        let previous = originalPhone
+                        prospect.contactPhone = newPhone
+                        try? modelContext.save()
 
-                    TextField("Enter phone number", text: $newPhone)
-                        .keyboardType(.phonePad)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(12)
-                        .onChange(of: newPhone) { _ in
-                            validatePhoneNumber()
+                        logPhoneChangeNote(old: previous, new: newPhone)
+
+                        if let url = URL(string: "tel://\(newPhone.filter(\.isNumber))") {
+                            UIApplication.shared.open(url)
                         }
 
-                    if let error = phoneError {
-                        Text(error)
-                            .foregroundColor(.red)
+                        showAddPhoneSheet = false
                     }
-
-                    Button("Save Number") {
-                        if validatePhoneNumber() {
-                            prospect.contactPhone = newPhone
-                            try? modelContext.save()
-
-                            if let url = URL(string: "tel://\(newPhone.filter(\.isNumber))") {
-                                UIApplication.shared.open(url)
-                            }
-
-                            showAddPhoneSheet = false
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(newPhone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-
-                    Spacer()
+                },
+                onCancel: {
+                    showAddPhoneSheet = false
                 }
-                .padding()
-                .navigationTitle("Phone Number")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            showAddPhoneSheet = false
-                        }
-                    }
-                }
-            }
+            )
+            .presentationDetents([.fraction(0.25)])
+            .presentationDragIndicator(.visible)
         }
 
         // Add email sheet
@@ -288,6 +287,48 @@ struct ProspectActionsToolbar: View {
                 }
             }
         }
+    }
+    
+    /// This function is intended to log call activity for prospects
+    private func logCallNote() {
+        let formatted = formattedPhone(prospect.contactPhone)
+        let content = "Called prospect at \(formatted) on \(Date().formatted(date: .abbreviated, time: .shortened))."
+
+        let note = Note(content: content, date: Date(), prospect: prospect)
+        prospect.notes.append(note)
+
+        try? modelContext.save()
+    }
+    
+    /// Logs when a phone number is added or changed
+    private func logPhoneChangeNote(old: String?, new: String) {
+        let oldNormalized = normalizedPhone(old)
+        let newNormalized = normalizedPhone(new)
+
+        // 🚫 Prevent logging if nothing actually changed
+        guard oldNormalized != newNormalized else {
+            return
+        }
+
+        let formattedNew = formattedPhone(new)
+
+        let content: String
+        if !oldNormalized.isEmpty {
+            let formattedOld = formattedPhone(old ?? "")
+            content = "Updated phone number from \(formattedOld) to \(formattedNew)."
+        } else {
+            content = "Added phone number \(formattedNew)."
+        }
+
+        let note = Note(content: content, date: Date(), prospect: prospect)
+        prospect.notes.append(note)
+
+        try? modelContext.save()
+    }
+    
+    /// This normalizes the phone # for comparing changes for note taking purposes
+    private func normalizedPhone(_ value: String?) -> String {
+        return value?.filter(\.isNumber) ?? ""
     }
     
     // MARK: - Core: Convert to Customer (Appointments Clone Fix)
@@ -469,5 +510,156 @@ struct ProspectActionsToolbar: View {
         }
 
     }
+    
+    private struct AddPhoneBottomSheet: View {
+        let mode: PhoneSheetMode
+
+        @Binding var phone: String
+        @Binding var error: String?
+
+        let onSave: () -> Void
+        let onCancel: () -> Void
+
+        private var title: String {
+            mode == .add ? "Add Phone Number" : "Edit Phone Number"
+        }
+
+        private var subtitle: String {
+            mode == .add
+                ? "Add a phone number for this contact."
+                : "Update the existing phone number."
+        }
+
+        private var primaryButtonTitle: String {
+            mode == .add ? "Add Number" : "Save Changes"
+        }
+
+        var body: some View {
+            VStack(spacing: 16) {
+                Capsule()
+                    .fill(Color.secondary.opacity(0.4))
+                    .frame(width: 36, height: 5)
+                    .padding(.top, 8)
+
+                VStack(spacing: 4) {
+                    Text(title)
+                        .font(.headline)
+
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+
+                TextField(
+                    mode == .add ? "Enter phone number" : "Update phone number",
+                    text: $phone
+                )
+                .keyboardType(.phonePad)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .padding()
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(12)
+                .onChange(of: phone) { _ in
+                    // ✅ Validate phone as user types
+                    if let errorMessage = PhoneValidator.validate(phone) {
+                        error = errorMessage
+                    } else {
+                        error = nil
+                    }
+                }
+
+                if let error {
+                    Text(error)
+                        .font(.footnote)
+                        .foregroundColor(.red)
+                }
+
+                HStack(spacing: 12) {
+                    Button("Cancel") {
+                        onCancel()
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    Button(primaryButtonTitle) {
+                        onSave()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || error != nil)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 12)
+        }
+    }
+    
+    private struct CallActionBottomSheet: View {
+        let phone: String
+        let onCall: () -> Void
+        let onEdit: () -> Void
+        let onCancel: () -> Void
+
+        var body: some View {
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 16) {
+
+                    Text("Call")
+                        .font(.headline)
+
+                    Text(phone)
+                        .font(.title3)
+                        .fontWeight(.semibold)
+
+                    // 🔁 Side-by-side actions
+                    HStack(spacing: 12) {
+                        Button {
+                            onCall()
+                        } label: {
+                            Label("Call", systemImage: "phone.fill")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+
+                        Button {
+                            onEdit()
+                        } label: {
+                            Label("Edit", systemImage: "pencil")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                    }
+
+                    Spacer(minLength: 0)
+                }
+                .padding(.top, 32)
+                .padding(.horizontal)
+                .padding(.bottom, 12)
+
+                // ❌ Close button (top-right)
+                Button(action: onCancel) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white)
+                            .shadow(color: .black.opacity(0.25), radius: 6, y: 2)
+
+                        Circle()
+                            .stroke(Color.black.opacity(0.15), lineWidth: 1)
+
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.black.opacity(0.8))
+                    }
+                    .frame(width: 28, height: 28)
+                    .padding(8)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("Close"))
+            }
+        }
+    }
+
     
 }
