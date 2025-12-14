@@ -326,11 +326,19 @@ struct ProspectActionsToolbar: View {
     
     /// Logs when a phone number is added or changed
     private func logPhoneChangeNote(old: String?, new: String) {
+        let oldNormalized = normalizedPhone(old)
+        let newNormalized = normalizedPhone(new)
+
+        // 🚫 Prevent logging if nothing actually changed
+        guard oldNormalized != newNormalized else {
+            return
+        }
+
         let formattedNew = formattedPhone(new)
 
         let content: String
-        if let old = old, !old.isEmpty {
-            let formattedOld = formattedPhone(old)
+        if !oldNormalized.isEmpty {
+            let formattedOld = formattedPhone(old ?? "")
             content = "Updated phone number from \(formattedOld) to \(formattedNew)."
         } else {
             content = "Added phone number \(formattedNew)."
@@ -340,6 +348,11 @@ struct ProspectActionsToolbar: View {
         prospect.notes.append(note)
 
         try? modelContext.save()
+    }
+    
+    /// This normalizes the phone # for comparing changes for note taking purposes
+    private func normalizedPhone(_ value: String?) -> String {
+        return value?.filter(\.isNumber) ?? ""
     }
     
     // MARK: - Core: Convert to Customer (Appointments Clone Fix)
