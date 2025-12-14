@@ -633,6 +633,7 @@ struct ProspectActionsToolbar: View {
 
                 Spacer(minLength: 0)
             }
+            .padding(.top, 32)
             .padding(.horizontal)
             .padding(.bottom, 12)
         }
