@@ -297,8 +297,8 @@ struct ProspectActionsToolbar: View {
     
     /// Logs when a phone number is added or changed
     private func logPhoneChangeNote(old: String?, new: String) {
-        let oldNormalized = normalizedPhone(old)
-        let newNormalized = normalizedPhone(new)
+        let oldNormalized = PhoneValidator.normalized(old)
+        let newNormalized = PhoneValidator.normalized(new)
 
         // 🚫 Prevent logging if nothing actually changed
         guard oldNormalized != newNormalized else {
@@ -319,11 +319,6 @@ struct ProspectActionsToolbar: View {
         prospect.notes.append(note)
 
         try? modelContext.save()
-    }
-    
-    /// This normalizes the phone # for comparing changes for note taking purposes
-    private func normalizedPhone(_ value: String?) -> String {
-        return value?.filter(\.isNumber) ?? ""
     }
     
     // MARK: - Core: Convert to Customer (Appointments Clone Fix)

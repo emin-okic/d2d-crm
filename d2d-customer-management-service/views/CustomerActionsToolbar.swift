@@ -265,8 +265,8 @@ struct CustomerActionsToolbar: View {
     }
     
     private func logCustomerPhoneChangeNote(old: String?, new: String) {
-        let oldNormalized = normalizedPhone(old)
-        let newNormalized = normalizedPhone(new)
+        let oldNormalized = PhoneValidator.normalized(old)
+        let newNormalized = PhoneValidator.normalized(new)
 
         // 🚫 Skip if unchanged
         guard oldNormalized != newNormalized else { return }
@@ -285,10 +285,6 @@ struct CustomerActionsToolbar: View {
         customer.notes.append(note)
 
         try? modelContext.save()
-    }
-    
-    private func normalizedPhone(_ value: String?) -> String {
-        value?.filter(\.isNumber) ?? ""
     }
 
     private func validatePhoneNumber() -> Bool {
