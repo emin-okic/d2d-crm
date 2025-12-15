@@ -28,6 +28,10 @@ struct CustomerActionsToolbar: View {
     @State private var exportSuccessMessage = ""
 
     @State private var phoneError: String?
+    
+    // This is for the new call action workflow
+    @State private var showCallSheet = false
+    @State private var originalPhone: String?
 
     var body: some View {
         ZStack {
@@ -37,9 +41,10 @@ struct CustomerActionsToolbar: View {
                 // ✅ Phone
                 iconButton(systemName: "phone.fill") {
                     if customer.contactPhone.isEmpty {
+                        originalPhone = nil
                         showAddPhoneSheet = true
                     } else {
-                        showCallConfirmation = true
+                        showCallSheet = true
                     }
                 }
 
@@ -130,50 +135,61 @@ struct CustomerActionsToolbar: View {
         } message: {
             Text("Would you like to save this contact to your iOS Contacts app?")
         }
+        
+        // New Phone Workflow
+        .sheet(isPresented: $showCallSheet) {
+            CallActionBottomSheet(
+                phone: formattedPhone(customer.contactPhone),
+                onCall: {
+                    logCustomerCallNote()
 
-        // ✅ Add / Edit phone sheet
+                    if let url = URL(string: "tel://\(customer.contactPhone.filter(\.isNumber))") {
+                        UIApplication.shared.open(url)
+                    }
+
+                    showCallSheet = false
+                },
+                onEdit: {
+                    originalPhone = customer.contactPhone
+                    newPhone = customer.contactPhone
+                    showCallSheet = false
+                    showAddPhoneSheet = true
+                },
+                onCancel: {
+                    showCallSheet = false
+                }
+            )
+            .presentationDetents([.fraction(0.25)])
+            .presentationDragIndicator(.visible)
+        }
+
+        // ✅ Add / Edit phone sheet (detented)
         .sheet(isPresented: $showAddPhoneSheet) {
-            NavigationView {
-                VStack(spacing: 16) {
-                    Text("Add Phone Number")
-                        .font(.headline)
+            AddPhoneBottomSheet(
+                mode: originalPhone == nil ? .add : .edit,
+                phone: $newPhone,
+                error: $phoneError,
+                onSave: {
+                    if validatePhoneNumber() {
+                        let previous = originalPhone
+                        customer.contactPhone = newPhone
+                        try? modelContext.save()
 
-                    TextField("Enter phone number", text: $newPhone)
-                        .keyboardType(.phonePad)
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(12)
-                        .onChange(of: newPhone) { _ in validatePhoneNumber() }
+                        logCustomerPhoneChangeNote(old: previous, new: newPhone)
 
-                    if let error = phoneError {
-                        Text(error).foregroundColor(.red)
-                    }
-
-                    Button("Save Number") {
-                        if validatePhoneNumber() {
-                            customer.contactPhone = newPhone
-                            try? modelContext.save()
-
-                            if let url = URL(string: "tel://\(newPhone.filter(\.isNumber))") {
-                                UIApplication.shared.open(url)
-                            }
-
-                            showAddPhoneSheet = false
+                        if let url = URL(string: "tel://\(newPhone.filter(\.isNumber))") {
+                            UIApplication.shared.open(url)
                         }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(newPhone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
-                    Spacer()
-                }
-                .padding()
-                .navigationTitle("Phone Number")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { showAddPhoneSheet = false }
+                        showAddPhoneSheet = false
                     }
+                },
+                onCancel: {
+                    showAddPhoneSheet = false
                 }
-            }
+            )
+            .presentationDetents([.fraction(0.25)])
+            .presentationDragIndicator(.visible)
         }
 
         // ✅ Add / Edit email sheet
@@ -218,6 +234,39 @@ struct CustomerActionsToolbar: View {
     }
 
     // MARK: - Helper functions
+    
+    private func logCustomerCallNote() {
+        let formatted = formattedPhone(customer.contactPhone)
+        let content = "Called customer at \(formatted) on \(Date().formatted(date: .abbreviated, time: .shortened))."
+
+        let note = Note(content: content, date: Date())
+        customer.notes.append(note)
+
+        try? modelContext.save()
+    }
+    
+    private func logCustomerPhoneChangeNote(old: String?, new: String) {
+        let oldNormalized = PhoneValidator.normalized(old)
+        let newNormalized = PhoneValidator.normalized(new)
+
+        // 🚫 Skip if unchanged
+        guard oldNormalized != newNormalized else { return }
+
+        let formattedNew = formattedPhone(new)
+
+        let content: String
+        if !oldNormalized.isEmpty {
+            let formattedOld = formattedPhone(old ?? "")
+            content = "Updated phone number from \(formattedOld) to \(formattedNew)."
+        } else {
+            content = "Added phone number \(formattedNew)."
+        }
+
+        let note = Note(content: content, date: Date())
+        customer.notes.append(note)
+
+        try? modelContext.save()
+    }
 
     private func validatePhoneNumber() -> Bool {
         if let error = PhoneValidator.validate(newPhone) {

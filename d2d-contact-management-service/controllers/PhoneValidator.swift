@@ -9,6 +9,7 @@ import PhoneNumberKit
 
 
 struct PhoneValidator {
+    
     static func validate(_ raw: String) -> String? {
         let cleaned = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty else { return nil }
@@ -20,5 +21,10 @@ struct PhoneValidator {
         } catch {
             return "Invalid phone number."
         }
+    }
+    
+    /// Normalizes a phone number for comparison / change detection
+    static func normalized(_ value: String?) -> String {
+        value?.filter(\.isNumber) ?? ""
     }
 }

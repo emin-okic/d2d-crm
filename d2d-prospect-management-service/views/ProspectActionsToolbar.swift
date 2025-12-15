@@ -36,11 +36,6 @@ struct ProspectActionsToolbar: View {
     
     // This variable is used for keeping track of the original phone # on changing it for note taking purposes
     @State private var originalPhone: String?
-    
-    private enum PhoneSheetMode {
-        case add
-        case edit
-    }
 
     var body: some View {
         ZStack {
@@ -302,8 +297,8 @@ struct ProspectActionsToolbar: View {
     
     /// Logs when a phone number is added or changed
     private func logPhoneChangeNote(old: String?, new: String) {
-        let oldNormalized = normalizedPhone(old)
-        let newNormalized = normalizedPhone(new)
+        let oldNormalized = PhoneValidator.normalized(old)
+        let newNormalized = PhoneValidator.normalized(new)
 
         // 🚫 Prevent logging if nothing actually changed
         guard oldNormalized != newNormalized else {
@@ -324,11 +319,6 @@ struct ProspectActionsToolbar: View {
         prospect.notes.append(note)
 
         try? modelContext.save()
-    }
-    
-    /// This normalizes the phone # for comparing changes for note taking purposes
-    private func normalizedPhone(_ value: String?) -> String {
-        return value?.filter(\.isNumber) ?? ""
     }
     
     // MARK: - Core: Convert to Customer (Appointments Clone Fix)
@@ -509,156 +499,6 @@ struct ProspectActionsToolbar: View {
             print("❌ Failed to delete prospect or appointments: \(error)")
         }
 
-    }
-    
-    private struct AddPhoneBottomSheet: View {
-        let mode: PhoneSheetMode
-
-        @Binding var phone: String
-        @Binding var error: String?
-
-        let onSave: () -> Void
-        let onCancel: () -> Void
-
-        private var title: String {
-            mode == .add ? "Add Phone Number" : "Edit Phone Number"
-        }
-
-        private var subtitle: String {
-            mode == .add
-                ? "Add a phone number for this contact."
-                : "Update the existing phone number."
-        }
-
-        private var primaryButtonTitle: String {
-            mode == .add ? "Add Number" : "Save Changes"
-        }
-
-        var body: some View {
-            VStack(spacing: 16) {
-                Capsule()
-                    .fill(Color.secondary.opacity(0.4))
-                    .frame(width: 36, height: 5)
-                    .padding(.top, 8)
-
-                VStack(spacing: 4) {
-                    Text(title)
-                        .font(.headline)
-
-                    Text(subtitle)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-
-                TextField(
-                    mode == .add ? "Enter phone number" : "Update phone number",
-                    text: $phone
-                )
-                .keyboardType(.phonePad)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(12)
-                .onChange(of: phone) { _ in
-                    // ✅ Validate phone as user types
-                    if let errorMessage = PhoneValidator.validate(phone) {
-                        error = errorMessage
-                    } else {
-                        error = nil
-                    }
-                }
-
-                if let error {
-                    Text(error)
-                        .font(.footnote)
-                        .foregroundColor(.red)
-                }
-
-                HStack(spacing: 12) {
-                    Button("Cancel") {
-                        onCancel()
-                    }
-                    .frame(maxWidth: .infinity)
-
-                    Button(primaryButtonTitle) {
-                        onSave()
-                    }
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(.borderedProminent)
-                    .disabled(phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || error != nil)
-                }
-
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal)
-            .padding(.bottom, 12)
-        }
-    }
-    
-    private struct CallActionBottomSheet: View {
-        let phone: String
-        let onCall: () -> Void
-        let onEdit: () -> Void
-        let onCancel: () -> Void
-
-        var body: some View {
-            ZStack(alignment: .topTrailing) {
-                VStack(spacing: 16) {
-
-                    Text("Call")
-                        .font(.headline)
-
-                    Text(phone)
-                        .font(.title3)
-                        .fontWeight(.semibold)
-
-                    // 🔁 Side-by-side actions
-                    HStack(spacing: 12) {
-                        Button {
-                            onCall()
-                        } label: {
-                            Label("Call", systemImage: "phone.fill")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.borderedProminent)
-
-                        Button {
-                            onEdit()
-                        } label: {
-                            Label("Edit", systemImage: "pencil")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
-                    }
-
-                    Spacer(minLength: 0)
-                }
-                .padding(.top, 32)
-                .padding(.horizontal)
-                .padding(.bottom, 12)
-
-                // ❌ Close button (top-right)
-                Button(action: onCancel) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.white)
-                            .shadow(color: .black.opacity(0.25), radius: 6, y: 2)
-
-                        Circle()
-                            .stroke(Color.black.opacity(0.15), lineWidth: 1)
-
-                        Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.black.opacity(0.8))
-                    }
-                    .frame(width: 28, height: 28)
-                    .padding(8)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Text("Close"))
-            }
-        }
     }
 
     
