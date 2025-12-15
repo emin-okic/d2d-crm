@@ -21,8 +21,7 @@ struct CustomerActionsToolbar: View {
     @State private var showAddEmailSheet = false
     @State private var newEmail = ""
     @State private var showEmailConfirmation = false
-
-    @State private var showDeleteConfirmation = false
+    
     @State private var showExportPrompt = false
     @State private var showExportSuccessBanner = false
     @State private var exportSuccessMessage = ""
@@ -62,14 +61,10 @@ struct CustomerActionsToolbar: View {
                     showExportPrompt = true
                 }
 
-                // ✅ Delete
-                iconButton(systemName: "trash.fill", color: .red) {
-                    showDeleteConfirmation = true
-                }
-
                 Spacer()
             }
             .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, alignment: .center)
 
             // ✅ Export success banner
             if showExportSuccessBanner {
@@ -88,14 +83,6 @@ struct CustomerActionsToolbar: View {
                 }
                 .zIndex(999)
             }
-        }
-
-        // ✅ Confirmation dialogs
-        .confirmationDialog("Delete this customer?",
-                            isPresented: $showDeleteConfirmation,
-                            titleVisibility: .visible) {
-            Button("Delete", role: .destructive) { deleteCustomer() }
-            Button("Cancel", role: .cancel) { }
         }
 
         .confirmationDialog("Call \(formattedPhone(customer.contactPhone))?",
@@ -277,26 +264,7 @@ struct CustomerActionsToolbar: View {
             return true
         }
     }
-
-    private func deleteCustomer() {
-        // ✅ Delete all appointments belonging to this customer
-        for appointment in customer.appointments {
-            modelContext.delete(appointment)
-        }
-
-        // ✅ Delete the customer itself
-        modelContext.delete(customer)
-        try? modelContext.save()
-
-        // ✅ Dismiss the details view
-        DispatchQueue.main.async {
-            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let root = scene.windows.first?.rootViewController {
-                root.dismiss(animated: true)
-            }
-        }
-    }
-
+    
     private func exportToContacts() {
         showExportFeedback("Contact saved to Contacts.")
     }

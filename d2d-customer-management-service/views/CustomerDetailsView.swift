@@ -24,6 +24,8 @@ struct CustomerDetailsView: View {
     // For address autocomplete
     @StateObject private var searchViewModel = SearchCompleterViewModel()
     @FocusState private var isAddressFieldFocused: Bool
+    
+    @State private var showDeleteConfirmation = false
 
     // Detect unsaved edits
     private var hasUnsavedEdits: Bool {
@@ -32,36 +34,67 @@ struct CustomerDetailsView: View {
     }
 
     var body: some View {
-        Form {
-            // ✅ Customer core info
-            Section(header: Text("Customer Details")) {
-                TextField("Full Name", text: $tempFullName)
-
-                // 👇 Autocomplete-enabled address field
-                AddressAutocompleteField(
-                    addressText: $tempAddress,
-                    isFocused: $isAddressFieldFocused,
-                    searchViewModel: searchViewModel
-                )
-            }
-
-            // ✅ Actions Toolbar
-            Section {
-                CustomerActionsToolbar(customer: customer)
-            }
-
-            // ✅ Tabs (Appointments, Knocks, Notes)
-            Section {
-                Picker("View", selection: $selectedTab) {
-                    ForEach(CustomerTab.allCases, id: \.self) { tab in
-                        Text(tab.rawValue).tag(tab)
-                    }
+        ZStack {
+            Form {
+                // ✅ Customer core info
+                Section(header: Text("Customer Details")) {
+                    TextField("Full Name", text: $tempFullName)
+                    
+                    // 👇 Autocomplete-enabled address field
+                    AddressAutocompleteField(
+                        addressText: $tempAddress,
+                        isFocused: $isAddressFieldFocused,
+                        searchViewModel: searchViewModel
+                    )
                 }
-                .pickerStyle(.segmented)
-                .padding(.bottom)
-
-                tabContent
+                
+                // ✅ Actions Toolbar
+                Section {
+                    CustomerActionsToolbar(customer: customer)
+                }
+                
+                // ✅ Tabs (Appointments, Knocks, Notes)
+                Section {
+                    Picker("View", selection: $selectedTab) {
+                        ForEach(CustomerTab.allCases, id: \.self) { tab in
+                            Text(tab.rawValue).tag(tab)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.bottom)
+                    
+                    tabContent
+                }
             }
+            
+            // Bottom-left floating delete button
+            VStack {
+                Spacer()
+                HStack {
+                    Button(action: {
+                        showDeleteConfirmation = true
+                    }) {
+                        Image(systemName: "trash.fill")
+                            .foregroundColor(.white)
+                            .font(.title2)
+                            .padding()
+                            .background(Color.red)
+                            .clipShape(Circle())
+                            .shadow(radius: 5)
+                    }
+                    .padding(.leading, 16)
+                    Spacer()
+                }
+            }
+            .sheet(isPresented: $showDeleteConfirmation) {
+                DeleteCustomerSheet(
+                    customerName: customer.fullName,
+                    onDelete: deleteCustomer
+                )
+                .presentationDetents([.fraction(0.35)])
+                .presentationDragIndicator(.visible)
+            }
+            
         }
         .navigationTitle("Customer Details")
         .toolbar {
@@ -87,6 +120,25 @@ struct CustomerDetailsView: View {
         .onAppear {
             tempFullName = customer.fullName
             tempAddress = customer.address
+        }
+    }
+    
+    private func deleteCustomer() {
+        // ✅ Delete all appointments belonging to this customer
+        for appointment in customer.appointments {
+            modelContext.delete(appointment)
+        }
+
+        // ✅ Delete the customer itself
+        modelContext.delete(customer)
+        try? modelContext.save()
+
+        // ✅ Dismiss the details view
+        DispatchQueue.main.async {
+            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let root = scene.windows.first?.rootViewController {
+                root.dismiss(animated: true)
+            }
         }
     }
 
