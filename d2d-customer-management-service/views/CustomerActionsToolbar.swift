@@ -163,52 +163,33 @@ struct CustomerActionsToolbar: View {
             .presentationDragIndicator(.visible)
         }
 
-        // ✅ Add / Edit phone sheet
+        // ✅ Add / Edit phone sheet (detented)
         .sheet(isPresented: $showAddPhoneSheet) {
-            NavigationView {
-                VStack(spacing: 16) {
-                    Text("Add Phone Number")
-                        .font(.headline)
+            AddPhoneBottomSheet(
+                mode: originalPhone == nil ? .add : .edit,
+                phone: $newPhone,
+                error: $phoneError,
+                onSave: {
+                    if validatePhoneNumber() {
+                        let previous = originalPhone
+                        customer.contactPhone = newPhone
+                        try? modelContext.save()
 
-                    TextField("Enter phone number", text: $newPhone)
-                        .keyboardType(.phonePad)
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(12)
-                        .onChange(of: newPhone) { _ in validatePhoneNumber() }
+                        logCustomerPhoneChangeNote(old: previous, new: newPhone)
 
-                    if let error = phoneError {
-                        Text(error).foregroundColor(.red)
-                    }
-
-                    Button("Save Number") {
-                        if validatePhoneNumber() {
-                            let previous = originalPhone
-                            customer.contactPhone = newPhone
-                            try? modelContext.save()
-
-                            logCustomerPhoneChangeNote(old: previous, new: newPhone)
-
-                            if let url = URL(string: "tel://\(newPhone.filter(\.isNumber))") {
-                                UIApplication.shared.open(url)
-                            }
-
-                            showAddPhoneSheet = false
+                        if let url = URL(string: "tel://\(newPhone.filter(\.isNumber))") {
+                            UIApplication.shared.open(url)
                         }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(newPhone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
-                    Spacer()
-                }
-                .padding()
-                .navigationTitle("Phone Number")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { showAddPhoneSheet = false }
+                        showAddPhoneSheet = false
                     }
+                },
+                onCancel: {
+                    showAddPhoneSheet = false
                 }
-            }
+            )
+            .presentationDetents([.fraction(0.25)])
+            .presentationDragIndicator(.visible)
         }
 
         // ✅ Add / Edit email sheet
