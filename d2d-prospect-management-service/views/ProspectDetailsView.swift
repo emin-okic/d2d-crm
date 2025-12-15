@@ -118,20 +118,17 @@ struct ProspectDetailsView: View {
                             .shadow(radius: 5)
                     }
                     .padding(.leading, 16)
+                    .sheet(isPresented: $showDeleteConfirmation) {
+                        DeleteProspectSheet(
+                            prospectName: prospect.fullName,
+                            onDelete: deleteProspect
+                        )
+                        .presentationDetents([.fraction(0.25)]) // short bottom sheet
+                        .presentationDragIndicator(.visible)     // draggable indicator
+                    }
                     Spacer()
                 }
             }
-        }
-        // Delete confirmation
-        .confirmationDialog(
-            "Are you sure you want to delete this contact?",
-            isPresented: $showDeleteConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Delete", role: .destructive) {
-                deleteProspect()
-            }
-            Button("Cancel", role: .cancel) { }
         }
         .navigationTitle("Edit Contact")
         .toolbar {
