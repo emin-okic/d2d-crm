@@ -24,8 +24,6 @@ struct ProspectActionsToolbar: View {
     @State private var newEmail = ""
     @State private var showEmailConfirmation = false
     
-    @State private var showDeleteConfirmation = false
-    
     @State private var showCreateSaleSheet = false
     
     @State private var phoneError: String?
@@ -86,12 +84,9 @@ struct ProspectActionsToolbar: View {
                     showExportPrompt = true
                 }
 
-                // Delete Contact
-                iconButton(systemName: "trash.fill", color: .red) {
-                    showDeleteConfirmation = true
-                }
             }
             .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, alignment: .center)
 
             // ✅ Floating banner at top
             if showExportSuccessBanner {
@@ -111,18 +106,6 @@ struct ProspectActionsToolbar: View {
                 .frame(maxWidth: .infinity)
                 .zIndex(999)
             }
-        }
-
-        // Delete confirmation
-        .confirmationDialog(
-            "Are you sure you want to delete this contact?",
-            isPresented: $showDeleteConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Delete", role: .destructive) {
-                deleteProspect()
-            }
-            Button("Cancel", role: .cancel) { }
         }
 
         // Phone confirmation
@@ -467,38 +450,6 @@ struct ProspectActionsToolbar: View {
                 }
             }
         }
-    }
-    
-    // MARK: - Delete customer and their appointments
-    private func deleteProspect() {
-        for appointment in prospect.appointments {
-            modelContext.delete(appointment)
-        }
-        modelContext.delete(prospect)
-        try? modelContext.save()
-        DispatchQueue.main.async {
-            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let root = scene.windows.first?.rootViewController {
-                root.dismiss(animated: true)
-            }
-        }
-    }
-    
-    private func deleteProspectAndAppointments() {
-        // Delete all appointments linked to the prospect
-        for appointment in prospect.appointments {
-            modelContext.delete(appointment)
-        }
-
-        // Now delete the prospect itself
-        modelContext.delete(prospect)
-
-        do {
-            try modelContext.save()
-        } catch {
-            print("❌ Failed to delete prospect or appointments: \(error)")
-        }
-
     }
 
     

@@ -20,83 +20,118 @@ struct ProspectDetailsView: View {
     // 🔑 Local editable copies for deferred saving
     @State private var tempFullName: String = ""
     @State private var tempAddress: String = ""
+    
+    @State private var showDeleteConfirmation = false
 
     var body: some View {
-        Form {
-            // Prospect info
-            Section(header: Text("Prospect Details")) {
-                TextField("Full Name", text: $tempFullName)
-
-                // Address with autocomplete
-                AddressAutocompleteField(
-                    addressText: $tempAddress,
-                    isFocused: $isAddressFieldFocused,
-                    searchViewModel: searchViewModel
-                )
-            }
-
-            // ✅ Actions Toolbar (unchanged)
-            Section {
-                ProspectActionsToolbar(prospect: prospect)
-            }
-
-            // Tabs for Appointments / Knocks / Notes
-            Section {
-                Picker("View", selection: $controller.selectedTab) {
-                    ForEach(ProspectTab.allCases, id: \.self) { tab in
-                        Text(tab.rawValue).tag(tab)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.bottom, 6)
-
-                switch controller.selectedTab {
-                case .appointments:
-                    let upcoming = prospect.appointments
-                        .filter { $0.date >= Date() }
-                        .sorted { $0.date < $1.date }
-                        .prefix(3)
-
-                    if upcoming.isEmpty {
-                        Text("No upcoming follow-ups.")
-                            .foregroundColor(.gray)
-                    } else {
-                        ForEach(upcoming) { appt in
-                            Button {
-                                controller.selectedAppointmentDetails = appt
-                            } label: {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Follow Up With \(prospect.fullName)")
-                                        .font(.subheadline).fontWeight(.medium)
-                                    Text(prospect.address)
-                                        .font(.caption).foregroundColor(.gray)
-                                    Text(appt.date.formatted(date: .abbreviated, time: .shortened))
-                                        .font(.caption).foregroundColor(.gray)
-                                }
-                                .padding(.vertical, 4)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-
-                    Button {
-                        controller.showAppointmentSheet = true
-                    } label: {
-                        Label("Add Appointment", systemImage: "calendar.badge.plus")
-                    }
-
-                case .knocks:
-                    KnockingHistoryView(prospect: prospect)
-
-                case .notes:
-                    NotesThreadSection(
-                        prospect: prospect,
-                        maxHeight: 180,
-                        maxVisibleNotes: 3,
-                        showChips: false
+        ZStack {
+            Form {
+                // Prospect info
+                Section(header: Text("Prospect Details")) {
+                    TextField("Full Name", text: $tempFullName)
+                    
+                    // Address with autocomplete
+                    AddressAutocompleteField(
+                        addressText: $tempAddress,
+                        isFocused: $isAddressFieldFocused,
+                        searchViewModel: searchViewModel
                     )
                 }
+                
+                // ✅ Actions Toolbar (unchanged)
+                Section {
+                    ProspectActionsToolbar(prospect: prospect)
+                }
+                
+                // Tabs for Appointments / Knocks / Notes
+                Section {
+                    Picker("View", selection: $controller.selectedTab) {
+                        ForEach(ProspectTab.allCases, id: \.self) { tab in
+                            Text(tab.rawValue).tag(tab)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.bottom, 6)
+                    
+                    switch controller.selectedTab {
+                    case .appointments:
+                        let upcoming = prospect.appointments
+                            .filter { $0.date >= Date() }
+                            .sorted { $0.date < $1.date }
+                            .prefix(3)
+                        
+                        if upcoming.isEmpty {
+                            Text("No upcoming follow-ups.")
+                                .foregroundColor(.gray)
+                        } else {
+                            ForEach(upcoming) { appt in
+                                Button {
+                                    controller.selectedAppointmentDetails = appt
+                                } label: {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Follow Up With \(prospect.fullName)")
+                                            .font(.subheadline).fontWeight(.medium)
+                                        Text(prospect.address)
+                                            .font(.caption).foregroundColor(.gray)
+                                        Text(appt.date.formatted(date: .abbreviated, time: .shortened))
+                                            .font(.caption).foregroundColor(.gray)
+                                    }
+                                    .padding(.vertical, 4)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        
+                        Button {
+                            controller.showAppointmentSheet = true
+                        } label: {
+                            Label("Add Appointment", systemImage: "calendar.badge.plus")
+                        }
+                        
+                    case .knocks:
+                        KnockingHistoryView(prospect: prospect)
+                        
+                    case .notes:
+                        NotesThreadSection(
+                            prospect: prospect,
+                            maxHeight: 180,
+                            maxVisibleNotes: 3,
+                            showChips: false
+                        )
+                    }
+                }
             }
+            
+            // Bottom-left floating delete button
+            VStack {
+                Spacer()
+                HStack {
+                    Button(action: {
+                        showDeleteConfirmation = true
+                    }) {
+                        Image(systemName: "trash.fill")
+                            .foregroundColor(.white)
+                            .font(.title2)
+                            .padding()
+                            .background(Color.red)
+                            .clipShape(Circle())
+                            .shadow(radius: 5)
+                    }
+                    .padding(.leading, 16)
+                    Spacer()
+                }
+            }
+        }
+        // Delete confirmation
+        .confirmationDialog(
+            "Are you sure you want to delete this contact?",
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                deleteProspect()
+            }
+            Button("Cancel", role: .cancel) { }
         }
         .navigationTitle("Edit Contact")
         .toolbar {
@@ -170,6 +205,38 @@ struct ProspectDetailsView: View {
         .sheet(item: $controller.selectedAppointmentDetails) { appointment in
             AppointmentDetailsView(appointment: appointment)
         }
+    }
+    
+    // MARK: - Delete customer and their appointments
+    private func deleteProspect() {
+        for appointment in prospect.appointments {
+            modelContext.delete(appointment)
+        }
+        modelContext.delete(prospect)
+        try? modelContext.save()
+        DispatchQueue.main.async {
+            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let root = scene.windows.first?.rootViewController {
+                root.dismiss(animated: true)
+            }
+        }
+    }
+    
+    private func deleteProspectAndAppointments() {
+        // Delete all appointments linked to the prospect
+        for appointment in prospect.appointments {
+            modelContext.delete(appointment)
+        }
+
+        // Now delete the prospect itself
+        modelContext.delete(prospect)
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("❌ Failed to delete prospect or appointments: \(error)")
+        }
+
     }
 
     // MARK: - Logic
