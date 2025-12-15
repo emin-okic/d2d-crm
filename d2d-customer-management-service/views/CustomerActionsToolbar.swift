@@ -28,6 +28,10 @@ struct CustomerActionsToolbar: View {
     @State private var exportSuccessMessage = ""
 
     @State private var phoneError: String?
+    
+    // This is for the new call action workflow
+    @State private var showCallSheet = false
+    @State private var originalPhone: String?
 
     var body: some View {
         ZStack {
@@ -37,9 +41,10 @@ struct CustomerActionsToolbar: View {
                 // ✅ Phone
                 iconButton(systemName: "phone.fill") {
                     if customer.contactPhone.isEmpty {
+                        originalPhone = nil
                         showAddPhoneSheet = true
                     } else {
-                        showCallConfirmation = true
+                        showCallSheet = true
                     }
                 }
 
@@ -130,6 +135,33 @@ struct CustomerActionsToolbar: View {
         } message: {
             Text("Would you like to save this contact to your iOS Contacts app?")
         }
+        
+        // New Phone Workflow
+        .sheet(isPresented: $showCallSheet) {
+            CallActionBottomSheet(
+                phone: formattedPhone(customer.contactPhone),
+                onCall: {
+                    logCustomerCallNote()
+
+                    if let url = URL(string: "tel://\(customer.contactPhone.filter(\.isNumber))") {
+                        UIApplication.shared.open(url)
+                    }
+
+                    showCallSheet = false
+                },
+                onEdit: {
+                    originalPhone = customer.contactPhone
+                    newPhone = customer.contactPhone
+                    showCallSheet = false
+                    showAddPhoneSheet = true
+                },
+                onCancel: {
+                    showCallSheet = false
+                }
+            )
+            .presentationDetents([.fraction(0.25)])
+            .presentationDragIndicator(.visible)
+        }
 
         // ✅ Add / Edit phone sheet
         .sheet(isPresented: $showAddPhoneSheet) {
@@ -151,8 +183,11 @@ struct CustomerActionsToolbar: View {
 
                     Button("Save Number") {
                         if validatePhoneNumber() {
+                            let previous = originalPhone
                             customer.contactPhone = newPhone
                             try? modelContext.save()
+
+                            logCustomerPhoneChangeNote(old: previous, new: newPhone)
 
                             if let url = URL(string: "tel://\(newPhone.filter(\.isNumber))") {
                                 UIApplication.shared.open(url)
@@ -218,6 +253,92 @@ struct CustomerActionsToolbar: View {
     }
 
     // MARK: - Helper functions
+    
+    private func logCustomerCallNote() {
+        let formatted = formattedPhone(customer.contactPhone)
+        let content = "Called customer at \(formatted) on \(Date().formatted(date: .abbreviated, time: .shortened))."
+
+        let note = Note(content: content, date: Date())
+        customer.notes.append(note)
+
+        try? modelContext.save()
+    }
+    
+    private func logCustomerPhoneChangeNote(old: String?, new: String) {
+        let oldNormalized = normalizedPhone(old)
+        let newNormalized = normalizedPhone(new)
+
+        // 🚫 Skip if unchanged
+        guard oldNormalized != newNormalized else { return }
+
+        let formattedNew = formattedPhone(new)
+
+        let content: String
+        if !oldNormalized.isEmpty {
+            let formattedOld = formattedPhone(old ?? "")
+            content = "Updated phone number from \(formattedOld) to \(formattedNew)."
+        } else {
+            content = "Added phone number \(formattedNew)."
+        }
+
+        let note = Note(content: content, date: Date())
+        customer.notes.append(note)
+
+        try? modelContext.save()
+    }
+    
+    private struct CallActionBottomSheet: View {
+        let phone: String
+        let onCall: () -> Void
+        let onEdit: () -> Void
+        let onCancel: () -> Void
+
+        var body: some View {
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 16) {
+                    Text("Call")
+                        .font(.headline)
+
+                    Text(phone)
+                        .font(.title3)
+                        .fontWeight(.semibold)
+
+                    HStack(spacing: 12) {
+                        Button {
+                            onCall()
+                        } label: {
+                            Label("Call", systemImage: "phone.fill")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+
+                        Button {
+                            onEdit()
+                        } label: {
+                            Label("Edit", systemImage: "pencil")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                    }
+
+                    Spacer(minLength: 0)
+                }
+                .padding(.top, 32)
+                .padding(.horizontal)
+                .padding(.bottom, 12)
+
+                Button(action: onCancel) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .bold))
+                }
+                .padding(8)
+            }
+        }
+    }
+    
+    private func normalizedPhone(_ value: String?) -> String {
+        value?.filter(\.isNumber) ?? ""
+    }
 
     private func validatePhoneNumber() -> Bool {
         if let error = PhoneValidator.validate(newPhone) {
