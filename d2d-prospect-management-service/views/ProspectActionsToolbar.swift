@@ -324,9 +324,9 @@ struct ProspectActionsToolbar: View {
         }
 
         // ✅ Create Customer record
-        let customer = Customer(fullName: prospect.fullName, address: prospect.address, count: prospect.knockCount)
-        customer.contactEmail = prospect.contactEmail
-        customer.contactPhone = prospect.contactPhone
+        let customer = Customer.fromProspect(prospect)
+
+        // overwrite with cloned data (safe)
         customer.notes = clonedNotes
         customer.knockHistory = clonedKnocks
 
