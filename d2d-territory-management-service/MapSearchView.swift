@@ -387,13 +387,33 @@ struct MapSearchView: View {
                         initialEmail: prospect.contactEmail
                     )
                     { newCustomer in
+                        
                         // 1) Pull over anything useful from the original prospect
                         if let prospect = prospectToConvert {
+                            
                             // Carry over history/notes/contact if your models have these
                             newCustomer.knockHistory = prospect.knockHistory
                             newCustomer.notes = prospect.notes
+                            
                             if newCustomer.contactPhone.isEmpty { newCustomer.contactPhone = prospect.contactPhone }
+                            
                             if newCustomer.contactEmail.isEmpty { newCustomer.contactEmail = prospect.contactEmail }
+                            
+                            
+                            // COPY COORDINATES
+                            newCustomer.latitude = prospect.latitude
+                            newCustomer.longitude = prospect.longitude
+                            
+                            // 🔍 Print for testing
+                            print("""
+                            ⭐️ CONVERTED TO CUSTOMER
+                            Name: \(newCustomer.fullName)
+                            Address: \(newCustomer.address)
+                            Lat: \(newCustomer.latitude?.description ?? "nil")
+                            Lon: \(newCustomer.longitude?.description ?? "nil")
+                            -------------------------
+                            """)
+                            
                         }
 
                         // 2) Persist the new Customer record
@@ -401,17 +421,19 @@ struct MapSearchView: View {
 
                         // 3) Retire the old prospect to avoid duplicate markers
                         if let prospect = prospectToConvert {
-                            // Option A: delete it (cleanest UI/no duplicate pins)
+                            
+                            // Delete it
                             modelContext.delete(prospect)
 
-                            // Option B (if you prefer to keep it): flip list flag instead of deleting
-                            // prospect.list = "Customers"
                         }
 
                         // 4) Save + refresh UI
                         try? modelContext.save()
+                        
                         updateMarkers()
+                        
                         selectedList = "Customers"
+                        
                         showConversionSheet = false
 
                         // 5) Celebrate 🎉
