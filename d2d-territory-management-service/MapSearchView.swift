@@ -156,7 +156,10 @@ struct MapSearchView: View {
 
                             guard !exists else { return }
 
-                            pendingAddProperty = PendingAddProperty(address: tapped)
+                            pendingAddProperty = PendingAddProperty(
+                                address: tapped,
+                                coordinate: coordinate
+                            )
                         }
                     },
                     onRegionChange: { newRegion in
@@ -302,7 +305,10 @@ struct MapSearchView: View {
             AddPropertyConfirmationSheet(
                 address: item.address,
                 onConfirm: {
-                    addProspectFromMapTap(address: item.address)
+                    addProspectFromMapTap(
+                            address: item.address,
+                            coordinate: item.coordinate
+                        )
                     pendingAddProperty = nil
                 },
                 onCancel: {
@@ -431,16 +437,28 @@ struct MapSearchView: View {
     /// This function handles adding new prospects to the map
     /// It will simply ask if the prospect selected should be added or not
     /// The assumption is that sales reps will want to pre-load their prospects the day before they knock it
-    private func addProspectFromMapTap(address: String) {
+    private func addProspectFromMapTap(address: String, coordinate: CLLocationCoordinate2D) {
         let newProspect = Prospect(
             fullName: "New Prospect",
             address: address,
             count: 0,
             list: "Prospects"
         )
+        
+        // Assign coordinates once
+        newProspect.latitude = coordinate.latitude
+        newProspect.longitude = coordinate.longitude
 
         modelContext.insert(newProspect)
         try? modelContext.save()
+        
+        // 🔍 Print for testing
+        print("""
+        📍 Prospect created
+        Address: \(address)
+        Latitude: \(coordinate.latitude)
+        Longitude: \(coordinate.longitude)
+        """)
 
         controller.performSearch(query: address)
     }
@@ -530,6 +548,7 @@ struct MapSearchView: View {
     struct PendingAddProperty: Identifiable {
         let id = UUID()
         let address: String
+        let coordinate: CLLocationCoordinate2D
     }
     
     @MainActor
