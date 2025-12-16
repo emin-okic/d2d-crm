@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import CoreLocation
 
 @Model
 final class Prospect: ContactProtocol {
@@ -21,6 +22,10 @@ final class Prospect: ContactProtocol {
 
     /// keep your list flag if you still use it elsewhere
     var list: String
+    
+    /// Stored coordinates for marker annotation generation
+    var latitude: Double?
+    var longitude: Double?
 
     init(fullName: String,
          address: String,
@@ -35,5 +40,15 @@ final class Prospect: ContactProtocol {
         self.notes = []
         self.appointments = []
         self.knockHistory = []
+        
+        self.latitude = nil
+        self.longitude = nil
+    }
+}
+
+extension Prospect {
+    var coordinate: CLLocationCoordinate2D? {
+        guard let lat = latitude, let lon = longitude else { return nil }
+        return CLLocationCoordinate2D(latitude: lat, longitude: lon)
     }
 }
