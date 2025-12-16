@@ -608,15 +608,66 @@ struct MapSearchView: View {
         MKLocalSearch(request: req).start { resp, _ in
             guard let item = resp?.mapItems.first else { return }
             let addr = item.placemark.title ?? "\(item.placemark.name ?? ""), \(item.placemark.locality ?? "")"
+
             DispatchQueue.main.async {
                 searchText = addr
-                controller.region = MKCoordinateRegion(center: item.placemark.coordinate, latitudinalMeters: 1609.34, longitudinalMeters: 1609.34)
+                controller.region = MKCoordinateRegion(
+                    center: item.placemark.coordinate,
+                    latitudinalMeters: 1609.34,
+                    longitudinalMeters: 1609.34
+                )
                 searchVM.results = []
                 isSearchFocused = false
-                // Do NOT auto-open stepper here; follow-up path only
                 pendingAddress = addr
+
+                let normalized = addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                
+                // 1️⃣ Check if it's a Prospect
+                if let existingProspect = prospects.first(where: {
+                    $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
+                }) {
+                    let place = IdentifiablePlace(
+                        address: existingProspect.address,
+                        location: CLLocationCoordinate2D(
+                            latitude: existingProspect.latitude ?? controller.region.center.latitude,
+                            longitude: existingProspect.longitude ?? controller.region.center.longitude
+                        ),
+                        count: existingProspect.knockHistory.count,
+                        list: existingProspect.list
+                    )
+                    showPopup(for: place)
+                }
+                // 2️⃣ Check if it's a Customer
+                else if let existingCustomer = customers.first(where: {
+                    $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
+                }) {
+                    let place = IdentifiablePlace(
+                        address: existingCustomer.address,
+                        location: CLLocationCoordinate2D(
+                            latitude: existingCustomer.latitude ?? controller.region.center.latitude,
+                            longitude: existingCustomer.longitude ?? controller.region.center.longitude
+                        ),
+                        count: existingCustomer.knockHistory.count,
+                        list: "Customers"
+                    )
+                    showPopup(for: place)
+                }
+                // 3️⃣ Otherwise, add as new property
+                else {
+                    pendingAddProperty = PendingAddProperty(
+                        address: addr,
+                        coordinate: item.placemark.coordinate
+                    )
+                }
             }
         }
+    }
+
+    /// Helper function to create the popup for Prospect or Customer
+    private func showPopup(for place: IdentifiablePlace) {
+        let state = PopupState(place: place)
+        popupState = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) { popupState = state }
     }
 
     private func submitSearch() {
