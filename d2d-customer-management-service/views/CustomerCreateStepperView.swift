@@ -85,13 +85,33 @@ struct CustomerCreateStepperView: View {
                     Button("Next") { stepIndex = 1 }
                         .disabled(!canProceedStepOne)
                 } else {
+                    
                     Button("Finish") {
                         guard validatePhoneNumber() else { return }
-                        let c = Customer(fullName: fullName, address: address)
-                        c.contactEmail = contactEmail
-                        c.contactPhone = contactPhone
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) {
-                            onComplete(c)
+
+                        Task {
+                            let customer = Customer(fullName: fullName, address: address)
+                            customer.contactEmail = contactEmail
+                            customer.contactPhone = contactPhone
+
+                            // 🔑 Resolve coordinates at creation time
+                            if let coord = await geocodeAddress(address) {
+                                customer.latitude = coord.latitude
+                                customer.longitude = coord.longitude
+
+                                print("""
+                                📍 Customer created with coordinates
+                                Address: \(address)
+                                Lat: \(coord.latitude)
+                                Lon: \(coord.longitude)
+                                """)
+                            } else {
+                                print("⚠️ Customer created WITHOUT coordinates:", address)
+                            }
+
+                            await MainActor.run {
+                                onComplete(customer)
+                            }
                         }
                     }
                     .disabled(!canProceedStepTwo)
@@ -155,6 +175,19 @@ struct CustomerCreateStepperView: View {
     }
 
     // MARK: - Helpers
+    
+    private func geocodeAddress(_ address: String) async -> CLLocationCoordinate2D? {
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = address
+
+        do {
+            let response = try await MKLocalSearch(request: request).start()
+            return response.mapItems.first?.placemark.coordinate
+        } catch {
+            print("❌ Geocoding failed:", error)
+            return nil
+        }
+    }
 
     private var canProceedStepOne: Bool {
         !fullName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import CoreLocation
 
 struct ProspectDetailsView: View {
     @Bindable var prospect: Prospect
@@ -260,6 +261,23 @@ struct ProspectDetailsView: View {
             let note = "Address changed from \(prospect.address.isEmpty ? "Unknown" : prospect.address) to \(trimmedAddress)."
             changeNotes.append(note)
             prospect.address = trimmedAddress
+
+            // ✅ Geocode the new address to update latitude/longitude
+            CLGeocoder().geocodeAddressString(trimmedAddress) { placemarks, error in
+                if let coord = placemarks?.first?.location?.coordinate {
+                    prospect.latitude = coord.latitude
+                    prospect.longitude = coord.longitude
+                    print("📍 Updated prospect coordinates: \(coord.latitude), \(coord.longitude)")
+                } else {
+                    print("❌ Failed to geocode address: \(error?.localizedDescription ?? "Unknown error")")
+                }
+
+                // Save prospect + notes after geocoding
+                controller.saveProspect(prospect, modelContext: modelContext)
+            }
+        } else {
+            // Save immediately if only the name changed
+            controller.saveProspect(prospect, modelContext: modelContext)
         }
 
         // Append automatic notes (if any)
@@ -267,9 +285,6 @@ struct ProspectDetailsView: View {
             let autoNote = Note(content: change, date: Date(), prospect: prospect)
             prospect.notes.append(autoNote)
         }
-
-        // Save prospect + notes
-        controller.saveProspect(prospect, modelContext: modelContext)
     }
     
 }

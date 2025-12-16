@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import CoreLocation
 
 @Model
 final class Customer: ContactProtocol {
@@ -18,6 +19,10 @@ final class Customer: ContactProtocol {
     var notes: [Note]
     var appointments: [Appointment]
     var knockHistory: [Knock]
+    
+    /// Stored coordinates for marker annotation generation
+    var latitude: Double?
+    var longitude: Double?
 
     init(fullName: String,
          address: String,
@@ -30,6 +35,9 @@ final class Customer: ContactProtocol {
         self.notes = []
         self.appointments = []
         self.knockHistory = []
+        
+        self.latitude = nil
+        self.longitude = nil
     }
 }
 
@@ -45,6 +53,19 @@ extension Customer {
         customer.notes = prospect.notes
         customer.appointments = prospect.appointments
         customer.knockHistory = prospect.knockHistory
+        
+        // 🔑 Preserve spatial identity
+        customer.latitude = prospect.latitude
+        customer.longitude = prospect.longitude
+        
+        // Return the customer object that was convertred from the prospect object
         return customer
+    }
+}
+
+extension Customer {
+    var coordinate: CLLocationCoordinate2D? {
+        guard let lat = latitude, let lon = longitude else { return nil }
+        return CLLocationCoordinate2D(latitude: lat, longitude: lon)
     }
 }

@@ -46,13 +46,38 @@ struct ProspectCreateStepperView: View {
                 if stepIndex == 0 {
                     Button("Next") { stepIndex = 1 }.disabled(!canProceedStepOne)
                 } else {
+                    
+                    /// This is the button for manually creating a prospect from the contacts screen
+                    /// TODO: Make this part its own component
                     Button("Finish") {
                         guard validatePhoneNumber() else { return }
+                        
+                        // Create prospect object
                         let p = Prospect(fullName: fullName, address: address, count: 0, list: "Prospects")
                         p.contactEmail = contactEmail
                         p.contactPhone = contactPhone
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                            onComplete(p)
+
+                        // Geocode before completion
+                        CLGeocoder().geocodeAddressString(address) { placemarks, error in
+                            if let coord = placemarks?.first?.location?.coordinate {
+                                p.latitude = coord.latitude
+                                p.longitude = coord.longitude
+
+                                print("""
+                                📍 Prospect Created
+                                Name: \(fullName)
+                                Address: \(address)
+                                Latitude: \(coord.latitude)
+                                Longitude: \(coord.longitude)
+                                """)
+                            } else {
+                                print("❌ Could not geocode manual prospect: \(error?.localizedDescription ?? "Unknown error")")
+                            }
+
+                            // Call completion on main queue
+                            DispatchQueue.main.async {
+                                onComplete(p)
+                            }
                         }
                     }
                     .disabled(!canProceedStepTwo)

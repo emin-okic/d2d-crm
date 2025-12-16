@@ -9,6 +9,7 @@
 import SwiftUI
 import SwiftData
 import ContactsUI
+import CoreLocation
 
 struct ImportOverlayView: View {
     @Binding var showingImportFromContacts: Bool
@@ -33,24 +34,39 @@ struct ImportOverlayView: View {
                         let phoneNumber = contact.phoneNumbers.first?.value.stringValue ?? ""
                         let email = contact.emailAddresses.first?.value as String? ?? ""
 
-                        let newProspect = Prospect(fullName: fullName, address: addressString, count: 0, list: "Prospects")
-                        newProspect.contactEmail = email
-                        newProspect.contactPhone = phoneNumber
-
+                        // Duplicate check
                         let isDuplicate = prospects.contains {
                             $0.fullName == fullName && $0.address == addressString
                         }
 
-                        if !isDuplicate {
+                        guard !isDuplicate else { continue }
+
+                        let newProspect = Prospect(fullName: fullName, address: addressString, count: 0, list: "Prospects")
+                        newProspect.contactEmail = email
+                        newProspect.contactPhone = phoneNumber
+
+                        // ✅ Geocode prospect to get coordinates
+                        CLGeocoder().geocodeAddressString(addressString) { placemarks, error in
+                            if let coord = placemarks?.first?.location?.coordinate {
+                                newProspect.latitude = coord.latitude
+                                newProspect.longitude = coord.longitude
+                                print("📍 Imported prospect coords: \(coord.latitude), \(coord.longitude)")
+                            } else {
+                                print("❌ Could not geocode imported prospect: \(error?.localizedDescription ?? "Unknown error")")
+                            }
+
+                            // Insert and save after geocoding
                             modelContext.insert(newProspect)
+                            try? modelContext.save()
+
+                            // Trigger map update
+                            onSave()
                         }
                     }
 
-                    try? modelContext.save()
+                    // UI updates
                     selectedList = "Prospects"
                     searchText = ""
-                    onSave()
-
                     showImportSuccess = true
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                         showImportSuccess = false

@@ -156,7 +156,10 @@ struct MapSearchView: View {
 
                             guard !exists else { return }
 
-                            pendingAddProperty = PendingAddProperty(address: tapped)
+                            pendingAddProperty = PendingAddProperty(
+                                address: tapped,
+                                coordinate: coordinate
+                            )
                         }
                     },
                     onRegionChange: { newRegion in
@@ -302,7 +305,10 @@ struct MapSearchView: View {
             AddPropertyConfirmationSheet(
                 address: item.address,
                 onConfirm: {
-                    addProspectFromMapTap(address: item.address)
+                    addProspectFromMapTap(
+                            address: item.address,
+                            coordinate: item.coordinate
+                        )
                     pendingAddProperty = nil
                 },
                 onCancel: {
@@ -381,13 +387,33 @@ struct MapSearchView: View {
                         initialEmail: prospect.contactEmail
                     )
                     { newCustomer in
+                        
                         // 1) Pull over anything useful from the original prospect
                         if let prospect = prospectToConvert {
+                            
                             // Carry over history/notes/contact if your models have these
                             newCustomer.knockHistory = prospect.knockHistory
                             newCustomer.notes = prospect.notes
+                            
                             if newCustomer.contactPhone.isEmpty { newCustomer.contactPhone = prospect.contactPhone }
+                            
                             if newCustomer.contactEmail.isEmpty { newCustomer.contactEmail = prospect.contactEmail }
+                            
+                            
+                            // COPY COORDINATES
+                            newCustomer.latitude = prospect.latitude
+                            newCustomer.longitude = prospect.longitude
+                            
+                            // 🔍 Print for testing
+                            print("""
+                            ⭐️ CONVERTED TO CUSTOMER
+                            Name: \(newCustomer.fullName)
+                            Address: \(newCustomer.address)
+                            Lat: \(newCustomer.latitude?.description ?? "nil")
+                            Lon: \(newCustomer.longitude?.description ?? "nil")
+                            -------------------------
+                            """)
+                            
                         }
 
                         // 2) Persist the new Customer record
@@ -395,17 +421,19 @@ struct MapSearchView: View {
 
                         // 3) Retire the old prospect to avoid duplicate markers
                         if let prospect = prospectToConvert {
-                            // Option A: delete it (cleanest UI/no duplicate pins)
+                            
+                            // Delete it
                             modelContext.delete(prospect)
 
-                            // Option B (if you prefer to keep it): flip list flag instead of deleting
-                            // prospect.list = "Customers"
                         }
 
                         // 4) Save + refresh UI
                         try? modelContext.save()
+                        
                         updateMarkers()
+                        
                         selectedList = "Customers"
+                        
                         showConversionSheet = false
 
                         // 5) Celebrate 🎉
@@ -431,18 +459,40 @@ struct MapSearchView: View {
     /// This function handles adding new prospects to the map
     /// It will simply ask if the prospect selected should be added or not
     /// The assumption is that sales reps will want to pre-load their prospects the day before they knock it
-    private func addProspectFromMapTap(address: String) {
+    private func addProspectFromMapTap(address: String, coordinate: CLLocationCoordinate2D) {
         let newProspect = Prospect(
             fullName: "New Prospect",
             address: address,
             count: 0,
             list: "Prospects"
         )
+        
+        // Assign coordinates once
+        newProspect.latitude = coordinate.latitude
+        newProspect.longitude = coordinate.longitude
 
         modelContext.insert(newProspect)
         try? modelContext.save()
+        
+        // 🔍 Print for testing
+        print("""
+        📍 Prospect created
+        Address: \(address)
+        Latitude: \(coordinate.latitude)
+        Longitude: \(coordinate.longitude)
+        """)
 
-        controller.performSearch(query: address)
+        // controller.performSearch(query: address)
+        
+        // Add marker WITHOUT geocoding
+        controller.markers.append(
+            IdentifiablePlace(
+                address: address,
+                location: coordinate,
+                count: 0,
+                list: "Prospects"
+            )
+        )
     }
 
     private func presentObjectionFlow(filtered: [Objection], for prospect: Prospect) {
@@ -530,6 +580,7 @@ struct MapSearchView: View {
     struct PendingAddProperty: Identifiable {
         let id = UUID()
         let address: String
+        let coordinate: CLLocationCoordinate2D
     }
     
     @MainActor
