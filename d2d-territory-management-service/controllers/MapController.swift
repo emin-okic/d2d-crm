@@ -110,13 +110,28 @@ class MapController: ObservableObject {
     /// - Parameter prospects: Array of `Prospect` objects to display.
     func setMarkers(prospects: [Prospect], customers: [Customer]) {
         clearMarkers()
-        
-        let all: [(String, Int, String)] =
-            prospects.map { ($0.address, $0.knockCount, $0.list) } +
-            customers.map { ($0.address, $0.knockCount, "Customers") }
 
-        for (address, count, list) in all {
-            geocodeAndAdd(address: address, count: count, list: list)
+        // ✅ Prospects: use stored coordinates (NO geocoding)
+        for p in prospects {
+            if let coord = p.coordinate {
+                markers.append(
+                    IdentifiablePlace(
+                        address: p.address,
+                        location: coord,
+                        count: p.knockCount,
+                        list: p.list
+                    )
+                )
+            }
+        }
+
+        // ⚠️ Customers: still geocode (unchanged behavior)
+        for c in customers {
+            geocodeAndAdd(
+                address: c.address,
+                count: c.knockCount,
+                list: "Customers"
+            )
         }
     }
     

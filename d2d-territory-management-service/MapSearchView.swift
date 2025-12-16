@@ -460,7 +460,17 @@ struct MapSearchView: View {
         Longitude: \(coordinate.longitude)
         """)
 
-        controller.performSearch(query: address)
+        // controller.performSearch(query: address)
+        
+        // Add marker WITHOUT geocoding
+        controller.markers.append(
+            IdentifiablePlace(
+                address: address,
+                location: coordinate,
+                count: 0,
+                list: "Prospects"
+            )
+        )
     }
 
     private func presentObjectionFlow(filtered: [Objection], for prospect: Prospect) {
