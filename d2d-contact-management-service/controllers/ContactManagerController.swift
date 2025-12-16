@@ -31,15 +31,32 @@ class ContactManagerController: ObservableObject {
             let customer = customers[safeIndex]
 
             let result = await withCheckedContinuation { (continuation: CheckedContinuation<Prospect?, Never>) in
-                DatabaseController.shared.geocodeAndSuggestNeighbor(from: customer.address) { address in
+                DatabaseController.shared.geocodeAndSuggestNeighbor(from: customer.address) { address, coordinate in
                     if let addr = address,
-                       !existingProspects.contains(where: { $0.address.caseInsensitiveCompare(addr) == .orderedSame }) {
+                       let coord = coordinate,
+                       !existingProspects.contains(where: {
+                           $0.address.caseInsensitiveCompare(addr) == .orderedSame
+                       }) {
+
                         let suggested = Prospect(
                             fullName: "Suggested Neighbor",
                             address: addr,
                             count: 0,
                             list: "Prospects"
                         )
+
+                        // 🔑 Attach coordinates here
+                        suggested.latitude = coord.latitude
+                        suggested.longitude = coord.longitude
+                        
+                        // 🧪 Debug print on creation
+                        print("""
+                        📍 Suggested Prospect Created
+                        Address: \(addr)
+                        Latitude: \(coord.latitude)
+                        Longitude: \(coord.longitude)
+                        """)
+
                         continuation.resume(returning: suggested)
                     } else {
                         continuation.resume(returning: nil)
