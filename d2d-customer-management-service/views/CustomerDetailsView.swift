@@ -144,8 +144,10 @@ struct CustomerDetailsView: View {
 
     // MARK: - Logic
     private func commitEdits() {
+        
         let trimmedName = tempFullName.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedAddress = tempAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        
         var changeNotes: [String] = []
 
         if trimmedName != customer.fullName {
@@ -154,17 +156,50 @@ struct CustomerDetailsView: View {
             customer.fullName = trimmedName
         }
 
+        // Address change
         if trimmedAddress != customer.address {
             let note = "Address changed from \(customer.address.isEmpty ? "Unknown" : customer.address) to \(trimmedAddress)."
             changeNotes.append(note)
             customer.address = trimmedAddress
+
+            // ✅ Re-geocode address
+            CLGeocoder().geocodeAddressString(trimmedAddress) { placemarks, error in
+                if let coord = placemarks?.first?.location?.coordinate {
+                    customer.latitude = coord.latitude
+                    customer.longitude = coord.longitude
+
+                    print("📍 Updated customer coordinates:")
+                    print("   → Latitude: \(coord.latitude)")
+                    print("   → Longitude: \(coord.longitude)")
+                } else {
+                    print("❌ Failed to geocode customer address:")
+                    print("   → \(error?.localizedDescription ?? "Unknown error")")
+                }
+
+                // Save AFTER geocoding
+                saveCustomer(changeNotes: changeNotes)
+            }
+        } else {
+            // No address change → save immediately
+            saveCustomer(changeNotes: changeNotes)
         }
 
+    }
+    
+    /// This replaces modelContext.save() with an async approach for geocoding lat/long coordinates
+    private func saveCustomer(changeNotes: [String]) {
         for note in changeNotes {
-            customer.notes.append(Note(content: note, date: Date()))
+            customer.notes.append(
+                Note(content: note, date: Date())
+            )
         }
 
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+            print("✅ Customer saved successfully")
+        } catch {
+            print("❌ Failed to save customer: \(error)")
+        }
     }
 
     // MARK: - Tab Content
