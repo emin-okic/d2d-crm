@@ -109,6 +109,7 @@ class MapController: ObservableObject {
     /// Replaces existing markers with those derived from the provided list of prospects.
     /// - Parameter prospects: Array of `Prospect` objects to display.
     func setMarkers(prospects: [Prospect], customers: [Customer]) {
+        
         clearMarkers()
 
         // ✅ Prospects: use stored coordinates (NO geocoding)
@@ -125,16 +126,22 @@ class MapController: ObservableObject {
             }
         }
 
-        // ⚠️ Customers: still geocode (unchanged behavior)
+        // ✅ Customers — stored coordinates only
         for c in customers {
-            geocodeAndAdd(
-                address: c.address,
-                count: c.knockCount,
-                list: "Customers"
-            )
+            if let coord = c.coordinate {
+                markers.append(
+                    IdentifiablePlace(
+                        address: c.address,
+                        location: coord,
+                        count: c.knockCount,
+                        list: "Customers"
+                    )
+                )
+            }
         }
     }
     
+    /// This is removable now
     private func geocodeAndAdd(address: String, count: Int, list: String) {
         let geocoder = CLGeocoder()
         geocoder.geocodeAddressString(address) { [weak self] placemarks, error in
