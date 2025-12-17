@@ -124,16 +124,21 @@ struct CustomerDetailsView: View {
     }
     
     private func deleteCustomer() {
-        // ✅ Delete all appointments belonging to this customer
+        // 🔥 Delete all appointments first (same as Prospect)
         for appointment in customer.appointments {
             modelContext.delete(appointment)
         }
 
-        // ✅ Delete the customer itself
+        // 🔥 Delete the customer
         modelContext.delete(customer)
-        try? modelContext.save()
 
-        // ✅ Dismiss the details view
+        do {
+            try modelContext.save()
+        } catch {
+            print("❌ Failed to delete customer: \(error)")
+        }
+
+        // Dismiss back to root (same UX as prospect delete)
         DispatchQueue.main.async {
             if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                let root = scene.windows.first?.rootViewController {

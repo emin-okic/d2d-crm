@@ -17,7 +17,10 @@ final class Customer: ContactProtocol {
     var contactEmail: String
     var contactPhone: String
     var notes: [Note]
+    
+    @Relationship
     var appointments: [Appointment]
+    
     var knockHistory: [Knock]
     
     /// Stored coordinates for marker annotation generation
