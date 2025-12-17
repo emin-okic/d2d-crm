@@ -199,73 +199,7 @@ struct MapSearchView: View {
                 AdEngine.shared.stop()
             }
             // Stepper overlay — presented ONLY when stepperState is set (Follow-Up Later path)
-            .overlay(
-              Group {
-                if let s = stepperState {
-                    KnockStepperPopupView(
-                      context: s.ctx,
-                      objections: objections,
-                      saveKnock: { outcome in
-                        knockController!.saveKnockOnly(
-                          address: s.ctx.address,
-                          status: outcome.rawValue,
-                          prospects: prospects,
-                          onUpdateMarkers: { updateMarkers() }
-                        )
-                      },
-                      // ⬇️ Attach deferred recording when an objection is selected
-                      incrementObjection: { obj in
-                        obj.timesHeard += 1
-
-                        if recordingFeaturesActive, let name = pendingRecordingFileName {
-                          let rec = Recording(fileName: name, date: .now, objection: obj, rating: 3)
-                          modelContext.insert(rec)
-                          pendingRecordingFileName = nil
-                        }
-
-                        try? modelContext.save()
-                      },
-                      saveFollowUp: { prospect, date in
-                          let appt = Appointment(
-                            title: "Follow-Up",
-                            location: prospect.address,
-                            clientName: prospect.fullName,
-                            date: date,
-                            type: "Follow-Up",
-                            notes: prospect.notes.map { $0.content },
-                            prospect: prospect
-                          )
-                          modelContext.insert(appt)
-                          try? modelContext.save()
-                      },
-                      convertToCustomer: { prospect, done in
-                        self.prospectToConvert = prospect
-                        self.showConversionSheet = true
-                        done()
-                      },
-                      addNote: { prospect, text in
-                        prospect.notes.append(Note(content: text))
-                        try? modelContext.save()
-                      },
-                      logTrip: { start, end, date in
-                        guard !end.isEmpty else { return }
-                        let trip = Trip(startAddress: start, endAddress: end, miles: 0, date: date)
-                        modelContext.insert(trip)
-                        try? modelContext.save()
-                      },
-                      onClose: {
-                          self.stepperState = nil
-                          // 🎉 Confetti only now, after stepper has been dismissed
-                          withAnimation { showConfetti = true }
-                      }
-                    )
-                  .frame(width: 280, height: 280) // ⬅️ hard clamp
-                  .position(x: geo.size.width / 2, y: geo.size.height * 0.42)
-                  .transition(.scale.combined(with: .opacity))
-                  .zIndex(1000)
-                }
-              }
-            )
+            .overlay(stepperOverlay)
             
             if showConfetti {
                 ConfettiBurstView()
@@ -566,6 +500,7 @@ struct MapSearchView: View {
                     address: addr,
                     status: "Wasn't Home",
                     prospects: prospects,
+                    customers: customers,
                     onUpdateMarkers: { updateMarkers() },
                     onShowNoteInput: { prospect in
                         prospectToNote = prospect
@@ -600,6 +535,75 @@ struct MapSearchView: View {
                 }
             }
             addressToCenter = nil
+        }
+    }
+    
+    private var stepperOverlay: some View {
+        Group {
+            if let s = stepperState {
+                KnockStepperPopupView(
+                  context: s.ctx,
+                  objections: objections,
+                  saveKnock: { outcome in
+                    knockController!.saveKnockOnly(
+                      address: s.ctx.address,
+                      status: outcome.rawValue,
+                      prospects: prospects,
+                      customers: customers,
+                      onUpdateMarkers: { updateMarkers() }
+                    )
+                  },
+                  // ⬇️ Attach deferred recording when an objection is selected
+                  incrementObjection: { obj in
+                    obj.timesHeard += 1
+
+                    if recordingFeaturesActive, let name = pendingRecordingFileName {
+                      let rec = Recording(fileName: name, date: .now, objection: obj, rating: 3)
+                      modelContext.insert(rec)
+                      pendingRecordingFileName = nil
+                    }
+
+                    try? modelContext.save()
+                  },
+                  saveFollowUp: { prospect, date in
+                      let appt = Appointment(
+                        title: "Follow-Up",
+                        location: prospect.address,
+                        clientName: prospect.fullName,
+                        date: date,
+                        type: "Follow-Up",
+                        notes: prospect.notes.map { $0.content },
+                        prospect: prospect
+                      )
+                      modelContext.insert(appt)
+                      try? modelContext.save()
+                  },
+                  convertToCustomer: { prospect, done in
+                    self.prospectToConvert = prospect
+                    self.showConversionSheet = true
+                    done()
+                  },
+                  addNote: { prospect, text in
+                    prospect.notes.append(Note(content: text))
+                    try? modelContext.save()
+                  },
+                  logTrip: { start, end, date in
+                    guard !end.isEmpty else { return }
+                    let trip = Trip(startAddress: start, endAddress: end, miles: 0, date: date)
+                    modelContext.insert(trip)
+                    try? modelContext.save()
+                  },
+                  onClose: {
+                      self.stepperState = nil
+                      // 🎉 Confetti only now, after stepper has been dismissed
+                      withAnimation { showConfetti = true }
+                  }
+                )
+                .frame(width: 280, height: 280)
+                .position(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY * 0.42)
+                .transition(.scale.combined(with: .opacity))
+                .zIndex(1000)
+            }
         }
     }
 

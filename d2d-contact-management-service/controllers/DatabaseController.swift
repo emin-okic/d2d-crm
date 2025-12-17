@@ -296,3 +296,26 @@ extension String {
         isEmpty ? nil : self
     }
 }
+
+extension DatabaseController {
+
+    func sqliteProspectId(forAddress addressValue: String) -> Int64? {
+        guard let db else { return nil }
+
+        let normalized = addressValue
+            .lowercased()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let query = prospects.filter(address == normalized)
+
+        do {
+            if let row = try db.pluck(query) {
+                return row[id]
+            }
+        } catch {
+            print("❌ Failed to fetch prospect id for address: \(addressValue)")
+        }
+
+        return nil
+    }
+}
