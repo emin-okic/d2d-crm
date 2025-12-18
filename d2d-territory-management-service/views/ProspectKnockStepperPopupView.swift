@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 import MapKit
 
-struct KnockStepperPopupView: View {
+struct ProspectKnockStepperPopupView: View {
     // Inputs
     let context: KnockContext
     

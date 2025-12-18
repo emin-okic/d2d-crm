@@ -1,15 +1,15 @@
 //
-//  ProspectPopupView.swift
+//  CustomerPopupView.swift
 //  d2d-studio
 //
-//  Created by Emin Okic on 7/26/25.
+//  Created by Emin Okic on 12/18/25.
 //
 
 import SwiftUI
 import MapKit
 
-struct ProspectPopupView: View {
-    let place: IdentifiablePlace
+struct CustomerPopupView: View {
+    let customer: Customer
     var onClose: () -> Void
     var onOutcomeSelected: (String, String?) -> Void
 
@@ -45,7 +45,7 @@ struct ProspectPopupView: View {
             }
             .padding(.horizontal, 5)
 
-            Text("Name: \(findProspectName(for: place.address))")
+            Text("Name: \(customer.fullName)")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .padding(.horizontal, 5)
@@ -123,10 +123,6 @@ struct ProspectPopupView: View {
                     stopAndHandleOutcome("Wasn't Home")
                 }
 
-                iconButton(systemName: "checkmark.seal.fill", label: "Sale", color: .green) {
-                    stopAndHandleOutcome("Converted To Sale")
-                }
-
                 iconButton(systemName: "calendar.badge.clock", label: "Follow Up", color: .orange) {
                     stopAndHandleOutcome("Follow Up Later")
                 }
@@ -177,7 +173,7 @@ struct ProspectPopupView: View {
     // MARK: - Helpers
 
     private var formattedAddressLines: [String] {
-        let parts = place.address.components(separatedBy: ",")
+        let parts = customer.address.components(separatedBy: ",")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
 
         if parts.count >= 3 {
@@ -187,14 +183,14 @@ struct ProspectPopupView: View {
             return [street, "\(city), \(stateZip)"]
         }
 
-        let words = place.address.components(separatedBy: " ")
+        let words = customer.address.components(separatedBy: " ")
         if words.count >= 5 {
             let street = words.prefix(3).joined(separator: " ")
             let rest = words.dropFirst(3).joined(separator: " ")
             return [street, rest]
         }
 
-        return [place.address]
+        return [customer.address]
     }
 
     private func startRecording() {
@@ -233,9 +229,5 @@ struct ProspectPopupView: View {
                 .appendingPathComponent(file)
             try? FileManager.default.removeItem(at: url)
         }
-    }
-
-    private func findProspectName(for address: String) -> String {
-        return "Prospect"
     }
 }

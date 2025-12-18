@@ -75,7 +75,7 @@ struct MapSearchView: View {
     @AppStorage("studioUnlocked") private var studioUnlocked: Bool = false
     private var recordingFeaturesActive: Bool { studioUnlocked && recordingModeEnabled }
 
-    @State private var knockController: KnockActionController? = nil
+    @State private var knockController: ProspectKnockActionController? = nil
 
     // NEW: Stepper state (only used for Follow-Up Later)
     @State private var stepperState: KnockStepperState? = nil
@@ -202,7 +202,7 @@ struct MapSearchView: View {
             .overlay(
               Group {
                 if let s = stepperState {
-                    KnockStepperPopupView(
+                    ProspectKnockStepperPopupView(
                       context: s.ctx,
                       objections: objections,
                       saveKnock: { outcome in
@@ -287,7 +287,7 @@ struct MapSearchView: View {
         .onChange(of: searchText) { searchVM.updateQuery($0) }
         .onAppear {
             updateMarkers()
-            knockController = KnockActionController(modelContext: modelContext, controller: controller)
+            knockController = ProspectKnockActionController(modelContext: modelContext, controller: controller)
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     NotificationCenter.default.post(name: .mapShouldRecenterAllMarkers, object: nil)
@@ -511,32 +511,51 @@ struct MapSearchView: View {
     private var prospectPopup: some View {
         Group {
             if let popup = popupState, let pos = popupScreenPosition {
-                ProspectPopupView(
-                    place: popup.place,
-                    isCustomer: popup.place.list == "Customers",
-                    onClose: { popupState = nil },
-                    onOutcomeSelected: { outcome, fileName in
-                        pendingAddress = popup.place.address
-                        isTappedAddressCustomer = popup.place.list == "Customers"
-                        popupState = nil
-                        // Route follow-ups into the stepper; keep others as-is
-                        if outcome == "Follow Up Later" {
-                            pendingRecordingFileName = fileName
-                            if let addr = pendingAddress {
-                                stepperState = .init(ctx: .init(address: addr, isCustomer: isTappedAddressCustomer, prospect: nil))
-                            }
-                        } else {
+                if popup.place.list == "Customers",
+                   let customer = customers.first(where: { $0.address == popup.place.address }) {
+                    CustomerPopupView(
+                        customer: customer,
+                        onClose: { popupState = nil },
+                        onOutcomeSelected: { outcome, fileName in
+                            pendingAddress = customer.address
+                            isTappedAddressCustomer = true
+                            popupState = nil
                             handleOutcome(outcome, recordingFileName: fileName)
-                        }
-                    },
-                    recordingModeEnabled: recordingModeEnabled
-                )
-                .frame(width: 240)
-                .background(.ultraThinMaterial)
-                .cornerRadius(16)
-                .position(pos)
-                .zIndex(999)
-                .id(popup.id)
+                        },
+                        recordingModeEnabled: recordingModeEnabled
+                    )
+                    .frame(width: 240)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(16)
+                    .position(pos)
+                    .zIndex(999)
+                    .id(popup.id)
+                } else {
+                    ProspectPopupView(
+                        place: popup.place,
+                        onClose: { popupState = nil },
+                        onOutcomeSelected: { outcome, fileName in
+                            pendingAddress = popup.place.address
+                            isTappedAddressCustomer = popup.place.list == "Customers"
+                            popupState = nil
+                            if outcome == "Follow Up Later" {
+                                pendingRecordingFileName = fileName
+                                if let addr = pendingAddress {
+                                    stepperState = .init(ctx: .init(address: addr, isCustomer: isTappedAddressCustomer, prospect: nil))
+                                }
+                            } else {
+                                handleOutcome(outcome, recordingFileName: fileName)
+                            }
+                        },
+                        recordingModeEnabled: recordingModeEnabled
+                    )
+                    .frame(width: 240)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(16)
+                    .position(pos)
+                    .zIndex(999)
+                    .id(popup.id)
+                }
             }
         }
     }
