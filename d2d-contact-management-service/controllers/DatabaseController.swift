@@ -296,3 +296,47 @@ extension String {
         isEmpty ? nil : self
     }
 }
+
+extension DatabaseController {
+
+    /// Adds a new customer to the database and returns its SQLite ID
+    @discardableResult
+    func addCustomer(name: String, addr: String) -> Int64? {
+        return addProspect(name: name, addr: addr)
+    }
+
+    /// Adds a knock for a specific Customer object
+    func addKnock(forCustomer customer: Customer) {
+        guard let db = db else { return }
+        
+        // Check if the customer already exists in the database
+        do {
+            let prospectQuery = prospects.filter(address == customer.address)
+            if let row = try db.pluck(prospectQuery) {
+                let pId = row[id]
+                let lastKnock = customer.knockHistory.last!
+                addKnock(
+                    for: pId,
+                    date: lastKnock.date,
+                    status: lastKnock.status,
+                    latitude: lastKnock.latitude,
+                    longitude: lastKnock.longitude
+                )
+            } else {
+                // Customer not in DB yet – insert and then add knock
+                if let newId = addCustomer(name: customer.fullName, addr: customer.address) {
+                    let lastKnock = customer.knockHistory.last!
+                    addKnock(
+                        for: newId,
+                        date: lastKnock.date,
+                        status: lastKnock.status,
+                        latitude: lastKnock.latitude,
+                        longitude: lastKnock.longitude
+                    )
+                }
+            }
+        } catch {
+            print("Failed to add knock for customer: \(error)")
+        }
+    }
+}
