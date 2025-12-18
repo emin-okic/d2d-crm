@@ -170,7 +170,7 @@ extension KnockActionController {
         prospects: [Prospect],
         customers: [Customer],
         onUpdateMarkers: @escaping () -> Void
-    ) -> ResolvedContact {
+    ) -> Prospect? {
 
         let contact = saveKnock(
             address: address,
@@ -183,7 +183,12 @@ extension KnockActionController {
             onUpdateMarkers()
         }
 
-        return contact
+        switch contact {
+        case .prospect(let prospect):
+            return prospect
+        case .customer:
+            return nil
+        }
     }
 }
 
