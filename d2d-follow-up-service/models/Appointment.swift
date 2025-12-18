@@ -20,6 +20,9 @@ class Appointment: Identifiable {
 
     @Relationship(inverse: \Prospect.appointments)
     var prospect: Prospect?
+    
+    @Relationship(inverse: \Customer.appointments)
+    var customer: Customer?
 
     init(
         title: String,

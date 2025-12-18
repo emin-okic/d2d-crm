@@ -543,8 +543,11 @@ struct MapSearchView: View {
                         clientName: customer.fullName,
                         date: date,
                         type: "Follow-Up",
-                        notes: []
+                        notes: [],
+                        prospect: nil // <-- not used for customer, but we need a relationship for Customer if needed
                     )
+                    // Attach to the customer
+                    appt.customer = customer // <-- Add this
                     modelContext.insert(appt)
                     try? modelContext.save()
                 },
