@@ -506,6 +506,66 @@ struct MapSearchView: View {
             .transition(.scale.combined(with: .opacity))
             .zIndex(1000)
         }
+        
+        // Customer Stepper
+        if isTappedAddressCustomer,
+           let s = stepperState,
+           let customer = customers.first(where: { addressesMatch($0.address, s.ctx.address) }) {
+
+            CustomerKnockStepperPopupView(
+                customer: customer,
+                objections: objections,
+                saveKnock: { outcome in
+                    // customers only allow Follow Up Later & Wasn't Home
+                    let lat = customer.latitude ?? controller.region.center.latitude
+                    let lon = customer.longitude ?? controller.region.center.longitude
+
+                    customer.knockHistory.append(
+                        Knock(
+                            date: .now,
+                            status: outcome.rawValue,
+                            latitude: lat,
+                            longitude: lon
+                        )
+                    )
+                    try? modelContext.save()
+                    updateMarkers()
+                    return customer
+                },
+                incrementObjection: { obj in
+                    obj.timesHeard += 1
+                    try? modelContext.save()
+                },
+                saveFollowUp: { customer, date in
+                    let appt = Appointment(
+                        title: "Follow-Up",
+                        location: customer.address,
+                        clientName: customer.fullName,
+                        date: date,
+                        type: "Follow-Up",
+                        notes: []
+                    )
+                    modelContext.insert(appt)
+                    try? modelContext.save()
+                },
+                addNote: { customer, text in
+                    customer.notes.append(Note(content: text))
+                    try? modelContext.save()
+                },
+                logTrip: { start, end, date in
+                    let trip = Trip(startAddress: start, endAddress: end, miles: 0, date: date)
+                    modelContext.insert(trip)
+                    try? modelContext.save()
+                },
+                onClose: {
+                    stepperState = nil
+                }
+            )
+            .frame(width: 280, height: 280)
+            .position(x: geo.size.width / 2, y: geo.size.height * 0.42)
+            .transition(.scale.combined(with: .opacity))
+            .zIndex(1000)
+        }
 
         // Customer Popup
         if isTappedAddressCustomer,
