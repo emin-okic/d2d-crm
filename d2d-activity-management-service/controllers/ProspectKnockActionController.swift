@@ -11,7 +11,7 @@ import SwiftData
 import MapKit
 
 @MainActor
-class KnockActionController {
+class ProspectKnockActionController {
     private let modelContext: ModelContext
     private let controller: MapController
     private let locationManager = LocationManager.shared
@@ -123,7 +123,7 @@ class KnockActionController {
     }
 }
 
-extension KnockActionController {
+extension ProspectKnockActionController {
     @discardableResult
     func saveKnockOnly(address: String, status: String, prospects: [Prospect], onUpdateMarkers: @escaping () -> Void) -> Prospect {
         let p = saveKnock(address: address, status: status, prospects: prospects)

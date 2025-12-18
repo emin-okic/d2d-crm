@@ -75,7 +75,7 @@ struct MapSearchView: View {
     @AppStorage("studioUnlocked") private var studioUnlocked: Bool = false
     private var recordingFeaturesActive: Bool { studioUnlocked && recordingModeEnabled }
 
-    @State private var knockController: KnockActionController? = nil
+    @State private var knockController: ProspectKnockActionController? = nil
 
     // NEW: Stepper state (only used for Follow-Up Later)
     @State private var stepperState: KnockStepperState? = nil
@@ -287,7 +287,7 @@ struct MapSearchView: View {
         .onChange(of: searchText) { searchVM.updateQuery($0) }
         .onAppear {
             updateMarkers()
-            knockController = KnockActionController(modelContext: modelContext, controller: controller)
+            knockController = ProspectKnockActionController(modelContext: modelContext, controller: controller)
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     NotificationCenter.default.post(name: .mapShouldRecenterAllMarkers, object: nil)
