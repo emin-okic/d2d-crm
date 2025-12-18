@@ -25,41 +25,60 @@ class KnockActionController {
         address: String,
         status: String,
         prospects: [Prospect],
+        customers: [Customer],
         onUpdateMarkers: @escaping () -> Void,
         onShowNoteInput: @escaping (Prospect) -> Void
     ) {
-        let prospect = saveKnock(address: address, status: status, prospects: prospects)
+        let contact = saveKnock(
+            address: address,
+            status: status,
+            prospects: prospects,
+            customers: customers
+        )
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             onUpdateMarkers()
         }
 
-        if status != "Wasn't Home" {
-            onShowNoteInput(prospect)
-        }
+        // Only prospects get notes
+        guard status != "Wasn't Home",
+              case .prospect(let prospect) = contact
+        else { return }
+
+        onShowNoteInput(prospect)
     }
 
     func handleKnockAndPromptObjection(
         address: String,
         status: String,
         prospects: [Prospect],
+        customers: [Customer],
         objections: [Objection],
         onUpdateMarkers: @escaping () -> Void,
         onShowObjectionPicker: @escaping ([Objection], Prospect) -> Void,
         onShowAddObjection: @escaping (Prospect) -> Void
     ) {
-        let prospect = saveKnock(address: address, status: status, prospects: prospects)
+        let contact = saveKnock(
+            address: address,
+            status: status,
+            prospects: prospects,
+            customers: customers
+        )
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             onUpdateMarkers()
         }
 
-        if objections.isEmpty {
+        // Objections are only for prospects
+        guard case .prospect(let prospect) = contact else { return }
+
+        let filtered = objections.filter { $0.text != "Converted To Sale" }
+
+        if filtered.isEmpty {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 onShowAddObjection(prospect)
             }
         } else {
-            let filtered = objections.filter { $0.text != "Converted To Sale" }
             onShowObjectionPicker(filtered, prospect)
         }
     }
@@ -85,49 +104,157 @@ class KnockActionController {
         }
     }
 
-    private func saveKnock(address: String, status: String, prospects: [Prospect]) -> Prospect {
-        let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+    private func saveKnock(
+        address: String,
+        status: String,
+        prospects: [Prospect],
+        customers: [Customer]
+    ) -> ResolvedContact {
+
+        guard var contact = resolveContact(
+            address: address,
+            prospects: prospects,
+            customers: customers
+        ) else {
+            fatalError("Attempted to log knock for unknown address: \(address)")
+        }
+
         let now = Date()
         let location = locationManager.currentLocation
-        let lat = location?.latitude ?? 0.0
-        let lon = location?.longitude ?? 0.0
+        let lat = location?.latitude ?? contact.latitude ?? 0
+        let lon = location?.longitude ?? contact.longitude ?? 0
 
-        var prospectId: Int64?
-        var updated: Prospect
-
-        if let existing = prospects.first(where: {
-            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
-        }) {
-            existing.knockCount += 1
-            existing.knockHistory.append(Knock(date: now, status: status, latitude: lat, longitude: lon))
-            updated = existing
-        } else {
-            let new = Prospect(fullName: "New Prospect", address: address, count: 1, list: "Prospects")
-            new.knockHistory = [Knock(date: now, status: status, latitude: lat, longitude: lon)]
-            modelContext.insert(new)
-            updated = new
-
-            if let newId = DatabaseController.shared.addProspect(name: new.fullName, addr: new.address) {
-                prospectId = newId
-            }
-        }
-
-        if let id = prospectId {
-            DatabaseController.shared.addKnock(for: id, date: now, status: status, latitude: lat, longitude: lon)
-        }
+        contact.knockCount += 1
+        contact.knockHistory.append(
+            Knock(date: now, status: status, latitude: lat, longitude: lon)
+        )
 
         controller.performSearch(query: address)
         try? modelContext.save()
 
-        return updated
+        return contact
     }
+    
+    private func resolveContact(
+        address: String,
+        prospects: [Prospect],
+        customers: [Customer]
+    ) -> ResolvedContact? {
+
+        let normalized = address
+            .lowercased()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let customer = customers.first(where: {
+            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
+        }) {
+            return .customer(customer)
+        }
+
+        if let prospect = prospects.first(where: {
+            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
+        }) {
+            return .prospect(prospect)
+        }
+
+        return nil
+    }
+    
 }
 
 extension KnockActionController {
     @discardableResult
-    func saveKnockOnly(address: String, status: String, prospects: [Prospect], onUpdateMarkers: @escaping () -> Void) -> Prospect {
-        let p = saveKnock(address: address, status: status, prospects: prospects)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { onUpdateMarkers() }
-        return p
+    func saveKnockOnly(
+        address: String,
+        status: String,
+        prospects: [Prospect],
+        customers: [Customer],
+        onUpdateMarkers: @escaping () -> Void
+    ) -> ResolvedContact {
+
+        let contact = saveKnock(
+            address: address,
+            status: status,
+            prospects: prospects,
+            customers: customers
+        )
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            onUpdateMarkers()
+        }
+
+        return contact
+    }
+}
+
+enum ResolvedContact {
+    case prospect(Prospect)
+    case customer(Customer)
+
+    var address: String {
+        switch self {
+        case .prospect(let p): return p.address
+        case .customer(let c): return c.address
+        }
+    }
+
+    var knockHistory: [Knock] {
+        get {
+            switch self {
+            case .prospect(let p): return p.knockHistory
+            case .customer(let c): return c.knockHistory
+            }
+        }
+        set {
+            switch self {
+            case .prospect(let p): p.knockHistory = newValue
+            case .customer(let c): c.knockHistory = newValue
+            }
+        }
+    }
+
+    var knockCount: Int {
+        get {
+            switch self {
+            case .prospect(let p): return p.knockCount
+            case .customer(let c): return c.knockCount
+            }
+        }
+        set {
+            switch self {
+            case .prospect(let p): p.knockCount = newValue
+            case .customer(let c): c.knockCount = newValue
+            }
+        }
+    }
+
+    var latitude: Double? {
+        get {
+            switch self {
+            case .prospect(let p): return p.latitude
+            case .customer(let c): return c.latitude
+            }
+        }
+        set {
+            switch self {
+            case .prospect(let p): p.latitude = newValue
+            case .customer(let c): c.latitude = newValue
+            }
+        }
+    }
+
+    var longitude: Double? {
+        get {
+            switch self {
+            case .prospect(let p): return p.longitude
+            case .customer(let c): return c.longitude
+            }
+        }
+        set {
+            switch self {
+            case .prospect(let p): p.longitude = newValue
+            case .customer(let c): c.longitude = newValue
+            }
+        }
     }
 }

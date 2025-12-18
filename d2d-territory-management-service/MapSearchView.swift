@@ -566,6 +566,7 @@ struct MapSearchView: View {
                     address: addr,
                     status: "Wasn't Home",
                     prospects: prospects,
+                    customers: customers,
                     onUpdateMarkers: { updateMarkers() },
                     onShowNoteInput: { prospect in
                         prospectToNote = prospect
