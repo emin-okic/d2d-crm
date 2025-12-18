@@ -542,38 +542,87 @@ struct MapSearchView: View {
     }
 
     private func handleOutcome(_ status: String, recordingFileName: String?) {
-        if status == "Converted To Sale" {
-            if let addr = pendingAddress {
-                if let prospect = prospects.first(where: {
-                    $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
-                    addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-                }) {
-                    prospectToConvert = prospect
-                    showConversionSheet = true
-                }
-            }
 
-        } else if status == "Follow Up Later" {
-            if let addr = pendingAddress {
-                stepperState = .init(
-                    ctx: .init(address: addr, isCustomer: isTappedAddressCustomer, prospect: nil)
+        guard let addr = pendingAddress else { return }
+
+        // =========================
+        // CUSTOMER FLOW
+        // =========================
+        if isTappedAddressCustomer {
+
+            switch status {
+
+            case "Wasn't Home":
+                let customerController = CustomerKnockActionController(
+                    modelContext: modelContext,
+                    controller: controller
                 )
-            }
 
-        } else if status == "Wasn't Home" {
-            if let addr = pendingAddress {
-                knockController?.handleKnockAndPromptNote(
+                customerController.handleKnockAndUpdateMarker(
                     address: addr,
-                    status: "Wasn't Home",
-                    prospects: prospects,
-                    onUpdateMarkers: { updateMarkers() },
-                    onShowNoteInput: { prospect in
-                        prospectToNote = prospect
-                        showNoteInput = true
-                    }
+                    status: status,
+                    customers: customers,
+                    onUpdateMarkers: { updateMarkers() }
                 )
+
+            case "Follow Up Later":
+                pendingRecordingFileName = recordingFileName
+                stepperState = .init(
+                    ctx: .init(
+                        address: addr,
+                        isCustomer: true,
+                        prospect: nil
+                    )
+                )
+
+            default:
+                // Customers should never hit Converted To Sale
+                assertionFailure("Invalid outcome '\(status)' for Customer")
             }
+
+            try? modelContext.save()
+            return
         }
+
+        // =========================
+        // PROSPECT FLOW
+        // =========================
+        switch status {
+
+        case "Converted To Sale":
+            if let prospect = prospects.first(where: {
+                addressesMatch($0.address, addr)
+            }) {
+                prospectToConvert = prospect
+                showConversionSheet = true
+            }
+
+        case "Follow Up Later":
+            pendingRecordingFileName = recordingFileName
+            stepperState = .init(
+                ctx: .init(
+                    address: addr,
+                    isCustomer: false,
+                    prospect: nil
+                )
+            )
+
+        case "Wasn't Home":
+            knockController?.handleKnockAndPromptNote(
+                address: addr,
+                status: status,
+                prospects: prospects,
+                onUpdateMarkers: { updateMarkers() },
+                onShowNoteInput: { prospect in
+                    prospectToNote = prospect
+                    showNoteInput = true
+                }
+            )
+
+        default:
+            break
+        }
+
         try? modelContext.save()
     }
     
