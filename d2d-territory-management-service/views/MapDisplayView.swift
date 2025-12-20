@@ -10,7 +10,11 @@ import MapKit
 
 struct MapDisplayView: UIViewRepresentable {
     @Binding var region: MKCoordinateRegion
+    
     var markers: [IdentifiablePlace]
+    
+    var userLocationManager: UserLocationManager
+    
     var onMarkerTapped: (IdentifiablePlace) -> Void
     var onMapTapped: (CLLocationCoordinate2D) -> Void
     var onRegionChange: ((MKCoordinateRegion) -> Void)?      // NEW: notify region changes
@@ -19,6 +23,7 @@ struct MapDisplayView: UIViewRepresentable {
 
     func makeCoordinator() -> Coordinator {
         Coordinator(
+            userLocationManager: userLocationManager,
             onMarkerTapped: onMarkerTapped,
             onMapTapped: onMapTapped,
             onRegionChange: onRegionChange
@@ -31,7 +36,11 @@ struct MapDisplayView: UIViewRepresentable {
         mapView.setRegion(region, animated: false)
         mapView.isZoomEnabled = true
         mapView.isScrollEnabled = true
-        mapView.showsUserLocation = false
+        
+        mapView.showsUserLocation = true
+        mapView.userTrackingMode = .none
+        mapView.isRotateEnabled = true
+        
         MapDisplayView.cachedMapView = mapView
 
         let tapGesture = UITapGestureRecognizer(
@@ -64,15 +73,20 @@ struct MapDisplayView: UIViewRepresentable {
     }
 
     class Coordinator: NSObject, MKMapViewDelegate {
+        
+        let userLocationManager: UserLocationManager
+        
         var onMarkerTapped: (IdentifiablePlace) -> Void
         var onMapTapped: (CLLocationCoordinate2D) -> Void
         var onRegionChange: ((MKCoordinateRegion) -> Void)?
 
         init(
+            userLocationManager: UserLocationManager,
             onMarkerTapped: @escaping (IdentifiablePlace) -> Void,
             onMapTapped: @escaping (CLLocationCoordinate2D) -> Void,
             onRegionChange: ((MKCoordinateRegion) -> Void)? = nil
         ) {
+            self.userLocationManager = userLocationManager
             self.onMarkerTapped = onMarkerTapped
             self.onMapTapped = onMapTapped
             self.onRegionChange = onRegionChange
@@ -92,6 +106,39 @@ struct MapDisplayView: UIViewRepresentable {
         }
 
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+            
+            
+            if annotation is MKUserLocation {
+                let id = "userLocation"
+                var view = mapView.dequeueReusableAnnotationView(withIdentifier: id)
+
+                if view == nil {
+                    view = MKAnnotationView(annotation: annotation, reuseIdentifier: id)
+                    view?.bounds = CGRect(x: 0, y: 0, width: 40, height: 40)
+                    view?.backgroundColor = .clear
+
+                    let dot = UIView(frame: CGRect(x: 12, y: 12, width: 16, height: 16))
+                    dot.backgroundColor = .systemBlue
+                    dot.layer.cornerRadius = 8
+                    dot.layer.borderWidth = 3
+                    dot.layer.borderColor = UIColor.white.cgColor
+                    dot.tag = 100
+
+                    let cone = DirectionConeView(frame: view!.bounds)
+                    cone.tag = 200
+
+                    view?.addSubview(cone)
+                    view?.addSubview(dot)
+                }
+
+                if let cone = view?.viewWithTag(200) as? DirectionConeView,
+                   let heading = userLocationManager.heading {
+                    cone.updateHeading(heading.trueHeading)
+                }
+
+                return view
+            }
+            
             guard let annotation = annotation as? IdentifiableAnnotation else { return nil }
             let identifier = "customMarker"
             var view = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
@@ -141,4 +188,40 @@ private class IdentifiableAnnotation: NSObject, MKAnnotation {
     var coordinate: CLLocationCoordinate2D { place.location }
     var title: String? { place.address }
     init(place: IdentifiablePlace) { self.place = place }
+}
+
+final class DirectionConeView: UIView {
+
+    private let coneLayer = CAShapeLayer()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .clear
+        layer.addSublayer(coneLayer)
+        updatePath()
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    private func updatePath() {
+        let center = CGPoint(x: bounds.midX, y: bounds.midY)
+        let path = UIBezierPath()
+        path.move(to: center)
+        path.addArc(
+            withCenter: center,
+            radius: 20,
+            startAngle: -.pi / 8,
+            endAngle: .pi / 8,
+            clockwise: true
+        )
+        path.close()
+
+        coneLayer.path = path.cgPath
+        coneLayer.fillColor = UIColor.systemBlue.withAlphaComponent(0.25).cgColor
+    }
+
+    func updateHeading(_ degrees: CLLocationDirection) {
+        let radians = CGFloat(degrees) * .pi / 180
+        transform = CGAffineTransform(rotationAngle: radians)
+    }
 }
