@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MapKit
+import Combine
 
 struct MapDisplayView: UIViewRepresentable {
     @Binding var region: MKCoordinateRegion
@@ -31,8 +32,12 @@ struct MapDisplayView: UIViewRepresentable {
     }
 
     func makeUIView(context: Context) -> MKMapView {
+        
         let mapView = MKMapView()
+        
         mapView.delegate = context.coordinator
+        context.coordinator.mapView = mapView
+        
         mapView.setRegion(region, animated: false)
         mapView.isZoomEnabled = true
         mapView.isScrollEnabled = true
@@ -48,6 +53,7 @@ struct MapDisplayView: UIViewRepresentable {
             action: #selector(Coordinator.handleTap(_:))
         )
         mapView.addGestureRecognizer(tapGesture)
+        
         return mapView
     }
 
@@ -76,6 +82,10 @@ struct MapDisplayView: UIViewRepresentable {
         
         let userLocationManager: UserLocationManager
         
+        private var headingCancellable: AnyCancellable?
+        
+        weak var mapView: MKMapView?
+        
         var onMarkerTapped: (IdentifiablePlace) -> Void
         var onMapTapped: (CLLocationCoordinate2D) -> Void
         var onRegionChange: ((MKCoordinateRegion) -> Void)?
@@ -90,6 +100,25 @@ struct MapDisplayView: UIViewRepresentable {
             self.onMarkerTapped = onMarkerTapped
             self.onMapTapped = onMapTapped
             self.onRegionChange = onRegionChange
+            
+            super.init()
+            
+            
+            // 🔴 LIVE heading updates
+            headingCancellable = userLocationManager.$heading
+                .receive(on: RunLoop.main)
+                .sink { [weak self] heading in
+                    guard
+                        let self,
+                        let mapView = self.mapView,
+                        let heading,
+                        let userView = mapView.view(for: mapView.userLocation),
+                        let cone = userView.viewWithTag(200) as? DirectionConeView
+                    else { return }
+
+                    cone.updateHeading(heading.trueHeading)
+                }
+            
         }
 
         @objc func handleTap(_ gesture: UITapGestureRecognizer) {
