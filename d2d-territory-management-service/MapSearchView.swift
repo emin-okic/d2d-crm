@@ -75,7 +75,7 @@ struct MapSearchView: View {
     @AppStorage("studioUnlocked") private var studioUnlocked: Bool = false
     private var recordingFeaturesActive: Bool { studioUnlocked && recordingModeEnabled }
 
-    @State private var knockController: KnockActionController? = nil
+    @State private var knockController: ProspectKnockActionController? = nil
 
     // NEW: Stepper state (only used for Follow-Up Later)
     @State private var stepperState: KnockStepperState? = nil
@@ -206,12 +206,37 @@ struct MapSearchView: View {
                       context: s.ctx,
                       objections: objections,
                       saveKnock: { outcome in
-                        knockController!.saveKnockOnly(
-                          address: s.ctx.address,
-                          status: outcome.rawValue,
-                          prospects: prospects,
-                          onUpdateMarkers: { updateMarkers() }
-                        )
+                          if s.ctx.isCustomer {
+                              let customerController = CustomerKnockActionController(
+                                  modelContext: modelContext,
+                                  controller: controller
+                              )
+
+                              let customer = customerController.saveKnockOnly(
+                                  address: s.ctx.address,
+                                  status: outcome.rawValue,
+                                  customers: customers,
+                                  onUpdateMarkers: { updateMarkers() }
+                              )
+
+                              // 🔑 Convert Customer → synthetic Prospect ONLY for UI continuity
+                              let p = Prospect(
+                                  fullName: customer.fullName,
+                                  address: customer.address,
+                                  count: customer.knockCount,
+                                  list: "Customers"
+                              )
+                              p.latitude = customer.latitude
+                              p.longitude = customer.longitude
+                              return p
+                          } else {
+                              return knockController!.saveKnockOnly(
+                                  address: s.ctx.address,
+                                  status: outcome.rawValue,
+                                  prospects: prospects,
+                                  onUpdateMarkers: { updateMarkers() }
+                              )
+                          }
                       },
                       // ⬇️ Attach deferred recording when an objection is selected
                       incrementObjection: { obj in
@@ -226,16 +251,35 @@ struct MapSearchView: View {
                         try? modelContext.save()
                       },
                       saveFollowUp: { prospect, date in
-                          let appt = Appointment(
-                            title: "Follow-Up",
-                            location: prospect.address,
-                            clientName: prospect.fullName,
-                            date: date,
-                            type: "Follow-Up",
-                            notes: prospect.notes.map { $0.content },
-                            prospect: prospect
-                          )
-                          modelContext.insert(appt)
+                          if s.ctx.isCustomer {
+                              guard let customer = customers.first(where: {
+                                  addressesMatch($0.address, s.ctx.address)
+                              }) else { return }
+
+                              let appt = Appointment(
+                                  title: "Follow-Up",
+                                  location: customer.address,
+                                  clientName: customer.fullName,
+                                  date: date,
+                                  type: "Follow-Up",
+                                  notes: customer.notes.map { $0.content }
+                              )
+
+                              customer.appointments.append(appt)
+                              modelContext.insert(appt)
+                          } else {
+                              let appt = Appointment(
+                                  title: "Follow-Up",
+                                  location: prospect.address,
+                                  clientName: prospect.fullName,
+                                  date: date,
+                                  type: "Follow-Up",
+                                  notes: prospect.notes.map { $0.content },
+                                  prospect: prospect
+                              )
+                              modelContext.insert(appt)
+                          }
+
                           try? modelContext.save()
                       },
                       convertToCustomer: { prospect, done in
@@ -287,7 +331,7 @@ struct MapSearchView: View {
         .onChange(of: searchText) { searchVM.updateQuery($0) }
         .onAppear {
             updateMarkers()
-            knockController = KnockActionController(modelContext: modelContext, controller: controller)
+            knockController = ProspectKnockActionController(modelContext: modelContext, controller: controller)
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     NotificationCenter.default.post(name: .mapShouldRecenterAllMarkers, object: nil)
@@ -394,6 +438,9 @@ struct MapSearchView: View {
                             // Carry over history/notes/contact if your models have these
                             newCustomer.knockHistory = prospect.knockHistory
                             newCustomer.notes = prospect.notes
+                            
+                            // Carry over the appointments
+                            newCustomer.appointments = prospect.appointments
                             
                             if newCustomer.contactPhone.isEmpty { newCustomer.contactPhone = prospect.contactPhone }
                             
@@ -542,38 +589,87 @@ struct MapSearchView: View {
     }
 
     private func handleOutcome(_ status: String, recordingFileName: String?) {
-        if status == "Converted To Sale" {
-            if let addr = pendingAddress {
-                if let prospect = prospects.first(where: {
-                    $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
-                    addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-                }) {
-                    prospectToConvert = prospect
-                    showConversionSheet = true
-                }
-            }
 
-        } else if status == "Follow Up Later" {
-            if let addr = pendingAddress {
-                stepperState = .init(
-                    ctx: .init(address: addr, isCustomer: isTappedAddressCustomer, prospect: nil)
+        guard let addr = pendingAddress else { return }
+
+        // =========================
+        // CUSTOMER FLOW
+        // =========================
+        if isTappedAddressCustomer {
+
+            switch status {
+
+            case "Wasn't Home":
+                let customerController = CustomerKnockActionController(
+                    modelContext: modelContext,
+                    controller: controller
                 )
-            }
 
-        } else if status == "Wasn't Home" {
-            if let addr = pendingAddress {
-                knockController?.handleKnockAndPromptNote(
+                customerController.handleKnockAndUpdateMarker(
                     address: addr,
-                    status: "Wasn't Home",
-                    prospects: prospects,
-                    onUpdateMarkers: { updateMarkers() },
-                    onShowNoteInput: { prospect in
-                        prospectToNote = prospect
-                        showNoteInput = true
-                    }
+                    status: status,
+                    customers: customers,
+                    onUpdateMarkers: { updateMarkers() }
                 )
+
+            case "Follow Up Later":
+                pendingRecordingFileName = recordingFileName
+                stepperState = .init(
+                    ctx: .init(
+                        address: addr,
+                        isCustomer: true,
+                        prospect: nil
+                    )
+                )
+
+            default:
+                // Customers should never hit Converted To Sale
+                assertionFailure("Invalid outcome '\(status)' for Customer")
             }
+
+            try? modelContext.save()
+            return
         }
+
+        // =========================
+        // PROSPECT FLOW
+        // =========================
+        switch status {
+
+        case "Converted To Sale":
+            if let prospect = prospects.first(where: {
+                addressesMatch($0.address, addr)
+            }) {
+                prospectToConvert = prospect
+                showConversionSheet = true
+            }
+
+        case "Follow Up Later":
+            pendingRecordingFileName = recordingFileName
+            stepperState = .init(
+                ctx: .init(
+                    address: addr,
+                    isCustomer: false,
+                    prospect: nil
+                )
+            )
+
+        case "Wasn't Home":
+            knockController?.handleKnockAndPromptNote(
+                address: addr,
+                status: status,
+                prospects: prospects,
+                onUpdateMarkers: { updateMarkers() },
+                onShowNoteInput: { prospect in
+                    prospectToNote = prospect
+                    showNoteInput = true
+                }
+            )
+
+        default:
+            break
+        }
+
         try? modelContext.save()
     }
     
