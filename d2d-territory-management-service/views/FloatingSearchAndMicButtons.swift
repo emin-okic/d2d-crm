@@ -18,6 +18,10 @@ struct FloatingSearchAndMicButtons: View {
     var animationNamespace: Namespace.ID
     var onSubmit: () -> Void
     var onSelectResult: (MKLocalSearchCompletion) -> Void
+    
+    // For the center on my location button
+    var userLocationManager: UserLocationManager
+    var mapController: MapController
 
     var body: some View {
         VStack(spacing: 10) {
@@ -30,12 +34,29 @@ struct FloatingSearchAndMicButtons: View {
                 onSubmit: onSubmit,
                 onSelectResult: onSelectResult
             )
-
+            
             if !isExpanded {
-                RecordingToggleButton()
-                    .transition(.opacity)
-                    .padding(.bottom, 10)
+                VStack(spacing: 10) {
+                    Button {
+                        if let loc = userLocationManager.location {
+                            mapController.region.center = loc.coordinate
+                        }
+                    } label: {
+                        Image(systemName: "location.fill")
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(
+                                    Circle().fill(Color.blue)
+                                )
+                                .shadow(radius: 4)
+                    }
+
+                    // RecordingToggleButton()
+                }
+                .transition(.opacity)
+                .padding(.bottom, 10)
             }
+
         }
         .padding(.bottom, 30)
         .padding(.leading, 20)
