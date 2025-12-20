@@ -439,6 +439,9 @@ struct MapSearchView: View {
                             newCustomer.knockHistory = prospect.knockHistory
                             newCustomer.notes = prospect.notes
                             
+                            // Carry over the appointments
+                            newCustomer.appointments = prospect.appointments
+                            
                             if newCustomer.contactPhone.isEmpty { newCustomer.contactPhone = prospect.contactPhone }
                             
                             if newCustomer.contactEmail.isEmpty { newCustomer.contactEmail = prospect.contactEmail }
