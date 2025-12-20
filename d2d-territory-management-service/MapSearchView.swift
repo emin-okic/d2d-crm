@@ -206,12 +206,37 @@ struct MapSearchView: View {
                       context: s.ctx,
                       objections: objections,
                       saveKnock: { outcome in
-                        knockController!.saveKnockOnly(
-                          address: s.ctx.address,
-                          status: outcome.rawValue,
-                          prospects: prospects,
-                          onUpdateMarkers: { updateMarkers() }
-                        )
+                          if s.ctx.isCustomer {
+                              let customerController = CustomerKnockActionController(
+                                  modelContext: modelContext,
+                                  controller: controller
+                              )
+
+                              let customer = customerController.saveKnockOnly(
+                                  address: s.ctx.address,
+                                  status: outcome.rawValue,
+                                  customers: customers,
+                                  onUpdateMarkers: { updateMarkers() }
+                              )
+
+                              // 🔑 Convert Customer → synthetic Prospect ONLY for UI continuity
+                              let p = Prospect(
+                                  fullName: customer.fullName,
+                                  address: customer.address,
+                                  count: customer.knockCount,
+                                  list: "Customers"
+                              )
+                              p.latitude = customer.latitude
+                              p.longitude = customer.longitude
+                              return p
+                          } else {
+                              return knockController!.saveKnockOnly(
+                                  address: s.ctx.address,
+                                  status: outcome.rawValue,
+                                  prospects: prospects,
+                                  onUpdateMarkers: { updateMarkers() }
+                              )
+                          }
                       },
                       // ⬇️ Attach deferred recording when an objection is selected
                       incrementObjection: { obj in
@@ -226,16 +251,35 @@ struct MapSearchView: View {
                         try? modelContext.save()
                       },
                       saveFollowUp: { prospect, date in
-                          let appt = Appointment(
-                            title: "Follow-Up",
-                            location: prospect.address,
-                            clientName: prospect.fullName,
-                            date: date,
-                            type: "Follow-Up",
-                            notes: prospect.notes.map { $0.content },
-                            prospect: prospect
-                          )
-                          modelContext.insert(appt)
+                          if s.ctx.isCustomer {
+                              guard let customer = customers.first(where: {
+                                  addressesMatch($0.address, s.ctx.address)
+                              }) else { return }
+
+                              let appt = Appointment(
+                                  title: "Follow-Up",
+                                  location: customer.address,
+                                  clientName: customer.fullName,
+                                  date: date,
+                                  type: "Follow-Up",
+                                  notes: customer.notes.map { $0.content }
+                              )
+
+                              customer.appointments.append(appt)
+                              modelContext.insert(appt)
+                          } else {
+                              let appt = Appointment(
+                                  title: "Follow-Up",
+                                  location: prospect.address,
+                                  clientName: prospect.fullName,
+                                  date: date,
+                                  type: "Follow-Up",
+                                  notes: prospect.notes.map { $0.content },
+                                  prospect: prospect
+                              )
+                              modelContext.insert(appt)
+                          }
+
                           try? modelContext.save()
                       },
                       convertToCustomer: { prospect, done in
