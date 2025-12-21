@@ -117,35 +117,47 @@ struct ProspectPopupView: View {
     }
 
     private var outcomeButtons: some View {
-        HStack {
-            Spacer()
-            HStack(spacing: 16) {
-                
-                if !isCustomer {
-                    iconButton(
-                        systemName: "xmark.octagon.fill",
-                        label: "Unqualified",
-                        color: .red
-                    ) {
-                        stopAndHandleOutcome("Unqualified")
-                    }
-                }
-                
-                iconButton(systemName: "house.slash.fill", label: "Not Home", color: .gray) {
-                    stopAndHandleOutcome("Wasn't Home")
-                }
+        let columns = [
+            GridItem(.flexible()),
+            GridItem(.flexible())
+        ]
 
-                if !isCustomer {
-                    iconButton(systemName: "checkmark.seal.fill", label: "Sale", color: .green) {
-                        stopAndHandleOutcome("Converted To Sale")
-                    }
-                }
-
-                iconButton(systemName: "calendar.badge.clock", label: "Follow Up", color: .orange) {
-                    stopAndHandleOutcome("Follow Up Later")
+        return LazyVGrid(columns: columns, spacing: 12) {
+            if !isCustomer {
+                iconButton(
+                    systemName: "xmark.octagon.fill",
+                    label: "Unqualified",
+                    color: .red
+                ) {
+                    stopAndHandleOutcome("Unqualified")
                 }
             }
-            Spacer()
+
+            iconButton(
+                systemName: "house.slash.fill",
+                label: "Not Home",
+                color: .gray
+            ) {
+                stopAndHandleOutcome("Wasn't Home")
+            }
+
+            if !isCustomer {
+                iconButton(
+                    systemName: "checkmark.seal.fill",
+                    label: "Sale",
+                    color: .green
+                ) {
+                    stopAndHandleOutcome("Converted To Sale")
+                }
+            }
+
+            iconButton(
+                systemName: "calendar.badge.clock",
+                label: "Follow Up",
+                color: .orange
+            ) {
+                stopAndHandleOutcome("Follow Up Later")
+            }
         }
         .padding(.top, 4)
     }
