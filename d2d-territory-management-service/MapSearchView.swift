@@ -649,6 +649,9 @@ struct MapSearchView: View {
                         prospect: nil
                     )
                 )
+            
+            case "Customer Lost":
+                convertCustomerToProspect(address: addr)
 
             default:
                 // Customers should never hit Converted To Sale
@@ -668,6 +671,16 @@ struct MapSearchView: View {
             if let prospect = prospects.first(where: {
                 addressesMatch($0.address, addr)
             }) {
+                
+                // 1️⃣ Log the "Converted To Sale" knock
+                knockController?.saveKnockOnly(
+                    address: addr,
+                    status: status,          // "Converted To Sale"
+                    prospects: prospects,
+                    onUpdateMarkers: { updateMarkers() }
+                )
+                
+                // 2️⃣ Trigger the conversion sheet
                 prospectToConvert = prospect
                 showConversionSheet = true
             }
@@ -693,12 +706,90 @@ struct MapSearchView: View {
                     showNoteInput = true
                 }
             )
+            
+        case "Unqualified":
+            knockController?.saveKnockOnly(
+                address: addr,
+                status: status,
+                prospects: prospects,
+                onUpdateMarkers: { updateMarkers() }
+            )
+        
+        case "Requalified":
+            if let prospect = prospects.first(where: {
+                addressesMatch($0.address, addr)
+            }) {
+
+                // 1️⃣ Clear unqualified flag
+                prospect.isUnqualified = false
+
+                // 2️⃣ Clean up name (remove suffix)
+                prospect.fullName = prospect.fullName
+                    .replacingOccurrences(of: " - Unqualified", with: "")
+
+                // 3️⃣ Log a knock for history
+                knockController?.saveKnockOnly(
+                    address: addr,
+                    status: "Requalified",
+                    prospects: prospects,
+                    onUpdateMarkers: { updateMarkers() }
+                )
+            }
 
         default:
             break
         }
 
         try? modelContext.save()
+    }
+    
+    @MainActor
+    private func convertCustomerToProspect(address: String) {
+        guard let customer = customers.first(where: {
+            addressesMatch($0.address, address)
+        }) else { return }
+
+        // 1️⃣ Create Prospect from Customer
+        let prospect = Prospect(
+            fullName: customer.fullName,
+            address: customer.address,
+            count: customer.knockCount,
+            list: "Prospects"
+        )
+
+        // 2️⃣ Carry everything over
+        prospect.contactPhone = customer.contactPhone
+        prospect.contactEmail = customer.contactEmail
+        prospect.notes = customer.notes
+        prospect.appointments = customer.appointments
+        prospect.knockHistory = customer.knockHistory
+        
+        // 2.5 LOG THE STATE TRANSITION
+        prospect.knockHistory.append(
+            Knock(
+                date: .now,
+                status: "Customer Lost",
+                latitude: prospect.latitude ?? customer.latitude ?? 0,
+                longitude: prospect.longitude ?? customer.longitude ?? 0
+            )
+        )
+
+        // 3️⃣ Preserve spatial identity
+        prospect.latitude = customer.latitude
+        prospect.longitude = customer.longitude
+
+        // 4️⃣ Persist new Prospect
+        modelContext.insert(prospect)
+
+        // 5️⃣ Delete Customer (single source of truth)
+        modelContext.delete(customer)
+
+        // 6️⃣ Save + refresh UI
+        try? modelContext.save()
+        updateMarkers()
+
+        // Optional UX
+        selectedList = "Prospects"
     }
     
     @MainActor

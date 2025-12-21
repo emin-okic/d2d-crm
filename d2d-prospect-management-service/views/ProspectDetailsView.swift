@@ -90,7 +90,7 @@ struct ProspectDetailsView: View {
                         }
                         
                     case .knocks:
-                        KnockingHistoryView(prospect: prospect)
+                        ProspectKnockingHistoryView(prospect: prospect)
                         
                     case .notes:
                         NotesThreadSection(

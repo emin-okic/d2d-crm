@@ -66,43 +66,52 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
 
         if annotation is MKUserLocation {
-            let id = "userLocation"
-            let view = mapView.dequeueReusableAnnotationView(withIdentifier: id)
-                ?? MKAnnotationView(annotation: annotation, reuseIdentifier: id)
-
-            view.bounds = CGRect(x: 0, y: 0, width: 40, height: 40)
-            view.backgroundColor = .clear
-
-            if view.viewWithTag(100) == nil {
-                let dot = UIView(frame: CGRect(x: 12, y: 12, width: 16, height: 16))
-                dot.backgroundColor = .systemBlue
-                dot.layer.cornerRadius = 8
-                dot.layer.borderWidth = 3
-                dot.layer.borderColor = UIColor.white.cgColor
-                dot.tag = 100
-
-                let cone = DirectionConeView(frame: view.bounds)
-                cone.tag = 200
-
-                view.addSubview(cone)
-                view.addSubview(dot)
-            }
-
-            if let cone = view.viewWithTag(200) as? DirectionConeView,
-               let heading = userLocationManager.heading {
-                cone.updateHeading(heading.trueHeading)
-            }
-
-            return view
+            return userLocationView(for: mapView)
         }
 
         guard let annotation = annotation as? IdentifiableAnnotation else { return nil }
 
-        let id = "customMarker"
-        let view = mapView.dequeueReusableAnnotationView(withIdentifier: id)
-            ?? MKAnnotationView(annotation: annotation, reuseIdentifier: id)
+        // 🔴 If unqualified, use special view
+        if annotation.place.isUnqualified {
+            return unqualifiedMarkerView(for: annotation)
+        }
 
-        view.annotation = annotation
+        // Otherwise, standard marker
+        return standardMarkerView(for: annotation)
+    }
+
+    // MARK: - Helpers
+
+    private func unqualifiedMarkerView(for annotation: IdentifiableAnnotation) -> MKAnnotationView {
+        let id = "unqualifiedMarker"
+        let size: CGFloat = 30
+
+        let view = MKAnnotationView(annotation: annotation, reuseIdentifier: id)
+        view.frame = CGRect(x: 0, y: 0, width: size, height: size)
+        view.layer.cornerRadius = size / 2
+        view.backgroundColor = .systemRed
+        view.image = nil
+        view.subviews.forEach { $0.removeFromSuperview() }
+
+        // Add white X
+        let xLabel = UILabel(frame: CGRect(x: 0, y: 0, width: size, height: size))
+        xLabel.text = "✕"
+        xLabel.textColor = .white
+        xLabel.textAlignment = .center
+        xLabel.font = .boldSystemFont(ofSize: size * 0.6)
+        view.addSubview(xLabel)
+
+        // Optional: subtle white border for map contrast
+        view.layer.borderWidth = 2
+        view.layer.borderColor = UIColor.white.cgColor
+
+        view.canShowCallout = false
+        return view
+    }
+
+    private func standardMarkerView(for annotation: IdentifiableAnnotation) -> MKAnnotationView {
+        let id = "customMarker"
+        let view = MKAnnotationView(annotation: annotation, reuseIdentifier: id)
         view.canShowCallout = false
         view.frame = CGRect(x: 0, y: 0, width: 28, height: 28)
         view.layer.cornerRadius = 14
@@ -120,6 +129,37 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         } else {
             view.image = nil
             view.backgroundColor = UIColor(annotation.place.markerColor)
+        }
+
+        return view
+    }
+
+    private func userLocationView(for mapView: MKMapView) -> MKAnnotationView? {
+        let id = "userLocation"
+        let view = mapView.dequeueReusableAnnotationView(withIdentifier: id)
+            ?? MKAnnotationView(annotation: nil, reuseIdentifier: id)
+
+        view.bounds = CGRect(x: 0, y: 0, width: 40, height: 40)
+        view.backgroundColor = .clear
+
+        if view.viewWithTag(100) == nil {
+            let dot = UIView(frame: CGRect(x: 12, y: 12, width: 16, height: 16))
+            dot.backgroundColor = .systemBlue
+            dot.layer.cornerRadius = 8
+            dot.layer.borderWidth = 3
+            dot.layer.borderColor = UIColor.white.cgColor
+            dot.tag = 100
+
+            let cone = DirectionConeView(frame: view.bounds)
+            cone.tag = 200
+
+            view.addSubview(cone)
+            view.addSubview(dot)
+        }
+
+        if let cone = view.viewWithTag(200) as? DirectionConeView,
+           let heading = userLocationManager.heading {
+            cone.updateHeading(heading.trueHeading)
         }
 
         return view

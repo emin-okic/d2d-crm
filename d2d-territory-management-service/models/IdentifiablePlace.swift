@@ -38,6 +38,10 @@ struct IdentifiablePlace: Identifiable {
     /// - `2...4` knocks: Yellow
     /// - `5+` knocks: Red
     var markerColor: Color {
+        
+        // Override everything if unqualified
+        if isUnqualified { return .red }
+        
         switch count {
         case 0:
             return .gray
@@ -49,6 +53,8 @@ struct IdentifiablePlace: Identifiable {
             return .red
         }
     }
+    
+    let isUnqualified: Bool
 
     /// Initializes a new `IdentifiablePlace`.
     ///
@@ -57,10 +63,17 @@ struct IdentifiablePlace: Identifiable {
     ///   - location: The geographic coordinates of the place.
     ///   - count: Optional initial knock count (defaults to `1`).
     ///   - list: The category of this place (e.g., "Customers", "Prospects").
-    init(address: String, location: CLLocationCoordinate2D, count: Int = 1, list: String = "Prospects") {
+    init(
+        address: String,
+        location: CLLocationCoordinate2D,
+        count: Int = 1,
+        list: String = "Prospects",
+        isUnqualified: Bool = false
+    ) {
         self.address = address
         self.location = location
         self.count = count
         self.list = list
+        self.isUnqualified = isUnqualified
     }
 }

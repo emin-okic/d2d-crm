@@ -117,24 +117,98 @@ struct ProspectPopupView: View {
     }
 
     private var outcomeButtons: some View {
-        HStack {
-            Spacer()
-            HStack(spacing: 16) {
-                iconButton(systemName: "house.slash.fill", label: "Not Home", color: .gray) {
+        let columns = [
+            GridItem(.flexible()),
+            GridItem(.flexible())
+        ]
+
+        return LazyVGrid(columns: columns, spacing: 12) {
+            
+            // 🔴 UNQUALIFIED PROSPECT FLOW
+            if place.isUnqualified && !isCustomer {
+
+                iconButton(
+                    systemName: "house.slash.fill",
+                    label: "Wasn't Home",
+                    color: .gray
+                ) {
                     stopAndHandleOutcome("Wasn't Home")
                 }
 
-                if !isCustomer {
-                    iconButton(systemName: "checkmark.seal.fill", label: "Sale", color: .green) {
-                        stopAndHandleOutcome("Converted To Sale")
-                    }
+                iconButton(
+                    systemName: "arrow.uturn.backward.circle.fill",
+                    label: "Requalified",
+                    color: .green
+                ) {
+                    stopAndHandleOutcome("Requalified")
                 }
 
-                iconButton(systemName: "calendar.badge.clock", label: "Follow Up", color: .orange) {
+                // return
+            }
+            
+            if !isCustomer && !place.isUnqualified {
+                
+                iconButton(
+                    systemName: "xmark.octagon.fill",
+                    label: "Unqualified",
+                    color: .red
+                ) {
+                    stopAndHandleOutcome("Unqualified")
+                }
+                
+                iconButton(
+                    systemName: "house.slash.fill",
+                    label: "Not Home",
+                    color: .gray
+                ) {
+                    stopAndHandleOutcome("Wasn't Home")
+                }
+
+                iconButton(
+                    systemName: "calendar.badge.clock",
+                    label: "Follow Up",
+                    color: .orange
+                ) {
                     stopAndHandleOutcome("Follow Up Later")
                 }
+                
+                iconButton(
+                    systemName: "checkmark.seal.fill",
+                    label: "Sale",
+                    color: .green
+                ) {
+                    stopAndHandleOutcome("Converted To Sale")
+                }
             }
-            Spacer()
+            
+            if isCustomer {
+                
+                iconButton(
+                    systemName: "person.crop.circle.badge.xmark",
+                    label: "Customer Lost",
+                    color: .red
+                ) {
+                    stopAndHandleOutcome("Customer Lost")
+                }
+                
+                iconButton(
+                    systemName: "house.slash.fill",
+                    label: "Not Home",
+                    color: .gray
+                ) {
+                    stopAndHandleOutcome("Wasn't Home")
+                }
+
+                iconButton(
+                    systemName: "calendar.badge.clock",
+                    label: "Follow Up",
+                    color: .orange
+                ) {
+                    stopAndHandleOutcome("Follow Up Later")
+                }
+                
+            }
+            
         }
         .padding(.top, 4)
     }

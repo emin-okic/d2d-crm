@@ -9,4 +9,5 @@ enum KnockOutcome: String, CaseIterable {
     case wasntHome = "Wasn't Home"
     case convertedToSale = "Converted To Sale"
     case followUpLater = "Follow Up Later"
+    case unqualified = "Unqualified"
 }

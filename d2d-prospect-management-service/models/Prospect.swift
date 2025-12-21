@@ -26,6 +26,8 @@ final class Prospect: ContactProtocol {
     /// Stored coordinates for marker annotation generation
     var latitude: Double?
     var longitude: Double?
+    
+    var isUnqualified: Bool
 
     init(fullName: String,
          address: String,
@@ -43,6 +45,8 @@ final class Prospect: ContactProtocol {
         
         self.latitude = nil
         self.longitude = nil
+        
+        self.isUnqualified = false
     }
 }
 
