@@ -184,6 +184,14 @@ struct ProspectPopupView: View {
             if isCustomer {
                 
                 iconButton(
+                    systemName: "person.crop.circle.badge.xmark",
+                    label: "Customer Lost",
+                    color: .red
+                ) {
+                    stopAndHandleOutcome("Customer Lost")
+                }
+                
+                iconButton(
                     systemName: "house.slash.fill",
                     label: "Not Home",
                     color: .gray
