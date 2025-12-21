@@ -711,6 +711,27 @@ struct MapSearchView: View {
                 prospects: prospects,
                 onUpdateMarkers: { updateMarkers() }
             )
+        
+        case "Requalified":
+            if let prospect = prospects.first(where: {
+                addressesMatch($0.address, addr)
+            }) {
+
+                // 1️⃣ Clear unqualified flag
+                prospect.isUnqualified = false
+
+                // 2️⃣ Clean up name (remove suffix)
+                prospect.fullName = prospect.fullName
+                    .replacingOccurrences(of: " - Unqualified", with: "")
+
+                // 3️⃣ Log a knock for history
+                knockController?.saveKnockOnly(
+                    address: addr,
+                    status: "Requalified",
+                    prospects: prospects,
+                    onUpdateMarkers: { updateMarkers() }
+                )
+            }
 
         default:
             break

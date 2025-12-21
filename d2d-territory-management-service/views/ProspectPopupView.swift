@@ -123,7 +123,31 @@ struct ProspectPopupView: View {
         ]
 
         return LazyVGrid(columns: columns, spacing: 12) {
-            if !isCustomer {
+            
+            // 🔴 UNQUALIFIED PROSPECT FLOW
+            if place.isUnqualified && !isCustomer {
+
+                iconButton(
+                    systemName: "house.slash.fill",
+                    label: "Wasn't Home",
+                    color: .gray
+                ) {
+                    stopAndHandleOutcome("Wasn't Home")
+                }
+
+                iconButton(
+                    systemName: "arrow.uturn.backward.circle.fill",
+                    label: "Requalified",
+                    color: .green
+                ) {
+                    stopAndHandleOutcome("Requalified")
+                }
+
+                // return
+            }
+            
+            if !isCustomer && !place.isUnqualified {
+                
                 iconButton(
                     systemName: "xmark.octagon.fill",
                     label: "Unqualified",
@@ -131,17 +155,23 @@ struct ProspectPopupView: View {
                 ) {
                     stopAndHandleOutcome("Unqualified")
                 }
-            }
+                
+                iconButton(
+                    systemName: "house.slash.fill",
+                    label: "Not Home",
+                    color: .gray
+                ) {
+                    stopAndHandleOutcome("Wasn't Home")
+                }
 
-            iconButton(
-                systemName: "house.slash.fill",
-                label: "Not Home",
-                color: .gray
-            ) {
-                stopAndHandleOutcome("Wasn't Home")
-            }
-
-            if !isCustomer {
+                iconButton(
+                    systemName: "calendar.badge.clock",
+                    label: "Follow Up",
+                    color: .orange
+                ) {
+                    stopAndHandleOutcome("Follow Up Later")
+                }
+                
                 iconButton(
                     systemName: "checkmark.seal.fill",
                     label: "Sale",
@@ -150,14 +180,27 @@ struct ProspectPopupView: View {
                     stopAndHandleOutcome("Converted To Sale")
                 }
             }
+            
+            if isCustomer {
+                
+                iconButton(
+                    systemName: "house.slash.fill",
+                    label: "Not Home",
+                    color: .gray
+                ) {
+                    stopAndHandleOutcome("Wasn't Home")
+                }
 
-            iconButton(
-                systemName: "calendar.badge.clock",
-                label: "Follow Up",
-                color: .orange
-            ) {
-                stopAndHandleOutcome("Follow Up Later")
+                iconButton(
+                    systemName: "calendar.badge.clock",
+                    label: "Follow Up",
+                    color: .orange
+                ) {
+                    stopAndHandleOutcome("Follow Up Later")
+                }
+                
             }
+            
         }
         .padding(.top, 4)
     }
