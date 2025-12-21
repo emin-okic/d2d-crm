@@ -56,9 +56,3 @@ extension Prospect {
         return CLLocationCoordinate2D(latitude: lat, longitude: lon)
     }
 }
-
-extension Prospect {
-    var displayName: String {
-        isUnqualified ? "\(fullName) (Unqualified)" : fullName
-    }
-}
