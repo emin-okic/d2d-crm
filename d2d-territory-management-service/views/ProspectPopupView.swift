@@ -120,6 +120,17 @@ struct ProspectPopupView: View {
         HStack {
             Spacer()
             HStack(spacing: 16) {
+                
+                if !isCustomer {
+                    iconButton(
+                        systemName: "xmark.octagon.fill",
+                        label: "Unqualified",
+                        color: .red
+                    ) {
+                        stopAndHandleOutcome("Unqualified")
+                    }
+                }
+                
                 iconButton(systemName: "house.slash.fill", label: "Not Home", color: .gray) {
                     stopAndHandleOutcome("Wasn't Home")
                 }

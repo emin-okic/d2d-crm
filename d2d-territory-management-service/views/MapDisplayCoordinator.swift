@@ -106,6 +106,16 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         view.canShowCallout = false
         view.frame = CGRect(x: 0, y: 0, width: 28, height: 28)
         view.layer.cornerRadius = 14
+        
+        // 🔴 UNQUALIFIED — BIG RED X (highest priority)
+        if annotation.place.isUnqualified {
+            view.image = UIImage(systemName: "xmark")?
+                .withTintColor(.white, renderingMode: .alwaysOriginal)
+
+            view.backgroundColor = .systemRed
+            view.layer.cornerRadius = 14
+            return view
+        }
 
         if annotation.place.list == "Customers" {
             view.image = UIImage(systemName: "star.circle.fill")?

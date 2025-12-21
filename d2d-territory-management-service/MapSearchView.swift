@@ -693,6 +693,15 @@ struct MapSearchView: View {
                     showNoteInput = true
                 }
             )
+            
+        case "Unqualified":
+            if let prospect = prospects.first(where: {
+                addressesMatch($0.address, addr)
+            }) {
+                prospect.isUnqualified = true
+                try? modelContext.save()
+                updateMarkers()
+            }
 
         default:
             break

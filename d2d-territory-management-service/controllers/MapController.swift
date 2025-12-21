@@ -120,7 +120,8 @@ class MapController: ObservableObject {
                         address: p.address,
                         location: coord,
                         count: p.knockCount,
-                        list: p.list
+                        list: p.list,
+                        isUnqualified: p.isUnqualified
                     )
                 )
             }
