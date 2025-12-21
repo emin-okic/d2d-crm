@@ -668,6 +668,16 @@ struct MapSearchView: View {
             if let prospect = prospects.first(where: {
                 addressesMatch($0.address, addr)
             }) {
+                
+                // 1️⃣ Log the "Converted To Sale" knock
+                knockController?.saveKnockOnly(
+                    address: addr,
+                    status: status,          // "Converted To Sale"
+                    prospects: prospects,
+                    onUpdateMarkers: { updateMarkers() }
+                )
+                
+                // 2️⃣ Trigger the conversion sheet
                 prospectToConvert = prospect
                 showConversionSheet = true
             }
