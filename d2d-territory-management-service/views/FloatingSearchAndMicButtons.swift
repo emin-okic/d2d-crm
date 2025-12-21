@@ -51,7 +51,6 @@ struct FloatingSearchAndMicButtons: View {
                                 .shadow(radius: 4)
                     }
 
-                    // RecordingToggleButton()
                 }
                 .transition(.opacity)
                 .padding(.bottom, 10)
