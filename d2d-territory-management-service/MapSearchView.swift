@@ -695,13 +695,12 @@ struct MapSearchView: View {
             )
             
         case "Unqualified":
-            if let prospect = prospects.first(where: {
-                addressesMatch($0.address, addr)
-            }) {
-                prospect.isUnqualified = true
-                try? modelContext.save()
-                updateMarkers()
-            }
+            knockController?.saveKnockOnly(
+                address: addr,
+                status: status,
+                prospects: prospects,
+                onUpdateMarkers: { updateMarkers() }
+            )
 
         default:
             break

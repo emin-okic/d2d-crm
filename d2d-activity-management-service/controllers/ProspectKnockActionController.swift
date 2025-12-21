@@ -99,8 +99,16 @@ class ProspectKnockActionController {
             $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
         }) {
             existing.knockCount += 1
+            
             existing.knockHistory.append(Knock(date: now, status: status, latitude: lat, longitude: lon))
+            
+            // ⭐️ STEP 3: flag as unqualified if applicable
+            if status == KnockOutcome.unqualified.rawValue {
+                existing.isUnqualified = true
+            }
+            
             updated = existing
+            
         } else {
             let new = Prospect(fullName: "New Prospect", address: address, count: 1, list: "Prospects")
             new.knockHistory = [Knock(date: now, status: status, latitude: lat, longitude: lon)]

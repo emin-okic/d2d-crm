@@ -440,24 +440,40 @@ struct KnockStepperPopupView: View {
         stepSequence = [.outcome]
 
         switch outcome {
+            
         case .wasntHome:
             stepSequence += [.note, .trip, .done]
+            
         case .convertedToSale:
             stepSequence += [.convertToCustomer, .note, .trip, .done]
+            
         case .followUpLater:
             stepSequence += [.objection, .scheduleFollowUp, .note, .trip, .done]
+            
+        case .unqualified:
+            stepSequence += [.note, .trip, .done]
+            
         }
     }
     
     private func injectRequiredSteps(for outcome: KnockOutcome) {
+        
         switch outcome {
+            
         case .wasntHome:
             stepSequence = [.note, .trip, .done]
+            
         case .convertedToSale:
             stepSequence = [.convertToCustomer, .note, .trip, .done]
+            
         case .followUpLater:
             stepSequence = [.objection, .scheduleFollowUp, .note, .trip, .done]
+            
+        case .unqualified:
+            stepSequence = [.note, .trip, .done]
+            
         }
+        
         stepIndex = 0
     }
 
