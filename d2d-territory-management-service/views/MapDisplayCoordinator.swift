@@ -109,11 +109,26 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         
         // 🔴 UNQUALIFIED — BIG RED X (highest priority)
         if annotation.place.isUnqualified {
-
-            view.image = UIImage(systemName: "xmark.circle.fill")?
-                .withTintColor(.white, renderingMode: .alwaysOriginal)
-
+            let size: CGFloat = 28
+            view.frame = CGRect(x: 0, y: 0, width: size, height: size)
+            view.layer.cornerRadius = size / 2
             view.backgroundColor = .systemRed
+            view.image = nil // remove any existing image
+
+            // Remove old subviews to avoid duplicates
+            view.subviews.forEach { $0.removeFromSuperview() }
+
+            // Add white X as a UILabel
+            let xLabel = UILabel(frame: CGRect(x: 0, y: 0, width: size, height: size))
+            xLabel.text = "✕" // or use "×" if you prefer
+            xLabel.textColor = .white
+            xLabel.textAlignment = .center
+            xLabel.font = .boldSystemFont(ofSize: size * 0.6) // scales with circle size
+            view.addSubview(xLabel)
+
+            // Optional: subtle white border for contrast
+            view.layer.borderWidth = 2
+            view.layer.borderColor = UIColor.white.cgColor
 
             return view
         }
