@@ -109,11 +109,12 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         
         // 🔴 UNQUALIFIED — BIG RED X (highest priority)
         if annotation.place.isUnqualified {
-            view.image = UIImage(systemName: "xmark")?
+
+            view.image = UIImage(systemName: "xmark.circle.fill")?
                 .withTintColor(.white, renderingMode: .alwaysOriginal)
 
             view.backgroundColor = .systemRed
-            view.layer.cornerRadius = 14
+
             return view
         }
 
