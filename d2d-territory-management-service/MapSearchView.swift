@@ -678,12 +678,6 @@ struct MapSearchView: View {
         try? modelContext.save()
     }
     
-    struct PendingAddProperty: Identifiable {
-        let id = UUID()
-        let address: String
-        let coordinate: CLLocationCoordinate2D
-    }
-    
     @MainActor
     private func handleMapCenterChange(newAddress: String?) {
         
