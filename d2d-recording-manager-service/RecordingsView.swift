@@ -44,6 +44,8 @@ struct RecordingsView: View {
     @State private var nowTick = Date()            // 👈 drives elapsed updates
     @State private var level: CGFloat = 0          // 👈 live audio level 0...1
     @State private var tickTimer: Timer?           // 👈 timer ref so we can stop it
+    
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationView {
@@ -241,9 +243,22 @@ struct RecordingsView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         .toolbar {
+            // Back button (top-left)
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .semibold))
+                }
+                .accessibilityLabel("Back")
+            }
+
+            // Recording mode toggle (top-right)
             ToolbarItem(placement: .topBarTrailing) {
-                RecordingToggleButton()
+                RecordingModeToggle()
             }
         }
     }
