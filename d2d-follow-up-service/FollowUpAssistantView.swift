@@ -258,13 +258,8 @@ struct FollowUpAssistantView: View {
             .sheet(isPresented: $showRecordingsSheet) {
                 NavigationStack {
                     RecordingsView()
-                        .navigationTitle("The Recording Studio")
+                        .navigationTitle("Recording Studio")
                         .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .confirmationAction) {
-                                Button("Done") { showRecordingsSheet = false }
-                            }
-                        }
                 }
             }
         }

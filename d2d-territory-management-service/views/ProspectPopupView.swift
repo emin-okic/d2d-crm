@@ -56,27 +56,6 @@ struct ProspectPopupView: View {
             // When features are active: show Record/Skip first, then outcomes.
             // When locked or off: always show outcomes (no recording UI).
             if recordingFeaturesActive {
-                if !isRecording && !showOutcomeButtons {
-                    HStack(spacing: 24) {
-                        Spacer()
-
-                        recordingActionButton(
-                            systemName: "mic.circle.fill",
-                            label: "Start Recording",
-                            color: .red,
-                            action: startRecording
-                        )
-
-                        recordingActionButton(
-                            systemName: "arrowshape.turn.up.right.circle.fill",
-                            label: "Skip Recording",
-                            color: .blue,
-                            action: { showOutcomeButtons = true }
-                        )
-
-                        Spacer()
-                    }
-                }
 
                 if showOutcomeButtons {
                     outcomeHeader
@@ -89,7 +68,9 @@ struct ProspectPopupView: View {
             }
         }
         .onAppear {
-            if !recordingFeaturesActive {
+            if recordingFeaturesActive {
+                startRecording()   // automatically start recording if mode is on
+            } else {
                 showOutcomeButtons = true
             }
         }
@@ -275,7 +256,6 @@ struct ProspectPopupView: View {
     }
 
     private func startRecording() {
-        // If locked/off, just reveal outcomes; do not attempt to start recording
         guard recordingFeaturesActive else {
             showOutcomeButtons = true
             return
@@ -285,7 +265,7 @@ struct ProspectPopupView: View {
         if result.started {
             isRecording = true
             currentFileName = result.fileName
-            showOutcomeButtons = true
+            showOutcomeButtons = true   // show outcomes alongside recording
         }
     }
 
