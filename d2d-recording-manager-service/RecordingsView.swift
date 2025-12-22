@@ -240,6 +240,12 @@ struct RecordingsView: View {
                 }
             }
         }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                RecordingToggleButton()
+            }
+        }
     }
     
     private var totalRecordings: Int {
