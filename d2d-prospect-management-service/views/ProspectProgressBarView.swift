@@ -73,6 +73,7 @@ struct ProspectProgressBarView: View {
                         Capsule()
                             .fill(Color.gray.opacity(0.3))
                             .frame(height: 12)
+                            .shadow(color: .black.opacity(0.08), radius: 2, y: 1)
 
                         Capsule()
                             .fill(current >= displayedNext ? .green : .blue)
@@ -81,7 +82,7 @@ struct ProspectProgressBarView: View {
                             .animation(.easeInOut(duration: 0.3), value: animateLevelUp)
                     }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, 20)
 
                 // Confetti
                 if showConfetti {
