@@ -24,8 +24,14 @@ struct FloatingNameSearchBar: View {
                         .foregroundColor(.primary)
                         .autocapitalization(.words)
                         .submitLabel(.done)
+                        .onSubmit {
+                            withAnimation {
+                                isExpanded = false
+                            }
+                        }
 
                     if !searchText.trimmingCharacters(in: .whitespaces).isEmpty {
+                        
                         Button("Done") {
                             withAnimation {
                                 isExpanded = false
@@ -74,6 +80,12 @@ struct FloatingNameSearchBar: View {
                         .shadow(radius: 4)
                 }
                 .padding(.bottom, 10)
+            }
+        }
+        .onChange(of: isExpanded) { expanded in
+            if !expanded {
+                searchText = ""
+                isFocused = false
             }
         }
         .padding(.bottom, 30)
