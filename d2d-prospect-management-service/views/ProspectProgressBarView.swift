@@ -51,11 +51,22 @@ struct ProspectProgressBarView: View {
 
             ZStack {
                 VStack(alignment: .leading, spacing: 4) {
+                    
                     // Counter
-                    Text("\(current)/\(displayedNext)")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(current >= displayedNext ? .green : .primary)
+                    // Tier bounds
+                    HStack {
+                        Text("\(displayedPrev)")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+
+                        Spacer()
+
+                        Text("\(displayedNext)")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                    }
 
                     // Progress bar
                     ZStack(alignment: .leading) {
