@@ -43,12 +43,16 @@ struct ContactManagementView: View {
                         searchText: $searchText,
                         suggestedProspect: $controller.suggestedProspect,
                         selectedList: $selectedList,
+                        isSearchExpanded: $isSearchExpanded,
+                        isSearchFocused: $isSearchFocused,
                         onSave: onSave
                     )
                 } else {
                     CustomerManagementView(
                         searchText: $searchText,
                         selectedList: $selectedList,
+                        isSearchExpanded: $isSearchExpanded,
+                        isSearchFocused: $isSearchFocused,
                         onSave: onSave,
                         showingAddCustomer: $showingAddCustomer
                     )

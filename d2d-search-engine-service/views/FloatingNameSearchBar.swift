@@ -24,21 +24,11 @@ struct FloatingNameSearchBar: View {
                         .foregroundColor(.primary)
                         .autocapitalization(.words)
                         .submitLabel(.done)
-
-                    if !searchText.trimmingCharacters(in: .whitespaces).isEmpty {
-                        Button("Done") {
+                        .onSubmit {
                             withAnimation {
                                 isExpanded = false
-                                isFocused = false
                             }
                         }
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 6)
-                        .background(Color.blue.opacity(0.8))
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                        .transition(.opacity)
-                    }
 
                     Button {
                         withAnimation {

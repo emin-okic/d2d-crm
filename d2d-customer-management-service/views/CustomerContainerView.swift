@@ -9,6 +9,9 @@ import SwiftUI
 
 struct CustomerContainerView: View {
     @Binding var searchText: String
+    
+    @Binding var isSearchExpanded: Bool
+    @FocusState<Bool>.Binding var isSearchFocused: Bool
 
     var body: some View {
         GeometryReader { geo in
@@ -19,7 +22,11 @@ struct CustomerContainerView: View {
                     .fill(Color(.systemGray6))
                     .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
 
-                CustomersSectionView(searchText: $searchText)
+                CustomersSectionView(
+                    searchText: $searchText,
+                    isSearchExpanded: $isSearchExpanded,
+                    isSearchFocused: $isSearchFocused
+                )
                     .padding()
             }
             .frame(height: targetHeight, alignment: .top)
