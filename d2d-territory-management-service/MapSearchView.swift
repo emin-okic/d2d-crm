@@ -226,6 +226,15 @@ struct MapSearchView: View {
                     }
                 }
             }
+            // Listen for search focus and close popup
+            .onChange(of: isSearchFocused) { focused in
+                if focused {
+                    // Close any open popup when the search bar is tapped/focused
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        popupState = nil
+                    }
+                }
+            }
             
             if showConfetti {
                 ConfettiBurstView()
