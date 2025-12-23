@@ -30,22 +30,6 @@ struct FloatingNameSearchBar: View {
                             }
                         }
 
-                    if !searchText.trimmingCharacters(in: .whitespaces).isEmpty {
-                        
-                        Button("Done") {
-                            withAnimation {
-                                isExpanded = false
-                                isFocused = false
-                            }
-                        }
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 6)
-                        .background(Color.blue.opacity(0.8))
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                        .transition(.opacity)
-                    }
-
                     Button {
                         withAnimation {
                             isExpanded = false
