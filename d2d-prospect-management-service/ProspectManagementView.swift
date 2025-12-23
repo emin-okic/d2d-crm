@@ -9,10 +9,16 @@ import SwiftUI
 import SwiftData
 
 struct ProspectManagementView: View {
+    
     @Environment(\.modelContext) private var modelContext
+    
     @Binding var searchText: String
     @Binding var suggestedProspect: Prospect?
     @Binding var selectedList: String   // 👈 add this
+    
+    @Binding var isSearchExpanded: Bool
+    @FocusState<Bool>.Binding var isSearchFocused: Bool
+    
     var onSave: () -> Void
 
     @Query private var prospects: [Prospect]
@@ -48,7 +54,9 @@ struct ProspectManagementView: View {
 
             ContactsContainerView(
                 selectedList: $selectedList,  // 👈 use binding instead of .constant
-                searchText: $searchText
+                searchText: $searchText,
+                isSearchExpanded: $isSearchExpanded,
+                isSearchFocused: $isSearchFocused
             )
             .padding(.horizontal, 20)
             .padding(.vertical, 10)

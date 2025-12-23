@@ -66,12 +66,6 @@ struct FloatingNameSearchBar: View {
                 .padding(.bottom, 10)
             }
         }
-        .onChange(of: isExpanded) { expanded in
-            if !expanded {
-                searchText = ""
-                isFocused = false
-            }
-        }
         .padding(.bottom, 30)
         .padding(.leading, 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)

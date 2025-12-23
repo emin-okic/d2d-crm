@@ -8,8 +8,12 @@
 import SwiftUI
 
 struct ContactsContainerView: View {
+    
     @Binding var selectedList: String
     @Binding var searchText: String
+    
+    @Binding var isSearchExpanded: Bool
+    @FocusState<Bool>.Binding var isSearchFocused: Bool
 
     var body: some View {
         GeometryReader { geo in
@@ -23,7 +27,9 @@ struct ContactsContainerView: View {
                 ProspectsSectionView(
                     selectedList: $selectedList,
                     containerHeight: targetHeight,
-                    searchText: searchText        // ⬅️ pass it down
+                    searchText: $searchText,
+                    isSearchExpanded: $isSearchExpanded,
+                    isSearchFocused: $isSearchFocused
                 )
                 .padding()
             }
