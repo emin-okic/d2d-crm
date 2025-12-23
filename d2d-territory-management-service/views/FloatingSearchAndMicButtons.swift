@@ -25,15 +25,6 @@ struct FloatingSearchAndMicButtons: View {
 
     var body: some View {
         VStack(spacing: 10) {
-            ExpandableSearchView(
-                searchText: $searchText,
-                isExpanded: $isExpanded,
-                isFocused: $isFocused,
-                viewModel: viewModel,
-                animationNamespace: animationNamespace,
-                onSubmit: onSubmit,
-                onSelectResult: onSelectResult
-            )
             
             if !isExpanded {
                 VStack(spacing: 10) {
@@ -55,6 +46,16 @@ struct FloatingSearchAndMicButtons: View {
                 .transition(.opacity)
                 .padding(.bottom, 10)
             }
+            
+            ExpandableSearchView(
+                searchText: $searchText,
+                isExpanded: $isExpanded,
+                isFocused: $isFocused,
+                viewModel: viewModel,
+                animationNamespace: animationNamespace,
+                onSubmit: onSubmit,
+                onSelectResult: onSelectResult
+            )
 
         }
         .padding(.bottom, 30)
