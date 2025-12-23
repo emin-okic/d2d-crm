@@ -23,8 +23,9 @@ struct ExpandableSearchView: View {
         VStack {
             
             HStack {
-                // Spacer()
+
                 if isExpanded {
+                    
                     SearchBarView(
                         searchText: $searchText,
                         isFocused: $isFocused,
@@ -36,6 +37,13 @@ struct ExpandableSearchView: View {
                         },
                         onSelectResult: {
                             onSelectResult($0)
+                            
+                            // Collapse search bar
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isExpanded = false
+                                isFocused = false
+                                searchText = ""
+                            }
                         },
                         onCancel: {
                             withAnimation {
