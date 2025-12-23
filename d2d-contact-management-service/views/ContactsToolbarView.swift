@@ -9,14 +9,32 @@
 import SwiftUI
 
 struct ContactsToolbarView: View {
+    
     @Binding var searchText: String
+    
     @Binding var isSearchExpanded: Bool
+    
     @FocusState<Bool>.Binding var isSearchFocused: Bool
 
     var onAddTapped: () -> Void
 
     var body: some View {
+        
         ZStack {
+            
+            // 🔹 Tap-outside dismiss layer
+            if isSearchExpanded {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation {
+                            isSearchExpanded = false
+                        }
+                    }
+                    .zIndex(1)
+            }
+            
             FloatingNameSearchBar(
                 searchText: $searchText,
                 isExpanded: $isSearchExpanded,
