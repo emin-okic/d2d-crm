@@ -9,8 +9,13 @@ import SwiftUI
 import SwiftData
 
 struct CustomersSectionView: View {
+    
     @Query private var allCustomers: [Customer]
+    
     @Binding var searchText: String
+    
+    @Binding var isSearchExpanded: Bool
+    @FocusState<Bool>.Binding var isSearchFocused: Bool
 
     @State private var selectedCustomer: Customer?
 
@@ -69,6 +74,19 @@ struct CustomersSectionView: View {
             NavigationStack {
                 CustomerDetailsView(customer: c)
                     .navigationBarTitleDisplayMode(.inline)
+            }
+        }
+        .onChange(of: selectedCustomer) { newValue in
+            guard newValue != nil else { return }
+
+            DispatchQueue.main.async {
+                withAnimation {
+                    isSearchExpanded = false
+                    isSearchFocused = false
+                }
+
+                // Clear AFTER collapse so tap wins
+                searchText = ""
             }
         }
     }

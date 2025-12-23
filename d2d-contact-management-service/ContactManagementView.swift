@@ -51,6 +51,8 @@ struct ContactManagementView: View {
                     CustomerManagementView(
                         searchText: $searchText,
                         selectedList: $selectedList,
+                        isSearchExpanded: $isSearchExpanded,
+                        isSearchFocused: $isSearchFocused,
                         onSave: onSave,
                         showingAddCustomer: $showingAddCustomer
                     )

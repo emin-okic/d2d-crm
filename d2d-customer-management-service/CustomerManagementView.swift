@@ -9,9 +9,16 @@ import SwiftUI
 import SwiftData
 
 struct CustomerManagementView: View {
+    
     @Environment(\.modelContext) private var modelContext
+    
     @Binding var searchText: String
+    
     @Binding var selectedList: String
+    
+    @Binding var isSearchExpanded: Bool
+    @FocusState<Bool>.Binding var isSearchFocused: Bool
+    
     var onSave: () -> Void
 
     @Binding var showingAddCustomer: Bool   // 👈 comes from parent now
@@ -28,7 +35,11 @@ struct CustomerManagementView: View {
             ToggleChipsView(selectedList: $selectedList)
 
             // ✅ Section now wrapped in container for consistent style
-            CustomerContainerView(searchText: $searchText)
+            CustomerContainerView(
+                searchText: $searchText,
+                isSearchExpanded: $isSearchExpanded,
+                isSearchFocused: $isSearchFocused
+            )
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)
         }
