@@ -843,23 +843,30 @@ struct MapSearchView: View {
     }
 
     private func handleCompletionTap(_ result: MKLocalSearchCompletion) {
+        
         let req = MKLocalSearch.Request(completion: result)
+        
         MKLocalSearch(request: req).start { resp, _ in
             guard let item = resp?.mapItems.first else { return }
             let addr = item.placemark.title ?? "\(item.placemark.name ?? ""), \(item.placemark.locality ?? "")"
 
             DispatchQueue.main.async {
                 searchText = addr
-                controller.region = MKCoordinateRegion(
-                    center: item.placemark.coordinate,
-                    latitudinalMeters: 1609.34,
-                    longitudinalMeters: 1609.34
-                )
                 searchVM.results = []
                 isSearchFocused = false
                 pendingAddress = addr
 
-                // let normalized = addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                // Determine zoom: ~1 mile (1609 meters) or adjust based on your UX preference
+                let region = MKCoordinateRegion(
+                    center: item.placemark.coordinate,
+                    latitudinalMeters: 500,
+                    longitudinalMeters: 500
+                )
+
+                // Animate the region change
+                withAnimation(.easeInOut(duration: 0.4)) {
+                    controller.region = region
+                }
                 
                 // 1️⃣ Check if it's a Prospect
                 if let existingProspect = prospects.first(where: {
