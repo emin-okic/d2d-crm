@@ -18,7 +18,7 @@ struct ProspectProgressBarView: View {
     private var breakpoints: [Int] {
         switch listType {
         case .prospects:
-            return [0, 5, 10, 25]
+            return [0, 5, 10, 25, 50, 100, 250, 500, 1000, 2000, 5000]
         }
     }
 
