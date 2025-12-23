@@ -202,6 +202,7 @@ struct MapSearchView: View {
                     userLocationManager: userLocationManager,
                     mapController: controller
                 )
+                
             }
             // inside body chain where you had the presenter & lifecycle hooks
             .presentRotatingAdsCentered()
@@ -215,6 +216,16 @@ struct MapSearchView: View {
             }
             // Stepper overlay — presented ONLY when stepperState is set (Follow-Up Later path)
             .overlay(stepperOverlay(geo: geo))
+            .onChange(of: popupState) { newValue in
+                // Close the search bar when a popup opens
+                if newValue != nil, isSearchExpanded {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isSearchExpanded = false
+                        isSearchFocused = false
+                        searchText = ""
+                    }
+                }
+            }
             
             if showConfetti {
                 ConfettiBurstView()
