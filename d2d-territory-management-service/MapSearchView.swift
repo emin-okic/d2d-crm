@@ -145,6 +145,16 @@ struct MapSearchView: View {
                         }
                     },
                     onMapTapped: { coordinate in
+                        
+                        // CLOSE SEARCH FIRST if click anywhere other than search
+                        if isSearchExpanded {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isSearchExpanded = false
+                                isSearchFocused = false
+                                searchText = ""
+                            }
+                        }
+                        
                         tapManager.handleTap(at: coordinate)
 
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
