@@ -145,6 +145,16 @@ struct MapSearchView: View {
                         }
                     },
                     onMapTapped: { coordinate in
+                        
+                        // CLOSE SEARCH FIRST if click anywhere other than search
+                        if isSearchExpanded {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isSearchExpanded = false
+                                isSearchFocused = false
+                                searchText = ""
+                            }
+                        }
+                        
                         tapManager.handleTap(at: coordinate)
 
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
@@ -192,6 +202,7 @@ struct MapSearchView: View {
                     userLocationManager: userLocationManager,
                     mapController: controller
                 )
+                
             }
             // inside body chain where you had the presenter & lifecycle hooks
             .presentRotatingAdsCentered()
@@ -205,6 +216,25 @@ struct MapSearchView: View {
             }
             // Stepper overlay — presented ONLY when stepperState is set (Follow-Up Later path)
             .overlay(stepperOverlay(geo: geo))
+            .onChange(of: popupState) { newValue in
+                // Close the search bar when a popup opens
+                if newValue != nil, isSearchExpanded {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isSearchExpanded = false
+                        isSearchFocused = false
+                        searchText = ""
+                    }
+                }
+            }
+            // Listen for search focus and close popup
+            .onChange(of: isSearchFocused) { focused in
+                if focused {
+                    // Close any open popup when the search bar is tapped/focused
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        popupState = nil
+                    }
+                }
+            }
             
             if showConfetti {
                 ConfettiBurstView()
@@ -813,23 +843,30 @@ struct MapSearchView: View {
     }
 
     private func handleCompletionTap(_ result: MKLocalSearchCompletion) {
+        
         let req = MKLocalSearch.Request(completion: result)
+        
         MKLocalSearch(request: req).start { resp, _ in
             guard let item = resp?.mapItems.first else { return }
             let addr = item.placemark.title ?? "\(item.placemark.name ?? ""), \(item.placemark.locality ?? "")"
 
             DispatchQueue.main.async {
                 searchText = addr
-                controller.region = MKCoordinateRegion(
-                    center: item.placemark.coordinate,
-                    latitudinalMeters: 1609.34,
-                    longitudinalMeters: 1609.34
-                )
                 searchVM.results = []
                 isSearchFocused = false
                 pendingAddress = addr
 
-                // let normalized = addr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                // Determine zoom: ~1 mile (1609 meters) or adjust based on your UX preference
+                let region = MKCoordinateRegion(
+                    center: item.placemark.coordinate,
+                    latitudinalMeters: 500,
+                    longitudinalMeters: 500
+                )
+
+                // Animate the region change
+                withAnimation(.easeInOut(duration: 0.4)) {
+                    controller.region = region
+                }
                 
                 // 1️⃣ Check if it's a Prospect
                 if let existingProspect = prospects.first(where: {

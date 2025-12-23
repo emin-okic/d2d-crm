@@ -35,18 +35,6 @@ struct SearchBarView: View {
                 .autocapitalization(.words)
                 .submitLabel(.done)
 
-                if !searchText.trimmingCharacters(in: .whitespaces).isEmpty {
-                    Button("Done") {
-                        onSubmit()
-                    }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 6)
-                    .background(Color.blue.opacity(0.8))
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-                    .transition(.opacity)
-                }
-
                 // ⬅️ Add cancel button here
                 Button(action: {
                     onCancel()
