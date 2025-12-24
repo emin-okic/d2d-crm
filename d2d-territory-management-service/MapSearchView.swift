@@ -189,8 +189,6 @@ struct MapSearchView: View {
                     hasSignedUp: hasCustomers   // ← was: hasSignedUp
                 )
 
-                prospectPopup
-
                 FloatingSearchAndMicButtons(
                     searchText: $searchText,
                     isExpanded: $isSearchExpanded,
@@ -268,6 +266,37 @@ struct MapSearchView: View {
         .onChange(of: addressToCenter) { handleMapCenterChange(newAddress: $0) }
         .onTapGesture {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to:nil,from:nil,for:nil)
+        }
+        // This is for the contact popup display
+        .sheet(item: $popupState) { popup in
+            ProspectPopupView(
+                place: popup.place,
+                isCustomer: popup.place.list == "Customers",
+                onClose: {
+                    popupState = nil
+                },
+                onOutcomeSelected: { outcome, fileName in
+                    pendingAddress = popup.place.address
+                    isTappedAddressCustomer = popup.place.list == "Customers"
+                    popupState = nil
+
+                    if outcome == "Follow Up Later" {
+                        pendingRecordingFileName = fileName
+                        stepperState = .init(
+                            ctx: .init(
+                                address: popup.place.address,
+                                isCustomer: isTappedAddressCustomer,
+                                prospect: nil
+                            )
+                        )
+                    } else {
+                        handleOutcome(outcome, recordingFileName: fileName)
+                    }
+                },
+                recordingModeEnabled: recordingModeEnabled
+            )
+            .presentationDetents([.fraction(0.5)])
+            .presentationDragIndicator(.visible)
         }
         // This is the menu option for new properties - all else is handled during the popup
         .sheet(item: $pendingAddProperty) { item in
@@ -610,39 +639,6 @@ struct MapSearchView: View {
             showingAddObjection = true
         } else {
             showObjectionPicker = true
-        }
-    }
-
-    private var prospectPopup: some View {
-        Group {
-            if let popup = popupState, let pos = popupScreenPosition {
-                ProspectPopupView(
-                    place: popup.place,
-                    isCustomer: popup.place.list == "Customers",
-                    onClose: { popupState = nil },
-                    onOutcomeSelected: { outcome, fileName in
-                        pendingAddress = popup.place.address
-                        isTappedAddressCustomer = popup.place.list == "Customers"
-                        popupState = nil
-                        // Route follow-ups into the stepper; keep others as-is
-                        if outcome == "Follow Up Later" {
-                            pendingRecordingFileName = fileName
-                            if let addr = pendingAddress {
-                                stepperState = .init(ctx: .init(address: addr, isCustomer: isTappedAddressCustomer, prospect: nil))
-                            }
-                        } else {
-                            handleOutcome(outcome, recordingFileName: fileName)
-                        }
-                    },
-                    recordingModeEnabled: recordingModeEnabled
-                )
-                .frame(width: 240)
-                .background(.ultraThinMaterial)
-                .cornerRadius(16)
-                .position(pos)
-                .zIndex(999)
-                .id(popup.id)
-            }
         }
     }
 
