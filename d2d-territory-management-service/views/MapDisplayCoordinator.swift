@@ -94,26 +94,39 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         let id = "unqualifiedMarker"
         let size: CGFloat = 30
 
-        let view = MKAnnotationView(annotation: annotation, reuseIdentifier: id)
+        let view =
+            mapView?.dequeueReusableAnnotationView(withIdentifier: id)
+            ?? MKAnnotationView(annotation: annotation, reuseIdentifier: id)
+
+        view.annotation = annotation
         view.frame = CGRect(x: 0, y: 0, width: size, height: size)
         view.layer.cornerRadius = size / 2
         view.backgroundColor = .systemRed
         view.image = nil
+        view.canShowCallout = false
+
+        // 🔴 Remove old subviews safely (reuse-proof)
         view.subviews.forEach { $0.removeFromSuperview() }
 
-        // Add white X
-        let xLabel = UILabel(frame: CGRect(x: 0, y: 0, width: size, height: size))
+        // ❌ Centered X using Auto Layout (bulletproof)
+        let xLabel = UILabel()
+        xLabel.translatesAutoresizingMaskIntoConstraints = false
         xLabel.text = "✕"
         xLabel.textColor = .white
         xLabel.textAlignment = .center
-        xLabel.font = .boldSystemFont(ofSize: size * 0.6)
+        xLabel.font = .boldSystemFont(ofSize: size * 0.65)
+
         view.addSubview(xLabel)
 
-        // Optional: subtle white border for map contrast
+        NSLayoutConstraint.activate([
+            xLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            xLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
+
+        // Optional contrast ring
         view.layer.borderWidth = 2
         view.layer.borderColor = UIColor.white.cgColor
 
-        view.canShowCallout = false
         return view
     }
 
@@ -198,7 +211,11 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     ) {
         let isSelected = annotation.place.id == selectedPlaceID
 
-        let size: CGFloat = isSelected ? 40 : 28
+        let baseSize: CGFloat = annotation.place.list == "Customers" ? 46 : 28
+        let selectedSize: CGFloat = annotation.place.list == "Customers" ? 58 : 40
+
+        let size: CGFloat = isSelected ? selectedSize : baseSize
+        
         view.frame.size = CGSize(width: size, height: size)
         view.layer.cornerRadius = size / 2
 
