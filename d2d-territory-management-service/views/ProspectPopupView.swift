@@ -98,100 +98,80 @@ struct ProspectPopupView: View {
     }
 
     private var outcomeButtons: some View {
-        let columns = [
-            GridItem(.flexible()),
-            GridItem(.flexible())
-        ]
-
-        return LazyVGrid(columns: columns, spacing: 12) {
+        if !isCustomer {
+            let columns = [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ]
             
-            // 🔴 UNQUALIFIED PROSPECT FLOW
-            if place.isUnqualified && !isCustomer {
+            return AnyView(
+                LazyVGrid(columns: columns, spacing: 12) {
+                    
+                    if place.isUnqualified {
+                        iconButton(
+                            systemName: "house.slash.fill",
+                            label: "Not Home",
+                            color: .gray
+                        ) { stopAndHandleOutcome("Wasn't Home") }
 
-                iconButton(
-                    systemName: "house.slash.fill",
-                    label: "Wasn't Home",
-                    color: .gray
-                ) {
-                    stopAndHandleOutcome("Wasn't Home")
-                }
+                        iconButton(
+                            systemName: "arrow.uturn.backward.circle.fill",
+                            label: "Requalified",
+                            color: .green
+                        ) { stopAndHandleOutcome("Requalified") }
+                    } else {
+                        iconButton(
+                            systemName: "xmark.octagon.fill",
+                            label: "Unqualified",
+                            color: .red
+                        ) { stopAndHandleOutcome("Unqualified") }
 
-                iconButton(
-                    systemName: "arrow.uturn.backward.circle.fill",
-                    label: "Requalified",
-                    color: .green
-                ) {
-                    stopAndHandleOutcome("Requalified")
-                }
+                        iconButton(
+                            systemName: "house.slash.fill",
+                            label: "Not Home",
+                            color: .gray
+                        ) { stopAndHandleOutcome("Wasn't Home") }
 
-                // return
-            }
-            
-            if !isCustomer && !place.isUnqualified {
-                
-                iconButton(
-                    systemName: "xmark.octagon.fill",
-                    label: "Unqualified",
-                    color: .red
-                ) {
-                    stopAndHandleOutcome("Unqualified")
-                }
-                
-                iconButton(
-                    systemName: "house.slash.fill",
-                    label: "Not Home",
-                    color: .gray
-                ) {
-                    stopAndHandleOutcome("Wasn't Home")
-                }
+                        iconButton(
+                            systemName: "calendar.badge.clock",
+                            label: "Follow Up",
+                            color: .orange
+                        ) { stopAndHandleOutcome("Follow Up Later") }
 
-                iconButton(
-                    systemName: "calendar.badge.clock",
-                    label: "Follow Up",
-                    color: .orange
-                ) {
-                    stopAndHandleOutcome("Follow Up Later")
+                        iconButton(
+                            systemName: "checkmark.seal.fill",
+                            label: "Sale",
+                            color: .green
+                        ) { stopAndHandleOutcome("Converted To Sale") }
+                    }
                 }
-                
-                iconButton(
-                    systemName: "checkmark.seal.fill",
-                    label: "Sale",
-                    color: .green
-                ) {
-                    stopAndHandleOutcome("Converted To Sale")
-                }
-            }
-            
-            if isCustomer {
-                
+                .padding(.top, 4)
+            )
+        }
+        
+        // Customer outcomes: all in one row
+        return AnyView(
+            HStack(spacing: 12) {
                 iconButton(
                     systemName: "person.crop.circle.badge.xmark",
                     label: "Customer Lost",
                     color: .red
-                ) {
-                    stopAndHandleOutcome("Customer Lost")
-                }
-                
+                ) { stopAndHandleOutcome("Customer Lost") }
+
                 iconButton(
                     systemName: "house.slash.fill",
                     label: "Not Home",
                     color: .gray
-                ) {
-                    stopAndHandleOutcome("Wasn't Home")
-                }
+                ) { stopAndHandleOutcome("Wasn't Home") }
 
                 iconButton(
                     systemName: "calendar.badge.clock",
                     label: "Follow Up",
                     color: .orange
-                ) {
-                    stopAndHandleOutcome("Follow Up Later")
-                }
-                
+                ) { stopAndHandleOutcome("Follow Up Later") }
             }
-            
-        }
-        .padding(.top, 4)
+            .padding(.top, 4)
+        )
     }
 
     private func recordingActionButton(systemName: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
