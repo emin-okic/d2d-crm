@@ -19,14 +19,18 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     var onMarkerTapped: (IdentifiablePlace) -> Void
     var onMapTapped: (CLLocationCoordinate2D) -> Void
     var onRegionChange: ((MKCoordinateRegion) -> Void)?
+    
+    var selectedPlaceID: UUID?
 
     init(
         userLocationManager: UserLocationManager,
+        selectedPlaceID: UUID?,
         onMarkerTapped: @escaping (IdentifiablePlace) -> Void,
         onMapTapped: @escaping (CLLocationCoordinate2D) -> Void,
         onRegionChange: ((MKCoordinateRegion) -> Void)? = nil
     ) {
         self.userLocationManager = userLocationManager
+        self.selectedPlaceID = selectedPlaceID
         self.onMarkerTapped = onMarkerTapped
         self.onMapTapped = onMapTapped
         self.onRegionChange = onRegionChange
@@ -59,6 +63,10 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         }
 
         if tappedAnnotations.isEmpty {
+            
+            selectedPlaceID = nil
+            mapView.deselectAnnotation(mapView.selectedAnnotations.first, animated: false)
+            
             onMapTapped(coordinate)
         }
     }
@@ -110,26 +118,17 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     }
 
     private func standardMarkerView(for annotation: IdentifiableAnnotation) -> MKAnnotationView {
+
         let id = "customMarker"
-        let view = MKAnnotationView(annotation: annotation, reuseIdentifier: id)
+
+        let view =
+            mapView?.dequeueReusableAnnotationView(withIdentifier: id)
+            ?? MKAnnotationView(annotation: annotation, reuseIdentifier: id)
+
+        view.annotation = annotation
         view.canShowCallout = false
-        view.frame = CGRect(x: 0, y: 0, width: 28, height: 28)
-        view.layer.cornerRadius = 14
 
-        if annotation.place.list == "Customers" {
-            view.image = UIImage(systemName: "star.circle.fill")?
-                .withTintColor(.systemBlue, renderingMode: .alwaysOriginal)
-
-            let pulse = CABasicAnimation(keyPath: "transform.scale")
-            pulse.fromValue = 1.5
-            pulse.toValue = 1.0
-            pulse.duration = 0.4
-            pulse.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            view.layer.add(pulse, forKey: "pulse")
-        } else {
-            view.image = nil
-            view.backgroundColor = UIColor(annotation.place.markerColor)
-        }
+        configure(view, for: annotation)
 
         return view
     }
@@ -166,12 +165,73 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     }
 
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-        if let annotation = view.annotation as? IdentifiableAnnotation {
-            onMarkerTapped(annotation.place)
+        guard let annotation = view.annotation as? IdentifiableAnnotation else { return }
+
+        selectedPlaceID = annotation.place.id
+        onMarkerTapped(annotation.place)
+
+        refreshAllAnnotations(on: mapView)
+    }
+
+    func mapView(_ mapView: MKMapView, didDeselect view: MKAnnotationView) {
+        refreshAllAnnotations(on: mapView)
+    }
+    
+    private func refreshAllAnnotations(on mapView: MKMapView) {
+        for annotation in mapView.annotations {
+            guard
+                let ann = annotation as? IdentifiableAnnotation,
+                let view = mapView.view(for: ann)
+            else { continue }
+
+            configure(view, for: ann)
         }
     }
 
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
         onRegionChange?(mapView.region)
     }
+    
+    private func configure(
+        _ view: MKAnnotationView,
+        for annotation: IdentifiableAnnotation
+    ) {
+        let isSelected = annotation.place.id == selectedPlaceID
+
+        let size: CGFloat = isSelected ? 40 : 28
+        view.frame.size = CGSize(width: size, height: size)
+        view.layer.cornerRadius = size / 2
+
+        // Reset state (CRITICAL)
+        view.alpha = 1.0
+        view.layer.borderWidth = 0
+        view.layer.shadowOpacity = 0
+        view.layer.removeAllAnimations()
+
+        if annotation.place.list == "Customers" {
+            view.image = UIImage(systemName: "star.circle.fill")?
+                .withTintColor(.systemBlue, renderingMode: .alwaysOriginal)
+            view.backgroundColor = .clear
+        } else {
+            view.image = nil
+            view.backgroundColor = UIColor(annotation.place.markerColor)
+        }
+
+        if isSelected {
+            view.layer.borderWidth = 3
+            view.layer.borderColor = UIColor.white.cgColor
+            view.layer.shadowColor = UIColor.black.cgColor
+            view.layer.shadowOpacity = 0.4
+            view.layer.shadowRadius = 6
+
+            let pulse = CABasicAnimation(keyPath: "transform.scale")
+            pulse.fromValue = 0.85
+            pulse.toValue = 1.0
+            pulse.duration = 0.2
+            view.layer.add(pulse, forKey: "selectPulse")
+        } else {
+            view.alpha = selectedPlaceID == nil ? 1.0 : 0.45
+        }
+    }
+    
 }

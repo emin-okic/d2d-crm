@@ -108,6 +108,8 @@ struct MapSearchView: View {
     
     @StateObject private var userLocationManager = UserLocationManager()
     
+    @State private var selectedPlaceID: UUID? = nil
+    
     init(searchText: Binding<String>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
@@ -126,8 +128,12 @@ struct MapSearchView: View {
                 MapDisplayView(
                     region: $controller.region,
                     markers: controller.markers,
+                    selectedPlaceID: selectedPlaceID,
                     userLocationManager: userLocationManager,
                     onMarkerTapped: { place in
+                        
+                        selectedPlaceID = place.id
+                        
                         // Keep ProspectPopupView behavior as-is
                         let state = PopupState(place: place)
                         popupState = nil
@@ -145,6 +151,8 @@ struct MapSearchView: View {
                         }
                     },
                     onMapTapped: { coordinate in
+                        
+                        selectedPlaceID = nil
                         
                         // CLOSE SEARCH FIRST if click anywhere other than search
                         if isSearchExpanded {
@@ -274,11 +282,13 @@ struct MapSearchView: View {
                 isCustomer: popup.place.list == "Customers",
                 onClose: {
                     popupState = nil
+                    selectedPlaceID = nil
                 },
                 onOutcomeSelected: { outcome, fileName in
                     pendingAddress = popup.place.address
                     isTappedAddressCustomer = popup.place.list == "Customers"
                     popupState = nil
+                    selectedPlaceID = nil
 
                     if outcome == "Follow Up Later" {
                         pendingRecordingFileName = fileName
