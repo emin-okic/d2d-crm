@@ -979,12 +979,81 @@ struct MapSearchView: View {
     }
 
     private func submitSearch() {
-        SearchHandler.submitManualSearch(
-            searchText: searchText,
-            pendingAddress: &pendingAddress,
-            showOutcomePrompt: &showOutcomePrompt,
-            clearSearchText: { searchText = "" }
-        )
+        let query = searchText
+
+        Task { @MainActor in
+            guard let item = await SearchBarController.resolveFreeformSearch(query: query) else {
+                return
+            }
+
+            let address =
+                item.placemark.postalAddress
+                .map {
+                    CNPostalAddressFormatter()
+                        .string(from: $0)
+                        .replacingOccurrences(of: "\n", with: ", ")
+                }
+                ?? item.placemark.title
+                ?? query
+
+            searchText = ""
+            searchVM.results = []
+            isSearchFocused = false
+            isSearchExpanded = false
+
+            pendingAddress = address
+
+            // 📍 Move map
+            withAnimation(.easeInOut(duration: 0.4)) {
+                controller.region = MKCoordinateRegion(
+                    center: item.placemark.coordinate,
+                    latitudinalMeters: 500,
+                    longitudinalMeters: 500
+                )
+            }
+
+            // 🔍 Existing Prospect?
+            if let prospect = prospects.first(where: {
+                addressesMatch($0.address, address)
+            }) {
+                showPopup(
+                    for: IdentifiablePlace(
+                        address: prospect.address,
+                        location: CLLocationCoordinate2D(
+                            latitude: prospect.latitude ?? item.placemark.coordinate.latitude,
+                            longitude: prospect.longitude ?? item.placemark.coordinate.longitude
+                        ),
+                        count: prospect.knockHistory.count,
+                        list: prospect.list
+                    )
+                )
+                return
+            }
+
+            // 🔍 Existing Customer?
+            if let customer = customers.first(where: {
+                addressesMatch($0.address, address)
+            }) {
+                showPopup(
+                    for: IdentifiablePlace(
+                        address: customer.address,
+                        location: CLLocationCoordinate2D(
+                            latitude: customer.latitude ?? item.placemark.coordinate.latitude,
+                            longitude: customer.longitude ?? item.placemark.coordinate.longitude
+                        ),
+                        count: customer.knockHistory.count,
+                        list: "Customers"
+                    )
+                )
+                return
+            }
+
+            // ➕ New property
+            pendingAddProperty = PendingAddProperty(
+                address: address,
+                coordinate: item.placemark.coordinate
+            )
+        }
     }
 
     private func updateMarkers() {
