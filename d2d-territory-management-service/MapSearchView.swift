@@ -468,90 +468,45 @@ struct MapSearchView: View {
         }) {
             AddObjectionView()
         }
-        .overlay(
-            Group {
-                if showConversionSheet, let prospect = prospectToConvert {
-                    Color.black.opacity(0.25)
-                        .ignoresSafeArea()
-                        .onTapGesture { showConversionSheet = false }
+        .sheet(isPresented: $showConversionSheet) {
+            if let prospect = prospectToConvert {
+                CustomerCreateStepperView(
+                    initialName: prospect.fullName,
+                    initialAddress: prospect.address,
+                    initialPhone: prospect.contactPhone,
+                    initialEmail: prospect.contactEmail
+                ) { newCustomer in
+                    
+                    // Carry over history, notes, appointments, coordinates
+                    newCustomer.knockHistory = prospect.knockHistory
+                    newCustomer.notes = prospect.notes
+                    newCustomer.appointments = prospect.appointments
+                    if newCustomer.contactPhone.isEmpty { newCustomer.contactPhone = prospect.contactPhone }
+                    if newCustomer.contactEmail.isEmpty { newCustomer.contactEmail = prospect.contactEmail }
+                    newCustomer.latitude = prospect.latitude
+                    newCustomer.longitude = prospect.longitude
 
-                    CustomerCreateStepperView(
-                        initialName: prospect.fullName,
-                        initialAddress: prospect.address,
-                        initialPhone: prospect.contactPhone,
-                        initialEmail: prospect.contactEmail
-                    )
-                    { newCustomer in
-                        
-                        // 1) Pull over anything useful from the original prospect
-                        if let prospect = prospectToConvert {
-                            
-                            // Carry over history/notes/contact if your models have these
-                            newCustomer.knockHistory = prospect.knockHistory
-                            newCustomer.notes = prospect.notes
-                            
-                            // Carry over the appointments
-                            newCustomer.appointments = prospect.appointments
-                            
-                            if newCustomer.contactPhone.isEmpty { newCustomer.contactPhone = prospect.contactPhone }
-                            
-                            if newCustomer.contactEmail.isEmpty { newCustomer.contactEmail = prospect.contactEmail }
-                            
-                            
-                            // COPY COORDINATES
-                            newCustomer.latitude = prospect.latitude
-                            newCustomer.longitude = prospect.longitude
-                            
-                            // 🔍 Print for testing
-                            print("""
-                            ⭐️ CONVERTED TO CUSTOMER
-                            Name: \(newCustomer.fullName)
-                            Address: \(newCustomer.address)
-                            Lat: \(newCustomer.latitude?.description ?? "nil")
-                            Lon: \(newCustomer.longitude?.description ?? "nil")
-                            -------------------------
-                            """)
-                            
-                        }
-
-                        // 2) Persist the new Customer record
-                        modelContext.insert(newCustomer)
-
-                        // 3) Retire the old prospect to avoid duplicate markers
-                        if let prospect = prospectToConvert {
-                            
-                            // Delete it
-                            modelContext.delete(prospect)
-
-                        }
-
-                        // 4) Save + refresh UI
-                        try? modelContext.save()
-                        
-                        updateMarkers()
-                        
-                        selectedList = "Customers"
-                        
-                        showConversionSheet = false
-
-                        // 5) Celebrate 🎉
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            withAnimation { showConfetti = true }
-                        }
-                    } onCancel: {
-                        showConversionSheet = false
+                    // Persist new customer and delete old prospect
+                    modelContext.insert(newCustomer)
+                    modelContext.delete(prospect)
+                    try? modelContext.save()
+                    
+                    updateMarkers()
+                    selectedList = "Customers"
+                    
+                    // Celebrate 🎉
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        withAnimation { showConfetti = true }
                     }
-                    .frame(width: 300, height: 300)
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(16)
-                    .shadow(radius: 8)
-                    .position(x: UIScreen.main.bounds.midX,
-                              y: UIScreen.main.bounds.midY * 0.9)
-                    .transition(.scale.combined(with: .opacity))
-                    .zIndex(2000)
+                    
+                    showConversionSheet = false
+                } onCancel: {
+                    showConversionSheet = false
                 }
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
             }
-        )
+        }
     }
     
     @ViewBuilder
