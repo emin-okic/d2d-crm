@@ -221,7 +221,94 @@ struct MapSearchView: View {
                 AdEngine.shared.stop()
             }
             // Stepper overlay — presented ONLY when stepperState is set (Follow-Up Later path)
-            .overlay(stepperOverlay(geo: geo))
+            //.overlay(stepperOverlay(geo: geo))
+            .sheet(item: $stepperState) { state in
+                VStack {
+                    Spacer() // push content to center vertically
+                    KnockStepperPopupView(
+                        context: state.ctx,
+                        objections: objections,
+                        saveKnock: { outcome in
+                            if state.ctx.isCustomer {
+                                let customerController = CustomerKnockActionController(
+                                    modelContext: modelContext,
+                                    controller: controller
+                                )
+                                let customer = customerController.saveKnockOnly(
+                                    address: state.ctx.address,
+                                    status: outcome.rawValue,
+                                    customers: customers,
+                                    onUpdateMarkers: { updateMarkers() }
+                                )
+                                let p = Prospect(
+                                    fullName: customer.fullName,
+                                    address: customer.address,
+                                    count: customer.knockCount,
+                                    list: "Customers"
+                                )
+                                p.latitude = customer.latitude
+                                p.longitude = customer.longitude
+                                return p
+                            } else {
+                                return knockController!.saveKnockOnly(
+                                    address: state.ctx.address,
+                                    status: outcome.rawValue,
+                                    prospects: prospects,
+                                    onUpdateMarkers: { updateMarkers() }
+                                )
+                            }
+                        },
+                        incrementObjection: { obj in
+                            obj.timesHeard += 1
+                            if recordingFeaturesActive,
+                               let name = pendingRecordingFileName {
+                                let rec = Recording(
+                                    fileName: name,
+                                    date: .now,
+                                    objection: obj,
+                                    rating: 3
+                                )
+                                modelContext.insert(rec)
+                                pendingRecordingFileName = nil
+                            }
+                            try? modelContext.save()
+                        },
+                        saveFollowUp: { prospect, date in
+                            saveFollowUp(for: state.ctx, prospect: prospect, date: date)
+                        },
+                        convertToCustomer: { prospect, done in
+                            prospectToConvert = prospect
+                            showConversionSheet = true
+                            done()
+                        },
+                        addNote: { prospect, text in
+                            prospect.notes.append(Note(content: text))
+                            try? modelContext.save()
+                        },
+                        logTrip: { start, end, date in
+                            guard !end.isEmpty else { return }
+                            let trip = Trip(
+                                startAddress: start,
+                                endAddress: end,
+                                miles: 0,
+                                date: date
+                            )
+                            modelContext.insert(trip)
+                            try? modelContext.save()
+                        },
+                        onClose: {
+                            stepperState = nil
+                            withAnimation { showConfetti = true }
+                        }
+                    )
+                    .frame(width: 280, height: 280)
+                    .cornerRadius(16)
+                    .shadow(radius: 8)
+                    Spacer() // push content to center vertically
+                }
+                .presentationDetents([.fraction(0.45)])
+                .presentationDragIndicator(.visible)
+            }
             .onChange(of: popupState) { newValue in
                 // Close the search bar when a popup opens
                 if newValue != nil, isSearchExpanded {
