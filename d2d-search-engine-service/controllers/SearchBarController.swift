@@ -57,6 +57,26 @@ enum SearchBarController {
         onResolved(trimmed)
     }
     
+    @MainActor
+    static func resolveFreeformSearch(
+        query: String
+    ) async -> MKMapItem? {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = trimmed
+        request.resultTypes = .address
+
+        do {
+            let response = try await MKLocalSearch(request: request).start()
+            return response.mapItems.first
+        } catch {
+            print("❌ Freeform search failed:", error.localizedDescription)
+            return nil
+        }
+    }
+    
     static func resolveAndSelectAddress(
         from completion: MKLocalSearchCompletion,
         onResolved: @escaping (String) -> Void
