@@ -14,6 +14,8 @@ struct MapDisplayView: UIViewRepresentable {
     
     var markers: [IdentifiablePlace]
     
+    var selectedPlaceID: UUID?
+    
     var userLocationManager: UserLocationManager
     
     var onMarkerTapped: (IdentifiablePlace) -> Void
@@ -25,6 +27,7 @@ struct MapDisplayView: UIViewRepresentable {
     func makeCoordinator() -> MapDisplayCoordinator {
         MapDisplayCoordinator(
             userLocationManager: userLocationManager,
+            selectedPlaceID: selectedPlaceID,
             onMarkerTapped: onMarkerTapped,
             onMapTapped: onMapTapped,
             onRegionChange: onRegionChange
@@ -58,6 +61,26 @@ struct MapDisplayView: UIViewRepresentable {
     }
 
     func updateUIView(_ mapView: MKMapView, context: Context) {
+        
+        // 🔄 Sync selected marker
+        if context.coordinator.selectedPlaceID != selectedPlaceID {
+            
+            context.coordinator.selectedPlaceID = selectedPlaceID
+            
+            for annotation in mapView.annotations {
+                
+                if let view = mapView.view(for: annotation) {
+                    
+                    for annotation in mapView.annotations {
+                        guard let view = mapView.view(for: annotation) else { continue }
+                        mapView.delegate?.mapView?(mapView, viewFor: annotation)
+                    }
+                    
+                }
+            }
+            
+        }
+        
         // Sync region
         if abs(mapView.region.center.latitude - region.center.latitude) > 0.0001 ||
            abs(mapView.region.center.longitude - region.center.longitude) > 0.0001 ||
@@ -69,10 +92,15 @@ struct MapDisplayView: UIViewRepresentable {
         let existing = mapView.annotations.compactMap { $0 as? IdentifiableAnnotation }
         let existingIds = Set(existing.map { $0.place.id })
         let newIds = Set(markers.map { $0.id })
+        
         if existingIds != newIds {
+            
             mapView.removeAnnotations(mapView.annotations)
+            
             for place in markers {
+                
                 let annotation = IdentifiableAnnotation(place: place)
+                
                 mapView.addAnnotation(annotation)
             }
         }

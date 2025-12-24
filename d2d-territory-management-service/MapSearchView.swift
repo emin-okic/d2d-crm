@@ -108,6 +108,8 @@ struct MapSearchView: View {
     
     @StateObject private var userLocationManager = UserLocationManager()
     
+    @State private var selectedPlaceID: UUID? = nil
+    
     init(searchText: Binding<String>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
@@ -126,8 +128,12 @@ struct MapSearchView: View {
                 MapDisplayView(
                     region: $controller.region,
                     markers: controller.markers,
+                    selectedPlaceID: selectedPlaceID,
                     userLocationManager: userLocationManager,
                     onMarkerTapped: { place in
+                        
+                        selectedPlaceID = place.id
+                        
                         // Keep ProspectPopupView behavior as-is
                         let state = PopupState(place: place)
                         popupState = nil
@@ -145,6 +151,8 @@ struct MapSearchView: View {
                         }
                     },
                     onMapTapped: { coordinate in
+                        
+                        selectedPlaceID = nil
                         
                         // CLOSE SEARCH FIRST if click anywhere other than search
                         if isSearchExpanded {
@@ -189,8 +197,6 @@ struct MapSearchView: View {
                     hasSignedUp: hasCustomers   // ← was: hasSignedUp
                 )
 
-                prospectPopup
-
                 FloatingSearchAndMicButtons(
                     searchText: $searchText,
                     isExpanded: $isSearchExpanded,
@@ -215,7 +221,94 @@ struct MapSearchView: View {
                 AdEngine.shared.stop()
             }
             // Stepper overlay — presented ONLY when stepperState is set (Follow-Up Later path)
-            .overlay(stepperOverlay(geo: geo))
+            //.overlay(stepperOverlay(geo: geo))
+            .sheet(item: $stepperState) { state in
+                VStack {
+                    Spacer() // push content to center vertically
+                    KnockStepperPopupView(
+                        context: state.ctx,
+                        objections: objections,
+                        saveKnock: { outcome in
+                            if state.ctx.isCustomer {
+                                let customerController = CustomerKnockActionController(
+                                    modelContext: modelContext,
+                                    controller: controller
+                                )
+                                let customer = customerController.saveKnockOnly(
+                                    address: state.ctx.address,
+                                    status: outcome.rawValue,
+                                    customers: customers,
+                                    onUpdateMarkers: { updateMarkers() }
+                                )
+                                let p = Prospect(
+                                    fullName: customer.fullName,
+                                    address: customer.address,
+                                    count: customer.knockCount,
+                                    list: "Customers"
+                                )
+                                p.latitude = customer.latitude
+                                p.longitude = customer.longitude
+                                return p
+                            } else {
+                                return knockController!.saveKnockOnly(
+                                    address: state.ctx.address,
+                                    status: outcome.rawValue,
+                                    prospects: prospects,
+                                    onUpdateMarkers: { updateMarkers() }
+                                )
+                            }
+                        },
+                        incrementObjection: { obj in
+                            obj.timesHeard += 1
+                            if recordingFeaturesActive,
+                               let name = pendingRecordingFileName {
+                                let rec = Recording(
+                                    fileName: name,
+                                    date: .now,
+                                    objection: obj,
+                                    rating: 3
+                                )
+                                modelContext.insert(rec)
+                                pendingRecordingFileName = nil
+                            }
+                            try? modelContext.save()
+                        },
+                        saveFollowUp: { prospect, date in
+                            saveFollowUp(for: state.ctx, prospect: prospect, date: date)
+                        },
+                        convertToCustomer: { prospect, done in
+                            prospectToConvert = prospect
+                            showConversionSheet = true
+                            done()
+                        },
+                        addNote: { prospect, text in
+                            prospect.notes.append(Note(content: text))
+                            try? modelContext.save()
+                        },
+                        logTrip: { start, end, date in
+                            guard !end.isEmpty else { return }
+                            let trip = Trip(
+                                startAddress: start,
+                                endAddress: end,
+                                miles: 0,
+                                date: date
+                            )
+                            modelContext.insert(trip)
+                            try? modelContext.save()
+                        },
+                        onClose: {
+                            stepperState = nil
+                            withAnimation { showConfetti = true }
+                        }
+                    )
+                    .frame(width: 280, height: 280)
+                    .cornerRadius(16)
+                    .shadow(radius: 8)
+                    Spacer() // push content to center vertically
+                }
+                .presentationDetents([.fraction(0.45)])
+                .presentationDragIndicator(.visible)
+            }
             .onChange(of: popupState) { newValue in
                 // Close the search bar when a popup opens
                 if newValue != nil, isSearchExpanded {
@@ -268,6 +361,39 @@ struct MapSearchView: View {
         .onChange(of: addressToCenter) { handleMapCenterChange(newAddress: $0) }
         .onTapGesture {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to:nil,from:nil,for:nil)
+        }
+        // This is for the contact popup display
+        .sheet(item: $popupState) { popup in
+            ProspectPopupView(
+                place: popup.place,
+                isCustomer: popup.place.list == "Customers",
+                onClose: {
+                    popupState = nil
+                    selectedPlaceID = nil
+                },
+                onOutcomeSelected: { outcome, fileName in
+                    pendingAddress = popup.place.address
+                    isTappedAddressCustomer = popup.place.list == "Customers"
+                    popupState = nil
+                    selectedPlaceID = nil
+
+                    if outcome == "Follow Up Later" {
+                        pendingRecordingFileName = fileName
+                        stepperState = .init(
+                            ctx: .init(
+                                address: popup.place.address,
+                                isCustomer: isTappedAddressCustomer,
+                                prospect: nil
+                            )
+                        )
+                    } else {
+                        handleOutcome(outcome, recordingFileName: fileName)
+                    }
+                },
+                recordingModeEnabled: recordingModeEnabled
+            )
+            .presentationDetents([.fraction(0.5)])
+            .presentationDragIndicator(.visible)
         }
         // This is the menu option for new properties - all else is handled during the popup
         .sheet(item: $pendingAddProperty) { item in
@@ -342,90 +468,45 @@ struct MapSearchView: View {
         }) {
             AddObjectionView()
         }
-        .overlay(
-            Group {
-                if showConversionSheet, let prospect = prospectToConvert {
-                    Color.black.opacity(0.25)
-                        .ignoresSafeArea()
-                        .onTapGesture { showConversionSheet = false }
+        .sheet(isPresented: $showConversionSheet) {
+            if let prospect = prospectToConvert {
+                CustomerCreateStepperView(
+                    initialName: prospect.fullName,
+                    initialAddress: prospect.address,
+                    initialPhone: prospect.contactPhone,
+                    initialEmail: prospect.contactEmail
+                ) { newCustomer in
+                    
+                    // Carry over history, notes, appointments, coordinates
+                    newCustomer.knockHistory = prospect.knockHistory
+                    newCustomer.notes = prospect.notes
+                    newCustomer.appointments = prospect.appointments
+                    if newCustomer.contactPhone.isEmpty { newCustomer.contactPhone = prospect.contactPhone }
+                    if newCustomer.contactEmail.isEmpty { newCustomer.contactEmail = prospect.contactEmail }
+                    newCustomer.latitude = prospect.latitude
+                    newCustomer.longitude = prospect.longitude
 
-                    CustomerCreateStepperView(
-                        initialName: prospect.fullName,
-                        initialAddress: prospect.address,
-                        initialPhone: prospect.contactPhone,
-                        initialEmail: prospect.contactEmail
-                    )
-                    { newCustomer in
-                        
-                        // 1) Pull over anything useful from the original prospect
-                        if let prospect = prospectToConvert {
-                            
-                            // Carry over history/notes/contact if your models have these
-                            newCustomer.knockHistory = prospect.knockHistory
-                            newCustomer.notes = prospect.notes
-                            
-                            // Carry over the appointments
-                            newCustomer.appointments = prospect.appointments
-                            
-                            if newCustomer.contactPhone.isEmpty { newCustomer.contactPhone = prospect.contactPhone }
-                            
-                            if newCustomer.contactEmail.isEmpty { newCustomer.contactEmail = prospect.contactEmail }
-                            
-                            
-                            // COPY COORDINATES
-                            newCustomer.latitude = prospect.latitude
-                            newCustomer.longitude = prospect.longitude
-                            
-                            // 🔍 Print for testing
-                            print("""
-                            ⭐️ CONVERTED TO CUSTOMER
-                            Name: \(newCustomer.fullName)
-                            Address: \(newCustomer.address)
-                            Lat: \(newCustomer.latitude?.description ?? "nil")
-                            Lon: \(newCustomer.longitude?.description ?? "nil")
-                            -------------------------
-                            """)
-                            
-                        }
-
-                        // 2) Persist the new Customer record
-                        modelContext.insert(newCustomer)
-
-                        // 3) Retire the old prospect to avoid duplicate markers
-                        if let prospect = prospectToConvert {
-                            
-                            // Delete it
-                            modelContext.delete(prospect)
-
-                        }
-
-                        // 4) Save + refresh UI
-                        try? modelContext.save()
-                        
-                        updateMarkers()
-                        
-                        selectedList = "Customers"
-                        
-                        showConversionSheet = false
-
-                        // 5) Celebrate 🎉
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            withAnimation { showConfetti = true }
-                        }
-                    } onCancel: {
-                        showConversionSheet = false
+                    // Persist new customer and delete old prospect
+                    modelContext.insert(newCustomer)
+                    modelContext.delete(prospect)
+                    try? modelContext.save()
+                    
+                    updateMarkers()
+                    selectedList = "Customers"
+                    
+                    // Celebrate 🎉
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        withAnimation { showConfetti = true }
                     }
-                    .frame(width: 300, height: 300)
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(16)
-                    .shadow(radius: 8)
-                    .position(x: UIScreen.main.bounds.midX,
-                              y: UIScreen.main.bounds.midY * 0.9)
-                    .transition(.scale.combined(with: .opacity))
-                    .zIndex(2000)
+                    
+                    showConversionSheet = false
+                } onCancel: {
+                    showConversionSheet = false
                 }
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
             }
-        )
+        }
     }
     
     @ViewBuilder
@@ -610,39 +691,6 @@ struct MapSearchView: View {
             showingAddObjection = true
         } else {
             showObjectionPicker = true
-        }
-    }
-
-    private var prospectPopup: some View {
-        Group {
-            if let popup = popupState, let pos = popupScreenPosition {
-                ProspectPopupView(
-                    place: popup.place,
-                    isCustomer: popup.place.list == "Customers",
-                    onClose: { popupState = nil },
-                    onOutcomeSelected: { outcome, fileName in
-                        pendingAddress = popup.place.address
-                        isTappedAddressCustomer = popup.place.list == "Customers"
-                        popupState = nil
-                        // Route follow-ups into the stepper; keep others as-is
-                        if outcome == "Follow Up Later" {
-                            pendingRecordingFileName = fileName
-                            if let addr = pendingAddress {
-                                stepperState = .init(ctx: .init(address: addr, isCustomer: isTappedAddressCustomer, prospect: nil))
-                            }
-                        } else {
-                            handleOutcome(outcome, recordingFileName: fileName)
-                        }
-                    },
-                    recordingModeEnabled: recordingModeEnabled
-                )
-                .frame(width: 240)
-                .background(.ultraThinMaterial)
-                .cornerRadius(16)
-                .position(pos)
-                .zIndex(999)
-                .id(popup.id)
-            }
         }
     }
 
