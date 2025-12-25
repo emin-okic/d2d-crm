@@ -253,59 +253,6 @@ struct CustomerCreateStepperView: View {
         }
     }
 
-    // MARK: - Steps
-
-    private var stepOne: some View {
-        Form {
-            Section(header: Text("Step 1 • Name & Address")) {
-                TextField("Full Name", text: $fullName)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    TextField("Address", text: $address)
-                        .focused($isAddressFocused)
-                        .onChange(of: address) { searchVM.updateQuery($0) }
-
-                    if isAddressFocused && !searchVM.results.isEmpty {
-                        ForEach(searchVM.results.prefix(4), id: \.self) { result in
-                            Button {
-                                handleAddressSelection(result)
-                            } label: {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(result.title).bold()
-                                    Text(result.subtitle)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                .padding(.vertical, 6)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private var stepTwo: some View {
-        Form {
-            Section(header: Text("Step 2 • Contact Details")) {
-                TextField("Phone (Optional)", text: $contactPhone)
-                    .keyboardType(.phonePad)
-                    .onChange(of: contactPhone) { _ in _ = validatePhoneNumber() }
-
-                if let phoneError = phoneError {
-                    Text(phoneError).foregroundColor(.red).font(.caption)
-                }
-
-                TextField("Email (Optional)", text: $contactEmail)
-                    .keyboardType(.emailAddress)
-                    .textInputAutocapitalization(.never)
-            }
-
-            // Extend “the rest” here later as needed
-            // Section(header: Text("Other Details")) { ... }
-        }
-    }
-
     // MARK: - Helpers
     
     private func geocodeAddress(_ address: String) async -> CLLocationCoordinate2D? {
