@@ -55,70 +55,202 @@ struct CustomerCreateStepperView: View {
     }
 
     var body: some View {
-        VStack(spacing: 8) {
-            // header
-            HStack {
-                Text("New Customer")
-                    .font(.headline)
-                Spacer()
-                Button(action: onCancel) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.secondary)
-                }
-            }
+        VStack(spacing: 0) {
+
+            // Header
+            header
+                .padding(.horizontal)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
 
             DotStepBar(total: totalSteps, index: stepIndex)
+                .padding(.bottom, 12)
 
-            // content
-            Group {
-                if stepIndex == 0 { stepOne }
-                else { stepTwo }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            Divider()
 
-            HStack {
-                if stepIndex > 0 {
-                    Button("Back") { stepIndex = 0 }
+            // Content
+            ScrollView {
+                LazyVStack(spacing: 16) {
+                    if stepIndex == 0 {
+                        stepOneCard
+                    } else {
+                        stepTwoCard
+                    }
                 }
-                Spacer()
-                if stepIndex == 0 {
-                    Button("Next") { stepIndex = 1 }
-                        .disabled(!canProceedStepOne)
-                } else {
-                    
-                    Button("Finish") {
-                        guard validatePhoneNumber() else { return }
+                .padding()
+            }
 
-                        Task {
-                            let customer = Customer(fullName: fullName, address: address)
-                            customer.contactEmail = contactEmail
-                            customer.contactPhone = contactPhone
+            Divider()
 
-                            // 🔑 Resolve coordinates at creation time
-                            if let coord = await geocodeAddress(address) {
-                                customer.latitude = coord.latitude
-                                customer.longitude = coord.longitude
+            // Footer actions
+            footerActions
+                .padding()
+                .background(.ultraThinMaterial)
+        }
+    }
+    
+    private var header: some View {
+        HStack {
+            Text("New Customer")
+                .font(.title3)
+                .fontWeight(.semibold)
 
-                                print("""
-                                📍 Customer created with coordinates
-                                Address: \(address)
-                                Lat: \(coord.latitude)
-                                Lon: \(coord.longitude)
-                                """)
-                            } else {
-                                print("⚠️ Customer created WITHOUT coordinates:", address)
-                            }
+            Spacer()
 
-                            await MainActor.run {
-                                onComplete(customer)
+            Button(action: onCancel) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 14, weight: .semibold))
+                    .padding(8)
+                    .background(Circle().fill(Color.secondary.opacity(0.15)))
+            }
+        }
+    }
+    
+    private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            content()
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.08), radius: 8, y: 4)
+        )
+    }
+    
+    private var stepOneCard: some View {
+        card {
+            Text("Name & Address")
+                .font(.headline)
+
+            labeledField("Full Name") {
+                TextField("John Smith", text: $fullName)
+            }
+
+            labeledField("Address") {
+                VStack(spacing: 6) {
+                    TextField("123 Main St", text: $address)
+                        .focused($isAddressFocused)
+                        .onChange(of: address) { searchVM.updateQuery($0) }
+
+                    if isAddressFocused && !searchVM.results.isEmpty {
+                        VStack(spacing: 0) {
+                            ForEach(searchVM.results.prefix(4), id: \.self) { result in
+                                Button {
+                                    handleAddressSelection(result)
+                                } label: {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(result.title)
+                                            .fontWeight(.medium)
+                                        Text(result.subtitle)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 12)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                                .buttonStyle(.plain)
+
+                                Divider()
                             }
                         }
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(.systemBackground))
+                                .shadow(color: .black.opacity(0.1), radius: 6)
+                        )
                     }
-                    .disabled(!canProceedStepTwo)
                 }
             }
         }
-        .padding(12)
+    }
+    
+    private var stepTwoCard: some View {
+        card {
+            Text("Contact Details")
+                .font(.headline)
+
+            labeledField("Phone (Optional)") {
+                TextField("555-123-4567", text: $contactPhone)
+                    .keyboardType(.phonePad)
+                    .onChange(of: contactPhone) { _ in _ = validatePhoneNumber() }
+            }
+
+            if let phoneError = phoneError {
+                Text(phoneError)
+                    .font(.caption)
+                    .foregroundColor(.red)
+            }
+
+            labeledField("Email (Optional)") {
+                TextField("name@email.com", text: $contactEmail)
+                    .keyboardType(.emailAddress)
+                    .textInputAutocapitalization(.never)
+            }
+        }
+    }
+    
+    private func labeledField<Content: View>(
+        _ label: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            content()
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color(.systemBackground))
+                )
+        }
+    }
+    
+    private var footerActions: some View {
+        HStack {
+            if stepIndex > 0 {
+                Button("Back") {
+                    stepIndex = 0
+                }
+            }
+
+            Spacer()
+
+            if stepIndex == 0 {
+                Button("Next") {
+                    stepIndex = 1
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!canProceedStepOne)
+            } else {
+                Button("Finish") {
+                    guard validatePhoneNumber() else { return }
+                    createCustomer()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!canProceedStepTwo)
+            }
+        }
+    }
+    
+    private func createCustomer() {
+        Task {
+            let customer = Customer(fullName: fullName, address: address)
+            customer.contactEmail = contactEmail
+            customer.contactPhone = contactPhone
+
+            if let coord = await geocodeAddress(address) {
+                customer.latitude = coord.latitude
+                customer.longitude = coord.longitude
+            }
+
+            await MainActor.run {
+                onComplete(customer)
+            }
+        }
     }
 
     // MARK: - Steps
