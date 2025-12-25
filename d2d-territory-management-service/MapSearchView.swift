@@ -134,10 +134,17 @@ struct MapSearchView: View {
                         
                         selectedPlaceID = place.id
                         
+                        
+                        // Center the map each time a prospect is selected
+                        centerMapForPopup(coordinate: place.location)
+                        
                         // Keep ProspectPopupView behavior as-is
                         let state = PopupState(place: place)
                         popupState = nil
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) { popupState = state }
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+                            popupState = state
+                        }
 
                         if let mapView = MapDisplayView.cachedMapView {
                             let raw = mapView.convert(place.location, toPointTo: mapView)
@@ -506,6 +513,34 @@ struct MapSearchView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
             }
+        }
+    }
+    
+    @MainActor
+    private func centerMapForPopup(coordinate: CLLocationCoordinate2D) {
+
+        // Target zoom (tight enough to matter visually)
+        let latMeters: CLLocationDistance = 700
+        let lonMeters: CLLocationDistance = 700
+
+        // Convert meters → degrees (approx)
+        let metersToDegrees = 1.0 / 111_000.0
+        let latitudeSpanDegrees = latMeters * metersToDegrees
+
+        // Push marker into TOP HALF (25% from top)
+        let verticalOffset = latitudeSpanDegrees * 0.25
+
+        let adjustedCenter = CLLocationCoordinate2D(
+            latitude: coordinate.latitude - verticalOffset,
+            longitude: coordinate.longitude
+        )
+
+        withAnimation(.easeInOut(duration: 0.35)) {
+            controller.region = MKCoordinateRegion(
+                center: adjustedCenter,
+                latitudinalMeters: latMeters,
+                longitudinalMeters: lonMeters
+            )
         }
     }
     
@@ -973,9 +1008,18 @@ struct MapSearchView: View {
     
     /// Helper function to create the popup for Prospect or Customer
     private func showPopup(for place: IdentifiablePlace) {
+        
+        selectedPlaceID = place.id
+        
+        centerMapForPopup(coordinate: place.location)
+        
         let state = PopupState(place: place)
         popupState = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) { popupState = state }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+            popupState = state
+        }
+        
     }
 
     private func submitSearch() {
