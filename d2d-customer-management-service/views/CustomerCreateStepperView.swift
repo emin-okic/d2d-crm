@@ -55,122 +55,201 @@ struct CustomerCreateStepperView: View {
     }
 
     var body: some View {
-        VStack(spacing: 8) {
-            // header
-            HStack {
-                Text("New Customer")
-                    .font(.headline)
-                Spacer()
-                Button(action: onCancel) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.secondary)
-                }
-            }
+        VStack(spacing: 0) {
+
+            // Header
+            header
+                .padding(.horizontal)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
 
             DotStepBar(total: totalSteps, index: stepIndex)
+                .padding(.bottom, 12)
 
-            // content
-            Group {
-                if stepIndex == 0 { stepOne }
-                else { stepTwo }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            Divider()
 
-            HStack {
-                if stepIndex > 0 {
-                    Button("Back") { stepIndex = 0 }
-                }
-                Spacer()
-                if stepIndex == 0 {
-                    Button("Next") { stepIndex = 1 }
-                        .disabled(!canProceedStepOne)
-                } else {
-                    
-                    Button("Finish") {
-                        guard validatePhoneNumber() else { return }
-
-                        Task {
-                            let customer = Customer(fullName: fullName, address: address)
-                            customer.contactEmail = contactEmail
-                            customer.contactPhone = contactPhone
-
-                            // 🔑 Resolve coordinates at creation time
-                            if let coord = await geocodeAddress(address) {
-                                customer.latitude = coord.latitude
-                                customer.longitude = coord.longitude
-
-                                print("""
-                                📍 Customer created with coordinates
-                                Address: \(address)
-                                Lat: \(coord.latitude)
-                                Lon: \(coord.longitude)
-                                """)
-                            } else {
-                                print("⚠️ Customer created WITHOUT coordinates:", address)
-                            }
-
-                            await MainActor.run {
-                                onComplete(customer)
-                            }
-                        }
+            // Content
+            ScrollView {
+                LazyVStack(spacing: 16) {
+                    if stepIndex == 0 {
+                        stepOneCard
+                    } else {
+                        stepTwoCard
                     }
-                    .disabled(!canProceedStepTwo)
                 }
+                .padding()
+            }
+
+            Divider()
+
+            // Footer actions
+            footerActions
+                .padding()
+                .background(.ultraThinMaterial)
+        }
+    }
+    
+    private var header: some View {
+        HStack {
+            Text("New Customer")
+                .font(.title3)
+                .fontWeight(.semibold)
+
+            Spacer()
+
+            Button(action: onCancel) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 14, weight: .semibold))
+                    .padding(8)
+                    .background(Circle().fill(Color.secondary.opacity(0.15)))
             }
         }
-        .padding(12)
     }
+    
+    private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            content()
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.08), radius: 8, y: 4)
+        )
+    }
+    
+    private var stepOneCard: some View {
+        card {
+            Text("Name & Address")
+                .font(.headline)
 
-    // MARK: - Steps
+            labeledField("Full Name") {
+                TextField("John Smith", text: $fullName)
+            }
 
-    private var stepOne: some View {
-        Form {
-            Section(header: Text("Step 1 • Name & Address")) {
-                TextField("Full Name", text: $fullName)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    TextField("Address", text: $address)
+            labeledField("Address") {
+                VStack(spacing: 6) {
+                    TextField("123 Main St", text: $address)
                         .focused($isAddressFocused)
                         .onChange(of: address) { searchVM.updateQuery($0) }
 
                     if isAddressFocused && !searchVM.results.isEmpty {
-                        ForEach(searchVM.results.prefix(4), id: \.self) { result in
-                            Button {
-                                handleAddressSelection(result)
-                            } label: {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(result.title).bold()
-                                    Text(result.subtitle)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
+                        VStack(spacing: 0) {
+                            ForEach(searchVM.results.prefix(4), id: \.self) { result in
+                                Button {
+                                    handleAddressSelection(result)
+                                } label: {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(result.title)
+                                            .fontWeight(.medium)
+                                        Text(result.subtitle)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 12)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                                 }
-                                .padding(.vertical, 6)
+                                .buttonStyle(.plain)
+
+                                Divider()
                             }
                         }
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(.systemBackground))
+                                .shadow(color: .black.opacity(0.1), radius: 6)
+                        )
                     }
                 }
             }
         }
     }
+    
+    private var stepTwoCard: some View {
+        card {
+            Text("Contact Details")
+                .font(.headline)
 
-    private var stepTwo: some View {
-        Form {
-            Section(header: Text("Step 2 • Contact Details")) {
-                TextField("Phone (Optional)", text: $contactPhone)
+            labeledField("Phone (Optional)") {
+                TextField("555-123-4567", text: $contactPhone)
                     .keyboardType(.phonePad)
                     .onChange(of: contactPhone) { _ in _ = validatePhoneNumber() }
+            }
 
-                if let phoneError = phoneError {
-                    Text(phoneError).foregroundColor(.red).font(.caption)
-                }
+            if let phoneError = phoneError {
+                Text(phoneError)
+                    .font(.caption)
+                    .foregroundColor(.red)
+            }
 
-                TextField("Email (Optional)", text: $contactEmail)
+            labeledField("Email (Optional)") {
+                TextField("name@email.com", text: $contactEmail)
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
             }
+        }
+    }
+    
+    private func labeledField<Content: View>(
+        _ label: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
-            // Extend “the rest” here later as needed
-            // Section(header: Text("Other Details")) { ... }
+            content()
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color(.systemBackground))
+                )
+        }
+    }
+    
+    private var footerActions: some View {
+        HStack {
+            if stepIndex > 0 {
+                Button("Back") {
+                    stepIndex = 0
+                }
+            }
+
+            Spacer()
+
+            if stepIndex == 0 {
+                Button("Next") {
+                    stepIndex = 1
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!canProceedStepOne)
+            } else {
+                Button("Finish") {
+                    guard validatePhoneNumber() else { return }
+                    createCustomer()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!canProceedStepTwo)
+            }
+        }
+    }
+    
+    private func createCustomer() {
+        Task {
+            let customer = Customer(fullName: fullName, address: address)
+            customer.contactEmail = contactEmail
+            customer.contactPhone = contactPhone
+
+            if let coord = await geocodeAddress(address) {
+                customer.latitude = coord.latitude
+                customer.longitude = coord.longitude
+            }
+
+            await MainActor.run {
+                onComplete(customer)
+            }
         }
     }
 

@@ -26,108 +26,184 @@ struct ProspectCreateStepperView: View {
     @State private var phoneError: String?
 
     var body: some View {
-        VStack(spacing: 8) {
-            HStack {
-                Text("New Prospect").font(.headline)
-                Spacer()
-                Button(action: onCancel) {
-                    Image(systemName: "xmark.circle.fill").foregroundColor(.secondary)
-                }
-            }
+        VStack(spacing: 0) {
+
+            // Header
+            header
+                .padding(.horizontal)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
 
             DotStepBar(total: totalSteps, index: stepIndex)
+                .padding(.bottom, 12)
 
-            Group { stepIndex == 0 ? AnyView(stepOne) : AnyView(stepTwo) }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            Divider()
 
-            HStack {
-                if stepIndex > 0 { Button("Back") { stepIndex = 0 } }
-                Spacer()
-                if stepIndex == 0 {
-                    Button("Next") { stepIndex = 1 }.disabled(!canProceedStepOne)
-                } else {
-                    
-                    /// This is the button for manually creating a prospect from the contacts screen
-                    /// TODO: Make this part its own component
-                    Button("Finish") {
-                        guard validatePhoneNumber() else { return }
-                        
-                        // Create prospect object
-                        let p = Prospect(fullName: fullName, address: address, count: 0, list: "Prospects")
-                        p.contactEmail = contactEmail
-                        p.contactPhone = contactPhone
-
-                        // Geocode before completion
-                        CLGeocoder().geocodeAddressString(address) { placemarks, error in
-                            if let coord = placemarks?.first?.location?.coordinate {
-                                p.latitude = coord.latitude
-                                p.longitude = coord.longitude
-
-                                print("""
-                                📍 Prospect Created
-                                Name: \(fullName)
-                                Address: \(address)
-                                Latitude: \(coord.latitude)
-                                Longitude: \(coord.longitude)
-                                """)
-                            } else {
-                                print("❌ Could not geocode manual prospect: \(error?.localizedDescription ?? "Unknown error")")
-                            }
-
-                            // Call completion on main queue
-                            DispatchQueue.main.async {
-                                onComplete(p)
-                            }
-                        }
+            // Scrollable content
+            ScrollView {
+                LazyVStack(spacing: 16) {
+                    if stepIndex == 0 {
+                        stepOneCard
+                    } else {
+                        stepTwoCard
                     }
-                    .disabled(!canProceedStepTwo)
                 }
+                .padding()
             }
+
+            Divider()
+
+            // Footer actions
+            footerActions
+                .padding()
+                .background(.ultraThinMaterial)
         }
-        .padding(12)
     }
 
-    // MARK: Steps
-    private var stepOne: some View {
-        Form {
-            Section(header: Text("Step 1 • Name & Address")) {
-                TextField("Full Name", text: $fullName)
+    // MARK: Header
+    private var header: some View {
+        HStack {
+            Text("New Prospect")
+                .font(.title3)
+                .fontWeight(.semibold)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    TextField("Address", text: $address)
+            Spacer()
+
+            Button(action: onCancel) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 14, weight: .semibold))
+                    .padding(8)
+                    .background(Circle().fill(Color.secondary.opacity(0.15)))
+            }
+        }
+    }
+
+    // MARK: Card Layout Helper
+    private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            content()
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.08), radius: 8, y: 4)
+        )
+    }
+
+    // MARK: Step 1
+    private var stepOneCard: some View {
+        card {
+            Text("Name & Address")
+                .font(.headline)
+
+            labeledField("Full Name") {
+                TextField("John Smith", text: $fullName)
+            }
+
+            labeledField("Address") {
+                VStack(spacing: 6) {
+                    TextField("123 Main St", text: $address)
                         .focused($isAddressFocused)
                         .onChange(of: address) { searchVM.updateQuery($0) }
 
                     if isAddressFocused && !searchVM.results.isEmpty {
-                        ForEach(searchVM.results.prefix(4), id: \.self) { result in
-                            Button {
-                                handleAddressSelection(result)
-                            } label: {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(result.title).bold()
-                                    Text(result.subtitle).font(.caption).foregroundColor(.secondary)
+                        VStack(spacing: 0) {
+                            ForEach(searchVM.results.prefix(4), id: \.self) { result in
+                                Button {
+                                    handleAddressSelection(result)
+                                } label: {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(result.title).fontWeight(.medium)
+                                        Text(result.subtitle)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 12)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                                 }
-                                .padding(.vertical, 6)
+                                .buttonStyle(.plain)
+
+                                Divider()
                             }
                         }
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(.systemBackground))
+                                .shadow(color: .black.opacity(0.1), radius: 6)
+                        )
                     }
                 }
             }
         }
     }
 
-    private var stepTwo: some View {
-        Form {
-            Section(header: Text("Step 2 • Contact Details")) {
-                TextField("Phone (Optional)", text: $contactPhone)
+    // MARK: Step 2
+    private var stepTwoCard: some View {
+        card {
+            Text("Contact Details")
+                .font(.headline)
+
+            labeledField("Phone (Optional)") {
+                TextField("555-123-4567", text: $contactPhone)
                     .keyboardType(.phonePad)
                     .onChange(of: contactPhone) { _ in _ = validatePhoneNumber() }
+            }
 
-                if let phoneError { Text(phoneError).foregroundColor(.red).font(.caption) }
+            if let phoneError = phoneError {
+                Text(phoneError)
+                    .font(.caption)
+                    .foregroundColor(.red)
+            }
 
-                TextField("Email (Optional)", text: $contactEmail)
+            labeledField("Email (Optional)") {
+                TextField("name@email.com", text: $contactEmail)
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
+            }
+        }
+    }
+
+    // MARK: Labeled Field
+    private func labeledField<Content: View>(
+        _ label: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            content()
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color(.systemBackground))
+                )
+        }
+    }
+
+    // MARK: Footer
+    private var footerActions: some View {
+        HStack {
+            if stepIndex > 0 {
+                Button("Back") { stepIndex = 0 }
+            }
+
+            Spacer()
+
+            if stepIndex == 0 {
+                Button("Next") { stepIndex = 1 }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!canProceedStepOne)
+            } else {
+                Button("Finish") {
+                    guard validatePhoneNumber() else { return }
+                    createProspect()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!canProceedStepTwo)
             }
         }
     }
@@ -137,6 +213,7 @@ struct ProspectCreateStepperView: View {
         !fullName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         !address.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
+
     private var canProceedStepTwo: Bool { phoneError == nil }
 
     private func handleAddressSelection(_ result: MKLocalSearchCompletion) {
@@ -148,6 +225,7 @@ struct ProspectCreateStepperView: View {
             }
         }
     }
+
     @discardableResult
     private func validatePhoneNumber() -> Bool {
         let raw = contactPhone.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -155,5 +233,19 @@ struct ProspectCreateStepperView: View {
         let utility = PhoneNumberUtility()
         do { _ = try utility.parse(raw); phoneError = nil; return true }
         catch { phoneError = "Invalid phone number."; return false }
+    }
+
+    private func createProspect() {
+        let p = Prospect(fullName: fullName, address: address, count: 0, list: "Prospects")
+        p.contactEmail = contactEmail
+        p.contactPhone = contactPhone
+
+        CLGeocoder().geocodeAddressString(address) { placemarks, _ in
+            if let coord = placemarks?.first?.location?.coordinate {
+                p.latitude = coord.latitude
+                p.longitude = coord.longitude
+            }
+            DispatchQueue.main.async { onComplete(p) }
+        }
     }
 }
