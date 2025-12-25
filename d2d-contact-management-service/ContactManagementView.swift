@@ -95,30 +95,20 @@ struct ContactManagementView: View {
                     }
                 }
             )
-            .overlay(
-                Group {
-                    if showingAddProspect {
-                        ProspectCreateStepperView { newProspect in
-                            modelContext.insert(newProspect)
-                            try? modelContext.save()
+            .sheet(isPresented: $showingAddProspect) {
+                ProspectCreateStepperView { newProspect in
+                    modelContext.insert(newProspect)
+                    try? modelContext.save()
 
-                            searchText = ""
-                            showingAddProspect = false
-                            onSave()
-                        } onCancel: {
-                            showingAddProspect = false
-                        }
-                        .frame(width: 300, height: 300)
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(16)
-                        .shadow(radius: 8)
-                        .position(x: UIScreen.main.bounds.midX,
-                                  y: UIScreen.main.bounds.midY * 0.9)
-                        .transition(.scale.combined(with: .opacity))
-                        .zIndex(2000)
-                    }
+                    searchText = ""
+                    showingAddProspect = false
+                    onSave()
+                } onCancel: {
+                    showingAddProspect = false
                 }
-            )
+                .presentationDetents([.fraction(0.5)]) // 50% of screen height
+                .presentationDragIndicator(.visible)    // optional: show the drag handle
+            }
             .onChange(of: selectedList) { newValue in
                 if newValue == "Prospects" {
                     Task {
