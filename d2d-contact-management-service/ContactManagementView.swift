@@ -24,7 +24,6 @@ struct ContactManagementView: View {
     @FocusState private var isSearchFocused: Bool
 
     // Menu + overlays
-    @State private var showAddOptionsMenu = false
     @State private var showingImportFromContacts = false
     @State private var showImportSuccess = false
 
@@ -58,14 +57,6 @@ struct ContactManagementView: View {
                     )
                 }
 
-                // Dim background if menu is open
-                if showAddOptionsMenu {
-                    Color.black.opacity(0.25)
-                        .ignoresSafeArea()
-                        .transition(.opacity)
-                        .onTapGesture { withAnimation { showAddOptionsMenu = false } }
-                }
-
                 // Toolbar
                 ContactsToolbarView(
                     searchText: $searchText,
@@ -73,9 +64,10 @@ struct ContactManagementView: View {
                     isSearchFocused: $isSearchFocused,
                     onAddTapped: {
                         if selectedList == "Prospects" {
-                            withAnimation(.spring()) { showAddOptionsMenu = true }
+                            withAnimation(.spring()) {
+                                showingImportFromContacts = true
+                            }
                         } else {
-                            // Customer add flow is inside CustomerManagementView
                             showingAddCustomer = true
                         }
                     }
@@ -90,41 +82,16 @@ struct ContactManagementView: View {
                     searchText: $searchText,
                     prospects: prospects,
                     modelContext: modelContext,
-                    onSave: onSave
+                    onSave: onSave,
+                    onAddManually: {
+                        showingAddProspect = true
+                    }
                 )
             )
             .overlay(
                 Group {
                     if showImportSuccess {
                         ToastMessageView(message: "Contacts imported successfully!")
-                    }
-                }
-            )
-            .overlay(
-                Group {
-                    if showAddOptionsMenu {
-                        VStack {
-                            Spacer()
-                            HStack {
-                                AddProspectOptionsMenu(
-                                    onAddManually: {
-                                        withAnimation { showAddOptionsMenu = false }
-                                        // Prospect create flow handled in ProspectManagementView
-                                        showingAddProspect = true
-                                    },
-                                    onImportFromContacts: {
-                                        withAnimation { showAddOptionsMenu = false }
-                                        showingImportFromContacts = true
-                                    }
-                                )
-                                .transition(.scale.combined(with: .opacity))
-                                .zIndex(1000)
-                                Spacer()
-                            }
-                            .padding(.leading, 40)
-                            .padding(.bottom, 80)
-                        }
-                        .ignoresSafeArea()
                     }
                 }
             )

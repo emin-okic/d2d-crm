@@ -16,73 +16,167 @@ struct ImportOverlayView: View {
     @Binding var showImportSuccess: Bool
     @Binding var selectedList: String
     @Binding var searchText: String
-    var prospects: [Prospect]
-    var modelContext: ModelContext
-    var onSave: () -> Void
+
+    let prospects: [Prospect]
+    let modelContext: ModelContext
+    let onSave: () -> Void
+    
+    let onAddManually: () -> Void
+
+    @State private var showContactsPicker = false
 
     var body: some View {
         if showingImportFromContacts {
-            ContactsImportView(
-                onComplete: { contacts in
-                    showingImportFromContacts = false
+            VStack(spacing: 20) {
+                Capsule()
+                    .fill(Color.secondary.opacity(0.4))
+                    .frame(width: 36, height: 5)
+                    .padding(.top, 8)
 
-                    for contact in contacts {
-                        let fullName = CNContactFormatter.string(from: contact, style: .fullName) ?? "No Name"
-                        let addressString = contact.postalAddresses.first.map {
-                            CNPostalAddressFormatter.string(from: $0.value, style: .mailingAddress).replacingOccurrences(of: "\n", with: ", ")
-                        } ?? "No Address"
-                        let phoneNumber = contact.phoneNumbers.first?.value.stringValue ?? ""
-                        let email = contact.emailAddresses.first?.value as String? ?? ""
+                VStack(spacing: 6) {
+                    Text("Add Prospect")
+                        .font(.title3)
+                        .fontWeight(.semibold)
 
-                        // Duplicate check
-                        let isDuplicate = prospects.contains {
-                            $0.fullName == fullName && $0.address == addressString
-                        }
+                    Text("Choose how you’d like to add a new prospect")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
 
-                        guard !isDuplicate else { continue }
-
-                        let newProspect = Prospect(fullName: fullName, address: addressString, count: 0, list: "Prospects")
-                        newProspect.contactEmail = email
-                        newProspect.contactPhone = phoneNumber
-
-                        // ✅ Geocode prospect to get coordinates
-                        CLGeocoder().geocodeAddressString(addressString) { placemarks, error in
-                            if let coord = placemarks?.first?.location?.coordinate {
-                                newProspect.latitude = coord.latitude
-                                newProspect.longitude = coord.longitude
-                                print("📍 Imported prospect coords: \(coord.latitude), \(coord.longitude)")
-                            } else {
-                                print("❌ Could not geocode imported prospect: \(error?.localizedDescription ?? "Unknown error")")
-                            }
-
-                            // Insert and save after geocoding
-                            modelContext.insert(newProspect)
-                            try? modelContext.save()
-
-                            // Trigger map update
-                            onSave()
-                        }
+                VStack(spacing: 12) {
+                    actionButton(
+                        title: "Import from Contacts",
+                        subtitle: "Select one or more contacts",
+                        systemImage: "person.crop.circle.badge.plus"
+                    ) {
+                        showContactsPicker = true
                     }
 
-                    // UI updates
-                    selectedList = "Prospects"
-                    searchText = ""
-                    showImportSuccess = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        showImportSuccess = false
+                    actionButton(
+                        title: "Add Manually",
+                        subtitle: "Enter details yourself",
+                        systemImage: "square.and.pencil"
+                    ) {
+                        showingImportFromContacts = false
+                        
+                        onAddManually()
                     }
-                },
-                onCancel: {
+                }
+
+                Spacer()
+
+                Button("Cancel") {
                     showingImportFromContacts = false
                 }
-            )
-            .frame(width: 300, height: 400)
+                .foregroundStyle(.secondary)
+            }
+            .padding()
+            .frame(width: 300, height: 360)
             .background(.ultraThinMaterial)
             .cornerRadius(16)
             .shadow(radius: 8)
-            .position(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY)
+            .position(
+                x: UIScreen.main.bounds.midX,
+                y: UIScreen.main.bounds.midY
+            )
             .transition(.scale.combined(with: .opacity))
             .zIndex(2000)
+            .sheet(isPresented: $showContactsPicker) {
+                ContactsImportView(
+                    onComplete: handleContactsImported,
+                    onCancel: { showContactsPicker = false }
+                )
+            }
         }
+    }
+
+    // MARK: - Import Logic
+
+    private func handleContactsImported(_ contacts: [CNContact]) {
+        showContactsPicker = false
+        showingImportFromContacts = false
+
+        for contact in contacts {
+            let fullName =
+                CNContactFormatter.string(from: contact, style: .fullName)
+                ?? "No Name"
+
+            let addressString =
+                contact.postalAddresses.first.map {
+                    CNPostalAddressFormatter
+                        .string(from: $0.value, style: .mailingAddress)
+                        .replacingOccurrences(of: "\n", with: ", ")
+                } ?? "No Address"
+
+            let phone = contact.phoneNumbers.first?.value.stringValue ?? ""
+            let email = contact.emailAddresses.first?.value as String? ?? ""
+
+            let isDuplicate = prospects.contains {
+                $0.fullName == fullName && $0.address == addressString
+            }
+
+            guard !isDuplicate else { continue }
+
+            let newProspect = Prospect(
+                fullName: fullName,
+                address: addressString,
+                count: 0,
+                list: "Prospects"
+            )
+
+            newProspect.contactPhone = phone
+            newProspect.contactEmail = email
+
+            CLGeocoder().geocodeAddressString(addressString) { placemarks, _ in
+                if let coord = placemarks?.first?.location?.coordinate {
+                    newProspect.latitude = coord.latitude
+                    newProspect.longitude = coord.longitude
+                }
+
+                modelContext.insert(newProspect)
+                try? modelContext.save()
+                onSave()
+            }
+        }
+
+        selectedList = "Prospects"
+        searchText = ""
+        showImportSuccess = true
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            showImportSuccess = false
+        }
+    }
+
+    // MARK: - Button
+
+    private func actionButton(
+        title: String,
+        subtitle: String,
+        systemImage: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: systemImage)
+                    .font(.title2)
+                    .frame(width: 36)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).font(.headline)
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+            .background(RoundedRectangle(cornerRadius: 14).fill(.ultraThinMaterial))
+        }
+        .buttonStyle(.plain)
     }
 }
