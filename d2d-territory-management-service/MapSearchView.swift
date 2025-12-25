@@ -377,6 +377,16 @@ struct MapSearchView: View {
                 onClose: {
                     popupState = nil
                     selectedPlaceID = nil
+                    
+                    // 🔑 Force MapKit to deselect the annotation
+                    if let mapView = MapDisplayView.cachedMapView {
+                        DispatchQueue.main.async {
+                            mapView.selectedAnnotations.forEach {
+                                mapView.deselectAnnotation($0, animated: false)
+                            }
+                        }
+                    }
+                    
                 },
                 onOutcomeSelected: { outcome, fileName in
                     pendingAddress = popup.place.address
