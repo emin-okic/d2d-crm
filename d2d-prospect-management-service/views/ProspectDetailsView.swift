@@ -23,6 +23,8 @@ struct ProspectDetailsView: View {
     @State private var tempAddress: String = ""
     
     @State private var showDeleteConfirmation = false
+    
+    @State private var showRevertConfirmation = false
 
     var body: some View {
         ZStack {
@@ -142,18 +144,25 @@ struct ProspectDetailsView: View {
                 }
             }
 
-            // Share Button (always visible)
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    controller.shareProspect(prospect)
-                } label: {
-                    Image(systemName: "square.and.arrow.up")
+            // Share Button (hidden while editing)
+            if !hasUnsavedEdits {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        controller.shareProspect(prospect)
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
                 }
             }
 
             // Save Button (only appears if name/address changed)
             if hasUnsavedEdits {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    Button("Revert") {
+                        showRevertConfirmation = true
+                    }
+                    .foregroundColor(.red)
+
                     Button("Save") {
                         withAnimation(.easeInOut(duration: 0.25)) {
                             commitEdits()
@@ -162,6 +171,15 @@ struct ProspectDetailsView: View {
                     .buttonStyle(.borderedProminent)
                 }
             }
+            
+        }
+        .alert("Revert Changes?", isPresented: $showRevertConfirmation) {
+            Button("Revert Changes", role: .destructive) {
+                revertEdits()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will discard all unsaved changes and restore the original prospect details.")
         }
         .onAppear {
             controller.captureBaseline(from: prospect)
@@ -202,6 +220,14 @@ struct ProspectDetailsView: View {
         }
         .sheet(item: $controller.selectedAppointmentDetails) { appointment in
             AppointmentDetailsView(appointment: appointment)
+        }
+    }
+    
+    private func revertEdits() {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            tempFullName = prospect.fullName
+            tempAddress = prospect.address
+            isAddressFieldFocused = false
         }
     }
     
