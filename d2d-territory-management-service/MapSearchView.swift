@@ -110,6 +110,8 @@ struct MapSearchView: View {
     
     @State private var selectedPlaceID: UUID? = nil
     
+    @State private var pendingBulkAdd: PendingBulkAdd?
+    
     init(searchText: Binding<String>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
@@ -523,6 +525,30 @@ struct MapSearchView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .didRequestBulkAdd)) { note in
+            if let bulk = note.object as? PendingBulkAdd {
+                pendingBulkAdd = bulk
+            }
+        }
+        .sheet(item: $pendingBulkAdd) { bulk in
+            BulkAddConfirmationSheet(
+                bulk: bulk,
+                onConfirm: {
+                    for prop in bulk.properties {
+                        addProspectFromMapTap(
+                            address: prop.address,
+                            coordinate: prop.coordinate
+                        )
+                    }
+                    pendingBulkAdd = nil
+                },
+                onCancel: {
+                    pendingBulkAdd = nil
+                }
+            )
+            .presentationDetents([.fraction(0.5)])
+            .presentationDragIndicator(.visible)
         }
     }
     

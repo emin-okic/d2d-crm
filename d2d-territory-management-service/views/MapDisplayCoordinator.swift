@@ -21,6 +21,9 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     var onRegionChange: ((MKCoordinateRegion) -> Void)?
     
     var selectedPlaceID: UUID?
+    
+    private var activeRadiusOverlay: MKCircle?
+    private let bulkAddRadius: CLLocationDistance = 35
 
     init(
         userLocationManager: UserLocationManager,
@@ -50,6 +53,102 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
 
                 cone.updateHeading(heading.trueHeading)
             }
+    }
+    
+    func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+        if let circle = overlay as? MKCircle {
+            let renderer = MKCircleRenderer(circle: circle)
+            renderer.strokeColor = UIColor.systemBlue.withAlphaComponent(0.7)
+            renderer.lineWidth = 2
+            renderer.fillColor = .clear
+            return renderer
+        }
+        return MKOverlayRenderer(overlay: overlay)
+    }
+    
+    private func notifyBulkAdd(
+        center: CLLocationCoordinate2D,
+        radius: CLLocationDistance
+    ) {
+        guard let mapView else { return }
+
+        let centerLocation = CLLocation(
+            latitude: center.latitude,
+            longitude: center.longitude
+        )
+
+        let candidates: [PendingAddProperty] =
+            mapView.annotations
+                .compactMap { $0 as? IdentifiableAnnotation }
+                .map { ann in
+                    let loc = CLLocation(
+                        latitude: ann.coordinate.latitude,
+                        longitude: ann.coordinate.longitude
+                    )
+                    return (ann, loc)
+                }
+                .filter { $0.1.distance(from: centerLocation) <= radius }
+                .prefix(8) // MVP cap
+                .map {
+                    PendingAddProperty(
+                        address: $0.0.place.address,
+                        coordinate: $0.0.place.location
+                    )
+                }
+
+        // guard !candidates.isEmpty else { return }
+
+        NotificationCenter.default.post(
+            name: .didRequestBulkAdd,
+            object: PendingBulkAdd(
+                center: center,
+                radius: radius,
+                properties: candidates
+            )
+        )
+    }
+    
+    @objc func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        guard let mapView else { return }
+
+        let point = gesture.location(in: mapView)
+        let coord = mapView.convert(point, toCoordinateFrom: mapView)
+
+        switch gesture.state {
+
+        case .began:
+            // Remove old overlay if any
+            if let overlay = activeRadiusOverlay {
+                mapView.removeOverlay(overlay)
+            }
+
+            let circle = MKCircle(center: coord, radius: bulkAddRadius)
+            activeRadiusOverlay = circle
+            mapView.addOverlay(circle)
+
+        case .changed:
+            if let overlay = activeRadiusOverlay {
+                mapView.removeOverlay(overlay)
+            }
+
+            let circle = MKCircle(center: coord, radius: bulkAddRadius)
+            activeRadiusOverlay = circle
+            mapView.addOverlay(circle)
+
+        case .ended:
+            guard let overlay = activeRadiusOverlay else { return }
+
+            let center = overlay.coordinate
+            let radius = overlay.radius
+
+            mapView.removeOverlay(overlay)
+            activeRadiusOverlay = nil
+
+            notifyBulkAdd(center: center, radius: radius)
+
+        default:
+            break
+        }
     }
 
     @objc func handleTap(_ gesture: UITapGestureRecognizer) {
@@ -251,4 +350,8 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         }
     }
     
+}
+
+extension Notification.Name {
+    static let didRequestBulkAdd = Notification.Name("didRequestBulkAdd")
 }
