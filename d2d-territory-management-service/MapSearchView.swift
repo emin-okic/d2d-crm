@@ -562,12 +562,9 @@ struct MapSearchView: View {
         .sheet(item: $pendingBulkAdd) { bulk in
             BulkAddConfirmationSheet(
                 bulk: bulk,
-                onConfirm: {
-                    for prop in bulk.properties {
-                        addProspectFromMapTap(
-                            address: prop.address,
-                            coordinate: prop.coordinate
-                        )
+                onConfirm: { selected in
+                    for prop in selected {
+                        addProspectFromMapTap(address: prop.address, coordinate: prop.coordinate)
                     }
                     pendingBulkAdd = nil
                 },
