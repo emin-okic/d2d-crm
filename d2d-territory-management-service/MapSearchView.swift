@@ -550,7 +550,7 @@ struct MapSearchView: View {
                     )
                 }
 
-                guard !resolved.isEmpty else { return } // nothing to add
+                // guard !resolved.isEmpty else { return } // line stops sheet from opening if 0 new properties exist
 
                 pendingBulkAdd = PendingBulkAdd(
                     center: bulk.center,

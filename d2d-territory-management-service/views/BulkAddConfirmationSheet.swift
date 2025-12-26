@@ -18,10 +18,17 @@ struct BulkAddConfirmationSheet: View {
                 .font(.headline)
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(bulk.properties) { prop in
-                        Text(prop.address)
-                            .font(.subheadline)
+                if bulk.properties.isEmpty {
+                    Text("No new addresses found in this area.")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .padding()
+                } else {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(bulk.properties) { prop in
+                            Text(prop.address)
+                                .font(.subheadline)
+                        }
                     }
                 }
             }
@@ -37,6 +44,7 @@ struct BulkAddConfirmationSheet: View {
                     onConfirm()
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(bulk.properties.isEmpty)
             }
         }
         .padding()
