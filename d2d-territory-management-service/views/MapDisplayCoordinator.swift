@@ -77,7 +77,8 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             longitude: center.longitude
         )
 
-        let candidates: [PendingAddProperty] =
+        // 1️⃣ Existing markers (if any)
+        var properties: [PendingAddProperty] =
             mapView.annotations
                 .compactMap { $0 as? IdentifiableAnnotation }
                 .map { ann in
@@ -88,7 +89,6 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
                     return (ann, loc)
                 }
                 .filter { $0.1.distance(from: centerLocation) <= radius }
-                .prefix(8) // MVP cap
                 .map {
                     PendingAddProperty(
                         address: $0.0.place.address,
@@ -96,16 +96,48 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
                     )
                 }
 
-        // guard !candidates.isEmpty else { return }
+        // 2️⃣ If NONE found → generate new properties
+        if properties.isEmpty {
+            properties = generateGrid(center: center, count: 6)
+        }
 
         NotificationCenter.default.post(
             name: .didRequestBulkAdd,
             object: PendingBulkAdd(
                 center: center,
                 radius: radius,
-                properties: candidates
+                properties: properties
             )
         )
+    }
+    
+    private func generateGrid(
+        center: CLLocationCoordinate2D,
+        count: Int
+    ) -> [PendingAddProperty] {
+
+        let spacingMeters: CLLocationDistance = 18
+        let metersToDegrees = 1.0 / 111_000.0
+        let delta = spacingMeters * metersToDegrees
+
+        var results: [PendingAddProperty] = []
+
+        for i in 0..<count {
+            let offset = Double(i - count / 2)
+            let coord = CLLocationCoordinate2D(
+                latitude: center.latitude + offset * delta,
+                longitude: center.longitude + offset * delta
+            )
+
+            results.append(
+                PendingAddProperty(
+                    address: "New Property \(i + 1)",
+                    coordinate: coord
+                )
+            )
+        }
+
+        return results
     }
     
     @objc func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
