@@ -527,8 +527,29 @@ struct MapSearchView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .didRequestBulkAdd)) { note in
-            if let bulk = note.object as? PendingBulkAdd {
-                pendingBulkAdd = bulk
+            guard let bulk = note.object as? PendingBulkAdd else { return }
+
+            Task { @MainActor in
+                var resolved: [PendingAddProperty] = []
+
+                for prop in bulk.properties {
+                    let address =
+                        await reverseGeocode(coordinate: prop.coordinate)
+                        ?? "Unknown Address"
+
+                    resolved.append(
+                        PendingAddProperty(
+                            address: address,
+                            coordinate: prop.coordinate
+                        )
+                    )
+                }
+
+                pendingBulkAdd = PendingBulkAdd(
+                    center: bulk.center,
+                    radius: bulk.radius,
+                    properties: resolved
+                )
             }
         }
         .sheet(item: $pendingBulkAdd) { bulk in
@@ -549,6 +570,54 @@ struct MapSearchView: View {
             )
             .presentationDetents([.fraction(0.5)])
             .presentationDragIndicator(.visible)
+        }
+    }
+    
+    private let bulkGeocoder = CLGeocoder()
+
+    private func reverseGeocode(
+        coordinate: CLLocationCoordinate2D
+    ) async -> String? {
+
+        let location = CLLocation(
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude
+        )
+
+        do {
+            let placemarks = try await bulkGeocoder.reverseGeocodeLocation(location)
+            guard let placemark = placemarks.first else { return nil }
+
+            // Prefer full postal address if available
+            if let postal = placemark.postalAddress {
+                return CNPostalAddressFormatter()
+                    .string(from: postal)
+                    .replacingOccurrences(of: "\n", with: ", ")
+            }
+
+            // Fallbacks
+            if let name = placemark.name,
+               let street = placemark.thoroughfare {
+                return "\(name) \(street)"
+            }
+
+            // Final fallback: build a readable address manually
+            let parts = [
+                placemark.subThoroughfare,
+                placemark.thoroughfare,
+                placemark.locality,
+                placemark.administrativeArea
+            ]
+
+            let address = parts
+                .compactMap { $0 }
+                .joined(separator: " ")
+
+            return address.isEmpty ? nil : address
+            
+        } catch {
+            print("❌ Reverse geocode failed:", error)
+            return nil
         }
     }
     
