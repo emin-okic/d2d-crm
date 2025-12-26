@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import CoreLocation
+import Contacts
 
 struct ProspectDetailsView: View {
     @Bindable var prospect: Prospect
@@ -23,9 +24,36 @@ struct ProspectDetailsView: View {
     @State private var tempAddress: String = ""
     
     @State private var showDeleteConfirmation = false
+    
+    @State private var showRevertConfirmation = false
+    
+    @State private var actionsToolbarProxy: ProspectActionsToolbar?
+    
+    @State private var showExportPrompt = false
+    @State private var showExportSuccessBanner = false
+    @State private var exportSuccessMessage = ""
 
     var body: some View {
         ZStack {
+            
+            if showExportSuccessBanner {
+                VStack {
+                    Spacer().frame(height: 60)
+                    Text(exportSuccessMessage)
+                        .font(.subheadline)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(Color.green.opacity(0.95))
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                        .shadow(radius: 6)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity)
+                .zIndex(1000)
+            }
+            
             Form {
                 // Prospect info
                 Section(header: Text("Prospect Details")) {
@@ -141,19 +169,35 @@ struct ProspectDetailsView: View {
                     Label("Back", systemImage: "chevron.left")
                 }
             }
+            
+            // Export + Share (hidden while editing)
+            if !hasUnsavedEdits {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
 
-            // Share Button (always visible)
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    controller.shareProspect(prospect)
-                } label: {
-                    Image(systemName: "square.and.arrow.up")
+                    // ✅ Export to Contacts
+                    Button {
+                        showExportPrompt = true
+                    } label: {
+                        Image(systemName: "person.crop.circle.badge.plus")
+                    }
+
+                    // Share
+                    Button {
+                        controller.shareProspect(prospect)
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
                 }
             }
 
             // Save Button (only appears if name/address changed)
             if hasUnsavedEdits {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    Button("Revert") {
+                        showRevertConfirmation = true
+                    }
+                    .foregroundColor(.red)
+
                     Button("Save") {
                         withAnimation(.easeInOut(duration: 0.25)) {
                             commitEdits()
@@ -162,6 +206,23 @@ struct ProspectDetailsView: View {
                     .buttonStyle(.borderedProminent)
                 }
             }
+            
+        }
+        .alert("Export to Contacts", isPresented: $showExportPrompt) {
+            Button("Yes") {
+                exportToContacts()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Would you like to save this contact to your iOS Contacts app?")
+        }
+        .alert("Revert Changes?", isPresented: $showRevertConfirmation) {
+            Button("Revert Changes", role: .destructive) {
+                revertEdits()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will discard all unsaved changes and restore the original prospect details.")
         }
         .onAppear {
             controller.captureBaseline(from: prospect)
@@ -202,6 +263,97 @@ struct ProspectDetailsView: View {
         }
         .sheet(item: $controller.selectedAppointmentDetails) { appointment in
             AppointmentDetailsView(appointment: appointment)
+        }
+    }
+    
+    private func exportToContacts() {
+        let store = CNContactStore()
+        store.requestAccess(for: .contacts) { granted, _ in
+            guard granted else {
+                showExportFeedback("Contacts access denied.")
+                return
+            }
+
+            let predicate = CNContact.predicateForContacts(matchingName: prospect.fullName)
+            
+            let keys: [CNKeyDescriptor] = [
+                CNContactGivenNameKey as CNKeyDescriptor,
+                CNContactFamilyNameKey as CNKeyDescriptor,
+                CNContactPhoneNumbersKey as CNKeyDescriptor,
+                CNContactEmailAddressesKey as CNKeyDescriptor,
+                CNContactPostalAddressesKey as CNKeyDescriptor
+            ]
+
+            do {
+                let matches = try store.unifiedContacts(matching: predicate, keysToFetch: keys)
+                let existing = matches.first {
+                    $0.postalAddresses.first?.value.street == prospect.address
+                }
+
+                let contact: CNMutableContact
+                let saveRequest = CNSaveRequest()
+
+                if let existing = existing {
+                    contact = existing.mutableCopy() as! CNMutableContact
+                    saveRequest.update(contact)
+                } else {
+                    contact = CNMutableContact()
+                    contact.givenName = prospect.fullName
+                    saveRequest.add(contact, toContainerWithIdentifier: nil)
+                }
+
+                if !prospect.contactPhone.isEmpty {
+                    contact.phoneNumbers = [
+                        CNLabeledValue(
+                            label: CNLabelPhoneNumberMobile,
+                            value: CNPhoneNumber(stringValue: prospect.contactPhone)
+                        )
+                    ]
+                }
+
+                if !prospect.contactEmail.isEmpty {
+                    contact.emailAddresses = [
+                        CNLabeledValue(
+                            label: CNLabelHome,
+                            value: NSString(string: prospect.contactEmail)
+                        )
+                    ]
+                }
+
+                let postal = CNMutablePostalAddress()
+                postal.street = prospect.address
+                contact.postalAddresses = [
+                    CNLabeledValue(label: CNLabelHome, value: postal)
+                ]
+
+                try store.execute(saveRequest)
+                showExportFeedback("Contact saved to Contacts.")
+            } catch {
+                showExportFeedback("Failed to save contact.")
+            }
+        }
+    }
+
+    private func showExportFeedback(_ message: String) {
+        DispatchQueue.main.async {
+            exportSuccessMessage = message
+            withAnimation {
+                showExportSuccessBanner = true
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                withAnimation {
+                    showExportSuccessBanner = false
+                }
+            }
+        }
+    }
+    
+    private func revertEdits() {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            tempFullName = prospect.fullName
+            tempAddress = prospect.address
+            isAddressFieldFocused = false
         }
     }
     

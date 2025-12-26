@@ -28,23 +28,22 @@ struct ProspectActionsToolbar: View {
     
     @State private var phoneError: String?
     
-    @State private var showExportPrompt = false
-    @State private var showExportSuccessBanner = false
-    @State private var exportSuccessMessage = ""
-    
     // This variable is used for keeping track of the original phone # on changing it for note taking purposes
     @State private var originalPhone: String?
 
     var body: some View {
         ZStack {
             HStack(spacing: 24) {
+                
                 // Phone
-                iconButton(systemName: "phone.fill") {
+                actionButton(
+                    icon: "phone.fill",
+                    title: "Call",
+                    color: .blue
+                ) {
                     if prospect.contactPhone.isEmpty {
-                        
                         // Set the original phone number to nil for note taking purposes
                         originalPhone = nil
-
                         showAddPhoneSheet = true
                     } else {
                         showCallSheet = true
@@ -52,7 +51,11 @@ struct ProspectActionsToolbar: View {
                 }
 
                 // Email
-                iconButton(systemName: "envelope.fill") {
+                actionButton(
+                    icon: "envelope.fill",
+                    title: "Email",
+                    color: .purple
+                ) {
                     if prospect.contactEmail.nilIfEmpty == nil {
                         showAddEmailSheet = true
                     } else {
@@ -60,52 +63,20 @@ struct ProspectActionsToolbar: View {
                     }
                 }
 
-                // Create Sale
                 if prospect.list == "Prospects" {
-                    Button(action: {
+                    actionButton(
+                        icon: "checkmark.seal.fill",
+                        title: "Convert",
+                        color: .green
+                    ) {
                         showCreateSaleSheet = true
-                    }) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.green)
-                                .frame(width: 34, height: 34)   // same as other icons
-
-                            Image(systemName: "checkmark.seal.fill")
-                                .font(.system(size: 24))        // ~25% smaller than .title2
-                                .foregroundColor(.white)
-                                .scaleEffect(0.75)              // shrink inside the circle
-                        }
                     }
-                    .buttonStyle(.plain)
-                }
-
-                // Export Contact
-                iconButton(systemName: "person.crop.circle.badge.plus") {
-                    showExportPrompt = true
                 }
 
             }
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: .center)
 
-            // ✅ Floating banner at top
-            if showExportSuccessBanner {
-                VStack {
-                    Spacer().frame(height: 60)
-                    Text(exportSuccessMessage)
-                        .font(.subheadline)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(Color.green.opacity(0.95))
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
-                        .shadow(radius: 6)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity)
-                .zIndex(999)
-            }
         }
 
         // Phone confirmation
@@ -153,46 +124,27 @@ struct ProspectActionsToolbar: View {
             Button("Cancel", role: .cancel) { }
         }
 
-        // Export confirmation
-        .alert("Export to Contacts", isPresented: $showExportPrompt) {
-            Button("Yes") {
-                exportToContacts()
-            }
-            Button("No", role: .cancel) { }
-        } message: {
-            Text("Would you like to save this contact to your iOS Contacts app?")
-        }
-
-        // Create sale sheet
+        // Convert to Customer sheet using common stepper form
         .sheet(isPresented: $showCreateSaleSheet) {
-            NavigationView {
-                Form {
-                    Section(header: Text("Confirm Customer Info")) {
-                        TextField("Full Name", text: $prospect.fullName)
-                        TextField("Address", text: $prospect.address)
-                        TextField("Phone", text: Binding(
-                            get: { prospect.contactPhone },
-                            set: { prospect.contactPhone = $0 }
-                        ))
-                        TextField("Email", text: Binding(
-                            get: { prospect.contactEmail },
-                            set: { prospect.contactEmail = $0 }
-                        ))
-                    }
-
-                    Section {
+            NavigationStack {
+                CustomerCreateStepperView(
+                    initialName: prospect.fullName,
+                    initialAddress: prospect.address,
+                    initialPhone: prospect.contactPhone,
+                    initialEmail: prospect.contactEmail,
+                    onComplete: { newCustomer in
+                        // Transfer notes, knocks, appointments
+                        transferProspectData(to: newCustomer)
                         
-                        Button("Confirm Sale") {
-                            createCustomer(from: prospect)
-                            showCreateSaleSheet = false
-                        }
-                        .disabled(prospect.fullName.isEmpty || prospect.address.isEmpty)
-                        
+                        showCreateSaleSheet = false
+                    },
+                    onCancel: {
+                        showCreateSaleSheet = false
                     }
-                }
-                .navigationTitle("Create Sale")
-                .navigationBarTitleDisplayMode(.inline)
+                )
             }
+            .presentationDetents([.fraction(0.5)])      // Limit to 50% of the screen
+            .presentationDragIndicator(.visible)        // Show drag indicator
         }
 
         // Add phone sheet
@@ -265,6 +217,61 @@ struct ProspectActionsToolbar: View {
                 }
             }
         }
+    }
+    
+    private func transferProspectData(to customer: Customer) {
+        // Deep copy notes, knocks, appointments
+        customer.notes = prospect.notes.map { Note(content: $0.content, date: $0.date) }
+        customer.knockHistory = prospect.knockHistory.map {
+            Knock(date: $0.date, status: $0.status, latitude: $0.latitude, longitude: $0.longitude)
+        }
+        
+        for appt in prospect.appointments {
+            appt.prospect = nil // break old link
+            customer.appointments.append(appt)
+        }
+
+        // Insert new customer and delete old prospect
+        modelContext.insert(customer)
+        modelContext.delete(prospect)
+
+        do {
+            try modelContext.save()
+            DispatchQueue.main.async {
+                if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let root = scene.windows.first?.rootViewController {
+                    root.dismiss(animated: true)
+                }
+            }
+        } catch {
+            print("❌ Failed to convert prospect to customer:", error)
+        }
+    }
+    
+    // MARK: - Modern CRM style button
+    @ViewBuilder
+    private func actionButton(icon: String, title: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(color.opacity(0.15))
+                        .frame(width: 60, height: 60)
+                    
+                    Image(systemName: icon)
+                        .font(.title2)
+                        .foregroundColor(color)
+                }
+                
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.primary)
+            }
+            .padding(4)
+        }
+        .buttonStyle(.plain)
+        .shadow(color: color.opacity(0.25), radius: 4, x: 0, y: 2)
+        .animation(.spring(response: 0.25, dampingFraction: 0.6), value: UUID())
     }
     
     /// This function is intended to log call activity for prospects
@@ -381,75 +388,6 @@ struct ProspectActionsToolbar: View {
         let digits = raw.filter(\.isNumber)
         guard digits.count == 10 else { return raw }
         return "(\(digits.prefix(3))) \(digits.dropFirst(3).prefix(3))-\(digits.suffix(4))"
-    }
-
-    private func exportToContacts() {
-        let store = CNContactStore()
-        store.requestAccess(for: .contacts) { granted, error in
-            guard granted else {
-                showExportFeedback("Contacts access denied.")
-                return
-            }
-
-            let predicate = CNContact.predicateForContacts(matchingName: prospect.fullName)
-            let keysToFetch: [CNKeyDescriptor] = [
-                CNContactGivenNameKey as CNKeyDescriptor,
-                CNContactPostalAddressesKey as CNKeyDescriptor,
-                CNContactPhoneNumbersKey as CNKeyDescriptor,
-                CNContactEmailAddressesKey as CNKeyDescriptor
-            ]
-
-            do {
-                let matches = try store.unifiedContacts(matching: predicate, keysToFetch: keysToFetch)
-                let existing = matches.first(where: {
-                    $0.postalAddresses.first?.value.street == prospect.address
-                })
-
-                let contact: CNMutableContact
-                let saveRequest = CNSaveRequest()
-
-                if let existing = existing {
-                    contact = existing.mutableCopy() as! CNMutableContact
-                    saveRequest.update(contact)
-                } else {
-                    contact = CNMutableContact()
-                    contact.givenName = prospect.fullName
-                    saveRequest.add(contact, toContainerWithIdentifier: nil)
-                }
-
-                contact.phoneNumbers = prospect.contactPhone.isEmpty ? [] : [
-                    CNLabeledValue(label: CNLabelPhoneNumberMobile, value: CNPhoneNumber(stringValue: prospect.contactPhone))
-                ]
-
-                contact.emailAddresses = prospect.contactEmail.isEmpty ? [] : [
-                    CNLabeledValue(label: CNLabelHome, value: NSString(string: prospect.contactEmail))
-                ]
-
-                let postal = CNMutablePostalAddress()
-                postal.street = prospect.address
-                contact.postalAddresses = [CNLabeledValue(label: CNLabelHome, value: postal)]
-
-                try store.execute(saveRequest)
-                showExportFeedback("Contact saved to Contacts.")
-            } catch {
-                showExportFeedback("Failed to save contact.")
-            }
-        }
-    }
-    
-    private func showExportFeedback(_ message: String) {
-        DispatchQueue.main.async {
-            exportSuccessMessage = message
-            withAnimation {
-                showExportSuccessBanner = true
-            }
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                withAnimation {
-                    showExportSuccessBanner = false
-                }
-            }
-        }
     }
 
     

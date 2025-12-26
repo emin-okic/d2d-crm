@@ -12,6 +12,9 @@ import PhoneNumberKit
 struct CustomerActionsToolbar: View {
     @Bindable var customer: Customer
     @Environment(\.modelContext) private var modelContext
+    
+    // Closure to dismiss the details view
+    var onClose: (() -> Void)? = nil
 
     // State for sheets and dialogs
     @State private var showAddPhoneSheet = false
@@ -21,16 +24,14 @@ struct CustomerActionsToolbar: View {
     @State private var showAddEmailSheet = false
     @State private var newEmail = ""
     @State private var showEmailConfirmation = false
-    
-    @State private var showExportPrompt = false
-    @State private var showExportSuccessBanner = false
-    @State private var exportSuccessMessage = ""
 
     @State private var phoneError: String?
     
     // This is for the new call action workflow
     @State private var showCallSheet = false
     @State private var originalPhone: String?
+    
+    @State private var showCustomerLostConfirmation = false
 
     var body: some View {
         ZStack {
@@ -38,7 +39,11 @@ struct CustomerActionsToolbar: View {
                 Spacer()
 
                 // ✅ Phone
-                iconButton(systemName: "phone.fill") {
+                actionButton(
+                    icon: "phone.fill",
+                    title: "Call",
+                    color: .blue
+                ) {
                     if customer.contactPhone.isEmpty {
                         originalPhone = nil
                         showAddPhoneSheet = true
@@ -48,17 +53,25 @@ struct CustomerActionsToolbar: View {
                 }
 
                 // ✅ Email
-                iconButton(systemName: "envelope.fill") {
+                actionButton(
+                    icon: "envelope.fill",
+                    title: "Email",
+                    color: .purple
+                ) {
                     if customer.contactEmail.nilIfEmpty == nil {
                         showAddEmailSheet = true
                     } else {
                         showEmailConfirmation = true
                     }
                 }
-
-                // ✅ Export Contact
-                iconButton(systemName: "person.crop.circle.badge.plus") {
-                    showExportPrompt = true
+                
+                // Customer Lost
+                actionButton(
+                    icon: "person.crop.circle.badge.xmark",
+                    title: "Sale Lost",
+                    color: .red
+                ) {
+                    showCustomerLostConfirmation = true
                 }
 
                 Spacer()
@@ -66,23 +79,6 @@ struct CustomerActionsToolbar: View {
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: .center)
 
-            // ✅ Export success banner
-            if showExportSuccessBanner {
-                VStack {
-                    Spacer().frame(height: 60)
-                    Text(exportSuccessMessage)
-                        .font(.subheadline)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(Color.green.opacity(0.95))
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
-                        .shadow(radius: 6)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                    Spacer()
-                }
-                .zIndex(999)
-            }
         }
 
         .confirmationDialog("Call \(formattedPhone(customer.contactPhone))?",
@@ -113,14 +109,6 @@ struct CustomerActionsToolbar: View {
                 showAddEmailSheet = true
             }
             Button("Cancel", role: .cancel) { }
-        }
-
-        // ✅ Export confirmation
-        .alert("Export to Contacts", isPresented: $showExportPrompt) {
-            Button("Yes") { exportToContacts() }
-            Button("No", role: .cancel) { }
-        } message: {
-            Text("Would you like to save this contact to your iOS Contacts app?")
         }
         
         // New Phone Workflow
@@ -178,6 +166,19 @@ struct CustomerActionsToolbar: View {
             .presentationDetents([.fraction(0.25)])
             .presentationDragIndicator(.visible)
         }
+        .confirmationDialog(
+            "Mark this customer as lost?",
+            isPresented: $showCustomerLostConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Yes, mark as lost", role: .destructive) {
+                convertCustomerToProspect(customer: customer)
+                
+                // Close the details view immediately
+                onClose?()
+            }
+            Button("Cancel", role: .cancel) { }
+        }
 
         // ✅ Add / Edit email sheet
         .sheet(isPresented: $showAddEmailSheet) {
@@ -218,6 +219,76 @@ struct CustomerActionsToolbar: View {
                 }
             }
         }
+    }
+    
+    @MainActor
+    private func convertCustomerToProspect(customer: Customer) {
+        // 1️⃣ Create Prospect from Customer
+        let prospect = Prospect(
+            fullName: customer.fullName,
+            address: customer.address,
+            count: customer.knockCount,
+            list: "Prospects"
+        )
+        
+        // 2️⃣ Carry over details
+        prospect.contactPhone = customer.contactPhone
+        prospect.contactEmail = customer.contactEmail
+        prospect.notes = customer.notes
+        prospect.appointments = customer.appointments
+        prospect.knockHistory = customer.knockHistory
+        
+        // 2.5 LOG THE STATE TRANSITION
+        prospect.knockHistory.append(
+            Knock(
+                date: .now,
+                status: "Customer Lost",
+                latitude: prospect.latitude ?? customer.latitude ?? 0,
+                longitude: prospect.longitude ?? customer.longitude ?? 0
+            )
+        )
+        
+        // 3️⃣ Preserve spatial identity
+        prospect.latitude = customer.latitude
+        prospect.longitude = customer.longitude
+        
+        // 4️⃣ Persist new Prospect
+        modelContext.insert(prospect)
+        
+        // 5️⃣ Delete old Customer
+        modelContext.delete(customer)
+        
+        // 6️⃣ Save context
+        try? modelContext.save()
+        
+        // Optional: update UI / selection if needed
+        // selectedList = "Prospects"
+    }
+    
+    // MARK: - Modern CRM style button
+    @ViewBuilder
+    private func actionButton(icon: String, title: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(color.opacity(0.15))
+                        .frame(width: 60, height: 60)
+
+                    Image(systemName: icon)
+                        .font(.title2)
+                        .foregroundColor(color)
+                }
+
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.primary)
+            }
+            .padding(4)
+        }
+        .buttonStyle(.plain)
+        .shadow(color: color.opacity(0.25), radius: 4, x: 0, y: 2)
+        .animation(.spring(response: 0.25, dampingFraction: 0.6), value: UUID())
     }
 
     // MARK: - Helper functions
@@ -262,18 +333,6 @@ struct CustomerActionsToolbar: View {
         } else {
             phoneError = nil
             return true
-        }
-    }
-    
-    private func exportToContacts() {
-        showExportFeedback("Contact saved to Contacts.")
-    }
-
-    private func showExportFeedback(_ message: String) {
-        exportSuccessMessage = message
-        withAnimation { showExportSuccessBanner = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-            withAnimation { showExportSuccessBanner = false }
         }
     }
 
