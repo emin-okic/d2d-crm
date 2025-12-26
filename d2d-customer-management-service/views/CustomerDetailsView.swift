@@ -32,6 +32,8 @@ struct CustomerDetailsView: View {
         tempFullName.trimmingCharacters(in: .whitespacesAndNewlines) != customer.fullName.trimmingCharacters(in: .whitespacesAndNewlines) ||
         tempAddress.trimmingCharacters(in: .whitespacesAndNewlines) != customer.address.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+    
+    @State private var showRevertConfirmation = false
 
     var body: some View {
         ZStack {
@@ -107,19 +109,41 @@ struct CustomerDetailsView: View {
                 }
             }
 
-            // Conditional Save Button
+            // Revert + Save (only when editing)
             if hasUnsavedEdits {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    Button("Revert") {
+                        showRevertConfirmation = true
+                    }
+                    .foregroundColor(.red)
+
                     Button("Save") {
                         commitEdits()
                     }
                     .buttonStyle(.borderedProminent)
                 }
             }
+            
+        }
+        .alert("Revert Changes?", isPresented: $showRevertConfirmation) {
+            Button("Revert Changes", role: .destructive) {
+                revertEdits()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will discard all unsaved changes and restore the original customer details.")
         }
         .onAppear {
             tempFullName = customer.fullName
             tempAddress = customer.address
+        }
+    }
+    
+    private func revertEdits() {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            tempFullName = customer.fullName
+            tempAddress = customer.address
+            isAddressFieldFocused = false
         }
     }
     
