@@ -534,21 +534,23 @@ struct MapSearchView: View {
 
                 for prop in bulk.properties {
 
-                    let snapped = await snapToNearestRoad(
-                        coordinate: prop.coordinate
-                    )
+                    let snapped = await snapToNearestRoad(coordinate: prop.coordinate)
 
-                    let address =
-                        await reverseGeocode(coordinate: snapped)
-                        ?? "Unknown Address"
+                    let address = await reverseGeocode(coordinate: snapped) ?? "Unknown Address"
+
+                    // Check for duplicates in existing Prospects or Customers
+                    let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+                    let exists = prospects.contains { $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized }
+                               || customers.contains { $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized }
+
+                    guard !exists else { continue } // Skip duplicates
 
                     resolved.append(
-                        PendingAddProperty(
-                            address: address,
-                            coordinate: snapped
-                        )
+                        PendingAddProperty(address: address, coordinate: snapped)
                     )
                 }
+
+                guard !resolved.isEmpty else { return } // nothing to add
 
                 pendingBulkAdd = PendingBulkAdd(
                     center: bulk.center,
