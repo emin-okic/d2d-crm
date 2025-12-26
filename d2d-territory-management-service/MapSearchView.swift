@@ -110,6 +110,8 @@ struct MapSearchView: View {
     
     @State private var selectedPlaceID: UUID? = nil
     
+    @State private var pendingBulkAdd: PendingBulkAdd?
+    
     init(searchText: Binding<String>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
@@ -524,6 +526,151 @@ struct MapSearchView: View {
                 .presentationDragIndicator(.visible)
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .didRequestBulkAdd)) { note in
+            guard let bulk = note.object as? PendingBulkAdd else { return }
+
+            Task { @MainActor in
+                var resolved: [PendingAddProperty] = []
+                var seenAddresses: Set<String> = [] // Track normalized addresses in this bulk
+
+                for prop in bulk.properties {
+
+                    let snapped = await snapToNearestRoad(coordinate: prop.coordinate)
+
+                    let address = await reverseGeocode(coordinate: snapped) ?? "Unknown Address"
+
+                    let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+
+                    // Skip if address already exists globally
+                    let existsGlobally = prospects.contains {
+                        $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
+                    } || customers.contains {
+                        $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
+                    }
+
+                    // Skip if duplicate inside this bulk
+                    guard !existsGlobally, !seenAddresses.contains(normalized) else { continue }
+
+                    resolved.append(PendingAddProperty(address: address, coordinate: snapped))
+                    seenAddresses.insert(normalized)
+                }
+
+                pendingBulkAdd = PendingBulkAdd(
+                    center: bulk.center,
+                    radius: bulk.radius,
+                    properties: resolved
+                )
+            }
+        }
+        .sheet(item: $pendingBulkAdd) { bulk in
+            BulkAddConfirmationSheet(
+                bulk: bulk,
+                onConfirm: { selected in
+                    for prop in selected {
+                        addProspectFromMapTap(address: prop.address, coordinate: prop.coordinate)
+                    }
+                    pendingBulkAdd = nil
+                },
+                onCancel: {
+                    pendingBulkAdd = nil
+                }
+            )
+            .presentationDetents([.fraction(0.5)])
+            .presentationDragIndicator(.visible)
+        }
+    }
+    
+    private let bulkGeocoder = CLGeocoder()
+
+    private func reverseGeocode(
+        coordinate: CLLocationCoordinate2D
+    ) async -> String? {
+
+        let location = CLLocation(
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude
+        )
+
+        do {
+            let placemarks = try await bulkGeocoder.reverseGeocodeLocation(location)
+            guard let placemark = placemarks.first else { return nil }
+
+            // Prefer full postal address if available
+            if let postal = placemark.postalAddress {
+                return CNPostalAddressFormatter()
+                    .string(from: postal)
+                    .replacingOccurrences(of: "\n", with: ", ")
+            }
+
+            // Fallbacks
+            if let name = placemark.name,
+               let street = placemark.thoroughfare {
+                return "\(name) \(street)"
+            }
+
+            // Final fallback: build a readable address manually
+            let parts = [
+                placemark.subThoroughfare,
+                placemark.thoroughfare,
+                placemark.locality,
+                placemark.administrativeArea
+            ]
+
+            let address = parts
+                .compactMap { $0 }
+                .joined(separator: " ")
+
+            return address.isEmpty ? nil : address
+            
+        } catch {
+            print("❌ Reverse geocode failed:", error)
+            return nil
+        }
+    }
+    
+    private func snapToNearestRoad(
+        coordinate: CLLocationCoordinate2D
+    ) async -> CLLocationCoordinate2D {
+
+        let request = MKDirections.Request()
+
+        // Tiny offset destination (~10m) to force route solving
+        let offset = 0.00009
+
+        request.source = MKMapItem(
+            placemark: MKPlacemark(coordinate: coordinate)
+        )
+
+        request.destination = MKMapItem(
+            placemark: MKPlacemark(
+                coordinate: CLLocationCoordinate2D(
+                    latitude: coordinate.latitude + offset,
+                    longitude: coordinate.longitude + offset
+                )
+            )
+        )
+
+        request.transportType = .walking
+        request.requestsAlternateRoutes = false
+
+        let directions = MKDirections(request: request)
+
+        do {
+            let response = try await directions.calculate()
+
+            // First polyline point = snapped road position
+            if let route = response.routes.first {
+                let points = route.polyline.points()
+                if route.polyline.pointCount > 0 {
+                    return points[0].coordinate
+                }
+            }
+        } catch {
+            print("❌ Road snap failed:", error)
+        }
+
+        // Fallback: original coordinate
+        return coordinate
     }
     
     @MainActor
