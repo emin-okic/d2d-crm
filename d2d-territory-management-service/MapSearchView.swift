@@ -531,6 +531,7 @@ struct MapSearchView: View {
 
             Task { @MainActor in
                 var resolved: [PendingAddProperty] = []
+                var seenAddresses: Set<String> = [] // Track normalized addresses in this bulk
 
                 for prop in bulk.properties {
 
@@ -538,19 +539,21 @@ struct MapSearchView: View {
 
                     let address = await reverseGeocode(coordinate: snapped) ?? "Unknown Address"
 
-                    // Check for duplicates in existing Prospects or Customers
                     let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-                    let exists = prospects.contains { $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized }
-                               || customers.contains { $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized }
 
-                    guard !exists else { continue } // Skip duplicates
+                    // Skip if address already exists globally
+                    let existsGlobally = prospects.contains {
+                        $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
+                    } || customers.contains {
+                        $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
+                    }
 
-                    resolved.append(
-                        PendingAddProperty(address: address, coordinate: snapped)
-                    )
+                    // Skip if duplicate inside this bulk
+                    guard !existsGlobally, !seenAddresses.contains(normalized) else { continue }
+
+                    resolved.append(PendingAddProperty(address: address, coordinate: snapped))
+                    seenAddresses.insert(normalized)
                 }
-
-                // guard !resolved.isEmpty else { return } // line stops sheet from opening if 0 new properties exist
 
                 pendingBulkAdd = PendingBulkAdd(
                     center: bulk.center,
