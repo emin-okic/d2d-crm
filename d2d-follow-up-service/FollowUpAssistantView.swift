@@ -57,9 +57,10 @@ struct FollowUpAssistantView: View {
                     VStack(alignment: .leading, spacing: 24) {
                         // MARK: - Header
                         HStack {
-                            Text("The Follow-Up Assistant")
+                            Text("Follow Up Assistant")
                                 .font(.title)
                                 .fontWeight(.bold)
+                                .frame(maxWidth: .infinity, alignment: .center)
                             Spacer()
                         }
                         .padding(.horizontal, 20)
