@@ -356,20 +356,6 @@ struct KnockStepperPopupView: View {
         case .note, .trip, .done: return true
         }
     }
-    
-    private func buildDefaultFollowUpNote(for prospect: Prospect,
-                                          objection: Objection?,
-                                          followUpDate: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a 'on' EEEE MMMM d, yyyy"
-        let dateString = formatter.string(from: followUpDate)
-
-        let name = prospect.fullName.isEmpty ? "This prospect" : prospect.fullName
-        let objText = objection?.text ?? "busy"
-
-        return "\(name) was \(objText.lowercased()) right now. " +
-               "There's a follow up set at \(dateString)."
-    }
 
     private func goNext() {
         guard let step = currentStep else { return }
@@ -377,15 +363,14 @@ struct KnockStepperPopupView: View {
         if step == .scheduleFollowUp, let p = workingProspect {
             saveFollowUp(p, followUpDate)
             didScheduleFollowUp = true
-            
-            // ⬇️ Pre-fill note step
-                if let obj = selectedObjection {
-                    noteText = buildDefaultFollowUpNote(for: p,
-                                                        objection: obj,
-                                                        followUpDate: followUpDate)
-                }
-            
+
+            noteText = SuggestedFollowUpNoteGenerator.generate(
+                prospect: p,
+                objection: selectedObjection,
+                followUpDate: followUpDate
+            )
         }
+        
         if step == .note, let p = workingProspect,
            !noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             addNote(p, noteText)
