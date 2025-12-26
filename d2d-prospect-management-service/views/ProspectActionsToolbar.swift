@@ -28,10 +28,6 @@ struct ProspectActionsToolbar: View {
     
     @State private var phoneError: String?
     
-    @State private var showExportPrompt = false
-    @State private var showExportSuccessBanner = false
-    @State private var exportSuccessMessage = ""
-    
     // This variable is used for keeping track of the original phone # on changing it for note taking purposes
     @State private var originalPhone: String?
 
@@ -79,33 +75,10 @@ struct ProspectActionsToolbar: View {
                     .buttonStyle(.plain)
                 }
 
-                // Export Contact
-                iconButton(systemName: "person.crop.circle.badge.plus") {
-                    showExportPrompt = true
-                }
-
             }
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: .center)
 
-            // ✅ Floating banner at top
-            if showExportSuccessBanner {
-                VStack {
-                    Spacer().frame(height: 60)
-                    Text(exportSuccessMessage)
-                        .font(.subheadline)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(Color.green.opacity(0.95))
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
-                        .shadow(radius: 6)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity)
-                .zIndex(999)
-            }
         }
 
         // Phone confirmation
@@ -151,16 +124,6 @@ struct ProspectActionsToolbar: View {
                 showAddEmailSheet = true
             }
             Button("Cancel", role: .cancel) { }
-        }
-
-        // Export confirmation
-        .alert("Export to Contacts", isPresented: $showExportPrompt) {
-            Button("Yes") {
-                exportToContacts()
-            }
-            Button("No", role: .cancel) { }
-        } message: {
-            Text("Would you like to save this contact to your iOS Contacts app?")
         }
 
         // Create sale sheet
@@ -381,75 +344,6 @@ struct ProspectActionsToolbar: View {
         let digits = raw.filter(\.isNumber)
         guard digits.count == 10 else { return raw }
         return "(\(digits.prefix(3))) \(digits.dropFirst(3).prefix(3))-\(digits.suffix(4))"
-    }
-
-    private func exportToContacts() {
-        let store = CNContactStore()
-        store.requestAccess(for: .contacts) { granted, error in
-            guard granted else {
-                showExportFeedback("Contacts access denied.")
-                return
-            }
-
-            let predicate = CNContact.predicateForContacts(matchingName: prospect.fullName)
-            let keysToFetch: [CNKeyDescriptor] = [
-                CNContactGivenNameKey as CNKeyDescriptor,
-                CNContactPostalAddressesKey as CNKeyDescriptor,
-                CNContactPhoneNumbersKey as CNKeyDescriptor,
-                CNContactEmailAddressesKey as CNKeyDescriptor
-            ]
-
-            do {
-                let matches = try store.unifiedContacts(matching: predicate, keysToFetch: keysToFetch)
-                let existing = matches.first(where: {
-                    $0.postalAddresses.first?.value.street == prospect.address
-                })
-
-                let contact: CNMutableContact
-                let saveRequest = CNSaveRequest()
-
-                if let existing = existing {
-                    contact = existing.mutableCopy() as! CNMutableContact
-                    saveRequest.update(contact)
-                } else {
-                    contact = CNMutableContact()
-                    contact.givenName = prospect.fullName
-                    saveRequest.add(contact, toContainerWithIdentifier: nil)
-                }
-
-                contact.phoneNumbers = prospect.contactPhone.isEmpty ? [] : [
-                    CNLabeledValue(label: CNLabelPhoneNumberMobile, value: CNPhoneNumber(stringValue: prospect.contactPhone))
-                ]
-
-                contact.emailAddresses = prospect.contactEmail.isEmpty ? [] : [
-                    CNLabeledValue(label: CNLabelHome, value: NSString(string: prospect.contactEmail))
-                ]
-
-                let postal = CNMutablePostalAddress()
-                postal.street = prospect.address
-                contact.postalAddresses = [CNLabeledValue(label: CNLabelHome, value: postal)]
-
-                try store.execute(saveRequest)
-                showExportFeedback("Contact saved to Contacts.")
-            } catch {
-                showExportFeedback("Failed to save contact.")
-            }
-        }
-    }
-    
-    private func showExportFeedback(_ message: String) {
-        DispatchQueue.main.async {
-            exportSuccessMessage = message
-            withAnimation {
-                showExportSuccessBanner = true
-            }
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                withAnimation {
-                    showExportSuccessBanner = false
-                }
-            }
-        }
     }
 
     
