@@ -124,36 +124,27 @@ struct ProspectActionsToolbar: View {
             Button("Cancel", role: .cancel) { }
         }
 
-        // Create sale sheet
+        // Convert to Customer sheet using common stepper form
         .sheet(isPresented: $showCreateSaleSheet) {
-            NavigationView {
-                Form {
-                    Section(header: Text("Confirm Customer Info")) {
-                        TextField("Full Name", text: $prospect.fullName)
-                        TextField("Address", text: $prospect.address)
-                        TextField("Phone", text: Binding(
-                            get: { prospect.contactPhone },
-                            set: { prospect.contactPhone = $0 }
-                        ))
-                        TextField("Email", text: Binding(
-                            get: { prospect.contactEmail },
-                            set: { prospect.contactEmail = $0 }
-                        ))
-                    }
-
-                    Section {
+            NavigationStack {
+                CustomerCreateStepperView(
+                    initialName: prospect.fullName,
+                    initialAddress: prospect.address,
+                    initialPhone: prospect.contactPhone,
+                    initialEmail: prospect.contactEmail,
+                    onComplete: { newCustomer in
+                        // Transfer notes, knocks, appointments
+                        transferProspectData(to: newCustomer)
                         
-                        Button("Confirm Sale") {
-                            createCustomer(from: prospect)
-                            showCreateSaleSheet = false
-                        }
-                        .disabled(prospect.fullName.isEmpty || prospect.address.isEmpty)
-                        
+                        showCreateSaleSheet = false
+                    },
+                    onCancel: {
+                        showCreateSaleSheet = false
                     }
-                }
-                .navigationTitle("Create Sale")
-                .navigationBarTitleDisplayMode(.inline)
+                )
             }
+            .presentationDetents([.fraction(0.5)])      // Limit to 50% of the screen
+            .presentationDragIndicator(.visible)        // Show drag indicator
         }
 
         // Add phone sheet
@@ -225,6 +216,35 @@ struct ProspectActionsToolbar: View {
                     }
                 }
             }
+        }
+    }
+    
+    private func transferProspectData(to customer: Customer) {
+        // Deep copy notes, knocks, appointments
+        customer.notes = prospect.notes.map { Note(content: $0.content, date: $0.date) }
+        customer.knockHistory = prospect.knockHistory.map {
+            Knock(date: $0.date, status: $0.status, latitude: $0.latitude, longitude: $0.longitude)
+        }
+        
+        for appt in prospect.appointments {
+            appt.prospect = nil // break old link
+            customer.appointments.append(appt)
+        }
+
+        // Insert new customer and delete old prospect
+        modelContext.insert(customer)
+        modelContext.delete(prospect)
+
+        do {
+            try modelContext.save()
+            DispatchQueue.main.async {
+                if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let root = scene.windows.first?.rootViewController {
+                    root.dismiss(animated: true)
+                }
+            }
+        } catch {
+            print("❌ Failed to convert prospect to customer:", error)
         }
     }
     
