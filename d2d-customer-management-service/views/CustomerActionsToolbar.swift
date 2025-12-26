@@ -12,6 +12,9 @@ import PhoneNumberKit
 struct CustomerActionsToolbar: View {
     @Bindable var customer: Customer
     @Environment(\.modelContext) private var modelContext
+    
+    // Closure to dismiss the details view
+    var onClose: (() -> Void)? = nil
 
     // State for sheets and dialogs
     @State private var showAddPhoneSheet = false
@@ -27,6 +30,8 @@ struct CustomerActionsToolbar: View {
     // This is for the new call action workflow
     @State private var showCallSheet = false
     @State private var originalPhone: String?
+    
+    @State private var showCustomerLostConfirmation = false
 
     var body: some View {
         ZStack {
@@ -58,6 +63,15 @@ struct CustomerActionsToolbar: View {
                     } else {
                         showEmailConfirmation = true
                     }
+                }
+                
+                // Customer Lost
+                actionButton(
+                    icon: "person.crop.circle.badge.xmark",
+                    title: "Sale Lost",
+                    color: .red
+                ) {
+                    showCustomerLostConfirmation = true
                 }
 
                 Spacer()
@@ -152,6 +166,19 @@ struct CustomerActionsToolbar: View {
             .presentationDetents([.fraction(0.25)])
             .presentationDragIndicator(.visible)
         }
+        .confirmationDialog(
+            "Mark this customer as lost?",
+            isPresented: $showCustomerLostConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Yes, mark as lost", role: .destructive) {
+                convertCustomerToProspect(customer: customer)
+                
+                // Close the details view immediately
+                onClose?()
+            }
+            Button("Cancel", role: .cancel) { }
+        }
 
         // ✅ Add / Edit email sheet
         .sheet(isPresented: $showAddEmailSheet) {
@@ -192,6 +219,50 @@ struct CustomerActionsToolbar: View {
                 }
             }
         }
+    }
+    
+    @MainActor
+    private func convertCustomerToProspect(customer: Customer) {
+        // 1️⃣ Create Prospect from Customer
+        let prospect = Prospect(
+            fullName: customer.fullName,
+            address: customer.address,
+            count: customer.knockCount,
+            list: "Prospects"
+        )
+        
+        // 2️⃣ Carry over details
+        prospect.contactPhone = customer.contactPhone
+        prospect.contactEmail = customer.contactEmail
+        prospect.notes = customer.notes
+        prospect.appointments = customer.appointments
+        prospect.knockHistory = customer.knockHistory
+        
+        // 2.5 LOG THE STATE TRANSITION
+        prospect.knockHistory.append(
+            Knock(
+                date: .now,
+                status: "Customer Lost",
+                latitude: prospect.latitude ?? customer.latitude ?? 0,
+                longitude: prospect.longitude ?? customer.longitude ?? 0
+            )
+        )
+        
+        // 3️⃣ Preserve spatial identity
+        prospect.latitude = customer.latitude
+        prospect.longitude = customer.longitude
+        
+        // 4️⃣ Persist new Prospect
+        modelContext.insert(prospect)
+        
+        // 5️⃣ Delete old Customer
+        modelContext.delete(customer)
+        
+        // 6️⃣ Save context
+        try? modelContext.save()
+        
+        // Optional: update UI / selection if needed
+        // selectedList = "Prospects"
     }
     
     // MARK: - Modern CRM style button

@@ -76,7 +76,10 @@ struct CustomerDetailsView: View {
                 
                 // ✅ Actions Toolbar
                 Section {
-                    CustomerActionsToolbar(customer: customer)
+                    CustomerActionsToolbar(
+                        customer: customer,
+                        onClose: { presentationMode.wrappedValue.dismiss() }
+                    )
                 }
                 
                 // ✅ Tabs (Appointments, Knocks, Notes)
