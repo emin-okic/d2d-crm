@@ -34,13 +34,16 @@ struct ProspectActionsToolbar: View {
     var body: some View {
         ZStack {
             HStack(spacing: 24) {
+                
                 // Phone
-                iconButton(systemName: "phone.fill") {
+                actionButton(
+                    icon: "phone.fill",
+                    title: "Call",
+                    color: .blue
+                ) {
                     if prospect.contactPhone.isEmpty {
-                        
                         // Set the original phone number to nil for note taking purposes
                         originalPhone = nil
-
                         showAddPhoneSheet = true
                     } else {
                         showCallSheet = true
@@ -48,7 +51,11 @@ struct ProspectActionsToolbar: View {
                 }
 
                 // Email
-                iconButton(systemName: "envelope.fill") {
+                actionButton(
+                    icon: "envelope.fill",
+                    title: "Email",
+                    color: .purple
+                ) {
                     if prospect.contactEmail.nilIfEmpty == nil {
                         showAddEmailSheet = true
                     } else {
@@ -56,23 +63,14 @@ struct ProspectActionsToolbar: View {
                     }
                 }
 
-                // Create Sale
                 if prospect.list == "Prospects" {
-                    Button(action: {
+                    actionButton(
+                        icon: "checkmark.seal.fill",
+                        title: "Convert",
+                        color: .green
+                    ) {
                         showCreateSaleSheet = true
-                    }) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.green)
-                                .frame(width: 34, height: 34)   // same as other icons
-
-                            Image(systemName: "checkmark.seal.fill")
-                                .font(.system(size: 24))        // ~25% smaller than .title2
-                                .foregroundColor(.white)
-                                .scaleEffect(0.75)              // shrink inside the circle
-                        }
                     }
-                    .buttonStyle(.plain)
                 }
 
             }
@@ -228,6 +226,32 @@ struct ProspectActionsToolbar: View {
                 }
             }
         }
+    }
+    
+    // MARK: - Modern CRM style button
+    @ViewBuilder
+    private func actionButton(icon: String, title: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(color.opacity(0.15))
+                        .frame(width: 60, height: 60)
+                    
+                    Image(systemName: icon)
+                        .font(.title2)
+                        .foregroundColor(color)
+                }
+                
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.primary)
+            }
+            .padding(4)
+        }
+        .buttonStyle(.plain)
+        .shadow(color: color.opacity(0.25), radius: 4, x: 0, y: 2)
+        .animation(.spring(response: 0.25, dampingFraction: 0.6), value: UUID())
     }
     
     /// This function is intended to log call activity for prospects
