@@ -21,10 +21,6 @@ struct CustomerActionsToolbar: View {
     @State private var showAddEmailSheet = false
     @State private var newEmail = ""
     @State private var showEmailConfirmation = false
-    
-    @State private var showExportPrompt = false
-    @State private var showExportSuccessBanner = false
-    @State private var exportSuccessMessage = ""
 
     @State private var phoneError: String?
     
@@ -56,33 +52,11 @@ struct CustomerActionsToolbar: View {
                     }
                 }
 
-                // ✅ Export Contact
-                iconButton(systemName: "person.crop.circle.badge.plus") {
-                    showExportPrompt = true
-                }
-
                 Spacer()
             }
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: .center)
 
-            // ✅ Export success banner
-            if showExportSuccessBanner {
-                VStack {
-                    Spacer().frame(height: 60)
-                    Text(exportSuccessMessage)
-                        .font(.subheadline)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(Color.green.opacity(0.95))
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
-                        .shadow(radius: 6)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                    Spacer()
-                }
-                .zIndex(999)
-            }
         }
 
         .confirmationDialog("Call \(formattedPhone(customer.contactPhone))?",
@@ -113,14 +87,6 @@ struct CustomerActionsToolbar: View {
                 showAddEmailSheet = true
             }
             Button("Cancel", role: .cancel) { }
-        }
-
-        // ✅ Export confirmation
-        .alert("Export to Contacts", isPresented: $showExportPrompt) {
-            Button("Yes") { exportToContacts() }
-            Button("No", role: .cancel) { }
-        } message: {
-            Text("Would you like to save this contact to your iOS Contacts app?")
         }
         
         // New Phone Workflow
@@ -262,18 +228,6 @@ struct CustomerActionsToolbar: View {
         } else {
             phoneError = nil
             return true
-        }
-    }
-    
-    private func exportToContacts() {
-        showExportFeedback("Contact saved to Contacts.")
-    }
-
-    private func showExportFeedback(_ message: String) {
-        exportSuccessMessage = message
-        withAnimation { showExportSuccessBanner = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-            withAnimation { showExportSuccessBanner = false }
         }
     }
 

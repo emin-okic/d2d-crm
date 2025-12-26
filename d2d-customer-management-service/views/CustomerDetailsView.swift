@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import MapKit
+import Contacts
 
 @available(iOS 18.0, *)
 struct CustomerDetailsView: View {
@@ -34,9 +35,32 @@ struct CustomerDetailsView: View {
     }
     
     @State private var showRevertConfirmation = false
+    
+    @State private var showExportPrompt = false
+    @State private var showExportSuccessBanner = false
+    @State private var exportSuccessMessage = ""
 
     var body: some View {
         ZStack {
+            
+            if showExportSuccessBanner {
+                VStack {
+                    Spacer().frame(height: 60)
+                    Text(exportSuccessMessage)
+                        .font(.subheadline)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(Color.green.opacity(0.95))
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                        .shadow(radius: 6)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity)
+                .zIndex(1000)
+            }
+            
             Form {
                 // ✅ Customer core info
                 Section(header: Text("Customer Details")) {
@@ -108,6 +132,17 @@ struct CustomerDetailsView: View {
                     Label("Back", systemImage: "chevron.left")
                 }
             }
+            
+            if !hasUnsavedEdits {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+
+                    Button {
+                        showExportPrompt = true
+                    } label: {
+                        Image(systemName: "person.crop.circle.badge.plus")
+                    }
+                }
+            }
 
             // Revert + Save (only when editing)
             if hasUnsavedEdits {
@@ -125,6 +160,14 @@ struct CustomerDetailsView: View {
             }
             
         }
+        .alert("Export to Contacts", isPresented: $showExportPrompt) {
+            Button("Yes") {
+                exportToContacts()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Would you like to save this contact to your iOS Contacts app?")
+        }
         .alert("Revert Changes?", isPresented: $showRevertConfirmation) {
             Button("Revert Changes", role: .destructive) {
                 revertEdits()
@@ -136,6 +179,85 @@ struct CustomerDetailsView: View {
         .onAppear {
             tempFullName = customer.fullName
             tempAddress = customer.address
+        }
+    }
+    
+    private func exportToContacts() {
+        let store = CNContactStore()
+        store.requestAccess(for: .contacts) { granted, _ in
+            guard granted else {
+                showExportFeedback("Contacts access denied.")
+                return
+            }
+
+            let predicate = CNContact.predicateForContacts(matchingName: customer.fullName)
+            let keys: [CNKeyDescriptor] = [
+                CNContactGivenNameKey as CNKeyDescriptor,
+                CNContactPostalAddressesKey as CNKeyDescriptor
+            ]
+
+            do {
+                let matches = try store.unifiedContacts(matching: predicate, keysToFetch: keys)
+                let existing = matches.first {
+                    $0.postalAddresses.first?.value.street == customer.address
+                }
+
+                let contact: CNMutableContact
+                let saveRequest = CNSaveRequest()
+
+                if let existing = existing {
+                    contact = existing.mutableCopy() as! CNMutableContact
+                    saveRequest.update(contact)
+                } else {
+                    contact = CNMutableContact()
+                    contact.givenName = customer.fullName
+                    saveRequest.add(contact, toContainerWithIdentifier: nil)
+                }
+
+                if !customer.contactPhone.isEmpty {
+                    contact.phoneNumbers = [
+                        CNLabeledValue(
+                            label: CNLabelPhoneNumberMobile,
+                            value: CNPhoneNumber(stringValue: customer.contactPhone)
+                        )
+                    ]
+                }
+
+                if !customer.contactEmail.isEmpty {
+                    contact.emailAddresses = [
+                        CNLabeledValue(
+                            label: CNLabelHome,
+                            value: NSString(string: customer.contactEmail)
+                        )
+                    ]
+                }
+
+                let postal = CNMutablePostalAddress()
+                postal.street = customer.address
+                contact.postalAddresses = [
+                    CNLabeledValue(label: CNLabelHome, value: postal)
+                ]
+
+                try store.execute(saveRequest)
+                showExportFeedback("Contact saved to Contacts.")
+            } catch {
+                showExportFeedback("Failed to save contact.")
+            }
+        }
+    }
+
+    private func showExportFeedback(_ message: String) {
+        DispatchQueue.main.async {
+            exportSuccessMessage = message
+            withAnimation {
+                showExportSuccessBanner = true
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                withAnimation {
+                    showExportSuccessBanner = false
+                }
+            }
         }
     }
     
