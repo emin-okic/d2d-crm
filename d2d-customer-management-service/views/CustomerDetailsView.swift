@@ -193,6 +193,9 @@ struct CustomerDetailsView: View {
             let predicate = CNContact.predicateForContacts(matchingName: customer.fullName)
             let keys: [CNKeyDescriptor] = [
                 CNContactGivenNameKey as CNKeyDescriptor,
+                CNContactFamilyNameKey as CNKeyDescriptor,
+                CNContactPhoneNumbersKey as CNKeyDescriptor,
+                CNContactEmailAddressesKey as CNKeyDescriptor,
                 CNContactPostalAddressesKey as CNKeyDescriptor
             ]
 
