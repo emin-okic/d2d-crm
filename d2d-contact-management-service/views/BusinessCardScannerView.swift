@@ -63,7 +63,7 @@ struct BusinessCardScannerView: UIViewControllerRepresentable {
 
                 let draft = BusinessCardParser.parse(text: text)
                 DispatchQueue.main.async {
-                    // self.parent.onScanned(draft)
+                    self.parent.onScanned(draft)
                 }
             }
 
