@@ -24,6 +24,9 @@ struct ImportOverlayView: View {
     let onAddManually: () -> Void
 
     @State private var showContactsPicker = false
+    
+    @State private var showBusinessCardScanner = false
+    @State private var scannedProspectDraft: ProspectDraft?
 
     var body: some View {
         if showingImportFromContacts {
@@ -45,6 +48,7 @@ struct ImportOverlayView: View {
                 }
 
                 VStack(spacing: 12) {
+                    
                     actionButton(
                         title: "Import from Contacts",
                         subtitle: "Select one or more contacts",
@@ -62,17 +66,25 @@ struct ImportOverlayView: View {
                         
                         onAddManually()
                     }
+                    
+                    actionButton(
+                        title: "Scan Business Card",
+                        subtitle: "Use your camera to add a prospect",
+                        systemImage: "camera.viewfinder"
+                    ) {
+                        showBusinessCardScanner = true
+                    }
                 }
-
-                Spacer()
-
+                
                 Button("Cancel") {
                     showingImportFromContacts = false
                 }
                 .foregroundStyle(.secondary)
+
+                Spacer()
             }
             .padding()
-            .frame(width: 300, height: 360)
+            .frame(maxWidth: 340, maxHeight: 400)
             .background(.ultraThinMaterial)
             .cornerRadius(16)
             .shadow(radius: 8)
@@ -88,6 +100,49 @@ struct ImportOverlayView: View {
                     onCancel: { showContactsPicker = false }
                 )
             }
+            .sheet(item: $scannedProspectDraft) { draft in
+                BusinessCardConfirmView(
+                    draft: draft,
+                    onConfirm: { confirmedDraft in
+                        saveProspect(confirmedDraft)
+                        scannedProspectDraft = nil
+                        showingImportFromContacts = false
+                    }
+                )
+            }
+            .sheet(isPresented: $showBusinessCardScanner) {
+                BusinessCardScannerView(
+                    onScanned: { draft in
+                        scannedProspectDraft = draft
+                        showBusinessCardScanner = false
+                    },
+                    onCancel: {
+                        showBusinessCardScanner = false
+                    }
+                )
+            }
+        }
+    }
+    
+    private func saveProspect(_ draft: ProspectDraft) {
+        let prospect = Prospect(
+            fullName: draft.fullName,
+            address: draft.address,
+            list: "Prospects"
+        )
+
+        prospect.contactPhone = draft.phone
+        prospect.contactEmail = draft.email
+
+        CLGeocoder().geocodeAddressString(draft.address) { placemarks, _ in
+            if let coord = placemarks?.first?.location?.coordinate {
+                prospect.latitude = coord.latitude
+                prospect.longitude = coord.longitude
+            }
+
+            modelContext.insert(prospect)
+            try? modelContext.save()
+            onSave()
         }
     }
 
