@@ -54,6 +54,9 @@ struct ProspectsSectionView: View {
         let tableAreaHeight = max(containerHeight, rowHeight * 2)
 
         ZStack(alignment: .top) {
+            Color(.systemGray6) // <- section background matches container
+                .edgesIgnoringSafeArea(.all)
+            
             if !filtered.isEmpty {
                 List {
                     ForEach(filtered) { p in
@@ -69,6 +72,8 @@ struct ProspectsSectionView: View {
                             .onTapGesture {
                                 selectedProspect = p
                             }
+                            .listRowBackground(Color.clear)  // make individual rows’ background transparent
+                            .listRowSeparator(.hidden)
                     }
                     .listRowInsets(EdgeInsets()) // optional, to control spacing like LazyVStack
                 }

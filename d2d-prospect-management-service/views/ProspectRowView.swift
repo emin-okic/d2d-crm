@@ -41,6 +41,11 @@ struct ProspectRowView: View {
         }
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity, minHeight: minRowHeight, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemGray6))        // match container gray
+                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2) // subtle depth
+        )
         .contentShape(Rectangle())
     }
 
