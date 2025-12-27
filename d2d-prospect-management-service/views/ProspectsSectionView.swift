@@ -34,8 +34,9 @@ struct ProspectsSectionView: View {
             .filter { $0.list == selectedList }
 
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        
         guard !q.isEmpty else {
-            return base.sorted { $0.fullName.localizedCaseInsensitiveCompare($1.fullName) == .orderedAscending }
+            return base.sorted { $0.orderIndex < $1.orderIndex }
         }
 
         // Match name, address, phone, email (case-insensitive)
@@ -75,6 +76,7 @@ struct ProspectsSectionView: View {
                             .listRowBackground(Color.clear)  // make individual rows’ background transparent
                             .listRowSeparator(.hidden)
                     }
+                    .onMove(perform: moveProspects)
                     .listRowInsets(EdgeInsets()) // optional, to control spacing like LazyVStack
                 }
                 .listStyle(.plain)
@@ -118,6 +120,17 @@ struct ProspectsSectionView: View {
                 searchText = ""
             }
         }
+    }
+    
+    private func moveProspects(from source: IndexSet, to destination: Int) {
+        var reordered = filtered
+        reordered.move(fromOffsets: source, toOffset: destination)
+
+        for (index, prospect) in reordered.enumerated() {
+            prospect.orderIndex = index
+        }
+
+        try? modelContext.save()
     }
     
     private func deleteProspect(_ prospect: Prospect) {
