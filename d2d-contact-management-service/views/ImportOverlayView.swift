@@ -75,16 +75,16 @@ struct ImportOverlayView: View {
                         showBusinessCardScanner = true
                     }
                 }
-
-                Spacer()
-
+                
                 Button("Cancel") {
                     showingImportFromContacts = false
                 }
                 .foregroundStyle(.secondary)
+
+                Spacer()
             }
             .padding()
-            .frame(width: 300, height: 360)
+            .frame(maxWidth: 340, maxHeight: 400)
             .background(.ultraThinMaterial)
             .cornerRadius(16)
             .shadow(radius: 8)
