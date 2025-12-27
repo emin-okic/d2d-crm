@@ -8,17 +8,13 @@ import SwiftUI
 
 struct ScorecardBar: View {
 
-    let avgKnocksPerSale: Int
-    let hasSignedUp: Bool
-
     var body: some View {
         HStack(spacing: 12) {
             
             DailyKnocksTrackerView()
+            
+            DailySalesTrackerView()
 
-            if hasSignedUp {
-                KnocksPerSaleView(count: avgKnocksPerSale, hasFirstSignup: true)
-            }
         }
         .cornerRadius(16)
         .shadow(radius: 4)
