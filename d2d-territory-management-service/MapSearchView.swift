@@ -651,8 +651,8 @@ struct MapSearchView: View {
     private func centerMapForPopup(coordinate: CLLocationCoordinate2D) {
 
         // Target zoom (tight enough to matter visually)
-        let latMeters: CLLocationDistance = 700
-        let lonMeters: CLLocationDistance = 700
+        let latMeters: CLLocationDistance = 250
+        let lonMeters: CLLocationDistance = 250
 
         // Convert meters → degrees (approx)
         let metersToDegrees = 1.0 / 111_000.0
