@@ -21,50 +21,41 @@ struct BusinessCardScannerView: UIViewControllerRepresentable {
         return controller
     }
 
-    func updateUIViewController(_ uiViewController: VNDocumentCameraViewController, context: Context) {}
+    func updateUIViewController(
+        _ uiViewController: VNDocumentCameraViewController,
+        context: Context
+    ) {}
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(self)
+        Coordinator(onScanned: onScanned, onCancel: onCancel)
     }
 
-    final class Coordinator: NSObject, VNDocumentCameraViewControllerDelegate {
+    // MARK: - Coordinator
 
-        let parent: BusinessCardScannerView
+    final class Coordinator: NSObject {
 
-        init(_ parent: BusinessCardScannerView) {
-            self.parent = parent
-        }
+        private let onScanned: (ProspectDraft) -> Void
+        private let onCancel: () -> Void
 
-        func documentCameraViewController(
-            _ controller: VNDocumentCameraViewController,
-            didFinishWith scan: VNDocumentCameraScan
+        init(
+            onScanned: @escaping (ProspectDraft) -> Void,
+            onCancel: @escaping () -> Void
         ) {
-            controller.dismiss(animated: true)
-
-            guard scan.pageCount > 0 else { return }
-
-            let image = scan.imageOfPage(at: 0)
-            recognizeText(from: image)
+            self.onScanned = onScanned
+            self.onCancel = onCancel
         }
 
-        func documentCameraViewControllerDidCancel(_ controller: VNDocumentCameraViewController) {
-            controller.dismiss(animated: true)
-            parent.onCancel()
-        }
+        // MARK: - OCR (Synchronous, Main Thread)
 
-        private func recognizeText(from image: UIImage) {
-            guard let cgImage = image.cgImage else { return }
+        private func recognizeText(from image: UIImage) -> String {
+            guard let cgImage = image.cgImage else { return "" }
+
+            var recognizedText = ""
 
             let request = VNRecognizeTextRequest { request, _ in
-                let text = request.results?
-                    .compactMap { $0 as? VNRecognizedTextObservation }
+                recognizedText = (request.results as? [VNRecognizedTextObservation])?
                     .compactMap { $0.topCandidates(1).first?.string }
                     .joined(separator: "\n") ?? ""
-
-                let draft = BusinessCardParser.parse(text: text)
-                DispatchQueue.main.async {
-                    self.parent.onScanned(draft)
-                }
             }
 
             request.recognitionLevel = .accurate
@@ -72,6 +63,36 @@ struct BusinessCardScannerView: UIViewControllerRepresentable {
 
             let handler = VNImageRequestHandler(cgImage: cgImage)
             try? handler.perform([request])
+
+            return recognizedText
         }
+    }
+}
+
+// MARK: - Delegate Conformance (Pre-Concurrency)
+
+extension BusinessCardScannerView.Coordinator:
+    @preconcurrency VNDocumentCameraViewControllerDelegate {
+
+    func documentCameraViewController(
+        _ controller: VNDocumentCameraViewController,
+        didFinishWith scan: VNDocumentCameraScan
+    ) {
+        controller.dismiss(animated: true)
+
+        guard scan.pageCount > 0 else { return }
+
+        let image = scan.imageOfPage(at: 0)
+        let text = recognizeText(from: image)
+        let draft = BusinessCardParser.parse(text: text)
+
+        onScanned(draft)
+    }
+
+    func documentCameraViewControllerDidCancel(
+        _ controller: VNDocumentCameraViewController
+    ) {
+        controller.dismiss(animated: true)
+        onCancel()
     }
 }
