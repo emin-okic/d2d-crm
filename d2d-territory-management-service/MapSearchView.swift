@@ -201,9 +201,8 @@ struct MapSearchView: View {
                 .edgesIgnoringSafeArea(.horizontal)
 
                 ScorecardBar(
-                    totalKnocks: totalKnocks,
                     avgKnocksPerSale: averageKnocksPerCustomer,
-                    hasSignedUp: hasCustomers   // ← was: hasSignedUp
+                    hasSignedUp: hasCustomers
                 )
 
                 FloatingSearchAndMicButtons(
