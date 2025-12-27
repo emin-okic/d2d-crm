@@ -10,14 +10,18 @@ import SwiftData
 
 struct CustomersSectionView: View {
     
+    @Environment(\.modelContext) private var modelContext
+    
     @Query private var allCustomers: [Customer]
     
     @Binding var searchText: String
-    
     @Binding var isSearchExpanded: Bool
     @FocusState<Bool>.Binding var isSearchFocused: Bool
 
     @State private var selectedCustomer: Customer?
+    
+    @State private var showDeleteConfirmation: Bool = false
+    @State private var customerToDelete: Customer?
 
     private let rowHeight: CGFloat = 88
 
@@ -38,28 +42,31 @@ struct CustomersSectionView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
+            
+            Color(.systemGray6)
+                .edgesIgnoringSafeArea(.all)
+            
             if !filtered.isEmpty {
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(filtered) { c in
-                            Button { selectedCustomer = c } label: {
-                                CustomerRowView(customer: c)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.horizontal, 12)
-                                    .contentShape(Rectangle())
+                List {
+                    ForEach(filtered) { c in
+                        CustomerRowView(customer: c)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    customerToDelete = c
+                                    showDeleteConfirmation = true
+                                } label: {
+                                    Label("Delete", systemImage: "trash.fill")
+                                }
                             }
-                            .buttonStyle(.plain)
-
-                            Divider()
-                                .padding(.leading, 15)
-                                .padding(.vertical, 10)
-                        }
+                            .onTapGesture {
+                                selectedCustomer = c
+                            }
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
                     }
-                    .padding(.top, 0)
-                    .transaction { $0.disablesAnimations = true }
-                    .contentTransition(.identity)
+                    .listRowInsets(EdgeInsets())
                 }
-                .scrollIndicators(.automatic)
+                .listStyle(.plain)
             } else {
                 Text(searchText.isEmpty ? "No Customers" : "No matches")
                     .font(.title3)
@@ -76,6 +83,14 @@ struct CustomersSectionView: View {
                     .navigationBarTitleDisplayMode(.inline)
             }
         }
+        .alert("Delete Customer?", isPresented: $showDeleteConfirmation, presenting: customerToDelete) { customer in
+            Button("Delete", role: .destructive) {
+                deleteCustomer(customer)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { customer in
+            Text("Are you sure you want to delete \(customer.fullName)? This action cannot be undone.")
+        }
         .onChange(of: selectedCustomer) { newValue in
             guard newValue != nil else { return }
 
@@ -90,4 +105,20 @@ struct CustomersSectionView: View {
             }
         }
     }
+    
+    private func deleteCustomer(_ customer: Customer) {
+        for appointment in customer.appointments {
+            modelContext.delete(appointment)
+        }
+
+        modelContext.delete(customer)
+        try? modelContext.save()
+
+        if selectedCustomer?.id == customer.id {
+            selectedCustomer = nil
+        }
+
+        customerToDelete = nil
+    }
+    
 }
