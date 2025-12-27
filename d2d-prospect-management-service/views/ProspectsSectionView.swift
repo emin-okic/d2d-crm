@@ -9,10 +9,15 @@ import SwiftUI
 import SwiftData
 
 struct ProspectsSectionView: View {
+    @Environment(\.modelContext) private var modelContext
+    
     @Query private var allProspects: [Prospect]
 
     @Binding var selectedList: String
     @State private var selectedProspect: Prospect?
+    
+    @State private var showDeleteConfirmation: Bool = false
+    @State private var prospectToDelete: Prospect?
 
     // From parent
     let containerHeight: CGFloat
@@ -49,28 +54,30 @@ struct ProspectsSectionView: View {
         let tableAreaHeight = max(containerHeight, rowHeight * 2)
 
         ZStack(alignment: .top) {
+            Color(.systemGray6) // <- section background matches container
+                .edgesIgnoringSafeArea(.all)
+            
             if !filtered.isEmpty {
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(filtered) { p in
-                            Button { selectedProspect = p } label: {
-                                ProspectRowView(prospect: p)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.horizontal, 12)
-                                    .contentShape(Rectangle())
+                List {
+                    ForEach(filtered) { p in
+                        ProspectRowView(prospect: p)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    prospectToDelete = p
+                                    showDeleteConfirmation = true
+                                } label: {
+                                    Label("Delete", systemImage: "trash.fill")
+                                }
                             }
-                            .buttonStyle(.plain)
-
-                            Divider()
-                                .padding(.leading, 15)
-                                .padding(.vertical, 10)
-                        }
+                            .onTapGesture {
+                                selectedProspect = p
+                            }
+                            .listRowBackground(Color.clear)  // make individual rows’ background transparent
+                            .listRowSeparator(.hidden)
                     }
-                    .padding(.top, 0)                        // flush to top when results exist
-                    .transaction { $0.disablesAnimations = true }
-                    .contentTransition(.identity)
+                    .listRowInsets(EdgeInsets()) // optional, to control spacing like LazyVStack
                 }
-                .scrollIndicators(.automatic)
+                .listStyle(.plain)
             } else {
                 // Empty state — “No matches” if searching, otherwise “No Prospects/Customers”
                 Text(searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -90,6 +97,14 @@ struct ProspectsSectionView: View {
                     .navigationBarTitleDisplayMode(.inline)
             }
         }
+        .alert("Delete Prospect?", isPresented: $showDeleteConfirmation, presenting: prospectToDelete) { prospect in
+            Button("Delete", role: .destructive) {
+                deleteProspect(prospect)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { prospect in
+            Text("Are you sure you want to delete \(prospect.fullName)? This action cannot be undone.")
+        }
         .onChange(of: selectedProspect) { newValue in
             guard newValue != nil else { return }
 
@@ -103,5 +118,21 @@ struct ProspectsSectionView: View {
                 searchText = ""
             }
         }
+    }
+    
+    private func deleteProspect(_ prospect: Prospect) {
+        // Delete appointments linked to the prospect
+        for appointment in prospect.appointments {
+            modelContext.delete(appointment)
+        }
+        // Delete prospect itself
+        modelContext.delete(prospect)
+        try? modelContext.save()
+
+        // Reset state
+        if selectedProspect?.id == prospect.id {
+            selectedProspect = nil
+        }
+        prospectToDelete = nil
     }
 }

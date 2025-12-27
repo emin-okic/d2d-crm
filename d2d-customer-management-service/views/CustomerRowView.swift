@@ -40,8 +40,24 @@ struct CustomerRowView: View {
             }
             
         }
-        .padding(.vertical, 10)
+        .padding(15)
         .frame(maxWidth: .infinity, minHeight: minRowHeight, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemGray6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color(.systemGray4), lineWidth: 1)
+                )
+                .shadow(
+                    color: Color.black.opacity(0.05),
+                    radius: 4,
+                    x: 0,
+                    y: 2
+                )
+        )
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
         .contentShape(Rectangle())
     }
 
