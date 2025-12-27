@@ -103,7 +103,11 @@ struct ImportOverlayView: View {
             .sheet(item: $scannedProspectDraft) { draft in
                 BusinessCardConfirmView(
                     draft: draft,
-                    onConfirm: saveProspect
+                    onConfirm: { confirmedDraft in
+                        saveProspect(confirmedDraft)
+                        scannedProspectDraft = nil
+                        showingImportFromContacts = false
+                    }
                 )
             }
             .sheet(isPresented: $showBusinessCardScanner) {
