@@ -26,19 +26,24 @@ struct CustomersSectionView: View {
     private let rowHeight: CGFloat = 88
 
     private var filtered: [Customer] {
+        
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !q.isEmpty else {
-            return allCustomers.sorted { $0.fullName.localizedCaseInsensitiveCompare($1.fullName) == .orderedAscending }
+
+        guard q.isEmpty else {
+            return allCustomers.filter { c in
+                c.fullName.localizedCaseInsensitiveContains(q) ||
+                c.address.localizedCaseInsensitiveContains(q) ||
+                c.contactPhone.localizedCaseInsensitiveContains(q) ||
+                c.contactEmail.localizedCaseInsensitiveContains(q)
+            }
+            .sorted { $0.fullName.localizedCaseInsensitiveCompare($1.fullName) == .orderedAscending }
         }
 
-        return allCustomers.filter { c in
-            c.fullName.localizedCaseInsensitiveContains(q) ||
-            c.address.localizedCaseInsensitiveContains(q) ||
-            c.contactPhone.localizedCaseInsensitiveContains(q) ||
-            c.contactEmail.localizedCaseInsensitiveContains(q)
-        }
-        .sorted { $0.fullName.localizedCaseInsensitiveCompare($1.fullName) == .orderedAscending }
+        // ✅ Default list order
+        return allCustomers.sorted { $0.orderIndex < $1.orderIndex }
     }
+    
+    @State private var draggingCustomerID: PersistentIdentifier?
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -50,6 +55,32 @@ struct CustomersSectionView: View {
                 List {
                     ForEach(filtered) { c in
                         CustomerRowView(customer: c)
+                            .scaleEffect(draggingCustomerID == c.persistentModelID ? 1.03 : 1.0)
+                            .shadow(
+                                color: draggingCustomerID == c.persistentModelID
+                                    ? Color.black.opacity(0.18)
+                                    : Color.black.opacity(0.05),
+                                radius: draggingCustomerID == c.persistentModelID ? 12 : 4,
+                                x: 0,
+                                y: draggingCustomerID == c.persistentModelID ? 6 : 2
+                            )
+                            .animation(.spring(response: 0.25, dampingFraction: 0.85),
+                                       value: draggingCustomerID)
+
+                            .onDrag {
+                                draggingCustomerID = c.persistentModelID
+                                return NSItemProvider(object: c.fullName as NSString)
+                            } preview: {
+                                CustomerRowView(customer: c)
+                                    .background(Color.clear)
+                                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                                    .compositingGroup()
+                                    .drawingGroup()
+                            }
+
+                            .onDrop(of: [.text], delegate: DragResetDelegate {
+                                draggingCustomerID = nil
+                            })
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) {
                                     customerToDelete = c
@@ -64,6 +95,7 @@ struct CustomersSectionView: View {
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
                     }
+                    .onMove(perform: moveCustomers)
                     .listRowInsets(EdgeInsets())
                 }
                 .listStyle(.plain)
@@ -103,6 +135,31 @@ struct CustomersSectionView: View {
                 // Clear AFTER collapse so tap wins
                 searchText = ""
             }
+        }
+    }
+    
+    private func moveCustomers(from source: IndexSet, to destination: Int) {
+        var reordered = filtered
+        reordered.move(fromOffsets: source, toOffset: destination)
+
+        for (index, customer) in reordered.enumerated() {
+            customer.orderIndex = index
+        }
+
+        try? modelContext.save()
+        draggingCustomerID = nil
+    }
+    
+    private struct DragResetDelegate: DropDelegate {
+        let onEnd: () -> Void
+
+        func performDrop(info: DropInfo) -> Bool {
+            onEnd()
+            return true
+        }
+
+        func dropExited(info: DropInfo) {
+            onEnd()
         }
     }
     

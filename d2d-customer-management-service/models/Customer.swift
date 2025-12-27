@@ -23,13 +23,19 @@ final class Customer: ContactProtocol {
     /// Stored coordinates for marker annotation generation
     var latitude: Double?
     var longitude: Double?
+    
+    var orderIndex: Int
 
-    init(fullName: String,
+    init(
+        fullName: String,
          address: String,
-         count: Int = 0) {
+         count: Int = 0,
+        orderIndex: Int = 0
+    ) {
         self.fullName = fullName
         self.address = address
         self.knockCount = count
+        self.orderIndex = orderIndex
         self.contactEmail = ""
         self.contactPhone = ""
         self.notes = []
