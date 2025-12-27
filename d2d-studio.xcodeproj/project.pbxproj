@@ -12,7 +12,6 @@
 		C5E6A7202E2BE6CD00EC05F4 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C5E6A71F2E2BE6CD00EC05F4 /* WidgetKit.framework */; };
 		C5E6A7222E2BE6CD00EC05F4 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C5E6A7212E2BE6CD00EC05F4 /* SwiftUI.framework */; };
 		C5E6A72F2E2BE6CD00EC05F4 /* d2d-widget-serviceExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C5E6A71D2E2BE6CD00EC05F4 /* d2d-widget-serviceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		C5EDA85D2F0024440016F579 /* ScorecardBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5EDA83F2F0024440016F579 /* ScorecardBar.swift */; };
 		C5FB3DCB2E2D81FD00586E5D /* PhoneNumberKit in Frameworks */ = {isa = PBXBuildFile; productRef = C5FB3DCA2E2D81FD00586E5D /* PhoneNumberKit */; };
 		C5FB3DCF2E2D81FD00586E5D /* PhoneNumberKit-Static in Frameworks */ = {isa = PBXBuildFile; productRef = C5FB3DCE2E2D81FD00586E5D /* PhoneNumberKit-Static */; };
 /* End PBXBuildFile section */
@@ -87,7 +86,6 @@
 		C5E6A7212E2BE6CD00EC05F4 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		C5E6A7362E2BEBCF00EC05F4 /* d2d-widget-serviceExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "d2d-widget-serviceExtension.entitlements"; sourceTree = "<group>"; };
 		C5E9F14F2DEB6CAB000A771B /* d2d-map-service.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "d2d-map-service.xctestplan"; sourceTree = "<group>"; };
-		C5EDA83F2F0024440016F579 /* ScorecardBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScorecardBar.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -249,7 +247,6 @@
 				C51C3CC42E82FAA80081B571 /* d2d-customer-management-service */,
 				C56CD3852E1993CB00232EF7 /* d2d-territory-management-service */,
 				C5EDA8FA2F0026580016F579 /* d2d-map-screen-analytics-service */,
-				C5EDA83F2F0024440016F579 /* ScorecardBar.swift */,
 				C55E795A2E450CB400D1EA0C /* d2d-activity-management-service */,
 				C511E0372E40F502001BAA36 /* d2d-search-engine-service */,
 				C5328C812E1B1D180057F68E /* d2d-follow-up-service */,
@@ -484,7 +481,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C5EDA85D2F0024440016F579 /* ScorecardBar.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
