@@ -34,8 +34,9 @@ struct ProspectsSectionView: View {
             .filter { $0.list == selectedList }
 
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        
         guard !q.isEmpty else {
-            return base.sorted { $0.fullName.localizedCaseInsensitiveCompare($1.fullName) == .orderedAscending }
+            return base.sorted { $0.orderIndex < $1.orderIndex }
         }
 
         // Match name, address, phone, email (case-insensitive)
@@ -49,6 +50,8 @@ struct ProspectsSectionView: View {
         return base.filter(matches)
             .sorted { $0.fullName.localizedCaseInsensitiveCompare($1.fullName) == .orderedAscending }
     }
+    
+    @State private var draggingProspectID: PersistentIdentifier?
 
     var body: some View {
         let tableAreaHeight = max(containerHeight, rowHeight * 2)
@@ -61,6 +64,23 @@ struct ProspectsSectionView: View {
                 List {
                     ForEach(filtered) { p in
                         ProspectRowView(prospect: p)
+                            .scaleEffect(draggingProspectID == p.persistentModelID ? 1.03 : 1.0)
+                            .shadow(
+                                color: draggingProspectID == p.persistentModelID
+                                    ? Color.black.opacity(0.18)
+                                    : Color.black.opacity(0.05),
+                                radius: draggingProspectID == p.persistentModelID ? 12 : 4,
+                                x: 0,
+                                y: draggingProspectID == p.persistentModelID ? 6 : 2
+                            )
+                            .animation(.spring(response: 0.25, dampingFraction: 0.85), value: draggingProspectID)
+                            .onDrag {
+                                draggingProspectID = p.persistentModelID
+                                return NSItemProvider(object: p.fullName as NSString)
+                            }
+                            .onDrop(of: [.text], delegate: DragResetDelegate {
+                                draggingProspectID = nil
+                            })
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) {
                                     prospectToDelete = p
@@ -75,6 +95,7 @@ struct ProspectsSectionView: View {
                             .listRowBackground(Color.clear)  // make individual rows’ background transparent
                             .listRowSeparator(.hidden)
                     }
+                    .onMove(perform: moveProspects)
                     .listRowInsets(EdgeInsets()) // optional, to control spacing like LazyVStack
                 }
                 .listStyle(.plain)
@@ -117,6 +138,32 @@ struct ProspectsSectionView: View {
                 // Clear after collapse so the sheet wins the tap
                 searchText = ""
             }
+        }
+    }
+    
+    private func moveProspects(from source: IndexSet, to destination: Int) {
+        var reordered = filtered
+        reordered.move(fromOffsets: source, toOffset: destination)
+
+        for (index, prospect) in reordered.enumerated() {
+            prospect.orderIndex = index
+        }
+
+        try? modelContext.save()
+        
+        draggingProspectID = nil
+    }
+    
+    private struct DragResetDelegate: DropDelegate {
+        let onEnd: () -> Void
+
+        func performDrop(info: DropInfo) -> Bool {
+            onEnd()
+            return true
+        }
+
+        func dropExited(info: DropInfo) {
+            onEnd()
         }
     }
     

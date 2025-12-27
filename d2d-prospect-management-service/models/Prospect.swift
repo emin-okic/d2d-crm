@@ -28,15 +28,21 @@ final class Prospect: ContactProtocol {
     var longitude: Double?
     
     var isUnqualified: Bool
+    
+    var orderIndex: Int
 
-    init(fullName: String,
+    init(
+        fullName: String,
          address: String,
          count: Int = 0,
-         list: String = "Prospects") {
+         list: String = "Prospects",
+         orderIndex: Int = 0
+    ) {
         self.fullName = fullName
         self.address = address
         self.knockCount = count
         self.list = list
+        self.orderIndex = orderIndex
         self.contactEmail = ""
         self.contactPhone = ""
         self.notes = []
