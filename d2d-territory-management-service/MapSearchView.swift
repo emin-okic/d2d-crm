@@ -325,7 +325,8 @@ struct MapSearchView: View {
                             address: unit.address,
                             location: unit.coordinate ?? controller.region.center,
                             count: unit.knockCount,
-                            list: unit.list
+                            list: unit.list,
+                            isUnqualified: unit.isUnqualified
                         )
 
                         showPopup(for: place)
