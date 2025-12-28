@@ -335,6 +335,8 @@ struct MapSearchView: View {
                         selectedUnitGroup = nil
                     }
                 )
+                .presentationDetents([.fraction(0.5)])
+                .presentationDragIndicator(.visible)
             }            // Listen for search focus and close popup
             .onChange(of: isSearchFocused) { focused in
                 if focused {
