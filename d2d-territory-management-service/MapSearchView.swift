@@ -308,7 +308,7 @@ struct MapSearchView: View {
                 .presentationDetents([.fraction(0.45)])
                 .presentationDragIndicator(.visible)
             }
-            .onChange(of: popupState) { newValue in
+            .onChange(of: popupState) { oldValue, newValue in
                 // Close the search bar when a popup opens
                 if newValue != nil, isSearchExpanded {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -342,8 +342,8 @@ struct MapSearchView: View {
                 .presentationDetents([.fraction(0.5)])
                 .presentationDragIndicator(.visible)
             }            // Listen for search focus and close popup
-            .onChange(of: isSearchFocused) { focused in
-                if focused {
+            .onChange(of: isSearchFocused) { oldValue, newValue in
+                if newValue {
                     // Close any open popup when the search bar is tapped/focused
                     withAnimation(.easeInOut(duration: 0.2)) {
                         popupState = nil
