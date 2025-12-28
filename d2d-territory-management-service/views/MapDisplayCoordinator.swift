@@ -209,6 +209,11 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         }
 
         guard let annotation = annotation as? IdentifiableAnnotation else { return nil }
+        
+        // 🏢 Multi-unit ALWAYS wins
+        if annotation.place.isMultiUnit {
+            return buildingMarkerView(for: annotation)
+        }
 
         // 🔴 If unqualified, use special view
         if annotation.place.isUnqualified {
@@ -217,6 +222,27 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
 
         // Otherwise, standard marker
         return standardMarkerView(for: annotation)
+    }
+    
+    private func buildingMarkerView(for annotation: IdentifiableAnnotation) -> MKAnnotationView {
+        let id = "buildingMarker"
+
+        let view =
+            mapView?.dequeueReusableAnnotationView(withIdentifier: id)
+            ?? MKAnnotationView(annotation: annotation, reuseIdentifier: id)
+
+        view.annotation = annotation
+        view.canShowCallout = false
+        view.frame.size = CGSize(width: 36, height: 36)
+
+        view.image = UIImage(systemName: "building.2.crop.circle.fill")?
+            .withTintColor(.systemGray, renderingMode: .alwaysOriginal)
+
+        view.backgroundColor = .clear
+        view.layer.shadowOpacity = 0.25
+        view.layer.shadowRadius = 4
+
+        return view
     }
 
     // MARK: - Helpers
