@@ -233,6 +233,15 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
 
         view.annotation = annotation
         view.canShowCallout = false
+        
+        // 🔒 HARD RESET (reuse-safe)
+        view.layer.cornerRadius = 0
+        view.layer.borderWidth = 0
+        view.layer.borderColor = nil
+        view.layer.shadowOpacity = 0
+        view.layer.removeAllAnimations()
+        view.backgroundColor = .clear
+        
         view.frame.size = CGSize(width: 36, height: 36)
 
         view.image = UIImage(systemName: "building.2.crop.circle.fill")?
@@ -366,6 +375,12 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         _ view: MKAnnotationView,
         for annotation: IdentifiableAnnotation
     ) {
+        
+        // 🏢 Multi-unit markers NEVER get standard configuration
+        if annotation.place.isMultiUnit {
+            return
+        }
+        
         let isSelected = annotation.place.id == selectedPlaceID
 
         let baseSize: CGFloat = annotation.place.list == "Customers" ? 46 : 28
