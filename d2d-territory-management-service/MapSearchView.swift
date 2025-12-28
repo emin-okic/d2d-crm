@@ -209,14 +209,16 @@ struct MapSearchView: View {
                 )
                 
                 // ✅ Floating QR Code Button
-                VStack {
-                    Spacer()
-                    HStack {
+                if !isSearchExpanded {
+                    VStack {
                         Spacer()
-                        QRCodeCardView()
+                        HStack {
+                            Spacer()
+                            QRCodeCardView()
+                        }
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 30)
                     }
-                    .padding(.trailing, 20)
-                    .padding(.bottom, 30)
                 }
                 
             }
