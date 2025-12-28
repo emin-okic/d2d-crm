@@ -90,6 +90,8 @@ struct MapSearchView: View {
     
     @State private var pendingBulkAdd: PendingBulkAdd?
     
+    @State private var selectedUnitGroup: UnitGroup?
+    
     init(searchText: Binding<String>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
@@ -114,6 +116,16 @@ struct MapSearchView: View {
                         
                         selectedPlaceID = place.id
                         
+                        // 🔹 STEP for Apartment / multi-unit interception
+                        let parts = parseAddress(place.address)
+                        let units = unitsForBaseAddress(parts.base)
+
+                        if units.count > 1 {
+                            // Show unit selector instead of prospect popup
+                            selectedUnitGroup = UnitGroup(base: parts.base, units: units)
+                            
+                            return
+                        }
                         
                         // Center the map each time a prospect is selected
                         centerMapForPopup(coordinate: place.location)
@@ -302,6 +314,31 @@ struct MapSearchView: View {
                     }
                 }
             }
+            .sheet(item: $selectedUnitGroup, content: { group in
+                UnitSelectorPopupView(
+                    baseAddress: group.base,
+                    units: group.units,
+                    onSelect: { prospect in
+                        selectedUnitGroup = nil
+
+                        let place = IdentifiablePlace(
+                            address: prospect.address,
+                            location: CLLocationCoordinate2D(
+                                latitude: prospect.latitude ?? controller.region.center.latitude,
+                                longitude: prospect.longitude ?? controller.region.center.longitude
+                            ),
+                            count: prospect.knockHistory.count,
+                            list: prospect.list
+                        )
+
+                        showPopup(for: place)
+                    },
+                    onClose: {
+                        selectedUnitGroup = nil
+                    }
+                )
+                .presentationDetents([.fraction(0.5)])
+            })
             // Listen for search focus and close popup
             .onChange(of: isSearchFocused) { focused in
                 if focused {
