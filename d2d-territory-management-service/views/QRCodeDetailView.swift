@@ -14,12 +14,8 @@ struct QRCodeDetailView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
-                Text("Edit QR Code URL")
+                Text("QR Code")
                     .font(.headline)
-                
-                TextField("Enter URL", text: $qrURL)
-                    .textFieldStyle(.roundedBorder)
-                    .padding(.horizontal)
                 
                 if let qrImage = generateQRCode(from: qrURL) {
                     Image(uiImage: qrImage)
@@ -41,17 +37,14 @@ struct QRCodeDetailView: View {
                         .foregroundColor(.red)
                 }
                 
+                TextField("Enter URL", text: $qrURL)
+                    .textFieldStyle(.roundedBorder)
+                    .padding(.horizontal)
+                    .frame(width: 300, height: 200)
+                
                 Spacer()
             }
             .padding()
-            .navigationTitle("QR Code")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") {
-                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                    }
-                }
-            }
         }
     }
     

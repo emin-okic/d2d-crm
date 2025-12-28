@@ -36,6 +36,8 @@ struct QRCodeCardView: View {
         }
         .sheet(isPresented: $showQRCodeSheet) {
             QRCodeDetailView(qrURL: $qrURL)
+                .presentationDetents([.fraction(0.5)]) // 50% of screen height
+                .presentationDragIndicator(.visible)  
         }
     }
 }
