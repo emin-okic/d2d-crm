@@ -554,6 +554,13 @@ struct MapSearchView: View {
         }
     }
     
+    private func unitsForBaseAddress(_ base: String) -> [Prospect] {
+        prospects.filter {
+            parseAddress($0.address).base.lowercased() ==
+            base.lowercased()
+        }
+    }
+    
     private let bulkGeocoder = CLGeocoder()
 
     private func reverseGeocode(
