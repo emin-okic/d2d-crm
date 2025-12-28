@@ -6,7 +6,7 @@
 //
 import SQLite
 import Foundation
-import CoreLocation
+@preconcurrency import CoreLocation
 
 /// A singleton class that manages all SQLite operations for the D2D CRM app.
 ///
