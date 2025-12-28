@@ -9,8 +9,8 @@ import CoreImage.CIFilterBuiltins
 
 struct QRCodeDetailView: View {
     @Binding var qrURL: String
-    @State private var generator = CIFilter.qrCodeGenerator()
-    
+    private let context = CIContext()
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -56,13 +56,21 @@ struct QRCodeDetailView: View {
     }
     
     private func generateQRCode(from string: String) -> UIImage? {
+        let filter = CIFilter.qrCodeGenerator()
         let data = Data(string.utf8)
-        generator.setValue(data, forKey: "inputMessage")
+        filter.setValue(data, forKey: "inputMessage")
         
-        if let outputImage = generator.outputImage {
-            let scaled = outputImage.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
-            return UIImage(ciImage: scaled)
+        guard let outputImage = filter.outputImage else { return nil }
+        
+        // Scale the image
+        let transform = CGAffineTransform(scaleX: 10, y: 10)
+        let scaledImage = outputImage.transformed(by: transform)
+        
+        // Render with CIContext to CGImage
+        if let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) {
+            return UIImage(cgImage: cgImage)
         }
+        
         return nil
     }
 }
