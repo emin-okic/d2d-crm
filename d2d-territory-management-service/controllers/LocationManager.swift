@@ -37,8 +37,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     /// - Parameters:
     ///   - manager: The location manager providing updates.
     ///   - locations: Array of recent location updates.
-    nonisolated(unsafe)
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         // Hop back onto the main actor
         Task { @MainActor in
             self.currentLocation = locations.last?.coordinate
