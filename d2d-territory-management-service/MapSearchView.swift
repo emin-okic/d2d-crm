@@ -208,6 +208,17 @@ struct MapSearchView: View {
                     mapController: controller
                 )
                 
+                // ✅ Floating QR Code Button
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        QRCodeCardView()
+                    }
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 30)
+                }
+                
             }
             // inside body chain where you had the presenter & lifecycle hooks
             .presentRotatingAdsCentered()
