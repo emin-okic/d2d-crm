@@ -9,5 +9,5 @@ import Foundation
 struct UnitGroup: Identifiable {
     let id = UUID()
     let base: String
-    let units: [Prospect]
+    let units: [UnitContact]
 }

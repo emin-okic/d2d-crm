@@ -314,21 +314,18 @@ struct MapSearchView: View {
                     }
                 }
             }
-            .sheet(item: $selectedUnitGroup, content: { group in
+            .sheet(item: $selectedUnitGroup) { group in
                 UnitSelectorPopupView(
                     baseAddress: group.base,
                     units: group.units,
-                    onSelect: { prospect in
+                    onSelect: { unit in
                         selectedUnitGroup = nil
 
                         let place = IdentifiablePlace(
-                            address: prospect.address,
-                            location: CLLocationCoordinate2D(
-                                latitude: prospect.latitude ?? controller.region.center.latitude,
-                                longitude: prospect.longitude ?? controller.region.center.longitude
-                            ),
-                            count: prospect.knockHistory.count,
-                            list: prospect.list
+                            address: unit.address,
+                            location: unit.coordinate ?? controller.region.center,
+                            count: unit.knockCount,
+                            list: unit.list
                         )
 
                         showPopup(for: place)
@@ -337,9 +334,7 @@ struct MapSearchView: View {
                         selectedUnitGroup = nil
                     }
                 )
-                .presentationDetents([.fraction(0.5)])
-            })
-            // Listen for search focus and close popup
+            }            // Listen for search focus and close popup
             .onChange(of: isSearchFocused) { focused in
                 if focused {
                     // Close any open popup when the search bar is tapped/focused
@@ -591,11 +586,21 @@ struct MapSearchView: View {
         }
     }
     
-    private func unitsForBaseAddress(_ base: String) -> [Prospect] {
-        prospects.filter {
-            parseAddress($0.address).base.lowercased() ==
-            base.lowercased()
-        }
+    private func unitsForBaseAddress(_ base: String) -> [UnitContact] {
+
+        let prospectUnits = prospects
+            .filter {
+                parseAddress($0.address).base.lowercased() == base.lowercased()
+            }
+            .map { UnitContact.prospect($0) }
+
+        let customerUnits = customers
+            .filter {
+                parseAddress($0.address).base.lowercased() == base.lowercased()
+            }
+            .map { UnitContact.customer($0) }
+
+        return prospectUnits + customerUnits
     }
     
     private let bulkGeocoder = CLGeocoder()

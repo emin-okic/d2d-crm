@@ -9,8 +9,8 @@ import SwiftUI
 
 struct UnitSelectorPopupView: View {
     let baseAddress: String
-    let units: [Prospect]
-    let onSelect: (Prospect) -> Void
+    let units: [UnitContact]
+    let onSelect: (UnitContact) -> Void
     let onClose: () -> Void
 
     var body: some View {
@@ -39,7 +39,14 @@ struct UnitSelectorPopupView: View {
                             HStack {
                                 Text(unitLabel(for: unit.address))
                                     .font(.headline)
+
+                                if unit.isCustomer {
+                                    Image(systemName: "star.fill")
+                                        .foregroundStyle(.yellow)
+                                }
+
                                 Spacer()
+
                                 Image(systemName: "chevron.right")
                                     .foregroundStyle(.secondary)
                             }
