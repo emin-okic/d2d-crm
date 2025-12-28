@@ -90,6 +90,8 @@ struct MapSearchView: View {
     
     @State private var pendingBulkAdd: PendingBulkAdd?
     
+    @State private var selectedUnitGroup: UnitGroup?
+    
     init(searchText: Binding<String>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
@@ -114,6 +116,20 @@ struct MapSearchView: View {
                         
                         selectedPlaceID = place.id
                         
+                        // 🔹 STEP for Apartment / multi-unit interception
+                        let parts = parseAddress(place.address)
+                        let units = unitsForBaseAddress(parts.base)
+
+                        if units.count > 1 {
+                            
+                            // ✅ Center map on the apartment complex itself
+                            centerMapForPopup(coordinate: place.location)
+                            
+                            // Show unit selector instead of prospect popup
+                            selectedUnitGroup = UnitGroup(base: parts.base, units: units)
+                            
+                            return
+                        }
                         
                         // Center the map each time a prospect is selected
                         centerMapForPopup(coordinate: place.location)
@@ -302,7 +318,30 @@ struct MapSearchView: View {
                     }
                 }
             }
-            // Listen for search focus and close popup
+            .sheet(item: $selectedUnitGroup) { group in
+                UnitSelectorPopupView(
+                    baseAddress: group.base,
+                    units: group.units,
+                    onSelect: { unit in
+                        selectedUnitGroup = nil
+
+                        let place = IdentifiablePlace(
+                            address: unit.address,
+                            location: unit.coordinate ?? controller.region.center,
+                            count: unit.knockCount,
+                            list: unit.list,
+                            isUnqualified: unit.isUnqualified
+                        )
+
+                        showPopup(for: place)
+                    },
+                    onClose: {
+                        selectedUnitGroup = nil
+                    }
+                )
+                .presentationDetents([.fraction(0.5)])
+                .presentationDragIndicator(.visible)
+            }            // Listen for search focus and close popup
             .onChange(of: isSearchFocused) { focused in
                 if focused {
                     // Close any open popup when the search bar is tapped/focused
@@ -552,6 +591,23 @@ struct MapSearchView: View {
             .presentationDetents([.fraction(0.5)])
             .presentationDragIndicator(.visible)
         }
+    }
+    
+    private func unitsForBaseAddress(_ base: String) -> [UnitContact] {
+
+        let prospectUnits = prospects
+            .filter {
+                parseAddress($0.address).base.lowercased() == base.lowercased()
+            }
+            .map { UnitContact.prospect($0) }
+
+        let customerUnits = customers
+            .filter {
+                parseAddress($0.address).base.lowercased() == base.lowercased()
+            }
+            .map { UnitContact.customer($0) }
+
+        return prospectUnits + customerUnits
     }
     
     private let bulkGeocoder = CLGeocoder()

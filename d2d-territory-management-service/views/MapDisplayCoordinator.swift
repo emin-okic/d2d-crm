@@ -209,6 +209,11 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         }
 
         guard let annotation = annotation as? IdentifiableAnnotation else { return nil }
+        
+        // 🏢 Multi-unit ALWAYS wins
+        if annotation.place.isMultiUnit {
+            return buildingMarkerView(for: annotation)
+        }
 
         // 🔴 If unqualified, use special view
         if annotation.place.isUnqualified {
@@ -217,6 +222,66 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
 
         // Otherwise, standard marker
         return standardMarkerView(for: annotation)
+    }
+    
+    private func buildingMarkerView(for annotation: IdentifiableAnnotation) -> MKAnnotationView {
+        let id = "buildingMarker"
+
+        let view =
+            mapView?.dequeueReusableAnnotationView(withIdentifier: id)
+            ?? MKAnnotationView(annotation: annotation, reuseIdentifier: id)
+
+        view.annotation = annotation
+        view.canShowCallout = false
+        
+        // 🔒 HARD RESET (reuse-safe)
+        view.layer.cornerRadius = 0
+        view.layer.borderWidth = 0
+        view.layer.borderColor = nil
+        view.layer.shadowOpacity = 0
+        view.layer.removeAllAnimations()
+        view.backgroundColor = .clear
+        
+        view.frame.size = CGSize(width: 36, height: 36)
+
+        // 🏢 Base building icon
+        let imageView = UIImageView(
+            image: UIImage(systemName: "building.2.crop.circle.fill")?
+                .withTintColor(.systemGray, renderingMode: .alwaysOriginal)
+        )
+        imageView.frame = view.bounds
+        imageView.contentMode = .scaleAspectFit
+        view.addSubview(imageView)
+
+        // view.backgroundColor = .clear
+        view.layer.shadowOpacity = 0.25
+        view.layer.shadowRadius = 4
+        
+        // 🔢 Unit count badge
+        let count = annotation.place.unitCount
+        if count > 1 {
+            let badgeSize: CGFloat = 16
+
+            let badge = UILabel()
+            badge.text = "\(count)"
+            badge.textColor = .white
+            badge.font = .boldSystemFont(ofSize: 10)
+            badge.textAlignment = .center
+            badge.backgroundColor = .systemBlue
+            badge.layer.cornerRadius = badgeSize / 2
+            badge.layer.masksToBounds = true
+
+            badge.frame = CGRect(
+                x: view.bounds.maxX - badgeSize + 2,
+                y: -2,
+                width: badgeSize,
+                height: badgeSize
+            )
+
+            view.addSubview(badge)
+        }
+
+        return view
     }
 
     // MARK: - Helpers
@@ -340,6 +405,12 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         _ view: MKAnnotationView,
         for annotation: IdentifiableAnnotation
     ) {
+        
+        // 🏢 Multi-unit markers NEVER get standard configuration
+        if annotation.place.isMultiUnit {
+            return
+        }
+        
         let isSelected = annotation.place.id == selectedPlaceID
 
         let baseSize: CGFloat = annotation.place.list == "Customers" ? 46 : 28

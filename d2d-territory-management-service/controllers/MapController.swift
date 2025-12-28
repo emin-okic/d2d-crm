@@ -111,34 +111,52 @@ class MapController: ObservableObject {
     func setMarkers(prospects: [Prospect], customers: [Customer]) {
         
         clearMarkers()
+        
+        var grouped: [String: [UnitContact]] = [:]
 
-        // ✅ Prospects: use stored coordinates (NO geocoding)
+        // 🔹 Collect PROSPECT units
         for p in prospects {
-            if let coord = p.coordinate {
-                markers.append(
-                    IdentifiablePlace(
-                        address: p.address,
-                        location: coord,
-                        count: p.knockCount,
-                        list: p.list,
-                        isUnqualified: p.isUnqualified
-                    )
-                )
-            }
+            guard let coord = p.coordinate else { continue }
+
+            let base = parseAddress(p.address).base
+            grouped[base, default: []].append(.prospect(p))
         }
 
-        // ✅ Customers — stored coordinates only
+        // 🔹 Collect CUSTOMER units
         for c in customers {
-            if let coord = c.coordinate {
-                markers.append(
-                    IdentifiablePlace(
-                        address: c.address,
-                        location: coord,
-                        count: c.knockCount,
-                        list: "Customers"
-                    )
+            guard let coord = c.coordinate else { continue }
+
+            let base = parseAddress(c.address).base
+            grouped[base, default: []].append(.customer(c))
+        }
+        
+        for (base, units) in grouped {
+            guard let coord = units.first?.coordinate else { continue }
+
+            let isMultiUnit = units.count > 1
+
+            // Marker "role" rules
+            let hasCustomer = units.contains { $0.isCustomer }
+            let hasUnqualified = units.contains { $0.isUnqualified }
+
+            let list = hasCustomer ? "Customers" : "Prospects"
+            let isUnqualified = !hasCustomer && hasUnqualified
+
+            let totalKnocks = units.reduce(0) { $0 + $1.knockCount }
+            
+            let unitCount = units.count
+
+            markers.append(
+                IdentifiablePlace(
+                    address: base,
+                    location: coord,
+                    count: totalKnocks,
+                    unitCount: unitCount,
+                    list: list,
+                    isUnqualified: isUnqualified,
+                    isMultiUnit: isMultiUnit
                 )
-            }
+            )
         }
     }
     
