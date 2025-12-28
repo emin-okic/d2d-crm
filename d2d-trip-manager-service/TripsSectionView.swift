@@ -85,16 +85,24 @@ struct TripsSectionView: View {
                 } else {
                     
                     if !filteredTrips.isEmpty {
-                        if filter == .day {
+                        switch filter {
+                        case .day:
                             let segments = filteredTrips.dailyMilesSegments()
                             DailyMilesChartView(segments: segments)
                                 .frame(maxWidth: .infinity)
                                 .transition(.opacity.combined(with: .slide))
-                        } else if filter == .week {
+                        case .week:
                             let segments = filteredTrips.weeklyMilesSegments()
                             WeeklyMilesChartView(segments: segments)
                                 .frame(maxWidth: .infinity)
                                 .transition(.opacity.combined(with: .slide))
+                        case .month:
+                            let segments = filteredTrips.monthlyMilesSegments()
+                            MonthlyMilesChartView(segments: segments)
+                                .frame(maxWidth: .infinity)
+                                .transition(.opacity.combined(with: .slide))
+                        default:
+                            EmptyView()
                         }
                     }
                     
