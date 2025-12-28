@@ -216,6 +216,8 @@ struct TripsSectionView: View {
         // Add Trip
         .sheet(isPresented: $showingAddTrip) {
             NewTripView { showingAddTrip = false }
+                .presentationDetents([.fraction(0.75)])
+                .presentationDragIndicator(.visible)
         }
         // Trip details (single)
         .sheet(item: $selectedTrip) { trip in
