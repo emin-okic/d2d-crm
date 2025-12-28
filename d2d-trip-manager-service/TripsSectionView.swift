@@ -84,13 +84,18 @@ struct TripsSectionView: View {
                         .padding(.top, 4)
                 } else {
                     
-                    if filter == .day && !filteredTrips.isEmpty {
-                        let segments = filteredTrips.dailyMilesSegments()
-                        HStack {
+                    if !filteredTrips.isEmpty {
+                        if filter == .day {
+                            let segments = filteredTrips.dailyMilesSegments()
                             DailyMilesChartView(segments: segments)
+                                .frame(maxWidth: .infinity)
+                                .transition(.opacity.combined(with: .slide))
+                        } else if filter == .week {
+                            let segments = filteredTrips.weeklyMilesSegments()
+                            WeeklyMilesChartView(segments: segments)
+                                .frame(maxWidth: .infinity)
+                                .transition(.opacity.combined(with: .slide))
                         }
-                        .frame(maxWidth: .infinity)
-                        .transition(.opacity.combined(with: .slide))
                     }
                     
                     // NEW: custom rows so we can toggle selection like RecordingsView
