@@ -10,6 +10,9 @@ import SwiftData
 import MapKit
 
 struct KnockStepperPopupView: View {
+    
+    @Environment(\.modelContext) private var modelContext
+    
     // Inputs
     let context: KnockContext
     
@@ -52,6 +55,8 @@ struct KnockStepperPopupView: View {
 
     @StateObject private var tripSearchVM = SearchCompleterViewModel()
     @FocusState private var tripFocusedField: Field?   // uses the same Field enum as your popup
+    
+    @Query(sort: \Trip.date, order: .forward) private var trips: [Trip]
     
     private var currentStep: KnockStep? {
         stepSequence.indices.contains(stepIndex) ? stepSequence[stepIndex] : nil
@@ -378,7 +383,13 @@ struct KnockStepperPopupView: View {
         
         if step == .trip {
           let end = endAddress.isEmpty ? context.address : endAddress
-          logTrip(startAddress, end, tripDate)   // only on Next
+
+            // Calculate miles before logging
+            Task {
+                let miles = await TripDistanceHelper.calculateMiles(from: startAddress, to: end)
+                logTripWithMiles(start: startAddress, end: end, miles: miles)
+            }
+
 
           stepSequence = [.done]
           stepIndex = 0
@@ -399,6 +410,17 @@ struct KnockStepperPopupView: View {
     private func configureSteps() {
         // Base sequence already set: [.outcome, .note, .trip, .done]
         // After choosing outcome, we'll splice required steps in place.
+    }
+    
+    private func logTripWithMiles(start: String, end: String, miles: Double) {
+        logTrip(start, end, tripDate)  // pass the tripDate here, as logTrip expects start, end, date
+        // override the trip miles after CoreData insertion
+        Task { @MainActor in
+            if let lastTrip = trips.last {
+                lastTrip.miles = miles
+                try? modelContext.save()
+            }
+        }
     }
 
     private func quickButton(_ system: String, _ label: String, _ action: @escaping () -> Void) -> some View {

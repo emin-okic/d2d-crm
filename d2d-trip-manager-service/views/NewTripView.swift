@@ -18,6 +18,8 @@ struct NewTripView: View {
     @State private var endAddress = ""
     @State private var miles = ""
     
+    @State private var tripDate = Date()
+    
     @StateObject private var searchVM = SearchCompleterViewModel()
     @FocusState private var focusedField: Field?
 
@@ -75,6 +77,13 @@ struct NewTripView: View {
                             
                         }
                     }
+                    
+                    // Trip Date / Time Picker
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Trip Date & Time").font(.footnote).foregroundColor(.secondary)
+                        DatePicker("Select Date & Time", selection: $tripDate, displayedComponents: [.date, .hourAndMinute])
+                            .labelsHidden()
+                    }
                 }
 
                 Button("Save Trip") {
@@ -89,7 +98,12 @@ struct NewTripView: View {
                             return
                         }
 
-                        let trip = Trip(startAddress: startAddress, endAddress: endAddress, miles: distance)
+                        let trip = Trip(
+                            startAddress: startAddress,
+                            endAddress: endAddress,
+                            miles: distance,
+                            date: tripDate
+                        )
 
                         await MainActor.run {
                             context.insert(trip)

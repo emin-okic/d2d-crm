@@ -67,9 +67,10 @@ struct TripDetailsView: View {
                         HStack {
                             Image(systemName: "calendar")
                                 .foregroundColor(.blue)
-                            DatePicker("Trip Date", selection: $date, displayedComponents: [.date])
+                            DatePicker("Trip Date & Time", selection: $date, displayedComponents: [.date, .hourAndMinute])
                                 .labelsHidden()
                         }
+                        
                     }
 
                     Section(header: Text("Route Details")) {

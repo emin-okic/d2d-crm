@@ -83,6 +83,34 @@ struct TripsSectionView: View {
                         .padding(.horizontal, 20)
                         .padding(.top, 4)
                 } else {
+                    
+                    if !filteredTrips.isEmpty {
+                        switch filter {
+                        case .day:
+                            let segments = filteredTrips.dailyMilesSegments()
+                            DailyMilesChartView(segments: segments)
+                                .frame(maxWidth: .infinity)
+                                .transition(.opacity.combined(with: .slide))
+                        case .week:
+                            let segments = filteredTrips.weeklyMilesSegments()
+                            WeeklyMilesChartView(segments: segments)
+                                .frame(maxWidth: .infinity)
+                                .transition(.opacity.combined(with: .slide))
+                        case .month:
+                            let segments = filteredTrips.monthlyMilesSegments()
+                            MonthlyMilesChartView(segments: segments)
+                                .frame(maxWidth: .infinity)
+                                .transition(.opacity.combined(with: .slide))
+                        case .year:
+                            let segments = filteredTrips.yearlyMilesSegments()
+                            YearlyMilesChartView(segments: segments)
+                                .frame(maxWidth: .infinity)
+                                .transition(.opacity.combined(with: .slide))
+                        default:
+                            EmptyView()
+                        }
+                    }
+                    
                     // NEW: custom rows so we can toggle selection like RecordingsView
                     List {
                         ForEach(filteredTrips) { trip in
@@ -206,6 +234,8 @@ struct TripsSectionView: View {
         // Add Trip
         .sheet(isPresented: $showingAddTrip) {
             NewTripView { showingAddTrip = false }
+                .presentationDetents([.fraction(0.75)])
+                .presentationDragIndicator(.visible)
         }
         // Trip details (single)
         .sheet(item: $selectedTrip) { trip in
