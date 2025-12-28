@@ -26,6 +26,15 @@ class SearchCompleterViewModel: NSObject, ObservableObject, MKLocalSearchComplet
     func updateQuery(_ query: String) {
         completer.queryFragment = query
     }
+    
+    func select(_ completion: MKLocalSearchCompletion) {
+        Task { @MainActor in
+            if let address = await SearchBarController.resolveAddress(from: completion) {
+                print("Selected address:", address)
+                // Optionally, you can handle a binding here or post a notification
+            }
+        }
+    }
 
     nonisolated func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
         // Delegate callback is nonisolated → marshal to MainActor

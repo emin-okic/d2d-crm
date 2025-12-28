@@ -92,11 +92,16 @@ struct MapSearchView: View {
     
     @State private var selectedUnitGroup: UnitGroup?
     
-    init(searchText: Binding<String>,
+    @Binding var searchContext: AppSearchContext
+    
+    init(
+        searchText: Binding<String>,
+         searchContext: Binding<AppSearchContext>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
          addressToCenter: Binding<String?>) {
         _searchText = searchText
+             _searchContext = searchContext 
         _region = region
         _selectedList = selectedList
         _addressToCenter = addressToCenter

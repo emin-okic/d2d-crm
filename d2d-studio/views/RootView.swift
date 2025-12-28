@@ -35,35 +35,61 @@ struct RootView: View {
     @State private var addressToCenter: String? = nil
     
     @State private var searchText: String = ""
+    @State private var searchContext: AppSearchContext = .none
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            MapSearchView(
-                searchText: $searchText,
-                region: $region,
-                selectedList: $selectedList,
-                addressToCenter: $addressToCenter
-            )
-            .tabItem {
-                Label("Map", systemImage: "map.fill")
-            }
-            .tag(0)
+        TabView {
 
-            ContactManagementView(
-                selectedList: $selectedList,
-                onSave: { showingAddProspect = false }
-            )
-            .tabItem {
-                Label("Contacts", systemImage: "person.3.fill")
+            // 🗺 MAP TAB
+            Tab("Map", systemImage: "map.fill") {
+                MapSearchView(
+                    searchText: $searchText,
+                    searchContext: $searchContext,
+                    region: $region,
+                    selectedList: $selectedList,
+                    addressToCenter: $addressToCenter
+                )
+                .onAppear {
+                    searchContext = .map
+                    NotificationCenter.default.post(
+                        name: .mapShouldRecenterAllMarkers,
+                        object: nil
+                    )
+                }
             }
-            .tag(1)
-            
-            FollowUpAssistantView(
-            )
-            .tabItem {
-                Label("Pipeline", systemImage: "calendar")
+
+            // 👥 CONTACTS TAB
+            Tab("Contacts", systemImage: "person.3.fill") {
+                ContactManagementView(
+                    searchText: $searchText,
+                    searchContext: $searchContext,
+                    selectedList: $selectedList,
+                    onSave: {}
+                )
+                .onAppear {
+                    searchContext = .contacts
+                }
             }
-            .tag(2)
+
+            // 📅 PIPELINE TAB
+            Tab("Pipeline", systemImage: "calendar") {
+                FollowUpAssistantView()
+                    .onAppear {
+                        searchContext = .none
+                    }
+            }
+
+            // 🔍 SEARCH TAB (iOS 26)
+            Tab(role: .search) {
+                NavigationStack {
+                    GlobalSearchView(
+                        searchText: $searchText,
+                        selectedTab: $selectedTab
+                    )
+                    .navigationTitle("Search")
+                }
+                .searchable(text: $searchText)
+            }
         }
         .onChange(of: selectedTab) { newValue in
                     if newValue == 0 {

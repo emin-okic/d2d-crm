@@ -15,7 +15,6 @@ struct ContactManagementView: View {
     var onSave: () -> Void
 
     // Shared state
-    @State private var searchText: String = ""
     @StateObject private var controller = ContactManagerController()
     @State private var suggestedProspect: Prospect?
     @State private var suggestionSourceIndex = 0
@@ -33,6 +32,24 @@ struct ContactManagementView: View {
     @State private var showingAddProspect = false
     
     @State private var showingAddCustomer = false
+    
+    @Binding var searchContext: AppSearchContext
+    @Binding var searchText: String
+    
+    init(
+        searchText: Binding<String>,
+        searchContext: Binding<AppSearchContext>,
+        selectedList: Binding<String>,
+        onSave: @escaping () -> Void
+    ) {
+        self._searchText = searchText
+        self._searchContext = searchContext
+        self._selectedList = selectedList
+        self.onSave = onSave
+
+        self._prospects = Query()
+        self._customers = Query()
+    }
 
     var body: some View {
         NavigationView {
