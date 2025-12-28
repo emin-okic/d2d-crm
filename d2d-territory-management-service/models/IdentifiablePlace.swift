@@ -27,6 +27,9 @@ struct IdentifiablePlace: Identifiable {
     
     /// The number of times this address has been knocked.
     var count: Int
+    
+    /// Number of distinct units at this location
+    var unitCount: Int
 
     /// The type of list the place belongs to ("Prospects" or "Customers").
     let list: String
@@ -69,6 +72,7 @@ struct IdentifiablePlace: Identifiable {
         address: String,
         location: CLLocationCoordinate2D,
         count: Int = 1,
+        unitCount: Int = 1,
         list: String = "Prospects",
         isUnqualified: Bool = false,
         isMultiUnit: Bool = false
@@ -76,6 +80,7 @@ struct IdentifiablePlace: Identifiable {
         self.address = address
         self.location = location
         self.count = count
+        self.unitCount = unitCount
         self.list = list
         self.isUnqualified = isUnqualified
         self.isMultiUnit = isMultiUnit

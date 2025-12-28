@@ -143,12 +143,15 @@ class MapController: ObservableObject {
             let isUnqualified = !hasCustomer && hasUnqualified
 
             let totalKnocks = units.reduce(0) { $0 + $1.knockCount }
+            
+            let unitCount = units.count
 
             markers.append(
                 IdentifiablePlace(
                     address: base,
                     location: coord,
                     count: totalKnocks,
+                    unitCount: unitCount,
                     list: list,
                     isUnqualified: isUnqualified,
                     isMultiUnit: isMultiUnit

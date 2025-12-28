@@ -244,12 +244,42 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         
         view.frame.size = CGSize(width: 36, height: 36)
 
-        view.image = UIImage(systemName: "building.2.crop.circle.fill")?
-            .withTintColor(.systemGray, renderingMode: .alwaysOriginal)
+        // 🏢 Base building icon
+        let imageView = UIImageView(
+            image: UIImage(systemName: "building.2.crop.circle.fill")?
+                .withTintColor(.systemGray, renderingMode: .alwaysOriginal)
+        )
+        imageView.frame = view.bounds
+        imageView.contentMode = .scaleAspectFit
+        view.addSubview(imageView)
 
-        view.backgroundColor = .clear
+        // view.backgroundColor = .clear
         view.layer.shadowOpacity = 0.25
         view.layer.shadowRadius = 4
+        
+        // 🔢 Unit count badge
+        let count = annotation.place.unitCount
+        if count > 1 {
+            let badgeSize: CGFloat = 16
+
+            let badge = UILabel()
+            badge.text = "\(count)"
+            badge.textColor = .white
+            badge.font = .boldSystemFont(ofSize: 10)
+            badge.textAlignment = .center
+            badge.backgroundColor = .systemBlue
+            badge.layer.cornerRadius = badgeSize / 2
+            badge.layer.masksToBounds = true
+
+            badge.frame = CGRect(
+                x: view.bounds.maxX - badgeSize + 2,
+                y: -2,
+                width: badgeSize,
+                height: badgeSize
+            )
+
+            view.addSubview(badge)
+        }
 
         return view
     }
