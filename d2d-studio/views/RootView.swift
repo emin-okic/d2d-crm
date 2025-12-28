@@ -65,7 +65,7 @@ struct RootView: View {
             }
             .tag(2)
         }
-        .onChange(of: selectedTab) { newValue in
+        .onChange(of: selectedTab) { _, newValue in
                     if newValue == 0 {
                         NotificationCenter.default.post(
                             name: .mapShouldRecenterAllMarkers,
