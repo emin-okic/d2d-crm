@@ -368,7 +368,9 @@ struct MapSearchView: View {
         .onReceive(NotificationCenter.default.publisher(for: .mapShouldRecenterAllMarkers)) { _ in
                     controller.recenterToFitAllMarkers()
                 }
-        .onChange(of: searchText) { searchVM.updateQuery($0) }
+        .onChange(of: searchText) { _, newValue in
+            searchVM.updateQuery(newValue)
+        }
         .onAppear {
             updateMarkers()
             knockController = ProspectKnockActionController(modelContext: modelContext, controller: controller)
@@ -378,9 +380,15 @@ struct MapSearchView: View {
                 }
             
         }
-        .onChange(of: prospects) { _ in updateMarkers() }
-        .onChange(of: selectedList) { _ in updateMarkers() }
-        .onChange(of: addressToCenter) { handleMapCenterChange(newAddress: $0) }
+        .onChange(of: prospects) { _, _ in
+            updateMarkers()
+        }
+        .onChange(of: selectedList) { _, _ in
+            updateMarkers()
+        }
+        .onChange(of: addressToCenter) { _, newAddress in
+            handleMapCenterChange(newAddress: newAddress)
+        }
         .onTapGesture {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to:nil,from:nil,for:nil)
         }
