@@ -26,6 +26,15 @@ enum UnitContact: Identifiable {
         case .customer(let c): return c.address
         }
     }
+    
+    var isUnqualified: Bool {
+        switch self {
+        case .prospect(let p):
+            return p.isUnqualified
+        case .customer:
+            return false
+        }
+    }
 
     var isCustomer: Bool {
         if case .customer = self { return true }

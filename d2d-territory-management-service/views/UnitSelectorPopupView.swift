@@ -40,7 +40,18 @@ struct UnitSelectorPopupView: View {
                                 Text(unitLabel(for: unit.address))
                                     .font(.headline)
 
-                                if unit.isCustomer {
+                                if unit.isUnqualified {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.red)
+                                            .frame(width: 18, height: 18)
+
+                                        Image(systemName: "xmark")
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundStyle(.white)
+                                    }
+                                }
+                                else if unit.isCustomer {
                                     Image(systemName: "star.fill")
                                         .foregroundStyle(.yellow)
                                 }
