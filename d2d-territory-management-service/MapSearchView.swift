@@ -121,6 +121,10 @@ struct MapSearchView: View {
                         let units = unitsForBaseAddress(parts.base)
 
                         if units.count > 1 {
+                            
+                            // ✅ Center map on the apartment complex itself
+                            centerMapForPopup(coordinate: place.location)
+                            
                             // Show unit selector instead of prospect popup
                             selectedUnitGroup = UnitGroup(base: parts.base, units: units)
                             
