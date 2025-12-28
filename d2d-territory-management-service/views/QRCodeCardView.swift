@@ -23,12 +23,9 @@ struct QRCodeCardView: View {
                         .scaledToFit()
                         .frame(width: 40, height: 40)
                         .foregroundColor(.blue)
-                    Text("QR")
-                        .font(.footnote)
-                        .foregroundColor(.primary)
                 }
                 .padding()
-                .frame(width: 80, height: 80)
+                .frame(width: 60, height: 60)
                 .background(.ultraThinMaterial)
                 .cornerRadius(12)
                 .shadow(radius: 2)
