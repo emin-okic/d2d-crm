@@ -23,7 +23,7 @@ struct QRCodeCardView: View {
                         .scaledToFit()
                         .frame(width: 40, height: 40)
                         .foregroundColor(.blue)
-                    Text("QR Code")
+                    Text("QR")
                         .font(.footnote)
                         .foregroundColor(.primary)
                 }

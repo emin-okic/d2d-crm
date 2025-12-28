@@ -8,45 +8,52 @@ import SwiftUI
 import CoreImage.CIFilterBuiltins
 
 struct QRCodeDetailView: View {
+    
     @Binding var qrURL: String
     private let context = CIContext()
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
-                Text("QR Code")
-                    .font(.headline)
-                
-                if let qrImage = generateQRCode(from: qrURL) {
-                    Image(uiImage: qrImage)
-                        .interpolation(.none)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 200, height: 200)
-                        .padding()
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(16)
-                        .shadow(radius: 4)
-                        .contextMenu {
-                            Button("Copy QR Code URL") {
-                                UIPasteboard.general.string = qrURL
+            GeometryReader { geo in
+                VStack(spacing: 10) {
+                    Text("QR Code")
+                        .font(.title)
+                    
+                    if let qrImage = generateQRCode(from: qrURL) {
+                        Image(uiImage: qrImage)
+                            .interpolation(.none)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: geo.size.width * 0.5,
+                                   height: geo.size.height * 0.5) // 50% of sheet height
+                            .padding()
+                            .background(.ultraThinMaterial)
+                            .cornerRadius(16)
+                            .shadow(radius: 4)
+                            .contextMenu {
+                                Button("Copy QR Code URL") {
+                                    UIPasteboard.general.string = qrURL
+                                }
                             }
-                        }
-                } else {
-                    Text("Invalid URL")
-                        .foregroundColor(.red)
+                    } else {
+                        Text("Invalid URL")
+                            .foregroundColor(.red)
+                    }
+                    
+                    TextField("Enter URL", text: $qrURL)
+                        .textFieldStyle(.roundedBorder)
+                        .padding(.horizontal)
+                        .frame(width: geo.size.width * 0.75,
+                               height: geo.size.height * 0.25) // 50% of sheet height
+                    
+                    Spacer()
                 }
-                
-                TextField("Enter URL", text: $qrURL)
-                    .textFieldStyle(.roundedBorder)
-                    .padding(.horizontal)
-                    .frame(width: 300, height: 200)
-                
-                Spacer()
+                .frame(width: geo.size.width, height: geo.size.height)
+                .padding()
             }
-            .padding()
         }
     }
+    
     
     private func generateQRCode(from string: String) -> UIImage? {
         let filter = CIFilter.qrCodeGenerator()
