@@ -101,6 +101,11 @@ struct TripsSectionView: View {
                             MonthlyMilesChartView(segments: segments)
                                 .frame(maxWidth: .infinity)
                                 .transition(.opacity.combined(with: .slide))
+                        case .year:
+                            let segments = filteredTrips.yearlyMilesSegments()
+                            YearlyMilesChartView(segments: segments)
+                                .frame(maxWidth: .infinity)
+                                .transition(.opacity.combined(with: .slide))
                         default:
                             EmptyView()
                         }
