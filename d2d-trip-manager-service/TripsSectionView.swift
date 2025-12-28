@@ -83,6 +83,16 @@ struct TripsSectionView: View {
                         .padding(.horizontal, 20)
                         .padding(.top, 4)
                 } else {
+                    
+                    if filter == .day && !filteredTrips.isEmpty {
+                        let segments = filteredTrips.dailyMilesSegments()
+                        HStack {
+                            DailyMilesChartView(segments: segments)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .transition(.opacity.combined(with: .slide))
+                    }
+                    
                     // NEW: custom rows so we can toggle selection like RecordingsView
                     List {
                         ForEach(filteredTrips) { trip in

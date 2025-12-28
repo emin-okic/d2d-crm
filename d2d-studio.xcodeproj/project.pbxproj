@@ -179,6 +179,11 @@
 			path = "d2d-map-serviceUITests";
 			sourceTree = "<group>";
 		};
+		C5C0794D2F01A18600449E7A /* d2d-trip-analytics-service */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "d2d-trip-analytics-service";
+			sourceTree = "<group>";
+		};
 		C5E346E02E82F62D00CAE776 /* d2d-prospect-management-service */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "d2d-prospect-management-service";
@@ -257,6 +262,7 @@
 				C511E0372E40F502001BAA36 /* d2d-search-engine-service */,
 				C5328C812E1B1D180057F68E /* d2d-follow-up-service */,
 				C511DEA22E40EF5C001BAA36 /* d2d-trip-manager-service */,
+				C5C0794D2F01A18600449E7A /* d2d-trip-analytics-service */,
 				C5B1B5652E3FC3A6004766E8 /* d2d-objections-manager-service */,
 				C5B1B5662E3FC3AE004766E8 /* d2d-recording-manager-service */,
 				C5BE4B442DE7CC9F005C37B1 /* d2d-map-serviceTests */,
@@ -317,6 +323,7 @@
 				C5B1B5652E3FC3A6004766E8 /* d2d-objections-manager-service */,
 				C5B1B5662E3FC3AE004766E8 /* d2d-recording-manager-service */,
 				C5BE4B362DE7CC9E005C37B1 /* d2d-studio */,
+				C5C0794D2F01A18600449E7A /* d2d-trip-analytics-service */,
 				C5E346E02E82F62D00CAE776 /* d2d-prospect-management-service */,
 				C5EDA8FA2F0026580016F579 /* d2d-map-screen-analytics-service */,
 			);
