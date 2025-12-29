@@ -112,35 +112,37 @@ struct FullScreenAppointmentsView: View {
                 .zIndex(999)
                 
                 // Bottom-right Apple Maps button
-                VStack {
-                    Spacer()
-                    HStack {
+                // Bottom-right Apple Maps button
+                if !filteredAppointments.isEmpty {
+                    VStack {
                         Spacer()
-                        Button {
-                            Task {
-                                let upcomingAppointments = appointments.filter { $0.date >= Date() }
-                                if upcomingAppointments.isEmpty {
-                                    print("No upcoming appointments to navigate")
-                                    return
+                        HStack {
+                            Spacer()
+                            Button {
+                                Task {
+                                    if filteredAppointments.isEmpty {
+                                        print("No appointments to navigate")
+                                        return
+                                    }
+                                    await RoutePlannerController.planAndOpenTodaysRoute(
+                                        appointments: filteredAppointments,
+                                        modelContext: modelContext
+                                    )
                                 }
-                                await RoutePlannerController.planAndOpenTodaysRoute(
-                                    appointments: upcomingAppointments,
-                                    modelContext: modelContext
-                                )
+                            } label: {
+                                Image(systemName: "car.fill")
+                                    .font(.system(size: 22, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .frame(width: 50, height: 50)
+                                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.blue))
+                                    .shadow(radius: 4)
                             }
-                        } label: {
-                            Image(systemName: "car.fill")
-                                .font(.system(size: 22, weight: .bold))
-                                .foregroundColor(.white)
-                                .frame(width: 50, height: 50)
-                                .background(RoundedRectangle(cornerRadius: 12).fill(Color.blue))
-                                .shadow(radius: 4)
+                            .padding(.bottom, 30)
+                            .padding(.trailing, 20)
                         }
-                        .padding(.bottom, 30)
-                        .padding(.trailing, 20)
                     }
+                    .zIndex(998)
                 }
-                .zIndex(998)
                 
             }
             .toolbar {

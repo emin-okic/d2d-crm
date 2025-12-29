@@ -17,7 +17,6 @@ struct FollowUpAssistantView: View {
 
     // Existing sheets
     @State private var showTripsSheet = false
-    @State private var showTodaysAppointmentsSheet = false
     @State private var showTopObjectionsSheet = false
 
     // NEW: floating toolbar sheets
@@ -73,10 +72,12 @@ struct FollowUpAssistantView: View {
                         // MARK: - Summary Cards
                         VStack(spacing: 12) {
                             HStack(spacing: 12) {
-                                Button { showTodaysAppointmentsSheet = true } label: {
-                                    LeaderboardCardView(title: "Appointments Today", count: appointmentsToday)
+                                // Top Objection scorecard
+                                Button { showTopObjectionsSheet = true } label: {
+                                    LeaderboardTextCardView(title: "Top Objection", text: topObjectionText)
                                 }
                                 .buttonStyle(.plain)
+                                .padding(.horizontal, 20)
 
                                 Button { showTripsSheet = true } label: {
                                     LeaderboardCardView(title: "Trips Made", count: totalTrips)
@@ -84,13 +85,6 @@ struct FollowUpAssistantView: View {
                                 .buttonStyle(.plain)
                             }
                         }
-                        .padding(.horizontal, 20)
-
-                        // Top Objection scorecard
-                        Button { showTopObjectionsSheet = true } label: {
-                            LeaderboardTextCardView(title: "Top Objection", text: topObjectionText)
-                        }
-                        .buttonStyle(.plain)
                         .padding(.horizontal, 20)
 
                         // MARK: - Appointments
@@ -191,20 +185,6 @@ struct FollowUpAssistantView: View {
                         .toolbar {
                             ToolbarItem(placement: .confirmationAction) {
                                 Button("Done") { showTripsSheet = false }
-                            }
-                        }
-                }
-            }
-
-            // Today's appointments
-            .sheet(isPresented: $showTodaysAppointmentsSheet) {
-                NavigationStack {
-                    TodaysAppointmentsView()
-                        .navigationTitle("Today's Appointments")
-                        .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .confirmationAction) {
-                                Button("Done") { showTodaysAppointmentsSheet = false }
                             }
                         }
                 }
