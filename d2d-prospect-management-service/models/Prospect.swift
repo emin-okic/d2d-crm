@@ -30,6 +30,8 @@ final class Prospect: ContactProtocol {
     var isUnqualified: Bool
     
     var orderIndex: Int
+    
+    @Relationship var demographics: Demographics?
 
     init(
         fullName: String,
@@ -53,6 +55,8 @@ final class Prospect: ContactProtocol {
         self.longitude = nil
         
         self.isUnqualified = false
+        
+        self.demographics = Demographics()
     }
 }
 

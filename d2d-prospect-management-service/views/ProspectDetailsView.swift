@@ -32,6 +32,8 @@ struct ProspectDetailsView: View {
     @State private var showExportPrompt = false
     @State private var showExportSuccessBanner = false
     @State private var exportSuccessMessage = ""
+    
+    @State private var showDemographicsEditor = false
 
     var body: some View {
         ZStack {
@@ -131,10 +133,32 @@ struct ProspectDetailsView: View {
                 }
             }
             
-            // Bottom-left floating delete button
-            VStack {
-                Spacer()
-                HStack {
+            // Bottom-left floating buttons
+            HStack {
+                VStack(spacing: 16) { // stack vertically with some spacing
+                    // Demographics button
+                    Button(action: {
+                        if prospect.demographics == nil {
+                            prospect.demographics = Demographics()
+                        }
+                        showDemographicsEditor = true
+                    }) {
+                        Image(systemName: "person.2.fill")
+                            .foregroundColor(.white)
+                            .font(.title2)
+                            .padding()
+                            .background(Color.blue)
+                            .clipShape(Circle())
+                            .shadow(radius: 5)
+                    }
+                    .sheet(isPresented: $showDemographicsEditor) {
+                        DemographicsEditorView(demographics: Binding(
+                            get: { prospect.demographics! },
+                            set: { prospect.demographics = $0 }
+                        ))
+                    }
+
+                    // Delete button
                     Button(action: {
                         showDeleteConfirmation = true
                     }) {
@@ -146,18 +170,21 @@ struct ProspectDetailsView: View {
                             .clipShape(Circle())
                             .shadow(radius: 5)
                     }
-                    .padding(.leading, 16)
                     .sheet(isPresented: $showDeleteConfirmation) {
                         DeleteProspectSheet(
                             prospectName: prospect.fullName,
                             onDelete: deleteProspect
                         )
-                        .presentationDetents([.fraction(0.25)]) // short bottom sheet
-                        .presentationDragIndicator(.visible)     // draggable indicator
+                        .presentationDetents([.fraction(0.25)])
+                        .presentationDragIndicator(.visible)
                     }
-                    Spacer()
                 }
+                .padding(.leading, 16)
+                .padding(.bottom, 16)
+
+                Spacer() // push everything to the left
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
         }
         .navigationTitle("Edit Contact")
         .toolbar {
