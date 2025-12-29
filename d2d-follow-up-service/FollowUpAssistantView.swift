@@ -121,57 +121,15 @@ struct FollowUpAssistantView: View {
                     .padding(.bottom, 5)
                 }
 
-                // MARK: - Floating bottom-left toolbar (Mic above +)
-                VStack(spacing: 12) {
-                    
-                    // Plus (opens Prospect picker -> Schedule)
-                    Button {
-                        showingProspectPicker = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(width: 50, height: 50)
-                            .background(Circle().fill(Color.blue))
-                            .shadow(radius: 4)
-                    }
-                    
-                    // Mic (opens RecordingsView when unlocked; otherwise promo)
-                    Button {
-                        if studioUnlocked {
-                            showRecordingsSheet = true
-                        } else {
-                            showPromo = true
-                        }
-                    } label: {
-                        // Reuse your existing icons if these types are in scope.
-                        // If not, you can keep the simple colored circle like before.
-                        Group {
-                            if studioUnlocked {
-                                // Unlocked look
-                                Image(systemName: "mic.circle.fill")
-                                    .resizable()
-                                    .frame(width: 50, height: 50)
-                                    .symbolRenderingMode(.palette)
-                                    .foregroundStyle(.white, recordingFeaturesActive ? .blue : .red)
-                                    .shadow(radius: 4)
-                            } else {
-                                // Hidden/locked look
-                                Image(systemName: "mic.circle.fill")
-                                    .resizable()
-                                    .frame(width: 50, height: 50)
-                                    .symbolRenderingMode(.hierarchical)
-                                    .foregroundColor(Color(.darkGray))
-                                    .shadow(radius: 4)
-                            }
-                        }
-                    }
-
-                }
-                .padding(.bottom, 30)
-                .padding(.leading, 20)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                .zIndex(999)
+                FollowUpAssistantFloatingToolbar(
+                    showingProspectPicker: $showingProspectPicker,
+                    selectedProspect: $selectedProspect,
+                    showRecordingsSheet: $showRecordingsSheet,
+                    showPromo: $showPromo,
+                    studioUnlocked: studioUnlocked,
+                    recordingFeaturesActive: recordingFeaturesActive
+                )
+                
             }
             .onAppear {
                 let defaults = UserDefaults(suiteName: "group.okic.d2dcrm")
