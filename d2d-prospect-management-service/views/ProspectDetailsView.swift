@@ -32,6 +32,8 @@ struct ProspectDetailsView: View {
     @State private var showExportPrompt = false
     @State private var showExportSuccessBanner = false
     @State private var exportSuccessMessage = ""
+    
+    @State private var showDemographicsEditor = false
 
     var body: some View {
         ZStack {
@@ -134,7 +136,31 @@ struct ProspectDetailsView: View {
             // Bottom-left floating delete button
             VStack {
                 Spacer()
+                
+                // Floating Demographics button
+                Button(action: {
+                    if prospect.demographics == nil {
+                        prospect.demographics = Demographics()
+                    }
+                    showDemographicsEditor = true
+                }) {
+                    Image(systemName: "person.2.fill")
+                        .foregroundColor(.white)
+                        .font(.title2)
+                        .padding()
+                        .background(Color.blue)
+                        .clipShape(Circle())
+                        .shadow(radius: 5)
+                }
+                .sheet(isPresented: $showDemographicsEditor) {
+                    DemographicsEditorView(demographics: Binding(
+                        get: { prospect.demographics! },
+                        set: { prospect.demographics = $0 }
+                    ))
+                }
+                
                 HStack {
+                    
                     Button(action: {
                         showDeleteConfirmation = true
                     }) {
