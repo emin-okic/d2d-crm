@@ -120,43 +120,30 @@ struct ProspectDetailsView: View {
                     case .knocks:
                         ProspectKnockingHistoryView(prospect: prospect)
                         
-                    case .notes:
-                        NotesThreadSection(
-                            prospect: prospect,
-                            maxHeight: 180,
-                            maxVisibleNotes: 3,
-                            showChips: false
-                        )
                     }
                 }
             }
             
-            // Bottom-left floating delete button
-            VStack {
-                Spacer()
-                HStack {
-                    Button(action: {
-                        showDeleteConfirmation = true
-                    }) {
-                        Image(systemName: "trash.fill")
-                            .foregroundColor(.white)
-                            .font(.title2)
-                            .padding()
-                            .background(Color.red)
-                            .clipShape(Circle())
-                            .shadow(radius: 5)
-                    }
-                    .padding(.leading, 16)
-                    .sheet(isPresented: $showDeleteConfirmation) {
-                        DeleteProspectSheet(
-                            prospectName: prospect.fullName,
-                            onDelete: deleteProspect
-                        )
-                        .presentationDetents([.fraction(0.25)]) // short bottom sheet
-                        .presentationDragIndicator(.visible)     // draggable indicator
-                    }
-                    Spacer()
+            // Bottom floating buttons
+            ProspectFloatingActionsView(
+                onDeleteTapped: {
+                    showDeleteConfirmation = true
+                },
+                onNotesTapped: {
+                    controller.showNotesSheet = true
                 }
+            )
+            .sheet(isPresented: $showDeleteConfirmation) {
+                DeleteProspectSheet(
+                    prospectName: prospect.fullName,
+                    onDelete: deleteProspect
+                )
+                .presentationDetents([.fraction(0.25)])
+                .presentationDragIndicator(.visible)
+            }
+
+            .sheet(isPresented: $controller.showNotesSheet) {
+                NotesThreadFullView(prospect: prospect)
             }
         }
         .navigationTitle("Edit Contact")
@@ -444,5 +431,4 @@ struct ProspectDetailsView: View {
 enum ProspectTab: String, CaseIterable {
     case appointments = "Appointments"
     case knocks = "Knocks"
-    case notes = "Notes"
 }
