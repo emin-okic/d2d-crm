@@ -20,6 +20,7 @@ class ProspectController: ObservableObject {
     @Published var showAppointmentSheet = false
     @Published var selectedAppointmentDetails: Appointment?
     @Published var selectedTab: ProspectTab = .appointments
+    @Published var showNotesSheet: Bool = false
     
     // Snapshot to detect edits
     private struct ProspectSnapshot: Equatable {

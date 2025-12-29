@@ -131,10 +131,11 @@ struct ProspectDetailsView: View {
                 }
             }
             
-            // Bottom-left floating delete button
+            // Bottom floating buttons
             VStack {
                 Spacer()
                 HStack {
+                    // Delete button (left)
                     Button(action: {
                         showDeleteConfirmation = true
                     }) {
@@ -146,17 +147,35 @@ struct ProspectDetailsView: View {
                             .clipShape(Circle())
                             .shadow(radius: 5)
                     }
-                    .padding(.leading, 16)
                     .sheet(isPresented: $showDeleteConfirmation) {
                         DeleteProspectSheet(
                             prospectName: prospect.fullName,
                             onDelete: deleteProspect
                         )
-                        .presentationDetents([.fraction(0.25)]) // short bottom sheet
-                        .presentationDragIndicator(.visible)     // draggable indicator
+                        .presentationDetents([.fraction(0.25)])
+                        .presentationDragIndicator(.visible)
                     }
-                    Spacer()
+                    
+                    Spacer() // Pushes the notes button to the right
+                    
+                    // Notes button (right)
+                    Button(action: {
+                        controller.showNotesSheet = true
+                    }) {
+                        Image(systemName: "note.text")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(Color.blue)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .shadow(radius: 5)
+                    }
+                    .sheet(isPresented: $controller.showNotesSheet) {
+                        NotesThreadFullView(prospect: prospect)
+                    }
                 }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
             }
         }
         .navigationTitle("Edit Contact")
