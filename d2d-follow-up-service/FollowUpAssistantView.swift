@@ -49,6 +49,10 @@ struct FollowUpAssistantView: View {
     @State private var showPromo = false
     @State private var showWalkthrough = false
     @State private var showCelebration = false
+    
+    @State private var showAppointmentsFullScreen = false
+    
+    @State private var showFullScreenProspectPicker = false
 
     var body: some View {
         NavigationView {
@@ -89,12 +93,28 @@ struct FollowUpAssistantView: View {
                         .buttonStyle(.plain)
                         .padding(.horizontal, 20)
 
-                        // MARK: - Appointments (no tabs now)
+                        // MARK: - Appointments
                         // AppointmentsSectionView already scrolls and is clamped to 300pt
                         ScrollView {
-                            AppointmentsContainerView()
-                                .frame(maxHeight: 400)
-                                .padding(.horizontal, 20)
+                            ZStack(alignment: .topTrailing) {
+                                AppointmentsContainerView()
+                                    .frame(maxHeight: 400)
+                                    .padding(.horizontal, 20)
+                                
+                                // Expand button
+                                Button {
+                                    showAppointmentsFullScreen = true
+                                } label: {
+                                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                        .font(.system(size: 18, weight: .semibold))
+                                        .padding(10)
+                                        .background(Color(.systemGray5).opacity(0.9))
+                                        .clipShape(Circle())
+                                }
+                                .padding(.vertical, 10)
+                                .padding(.horizontal, 30)
+                                .buttonStyle(.plain)
+                            }
                         }
                         .frame(maxHeight: 500)
                     }
@@ -162,7 +182,13 @@ struct FollowUpAssistantView: View {
             .navigationBarTitleDisplayMode(.inline)
 
             // SHEETS
-            
+            .sheet(isPresented: $showAppointmentsFullScreen) {
+                FullScreenAppointmentsView(
+                    isPresented: $showAppointmentsFullScreen,
+                    selectedProspect: $selectedProspect,
+                    prospects: prospects
+                )
+            }
             // Promo to request App Store review → unlock
             .sheet(isPresented: $showPromo) {
                 RecordingStudioPromo {
