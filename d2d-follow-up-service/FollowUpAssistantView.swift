@@ -10,6 +10,9 @@ import SwiftData
 import WidgetKit
 
 struct FollowUpAssistantView: View {
+    
+    @Environment(\.modelContext) private var modelContext
+    
     @Query private var prospects: [Prospect]
     @Query private var trips: [Trip]
     @Query private var appointments: [Appointment]
@@ -61,6 +64,14 @@ struct FollowUpAssistantView: View {
     }
     
     @Query private var recordings: [Recording]
+    
+    // MARK: - Appointment toolbar state
+    @State private var isEditingAppointments = false
+    @State private var selectedAppointments: Set<Appointment> = []
+    @State private var showDeleteAppointmentsConfirm = false
+    @State private var showAppointmentsPicker = false
+    
+    @State private var filteredAppointments: [Appointment] = []
 
     var body: some View {
         NavigationView {
@@ -114,9 +125,13 @@ struct FollowUpAssistantView: View {
                         // AppointmentsSectionView already scrolls and is clamped to 300pt
                         ScrollView {
                             ZStack(alignment: .topTrailing) {
-                                AppointmentsContainerView()
-                                    .frame(maxHeight: 500)
-                                    .padding(.horizontal, 20)
+                                AppointmentsContainerView(
+                                    isEditing: $isEditingAppointments,
+                                    selectedAppointments: $selectedAppointments,
+                                    filteredAppointments: $filteredAppointments
+                                )
+                                .padding(.horizontal, 20)
+                                .frame(maxHeight: 500)
                                 
                                 // Expand button
                                 Button {
@@ -137,13 +152,12 @@ struct FollowUpAssistantView: View {
                     }
                     .padding(.bottom, 5)
                 }
-
-                FollowUpAssistantFloatingToolbar(
-                    showRecordingsSheet: $showRecordingsSheet,
-                    showPromo: $showPromo,
-                    showTripsSheet: $showTripsSheet,
-                    studioUnlocked: studioUnlocked,
-                    recordingFeaturesActive: recordingFeaturesActive
+                
+                AppointmentsToolbar(
+                    showProspectPicker: $showAppointmentsPicker,
+                    isEditing: $isEditingAppointments,
+                    selectedAppointments: $selectedAppointments,
+                    showDeleteConfirm: $showDeleteAppointmentsConfirm
                 )
                 
             }
@@ -156,6 +170,34 @@ struct FollowUpAssistantView: View {
             .navigationBarTitleDisplayMode(.inline)
 
             // SHEETS
+            .sheet(isPresented: $showAppointmentsPicker) {
+                NavigationStack {
+                    List(prospects) { prospect in
+                        Button {
+                            selectedProspect = prospect
+                            showAppointmentsPicker = false
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(prospect.fullName)
+                                Text(prospect.address)
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(.vertical, 10)
+                        }
+                    }
+                    .navigationTitle("Pick Prospect")
+                    .listStyle(.plain)
+                }
+            }
+            .alert("Delete selected appointments?", isPresented: $showDeleteAppointmentsConfirm) {
+                Button("Delete", role: .destructive) {
+                    deleteSelectedAppointments()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This action can’t be undone.")
+            }
             .sheet(isPresented: $showAppointmentsFullScreen) {
                 FullScreenAppointmentsView(
                     isPresented: $showAppointmentsFullScreen,
@@ -248,6 +290,22 @@ struct FollowUpAssistantView: View {
                         .navigationBarTitleDisplayMode(.inline)
                 }
             }
+        }
+    }
+    
+    private func deleteSelectedAppointments() {
+        withAnimation {
+            let toDelete = selectedAppointments
+            selectedAppointments.removeAll()
+            for appt in toDelete {
+                modelContext.delete(appt)
+            }
+            do {
+                try modelContext.save()
+            } catch {
+                print("Error saving after deletion: \(error)")
+            }
+            isEditingAppointments = false
         }
     }
 }
