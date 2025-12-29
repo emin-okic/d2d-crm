@@ -39,6 +39,8 @@ struct CustomerDetailsView: View {
     @State private var showExportPrompt = false
     @State private var showExportSuccessBanner = false
     @State private var exportSuccessMessage = ""
+    
+    @State private var showNotesSheet = false
 
     var body: some View {
         ZStack {
@@ -96,10 +98,11 @@ struct CustomerDetailsView: View {
                 }
             }
             
-            // Bottom-left floating delete button
+            // Bottom floating buttons (Delete + Notes)
             VStack {
                 Spacer()
                 HStack {
+                    // Delete (left)
                     Button(action: {
                         showDeleteConfirmation = true
                     }) {
@@ -111,9 +114,33 @@ struct CustomerDetailsView: View {
                             .clipShape(Circle())
                             .shadow(radius: 5)
                     }
-                    .padding(.leading, 16)
+
                     Spacer()
+
+                    // Notes (right)
+                    Button(action: {
+                        showNotesSheet = true
+                    }) {
+                        Image(systemName: "note.text")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(Color.blue)
+                            .clipShape(
+                                RoundedRectangle(
+                                    cornerRadius: 12,
+                                    style: .continuous
+                                )
+                            )
+                            .shadow(radius: 5)
+                    }
                 }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
+            }
+            .ignoresSafeArea(.keyboard, edges: .bottom)
+            .sheet(isPresented: $showNotesSheet) {
+                CustomerNotesThreadFullView(customer: customer)
             }
             .sheet(isPresented: $showDeleteConfirmation) {
                 DeleteCustomerSheet(
@@ -362,13 +389,6 @@ struct CustomerDetailsView: View {
             AppointmentsView(customer: customer)
         case .knocks:
             CustomerKnockingHistoryView(customer: customer)
-        case .notes:
-            CustomerNotesThreadSection(
-                customer: customer,
-                maxHeight: 180,
-                maxVisibleNotes: 3,
-                showChips: false
-            )
         }
     }
 }
@@ -451,5 +471,4 @@ private struct AppointmentsView: View {
 enum CustomerTab: String, CaseIterable {
     case appointments = "Appointments"
     case knocks = "Knocks"
-    case notes = "Notes"
 }
