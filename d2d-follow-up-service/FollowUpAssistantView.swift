@@ -91,7 +91,7 @@ struct FollowUpAssistantView: View {
                         ScrollView {
                             ZStack(alignment: .topTrailing) {
                                 AppointmentsContainerView()
-                                    .frame(maxHeight: 400)
+                                    .frame(maxHeight: 500)
                                     .padding(.horizontal, 20)
                                 
                                 // Expand button
@@ -109,7 +109,7 @@ struct FollowUpAssistantView: View {
                                 .buttonStyle(.plain)
                             }
                         }
-                        .frame(maxHeight: 500)
+                        .frame(maxHeight: 700)
                     }
                     .padding(.bottom, 5)
                 }
