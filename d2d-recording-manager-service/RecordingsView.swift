@@ -105,14 +105,17 @@ struct RecordingsView: View {
 
                     // List
                     if recordings.isEmpty {
-                        Text("No Recordings Yet")
-                            .font(.title3)                // bigger, like a subtitle
-                            .fontWeight(.semibold)
-                            .foregroundColor(.secondary)  // subtle but readable
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.vertical, 24)       // more breathing room
-                        
+                        VStack {
+                            Text("No Recordings Yet")
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.top, 24) // top spacing from header
+                            Spacer() // push content to top
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .padding(.horizontal, 20)
                     } else {
                         List {
                             ForEach(recordings) { recording in
