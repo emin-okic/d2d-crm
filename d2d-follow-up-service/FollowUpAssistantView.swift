@@ -117,6 +117,7 @@ struct FollowUpAssistantView: View {
                 FollowUpAssistantFloatingToolbar(
                     showRecordingsSheet: $showRecordingsSheet,
                     showPromo: $showPromo,
+                    showTripsSheet: $showTripsSheet,
                     studioUnlocked: studioUnlocked,
                     recordingFeaturesActive: recordingFeaturesActive
                 )

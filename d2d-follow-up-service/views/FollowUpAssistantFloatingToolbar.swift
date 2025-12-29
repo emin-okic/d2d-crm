@@ -11,6 +11,8 @@ struct FollowUpAssistantFloatingToolbar: View {
 
     @Binding var showRecordingsSheet: Bool
     @Binding var showPromo: Bool
+    
+    @Binding var showTripsSheet: Bool
 
     // Feature gating
     var studioUnlocked: Bool
@@ -45,6 +47,25 @@ struct FollowUpAssistantFloatingToolbar: View {
                     }
                 }
             }
+
+            // Car button (smaller icon, same circle size)
+            Button {
+                showTripsSheet = true
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color.blue)
+                        .frame(width: 50, height: 50) // circle size same as mic
+
+                    Image(systemName: "car.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 30, height: 30) // slightly smaller than before
+                        .foregroundColor(.white)
+                }
+                .shadow(radius: 4)
+            }
+            .buttonStyle(.plain)
 
         }
         .padding(.bottom, 30)
