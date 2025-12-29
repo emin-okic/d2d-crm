@@ -17,7 +17,6 @@ struct FollowUpAssistantView: View {
 
     // Existing sheets
     @State private var showTripsSheet = false
-    @State private var showTodaysAppointmentsSheet = false
     @State private var showTopObjectionsSheet = false
 
     // NEW: floating toolbar sheets
@@ -36,8 +35,6 @@ struct FollowUpAssistantView: View {
         return appointments.filter { cal.isDate($0.date, inSameDayAs: today) }.count
     }
 
-    private var totalTrips: Int { trips.count }
-
     private var topObjectionText: String {
         objections
             .filter { $0.text != "Converted To Sale" }
@@ -49,6 +46,10 @@ struct FollowUpAssistantView: View {
     @State private var showPromo = false
     @State private var showWalkthrough = false
     @State private var showCelebration = false
+    
+    @State private var showAppointmentsFullScreen = false
+    
+    @State private var showFullScreenProspectPicker = false
 
     var body: some View {
         NavigationView {
@@ -69,89 +70,51 @@ struct FollowUpAssistantView: View {
                         // MARK: - Summary Cards
                         VStack(spacing: 12) {
                             HStack(spacing: 12) {
-                                Button { showTodaysAppointmentsSheet = true } label: {
-                                    LeaderboardCardView(title: "Appointments Today", count: appointmentsToday)
-                                }
-                                .buttonStyle(.plain)
-
-                                Button { showTripsSheet = true } label: {
-                                    LeaderboardCardView(title: "Trips Made", count: totalTrips)
+                                // Top Objection scorecard
+                                Button { showTopObjectionsSheet = true } label: {
+                                    LeaderboardTextCardView(title: "Top Objection", text: topObjectionText)
                                 }
                                 .buttonStyle(.plain)
                             }
                         }
                         .padding(.horizontal, 20)
 
-                        // Top Objection scorecard
-                        Button { showTopObjectionsSheet = true } label: {
-                            LeaderboardTextCardView(title: "Top Objection", text: topObjectionText)
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal, 20)
-
-                        // MARK: - Appointments (no tabs now)
+                        // MARK: - Appointments
                         // AppointmentsSectionView already scrolls and is clamped to 300pt
                         ScrollView {
-                            AppointmentsContainerView()
-                                .frame(maxHeight: 400)
-                                .padding(.horizontal, 20)
+                            ZStack(alignment: .topTrailing) {
+                                AppointmentsContainerView()
+                                    .frame(maxHeight: 500)
+                                    .padding(.horizontal, 20)
+                                
+                                // Expand button
+                                Button {
+                                    showAppointmentsFullScreen = true
+                                } label: {
+                                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                        .font(.system(size: 18, weight: .semibold))
+                                        .padding(10)
+                                        .background(Color(.systemGray5).opacity(0.9))
+                                        .clipShape(Circle())
+                                }
+                                .padding(.vertical, 10)
+                                .padding(.horizontal, 30)
+                                .buttonStyle(.plain)
+                            }
                         }
-                        .frame(maxHeight: 500)
+                        .frame(maxHeight: 700)
                     }
                     .padding(.bottom, 5)
                 }
 
-                // MARK: - Floating bottom-left toolbar (Mic above +)
-                VStack(spacing: 12) {
-                    
-                    // Plus (opens Prospect picker -> Schedule)
-                    Button {
-                        showingProspectPicker = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(width: 50, height: 50)
-                            .background(Circle().fill(Color.blue))
-                            .shadow(radius: 4)
-                    }
-                    
-                    // Mic (opens RecordingsView when unlocked; otherwise promo)
-                    Button {
-                        if studioUnlocked {
-                            showRecordingsSheet = true
-                        } else {
-                            showPromo = true
-                        }
-                    } label: {
-                        // Reuse your existing icons if these types are in scope.
-                        // If not, you can keep the simple colored circle like before.
-                        Group {
-                            if studioUnlocked {
-                                // Unlocked look
-                                Image(systemName: "mic.circle.fill")
-                                    .resizable()
-                                    .frame(width: 50, height: 50)
-                                    .symbolRenderingMode(.palette)
-                                    .foregroundStyle(.white, recordingFeaturesActive ? .blue : .red)
-                                    .shadow(radius: 4)
-                            } else {
-                                // Hidden/locked look
-                                Image(systemName: "mic.circle.fill")
-                                    .resizable()
-                                    .frame(width: 50, height: 50)
-                                    .symbolRenderingMode(.hierarchical)
-                                    .foregroundColor(Color(.darkGray))
-                                    .shadow(radius: 4)
-                            }
-                        }
-                    }
-
-                }
-                .padding(.bottom, 30)
-                .padding(.leading, 20)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                .zIndex(999)
+                FollowUpAssistantFloatingToolbar(
+                    showRecordingsSheet: $showRecordingsSheet,
+                    showPromo: $showPromo,
+                    showTripsSheet: $showTripsSheet,
+                    studioUnlocked: studioUnlocked,
+                    recordingFeaturesActive: recordingFeaturesActive
+                )
+                
             }
             .onAppear {
                 let defaults = UserDefaults(suiteName: "group.okic.d2dcrm")
@@ -162,7 +125,12 @@ struct FollowUpAssistantView: View {
             .navigationBarTitleDisplayMode(.inline)
 
             // SHEETS
-            
+            .sheet(isPresented: $showAppointmentsFullScreen) {
+                FullScreenAppointmentsView(
+                    isPresented: $showAppointmentsFullScreen,
+                    prospects: prospects
+                )
+            }
             // Promo to request App Store review → unlock
             .sheet(isPresented: $showPromo) {
                 RecordingStudioPromo {
@@ -210,20 +178,6 @@ struct FollowUpAssistantView: View {
                         .toolbar {
                             ToolbarItem(placement: .confirmationAction) {
                                 Button("Done") { showTripsSheet = false }
-                            }
-                        }
-                }
-            }
-
-            // Today's appointments
-            .sheet(isPresented: $showTodaysAppointmentsSheet) {
-                NavigationStack {
-                    TodaysAppointmentsView()
-                        .navigationTitle("Today's Appointments")
-                        .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .confirmationAction) {
-                                Button("Done") { showTodaysAppointmentsSheet = false }
                             }
                         }
                 }

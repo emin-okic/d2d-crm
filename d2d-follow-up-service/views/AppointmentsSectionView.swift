@@ -4,16 +4,20 @@
 //
 //  Created by Emin Okic on 7/6/25.
 //
+
 import SwiftUI
 import SwiftData
 
 struct AppointmentsSectionView: View {
     @Query private var appointments: [Appointment]
-    @Query private var prospects: [Prospect]   // can stay (not used here now, but harmless)
+    @Query private var prospects: [Prospect]
 
-    // Removed: showingProspectPicker / selectedProspect
+    // Parent bindings for multi-delete
+    @Binding var isEditing: Bool
+    @Binding var selectedAppointments: Set<Appointment>
+
     @State private var selectedAppointment: Appointment?
-
+    
     @State private var filter: AppointmentFilter = .upcoming
     private let filterKey = "lastSelectedAppointmentFilter"
 
@@ -21,14 +25,31 @@ struct AppointmentsSectionView: View {
 
     private var upcomingCount: Int { appointments.filter { $0.date >= now }.count }
     private var pastCount: Int { appointments.filter { $0.date <  now }.count }
+    
+    @Binding var filteredAppointments: [Appointment]
 
-    private var filteredAppointments: [Appointment] {
-        let ups  = appointments.filter { $0.date >= now }.sorted { $0.date < $1.date }
-        let past = appointments.filter { $0.date <  now }.sorted { $0.date > $1.date }
-        return filter == .upcoming ? ups : past
+    private var filteredAppointmentsInternal: [Appointment] {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        switch filter {
+        case .today:
+            return appointments
+                .filter { calendar.isDate($0.date, inSameDayAs: now) }
+                .sorted { $0.date < $1.date }
+        case .upcoming:
+            return appointments
+                .filter { $0.date >= now && !calendar.isDateInToday($0.date) }
+                .sorted { $0.date < $1.date }
+        case .past:
+            return appointments
+                .filter { $0.date < now && !calendar.isDateInToday($0.date) }
+                .sorted { $0.date > $1.date }
+        }
     }
     
     private let rowHeight: CGFloat = 74
+    var maxScrollHeight: CGFloat? = nil
 
     var body: some View {
         ZStack {
@@ -40,9 +61,14 @@ struct AppointmentsSectionView: View {
                         Text("Appointments")
                             .font(.title2)
                             .fontWeight(.semibold)
-                        Text(filter == .upcoming
-                             ? "\(upcomingCount) Upcoming Appointments"
-                             : "\(pastCount) Past Appointments")
+                        
+                        let calendar = Calendar.current
+                        let now = Date()
+                        Text(filter == .today
+                             ? "\(appointments.filter { calendar.isDate($0.date, inSameDayAs: now) }.count) Today's Appointments"
+                             : filter == .upcoming
+                             ? "\(appointments.filter { $0.date >= now && !calendar.isDateInToday($0.date) }.count) Upcoming Appointments"
+                             : "\(appointments.filter { $0.date < now && !calendar.isDateInToday($0.date) }.count) Past Appointments")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -51,43 +77,52 @@ struct AppointmentsSectionView: View {
                     
                     // Toggle chips
                     HStack(spacing: 8) {
+                        toggleChip("Today", isOn: filter == .today) { filter = .today }
                         toggleChip("Upcoming", isOn: filter == .upcoming) { filter = .upcoming }
-                        toggleChip("Past",     isOn: filter == .past)     { filter = .past }
+                        toggleChip("Past", isOn: filter == .past) { filter = .past }
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 20)
 
                     // Empty / list
-                    if filteredAppointments.isEmpty {
+                    if filteredAppointmentsInternal.isEmpty {
                         Text("No \(filter.rawValue) Appointments")
-                            .font(.title3)                // bigger, like a subtitle
+                            .font(.title3)
                             .fontWeight(.semibold)
-                            .foregroundColor(.secondary)  // subtle but readable
+                            .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                             .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.vertical, 24)       // more breathing room
+                            .padding(.vertical, 24)
                     } else {
                         ScrollView {
                             LazyVStack(spacing: 0) {
-                                ForEach(filteredAppointments) { appt in
+                                ForEach(filteredAppointmentsInternal) { appt in
                                     Button {
-                                        selectedAppointment = appt
+                                        if isEditing {
+                                            toggleSelection(for: appt)
+                                        } else {
+                                            selectedAppointment = appt
+                                        }
                                     } label: {
-                                        AppointmentRowView(appt: appt)
+                                        AppointmentRowView(
+                                            appt: appt,
+                                            isEditing: isEditing,
+                                            isSelected: selectedAppointments.contains(appt)
+                                        )
                                     }
                                     Divider()
                                 }
                             }
                             .padding(.horizontal, 10)
                         }
-                        .frame(maxHeight: rowHeight * 3)
+                        .frame(maxHeight: maxScrollHeight ?? rowHeight * 3)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .topLeading)
                 .padding(.bottom, 12)
                 .sheet(item: $selectedAppointment) { appt in
-                            AppointmentDetailsView(appointment: appt)
-                        }
+                    AppointmentDetailsView(appointment: appt)
+                }
             }
             .scrollIndicators(.automatic)
         }
@@ -102,9 +137,17 @@ struct AppointmentsSectionView: View {
         .onChange(of: filter) {
             UserDefaults.standard.set(filter.rawValue, forKey: filterKey)
         }
-        // Only appointment details sheet remains here
-        .sheet(item: $selectedAppointment) { appt in
-            AppointmentDetailsView(appointment: appt)
+        .onChange(of: filteredAppointmentsInternal) { newValue in
+            filteredAppointments = newValue
+        }
+    }
+
+    // MARK: - Multi-select helpers
+    private func toggleSelection(for appt: Appointment) {
+        if selectedAppointments.contains(appt) {
+            selectedAppointments.remove(appt)
+        } else {
+            selectedAppointments.insert(appt)
         }
     }
 
@@ -129,20 +172,5 @@ struct AppointmentsSectionView: View {
         }
         .buttonStyle(.plain)
         .animation(.easeInOut(duration: 0.15), value: isOn)
-    }
-}
-
-struct AppointmentRowView: View {
-    let appt: Appointment
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Follow Up With \(appt.prospect?.fullName ?? appt.title)")
-                .font(.body).fontWeight(.medium)
-            Text(appt.prospect?.address ?? appt.location)
-                .font(.caption).foregroundColor(.secondary)
-            Text(appt.date.formatted(date: .abbreviated, time: .shortened))
-                .font(.caption2).foregroundColor(.secondary)
-        }
-        .padding(.vertical, 10)
     }
 }

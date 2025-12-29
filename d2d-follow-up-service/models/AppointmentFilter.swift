@@ -8,6 +8,7 @@ import SwiftUI
 import SwiftData
 
 enum AppointmentFilter: String, CaseIterable, Identifiable {
+    case today = "Today"
     case upcoming = "Upcoming"
     case past = "Past"
 
