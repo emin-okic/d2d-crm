@@ -59,6 +59,8 @@ struct FollowUpAssistantView: View {
             calendar.isDate($0.date, inSameDayAs: today)
         }.count
     }
+    
+    @Query private var recordings: [Recording]
 
     var body: some View {
         NavigationView {
@@ -79,9 +81,19 @@ struct FollowUpAssistantView: View {
                         // MARK: - Summary Cards
                         VStack(spacing: 12) {
                             HStack(spacing: 12) {
-                                // Top Objection scorecard
-                                Button { showTopObjectionsSheet = true } label: {
-                                    LeaderboardTextCardView(title: "Top Objection", text: topObjectionText)
+                                
+                                // Recordings scorecard (NEW)
+                                Button {
+                                    if studioUnlocked {
+                                        showRecordingsSheet = true
+                                    } else {
+                                        showPromo = true
+                                    }
+                                } label: {
+                                    RecordingsScorecardView(
+                                        unlocked: studioUnlocked,
+                                        count: recordings.count
+                                    )
                                 }
                                 .buttonStyle(.plain)
                                 
