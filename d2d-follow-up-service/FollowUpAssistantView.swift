@@ -35,8 +35,6 @@ struct FollowUpAssistantView: View {
         return appointments.filter { cal.isDate($0.date, inSameDayAs: today) }.count
     }
 
-    private var totalTrips: Int { trips.count }
-
     private var topObjectionText: String {
         objections
             .filter { $0.text != "Converted To Sale" }
@@ -75,11 +73,6 @@ struct FollowUpAssistantView: View {
                                 // Top Objection scorecard
                                 Button { showTopObjectionsSheet = true } label: {
                                     LeaderboardTextCardView(title: "Top Objection", text: topObjectionText)
-                                }
-                                .buttonStyle(.plain)
-
-                                Button { showTripsSheet = true } label: {
-                                    LeaderboardCardView(title: "Trips Made", count: totalTrips)
                                 }
                                 .buttonStyle(.plain)
                             }
