@@ -50,6 +50,15 @@ struct FollowUpAssistantView: View {
     @State private var showAppointmentsFullScreen = false
     
     @State private var showFullScreenProspectPicker = false
+    
+    private var dailyTrips: Int {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+
+        return trips.filter {
+            calendar.isDate($0.date, inSameDayAs: today)
+        }.count
+    }
 
     var body: some View {
         NavigationView {
@@ -73,6 +82,16 @@ struct FollowUpAssistantView: View {
                                 // Top Objection scorecard
                                 Button { showTopObjectionsSheet = true } label: {
                                     LeaderboardTextCardView(title: "Top Objection", text: topObjectionText)
+                                }
+                                .buttonStyle(.plain)
+                                
+                                Button {
+                                    showTripsSheet = true
+                                } label: {
+                                    LeaderboardCardView(
+                                        title: "Trips Today",
+                                        count: dailyTrips
+                                    )
                                 }
                                 .buttonStyle(.plain)
                             }

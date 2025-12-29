@@ -12,7 +12,8 @@ struct TripsSectionView: View {
     @Environment(\.modelContext) private var context
 
     @Query private var allTrips: [Trip]
-    @State private var filter: TripFilter = .week
+    
+    @State private var filter: TripFilter = .day
     @State private var selectedTrip: Trip?
     @State private var showingAddTrip = false
 
