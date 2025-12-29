@@ -25,11 +25,27 @@ struct AppointmentsSectionView: View {
 
     private var upcomingCount: Int { appointments.filter { $0.date >= now }.count }
     private var pastCount: Int { appointments.filter { $0.date <  now }.count }
+    
+    @Binding var filteredAppointments: [Appointment]
 
-    private var filteredAppointments: [Appointment] {
-        let ups  = appointments.filter { $0.date >= now }.sorted { $0.date < $1.date }
-        let past = appointments.filter { $0.date <  now }.sorted { $0.date > $1.date }
-        return filter == .upcoming ? ups : past
+    private var filteredAppointmentsInternal: [Appointment] {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        switch filter {
+        case .today:
+            return appointments
+                .filter { calendar.isDate($0.date, inSameDayAs: now) }
+                .sorted { $0.date < $1.date }
+        case .upcoming:
+            return appointments
+                .filter { $0.date >= now && !calendar.isDateInToday($0.date) }
+                .sorted { $0.date < $1.date }
+        case .past:
+            return appointments
+                .filter { $0.date < now && !calendar.isDateInToday($0.date) }
+                .sorted { $0.date > $1.date }
+        }
     }
     
     private let rowHeight: CGFloat = 74
@@ -45,9 +61,14 @@ struct AppointmentsSectionView: View {
                         Text("Appointments")
                             .font(.title2)
                             .fontWeight(.semibold)
-                        Text(filter == .upcoming
-                             ? "\(upcomingCount) Upcoming Appointments"
-                             : "\(pastCount) Past Appointments")
+                        
+                        let calendar = Calendar.current
+                        let now = Date()
+                        Text(filter == .today
+                             ? "\(appointments.filter { calendar.isDate($0.date, inSameDayAs: now) }.count) Today's Appointments"
+                             : filter == .upcoming
+                             ? "\(appointments.filter { $0.date >= now && !calendar.isDateInToday($0.date) }.count) Upcoming Appointments"
+                             : "\(appointments.filter { $0.date < now && !calendar.isDateInToday($0.date) }.count) Past Appointments")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -56,14 +77,15 @@ struct AppointmentsSectionView: View {
                     
                     // Toggle chips
                     HStack(spacing: 8) {
+                        toggleChip("Today", isOn: filter == .today) { filter = .today }
                         toggleChip("Upcoming", isOn: filter == .upcoming) { filter = .upcoming }
-                        toggleChip("Past",     isOn: filter == .past)     { filter = .past }
+                        toggleChip("Past", isOn: filter == .past) { filter = .past }
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 20)
 
                     // Empty / list
-                    if filteredAppointments.isEmpty {
+                    if filteredAppointmentsInternal.isEmpty {
                         Text("No \(filter.rawValue) Appointments")
                             .font(.title3)
                             .fontWeight(.semibold)
@@ -74,7 +96,7 @@ struct AppointmentsSectionView: View {
                     } else {
                         ScrollView {
                             LazyVStack(spacing: 0) {
-                                ForEach(filteredAppointments) { appt in
+                                ForEach(filteredAppointmentsInternal) { appt in
                                     Button {
                                         if isEditing {
                                             toggleSelection(for: appt)
@@ -114,6 +136,9 @@ struct AppointmentsSectionView: View {
         }
         .onChange(of: filter) {
             UserDefaults.standard.set(filter.rawValue, forKey: filterKey)
+        }
+        .onChange(of: filteredAppointmentsInternal) { newValue in
+            filteredAppointments = newValue
         }
     }
 

@@ -12,7 +12,8 @@ struct AppointmentsContainerView: View {
     
     @State private var isEditing = false
     @State private var selectedAppointments: Set<Appointment> = []
-    
+    @State private var filteredAppointments: [Appointment] = [] // <-- NEW
+
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 16)
@@ -22,6 +23,7 @@ struct AppointmentsContainerView: View {
             AppointmentsSectionView(
                 isEditing: $isEditing,
                 selectedAppointments: $selectedAppointments,
+                filteredAppointments: $filteredAppointments,
                 maxScrollHeight: UIScreen.main.bounds.height * 0.5
             )
                 .padding()

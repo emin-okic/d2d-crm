@@ -25,6 +25,10 @@ struct FullScreenAppointmentsView: View {
     @State private var trashPulse = false
 
     @State private var selectedAppointment: Appointment?
+    
+    @Query private var appointments: [Appointment]
+    
+    @State private var filteredAppointments: [Appointment] = []
 
     var body: some View {
         NavigationStack {
@@ -33,6 +37,7 @@ struct FullScreenAppointmentsView: View {
                 AppointmentsSectionView(
                     isEditing: $isEditing,
                     selectedAppointments: $selectedAppointments,
+                    filteredAppointments: $filteredAppointments,
                     maxScrollHeight: UIScreen.main.bounds.height * 0.50
                 )
                 .navigationTitle("Appointments")
@@ -105,6 +110,38 @@ struct FullScreenAppointmentsView: View {
                 .padding(.leading, 20)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                 .zIndex(999)
+                
+                // Bottom-right Apple Maps button
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button {
+                            Task {
+                                let upcomingAppointments = appointments.filter { $0.date >= Date() }
+                                if upcomingAppointments.isEmpty {
+                                    print("No upcoming appointments to navigate")
+                                    return
+                                }
+                                await RoutePlannerController.planAndOpenTodaysRoute(
+                                    appointments: upcomingAppointments,
+                                    modelContext: modelContext
+                                )
+                            }
+                        } label: {
+                            Image(systemName: "car.fill")
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: 50, height: 50)
+                                .background(RoundedRectangle(cornerRadius: 12).fill(Color.blue))
+                                .shadow(radius: 4)
+                        }
+                        .padding(.bottom, 30)
+                        .padding(.trailing, 20)
+                    }
+                }
+                .zIndex(998)
+                
             }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
