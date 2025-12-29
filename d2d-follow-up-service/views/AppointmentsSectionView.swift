@@ -110,7 +110,7 @@ struct AppointmentsSectionView: View {
                                             isSelected: selectedAppointments.contains(appt)
                                         )
                                     }
-                                    Divider()
+
                                 }
                             }
                             .padding(.horizontal, 10)
