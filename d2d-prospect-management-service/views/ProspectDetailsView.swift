@@ -120,13 +120,6 @@ struct ProspectDetailsView: View {
                     case .knocks:
                         ProspectKnockingHistoryView(prospect: prospect)
                         
-                    case .notes:
-                        NotesThreadSection(
-                            prospect: prospect,
-                            maxHeight: 180,
-                            maxVisibleNotes: 3,
-                            showChips: false
-                        )
                     }
                 }
             }
@@ -463,5 +456,4 @@ struct ProspectDetailsView: View {
 enum ProspectTab: String, CaseIterable {
     case appointments = "Appointments"
     case knocks = "Knocks"
-    case notes = "Notes"
 }

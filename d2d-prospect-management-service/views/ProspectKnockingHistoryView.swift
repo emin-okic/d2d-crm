@@ -52,7 +52,7 @@ struct ProspectKnockingHistoryView: View {
                 }
             }
         }
-        .navigationTitle("Knocking History")
+        //.navigationTitle("Knocking History")
     }
     
     /// Maps knock status to a system icon.
