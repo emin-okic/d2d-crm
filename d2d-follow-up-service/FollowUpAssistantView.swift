@@ -50,8 +50,6 @@ struct FollowUpAssistantView: View {
     @State private var showWalkthrough = false
     @State private var showCelebration = false
     
-    @State private var showAppointmentsFullScreen = false
-    
     @State private var showFullScreenProspectPicker = false
     
     private var dailyTrips: Int {
@@ -133,19 +131,6 @@ struct FollowUpAssistantView: View {
                                 .padding(.horizontal, 20)
                                 .frame(maxHeight: 500)
                                 
-                                // Expand button
-                                Button {
-                                    showAppointmentsFullScreen = true
-                                } label: {
-                                    Image(systemName: "arrow.up.left.and.arrow.down.right")
-                                        .font(.system(size: 18, weight: .semibold))
-                                        .padding(10)
-                                        .background(Color(.systemGray5).opacity(0.9))
-                                        .clipShape(Circle())
-                                }
-                                .padding(.vertical, 10)
-                                .padding(.horizontal, 30)
-                                .buttonStyle(.plain)
                             }
                         }
                         .frame(maxHeight: 700)
@@ -214,12 +199,6 @@ struct FollowUpAssistantView: View {
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text("This action can’t be undone.")
-            }
-            .sheet(isPresented: $showAppointmentsFullScreen) {
-                FullScreenAppointmentsView(
-                    isPresented: $showAppointmentsFullScreen,
-                    prospects: prospects
-                )
             }
             // Promo to request App Store review → unlock
             .sheet(isPresented: $showPromo) {
