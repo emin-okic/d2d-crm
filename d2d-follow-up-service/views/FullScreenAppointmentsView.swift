@@ -9,16 +9,20 @@ import SwiftUI
 import SwiftData
 
 struct FullScreenAppointmentsView: View {
+    
     @Binding var isPresented: Bool
-    @Binding var selectedProspect: Prospect?
+    // @Binding var selectedProspect: Prospect?
     var prospects: [Prospect]
 
     @State private var showProspectPicker = false
+    
+    @State private var showScheduleAppointment = false
+    @State private var prospectToSchedule: Prospect?
 
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottomLeading) {
-                AppointmentsSectionView()
+                AppointmentsSectionView(maxScrollHeight: UIScreen.main.bounds.height * 0.50)
                     .navigationTitle("Appointments")
                     .navigationBarTitleDisplayMode(.inline)
 
@@ -46,8 +50,9 @@ struct FullScreenAppointmentsView: View {
                 NavigationStack {
                     List(prospects) { prospect in
                         Button {
-                            selectedProspect = prospect
+                            prospectToSchedule = prospect
                             showProspectPicker = false
+                            showScheduleAppointment = true
                         } label: {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(prospect.fullName)
@@ -60,6 +65,14 @@ struct FullScreenAppointmentsView: View {
                     }
                     .navigationTitle("Pick Prospect")
                     .listStyle(.plain)
+                }
+            }
+            // Schedule Appointment sheet
+            .sheet(isPresented: $showScheduleAppointment, onDismiss: {
+                prospectToSchedule = nil
+            }) {
+                if let prospect = prospectToSchedule {
+                    ScheduleAppointmentView(prospect: prospect)
                 }
             }
         }

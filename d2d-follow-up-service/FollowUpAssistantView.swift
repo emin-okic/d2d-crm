@@ -185,7 +185,6 @@ struct FollowUpAssistantView: View {
             .sheet(isPresented: $showAppointmentsFullScreen) {
                 FullScreenAppointmentsView(
                     isPresented: $showAppointmentsFullScreen,
-                    selectedProspect: $selectedProspect,
                     prospects: prospects
                 )
             }

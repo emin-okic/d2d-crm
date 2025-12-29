@@ -29,6 +29,8 @@ struct AppointmentsSectionView: View {
     }
     
     private let rowHeight: CGFloat = 74
+    
+    var maxScrollHeight: CGFloat? = nil
 
     var body: some View {
         ZStack {
@@ -80,14 +82,16 @@ struct AppointmentsSectionView: View {
                             }
                             .padding(.horizontal, 10)
                         }
-                        .frame(maxHeight: rowHeight * 3)
+                        .frame(maxHeight: maxScrollHeight ?? rowHeight * 3)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .topLeading)
                 .padding(.bottom, 12)
                 .sheet(item: $selectedAppointment) { appt in
-                            AppointmentDetailsView(appointment: appt)
-                        }
+                    
+                    AppointmentDetailsView(appointment: appt)
+                    
+                }
             }
             .scrollIndicators(.automatic)
         }
@@ -101,10 +105,6 @@ struct AppointmentsSectionView: View {
         }
         .onChange(of: filter) {
             UserDefaults.standard.set(filter.rawValue, forKey: filterKey)
-        }
-        // Only appointment details sheet remains here
-        .sheet(item: $selectedAppointment) { appt in
-            AppointmentDetailsView(appointment: appt)
         }
     }
 
@@ -129,20 +129,5 @@ struct AppointmentsSectionView: View {
         }
         .buttonStyle(.plain)
         .animation(.easeInOut(duration: 0.15), value: isOn)
-    }
-}
-
-struct AppointmentRowView: View {
-    let appt: Appointment
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Follow Up With \(appt.prospect?.fullName ?? appt.title)")
-                .font(.body).fontWeight(.medium)
-            Text(appt.prospect?.address ?? appt.location)
-                .font(.caption).foregroundColor(.secondary)
-            Text(appt.date.formatted(date: .abbreviated, time: .shortened))
-                .font(.caption2).foregroundColor(.secondary)
-        }
-        .padding(.vertical, 10)
     }
 }
