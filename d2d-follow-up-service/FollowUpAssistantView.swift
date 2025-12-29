@@ -122,8 +122,6 @@ struct FollowUpAssistantView: View {
                 }
 
                 FollowUpAssistantFloatingToolbar(
-                    showingProspectPicker: $showingProspectPicker,
-                    selectedProspect: $selectedProspect,
                     showRecordingsSheet: $showRecordingsSheet,
                     showPromo: $showPromo,
                     studioUnlocked: studioUnlocked,

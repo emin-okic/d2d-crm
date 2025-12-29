@@ -8,9 +8,7 @@
 import SwiftUI
 
 struct FollowUpAssistantFloatingToolbar: View {
-    // Bindings from parent
-    @Binding var showingProspectPicker: Bool
-    @Binding var selectedProspect: Prospect?
+
     @Binding var showRecordingsSheet: Bool
     @Binding var showPromo: Bool
 
@@ -20,19 +18,7 @@ struct FollowUpAssistantFloatingToolbar: View {
 
     var body: some View {
         VStack(spacing: 12) {
-
-            // Plus button (opens Prospect picker -> schedule)
-            Button {
-                showingProspectPicker = true
-            } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(width: 50, height: 50)
-                    .background(Circle().fill(Color.blue))
-                    .shadow(radius: 4)
-            }
-
+            
             // Mic button (opens RecordingsView when unlocked, promo otherwise)
             Button {
                 if studioUnlocked {
