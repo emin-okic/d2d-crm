@@ -10,6 +10,8 @@ import SwiftData
 
 struct TripsSectionView: View {
     @Environment(\.modelContext) private var context
+    
+    @Environment(\.dismiss) private var dismiss
 
     @Query private var allTrips: [Trip]
     
@@ -22,6 +24,8 @@ struct TripsSectionView: View {
     @State private var selectedTrips: Set<Trip> = []
     @State private var showDeleteConfirm = false
     @State private var trashPulse = false
+    
+    @State private var csvURL: IdentifiableURL?
 
     private var filteredTrips: [Trip] {
         let calendar = Calendar.current
@@ -44,6 +48,33 @@ struct TripsSectionView: View {
         }
         .sorted(by: { $0.date > $1.date })
     }
+    
+    private var chartView: some View {
+        switch filter {
+        case .day:
+            let segments = filteredTrips.dailyMilesSegments()
+            return AnyView(DailyMilesChartView(segments: segments)
+                .frame(maxWidth: .infinity)
+                .transition(.opacity.combined(with: .slide)))
+        case .week:
+            let segments = filteredTrips.weeklyMilesSegments()
+            return AnyView(WeeklyMilesChartView(segments: segments)
+                .frame(maxWidth: .infinity)
+                .transition(.opacity.combined(with: .slide)))
+        case .month:
+            let segments = filteredTrips.monthlyMilesSegments()
+            return AnyView(MonthlyMilesChartView(segments: segments)
+                .frame(maxWidth: .infinity)
+                .transition(.opacity.combined(with: .slide)))
+        case .year:
+            let segments = filteredTrips.yearlyMilesSegments()
+            return AnyView(YearlyMilesChartView(segments: segments)
+                .frame(maxWidth: .infinity)
+                .transition(.opacity.combined(with: .slide)))
+        default:
+            return AnyView(EmptyView())
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -51,31 +82,7 @@ struct TripsSectionView: View {
             VStack(alignment: .leading, spacing: 12) {
 
                 // Filter chips (Day / Week / Month / Year)
-                HStack(spacing: 8) {
-                    ForEach(TripFilter.allCases) { option in
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.15)) { filter = option }
-                        } label: {
-                            Text(option.rawValue)
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .padding(.vertical, 6)
-                                .padding(.horizontal, 10)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(filter == option ? Color.blue : Color(.secondarySystemBackground))
-                                )
-                                .foregroundColor(filter == option ? .white : .primary)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(filter == option ? Color.blue.opacity(0.9) : Color.gray.opacity(0.25), lineWidth: 1)
-                                )
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.top, 4)
+                TripFilterChips(selectedFilter: $filter)
 
                 if filteredTrips.isEmpty {
                     Text("No trips logged yet.")
@@ -86,72 +93,18 @@ struct TripsSectionView: View {
                 } else {
                     
                     if !filteredTrips.isEmpty {
-                        switch filter {
-                        case .day:
-                            let segments = filteredTrips.dailyMilesSegments()
-                            DailyMilesChartView(segments: segments)
-                                .frame(maxWidth: .infinity)
-                                .transition(.opacity.combined(with: .slide))
-                        case .week:
-                            let segments = filteredTrips.weeklyMilesSegments()
-                            WeeklyMilesChartView(segments: segments)
-                                .frame(maxWidth: .infinity)
-                                .transition(.opacity.combined(with: .slide))
-                        case .month:
-                            let segments = filteredTrips.monthlyMilesSegments()
-                            MonthlyMilesChartView(segments: segments)
-                                .frame(maxWidth: .infinity)
-                                .transition(.opacity.combined(with: .slide))
-                        case .year:
-                            let segments = filteredTrips.yearlyMilesSegments()
-                            YearlyMilesChartView(segments: segments)
-                                .frame(maxWidth: .infinity)
-                                .transition(.opacity.combined(with: .slide))
-                        default:
-                            EmptyView()
-                        }
+                        chartView
                     }
                     
                     // NEW: custom rows so we can toggle selection like RecordingsView
                     List {
                         ForEach(filteredTrips) { trip in
-                            HStack(alignment: .top, spacing: 10) {
-                                if isEditing {
-                                    Image(systemName: selectedTrips.contains(trip) ? "checkmark.circle.fill" : "circle")
-                                        .foregroundColor(.blue)
-                                        .padding(.top, 2)
-                                }
-
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(trip.date.formatted(date: .abbreviated, time: .shortened))
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
-
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        Label(trip.startAddress, systemImage: "circle.fill")
-                                        Label(trip.endAddress, systemImage: "mappin.circle.fill")
-                                        HStack {
-                                            Image(systemName: "car.fill")
-                                            Text("\(trip.miles, specifier: "%.1f") miles")
-                                        }
-                                    }
-                                    .font(.subheadline)
-                                }
-                            }
-                            .padding(.vertical, 6)
-                            .background(
-                                (isEditing && selectedTrips.contains(trip))
-                                ? Color.red.opacity(0.06)
-                                : Color.clear
+                            TripRowView(
+                                trip: trip,
+                                isEditing: isEditing,
+                                isSelected: selectedTrips.contains(trip),
+                                toggleSelection: toggleSelection(for:)
                             )
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                if isEditing {
-                                    toggleSelection(for: trip)
-                                } else {
-                                    selectedTrip = trip
-                                }
-                            }
                         }
                     }
                     .listStyle(.plain)
@@ -232,6 +185,28 @@ struct TripsSectionView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
             .zIndex(999)
         }
+        .toolbar {
+            // Back button on the left
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    HStack {
+                        Image(systemName: "chevron.left")
+                    }
+                }
+            }
+
+            // Export CSV button on the right
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if !filteredTrips.isEmpty {
+                    ShareLink(item: csvFileURL()) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .disabled(filteredTrips.isEmpty)
+                }
+            }
+        }
         // Add Trip
         .sheet(isPresented: $showingAddTrip) {
             NewTripView { showingAddTrip = false }
@@ -256,6 +231,56 @@ struct TripsSectionView: View {
             Text("This action can’t be undone.")
         }
     }
+    
+    private func csvFileURL() -> URL {
+        let fileName = "TripsExport.csv"
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+
+        var csvString = "Date,Start Address,End Address,Miles\n"
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MM/dd/yyyy"
+
+        for trip in filteredTrips {
+            let dateString = formatter.string(from: trip.date)
+            let start = trip.startAddress.replacingOccurrences(of: ",", with: " ")
+            let end = trip.endAddress.replacingOccurrences(of: ",", with: " ")
+            let miles = String(format: "%.2f", trip.miles)
+            csvString += "\(dateString),\(start),\(end),\(miles)\n"
+        }
+
+        do {
+            try csvString.write(to: tempURL, atomically: true, encoding: .utf8)
+        } catch {
+            print("Error exporting CSV: \(error)")
+        }
+
+        return tempURL
+    }
+    
+    
+    private func exportCSV() {
+        let fileName = "TripsExport.csv"
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+
+        var csvString = "Date,Start Address,End Address,Miles\n"
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MM/dd/yyyy"
+
+        for trip in filteredTrips {
+            let dateString = formatter.string(from: trip.date)
+            let start = trip.startAddress.replacingOccurrences(of: ",", with: " ")
+            let end = trip.endAddress.replacingOccurrences(of: ",", with: " ")
+            let miles = String(format: "%.2f", trip.miles)
+            csvString += "\(dateString),\(start),\(end),\(miles)\n"
+        }
+
+        do {
+            try csvString.write(to: tempURL, atomically: true, encoding: .utf8)
+            csvURL = IdentifiableURL(url: tempURL)
+        } catch {
+            print("Error exporting CSV: \(error)")
+        }
+    }
 
     // MARK: - Helpers
 
@@ -271,4 +296,9 @@ struct TripsSectionView: View {
         try? context.save()
         selectedTrips.removeAll()
     }
+}
+
+struct IdentifiableURL: Identifiable {
+    let id = UUID()
+    let url: URL
 }
