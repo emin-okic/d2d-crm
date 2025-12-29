@@ -4,16 +4,20 @@
 //
 //  Created by Emin Okic on 7/6/25.
 //
+
 import SwiftUI
 import SwiftData
 
 struct AppointmentsSectionView: View {
     @Query private var appointments: [Appointment]
-    @Query private var prospects: [Prospect]   // can stay (not used here now, but harmless)
+    @Query private var prospects: [Prospect]
 
-    // Removed: showingProspectPicker / selectedProspect
+    // Parent bindings for multi-delete
+    @Binding var isEditing: Bool
+    @Binding var selectedAppointments: Set<Appointment>
+
     @State private var selectedAppointment: Appointment?
-
+    
     @State private var filter: AppointmentFilter = .upcoming
     private let filterKey = "lastSelectedAppointmentFilter"
 
@@ -29,7 +33,6 @@ struct AppointmentsSectionView: View {
     }
     
     private let rowHeight: CGFloat = 74
-    
     var maxScrollHeight: CGFloat? = nil
 
     var body: some View {
@@ -62,20 +65,28 @@ struct AppointmentsSectionView: View {
                     // Empty / list
                     if filteredAppointments.isEmpty {
                         Text("No \(filter.rawValue) Appointments")
-                            .font(.title3)                // bigger, like a subtitle
+                            .font(.title3)
                             .fontWeight(.semibold)
-                            .foregroundColor(.secondary)  // subtle but readable
+                            .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                             .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.vertical, 24)       // more breathing room
+                            .padding(.vertical, 24)
                     } else {
                         ScrollView {
                             LazyVStack(spacing: 0) {
                                 ForEach(filteredAppointments) { appt in
                                     Button {
-                                        selectedAppointment = appt
+                                        if isEditing {
+                                            toggleSelection(for: appt)
+                                        } else {
+                                            selectedAppointment = appt
+                                        }
                                     } label: {
-                                        AppointmentRowView(appt: appt)
+                                        AppointmentRowView(
+                                            appt: appt,
+                                            isEditing: isEditing,
+                                            isSelected: selectedAppointments.contains(appt)
+                                        )
                                     }
                                     Divider()
                                 }
@@ -88,9 +99,7 @@ struct AppointmentsSectionView: View {
                 .frame(maxWidth: .infinity, alignment: .topLeading)
                 .padding(.bottom, 12)
                 .sheet(item: $selectedAppointment) { appt in
-                    
                     AppointmentDetailsView(appointment: appt)
-                    
                 }
             }
             .scrollIndicators(.automatic)
@@ -105,6 +114,15 @@ struct AppointmentsSectionView: View {
         }
         .onChange(of: filter) {
             UserDefaults.standard.set(filter.rawValue, forKey: filterKey)
+        }
+    }
+
+    // MARK: - Multi-select helpers
+    private func toggleSelection(for appt: Appointment) {
+        if selectedAppointments.contains(appt) {
+            selectedAppointments.remove(appt)
+        } else {
+            selectedAppointments.insert(appt)
         }
     }
 
