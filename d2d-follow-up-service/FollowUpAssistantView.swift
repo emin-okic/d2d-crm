@@ -244,11 +244,6 @@ struct FollowUpAssistantView: View {
                     TripsSectionView()
                         .navigationTitle("Trips")
                         .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .confirmationAction) {
-                                Button("Done") { showTripsSheet = false }
-                            }
-                        }
                 }
             }
 
