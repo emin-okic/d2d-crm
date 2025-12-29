@@ -10,6 +10,9 @@ import SwiftData
 import WidgetKit
 
 struct FollowUpAssistantView: View {
+    
+    @Environment(\.modelContext) private var modelContext
+    
     @Query private var prospects: [Prospect]
     @Query private var trips: [Trip]
     @Query private var appointments: [Appointment]
@@ -47,9 +50,26 @@ struct FollowUpAssistantView: View {
     @State private var showWalkthrough = false
     @State private var showCelebration = false
     
-    @State private var showAppointmentsFullScreen = false
-    
     @State private var showFullScreenProspectPicker = false
+    
+    private var dailyTrips: Int {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+
+        return trips.filter {
+            calendar.isDate($0.date, inSameDayAs: today)
+        }.count
+    }
+    
+    @Query private var recordings: [Recording]
+    
+    // MARK: - Appointment toolbar state
+    @State private var isEditingAppointments = false
+    @State private var selectedAppointments: Set<Appointment> = []
+    @State private var showDeleteAppointmentsConfirm = false
+    @State private var showAppointmentsPicker = false
+    
+    @State private var filteredAppointments: [Appointment] = []
 
     var body: some View {
         NavigationView {
@@ -70,9 +90,29 @@ struct FollowUpAssistantView: View {
                         // MARK: - Summary Cards
                         VStack(spacing: 12) {
                             HStack(spacing: 12) {
-                                // Top Objection scorecard
-                                Button { showTopObjectionsSheet = true } label: {
-                                    LeaderboardTextCardView(title: "Top Objection", text: topObjectionText)
+                                
+                                // Recordings scorecard (NEW)
+                                Button {
+                                    if studioUnlocked {
+                                        showRecordingsSheet = true
+                                    } else {
+                                        showPromo = true
+                                    }
+                                } label: {
+                                    RecordingsScorecardView(
+                                        unlocked: studioUnlocked,
+                                        count: recordings.count
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                
+                                Button {
+                                    showTripsSheet = true
+                                } label: {
+                                    LeaderboardCardView(
+                                        title: "Trips Today",
+                                        count: dailyTrips
+                                    )
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -83,36 +123,43 @@ struct FollowUpAssistantView: View {
                         // AppointmentsSectionView already scrolls and is clamped to 300pt
                         ScrollView {
                             ZStack(alignment: .topTrailing) {
-                                AppointmentsContainerView()
-                                    .frame(maxHeight: 500)
-                                    .padding(.horizontal, 20)
+                                AppointmentsContainerView(
+                                    isEditing: $isEditingAppointments,
+                                    selectedAppointments: $selectedAppointments,
+                                    filteredAppointments: $filteredAppointments
+                                )
+                                .padding(.horizontal, 20)
+                                .frame(maxHeight: 500)
                                 
-                                // Expand button
-                                Button {
-                                    showAppointmentsFullScreen = true
-                                } label: {
-                                    Image(systemName: "arrow.up.left.and.arrow.down.right")
-                                        .font(.system(size: 18, weight: .semibold))
-                                        .padding(10)
-                                        .background(Color(.systemGray5).opacity(0.9))
-                                        .clipShape(Circle())
-                                }
-                                .padding(.vertical, 10)
-                                .padding(.horizontal, 30)
-                                .buttonStyle(.plain)
                             }
                         }
                         .frame(maxHeight: 700)
                     }
                     .padding(.bottom, 5)
                 }
-
-                FollowUpAssistantFloatingToolbar(
-                    showRecordingsSheet: $showRecordingsSheet,
-                    showPromo: $showPromo,
-                    showTripsSheet: $showTripsSheet,
-                    studioUnlocked: studioUnlocked,
-                    recordingFeaturesActive: recordingFeaturesActive
+                
+                
+                // Floating Apple Maps button
+                if !appointments.isEmpty {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            OpenInAppleMapsButton(
+                                appointments: appointments.filter { Calendar.current.isDate($0.date, inSameDayAs: Date()) }
+                            )
+                            .padding(.bottom, 30)
+                            .padding(.trailing, 20)
+                        }
+                    }
+                    .zIndex(998)
+                }
+                
+                AppointmentsToolbar(
+                    showProspectPicker: $showAppointmentsPicker,
+                    isEditing: $isEditingAppointments,
+                    selectedAppointments: $selectedAppointments,
+                    showDeleteConfirm: $showDeleteAppointmentsConfirm
                 )
                 
             }
@@ -125,11 +172,33 @@ struct FollowUpAssistantView: View {
             .navigationBarTitleDisplayMode(.inline)
 
             // SHEETS
-            .sheet(isPresented: $showAppointmentsFullScreen) {
-                FullScreenAppointmentsView(
-                    isPresented: $showAppointmentsFullScreen,
-                    prospects: prospects
-                )
+            .sheet(isPresented: $showAppointmentsPicker) {
+                NavigationStack {
+                    List(prospects) { prospect in
+                        Button {
+                            selectedProspect = prospect
+                            showAppointmentsPicker = false
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(prospect.fullName)
+                                Text(prospect.address)
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(.vertical, 10)
+                        }
+                    }
+                    .navigationTitle("Pick Prospect")
+                    .listStyle(.plain)
+                }
+            }
+            .alert("Delete selected appointments?", isPresented: $showDeleteAppointmentsConfirm) {
+                Button("Delete", role: .destructive) {
+                    deleteSelectedAppointments()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This action can’t be undone.")
             }
             // Promo to request App Store review → unlock
             .sheet(isPresented: $showPromo) {
@@ -217,6 +286,22 @@ struct FollowUpAssistantView: View {
                         .navigationBarTitleDisplayMode(.inline)
                 }
             }
+        }
+    }
+    
+    private func deleteSelectedAppointments() {
+        withAnimation {
+            let toDelete = selectedAppointments
+            selectedAppointments.removeAll()
+            for appt in toDelete {
+                modelContext.delete(appt)
+            }
+            do {
+                try modelContext.save()
+            } catch {
+                print("Error saving after deletion: \(error)")
+            }
+            isEditingAppointments = false
         }
     }
 }

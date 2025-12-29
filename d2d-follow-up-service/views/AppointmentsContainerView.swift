@@ -10,9 +10,9 @@ import SwiftUI
 
 struct AppointmentsContainerView: View {
     
-    @State private var isEditing = false
-    @State private var selectedAppointments: Set<Appointment> = []
-    @State private var filteredAppointments: [Appointment] = [] // <-- NEW
+    @Binding var isEditing: Bool
+    @Binding var selectedAppointments: Set<Appointment>
+    @Binding var filteredAppointments: [Appointment]
 
     var body: some View {
         ZStack {

@@ -9,6 +9,8 @@ import SwiftUI
 import SwiftData
 
 struct AppointmentsSectionView: View {
+    @Environment(\.modelContext) private var modelContext
+    
     @Query private var appointments: [Appointment]
     @Query private var prospects: [Prospect]
 
@@ -17,6 +19,9 @@ struct AppointmentsSectionView: View {
     @Binding var selectedAppointments: Set<Appointment>
 
     @State private var selectedAppointment: Appointment?
+    
+    @State private var appointmentToDelete: Appointment?
+    @State private var showDeleteConfirmation: Bool = false
     
     @State private var filter: AppointmentFilter = .upcoming
     private let filterKey = "lastSelectedAppointmentFilter"
@@ -53,7 +58,6 @@ struct AppointmentsSectionView: View {
 
     var body: some View {
         ZStack {
-            ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
 
                     // Header
@@ -84,38 +88,44 @@ struct AppointmentsSectionView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 20)
 
-                    // Empty / list
+                    // MARK: Appointments list or empty state
                     if filteredAppointmentsInternal.isEmpty {
-                        Text("No \(filter.rawValue) Appointments")
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.vertical, 24)
+                        VStack(spacing: 24) {
+                            Text("No \(filter.rawValue) Appointments")
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .padding(.top, 16)
                     } else {
-                        ScrollView {
-                            LazyVStack(spacing: 0) {
-                                ForEach(filteredAppointmentsInternal) { appt in
-                                    Button {
-                                        if isEditing {
-                                            toggleSelection(for: appt)
-                                        } else {
-                                            selectedAppointment = appt
-                                        }
-                                    } label: {
-                                        AppointmentRowView(
-                                            appt: appt,
-                                            isEditing: isEditing,
-                                            isSelected: selectedAppointments.contains(appt)
-                                        )
+                        List {
+                            ForEach(filteredAppointmentsInternal) { appt in
+                                AppointmentRowView(
+                                    appt: appt,
+                                    isEditing: isEditing,
+                                    isSelected: selectedAppointments.contains(appt)
+                                )
+                                .listRowBackground(Color.clear)
+                                .onTapGesture {
+                                    if isEditing {
+                                        toggleSelection(for: appt)
+                                    } else {
+                                        selectedAppointment = appt
                                     }
-                                    Divider()
+                                }
+                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    Button(role: .destructive) {
+                                        appointmentToDelete = appt
+                                        showDeleteConfirmation = true
+                                    } label: {
+                                        Label("Delete", systemImage: "trash.fill")
+                                    }
                                 }
                             }
-                            .padding(.horizontal, 10)
                         }
-                        .frame(maxHeight: maxScrollHeight ?? rowHeight * 3)
+                        .listStyle(.plain)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -123,8 +133,14 @@ struct AppointmentsSectionView: View {
                 .sheet(item: $selectedAppointment) { appt in
                     AppointmentDetailsView(appointment: appt)
                 }
+        }
+        .alert("Delete Appointment?", isPresented: $showDeleteConfirmation, presenting: appointmentToDelete) { appt in
+            Button("Delete", role: .destructive) {
+                deleteAppointment(appt)
             }
-            .scrollIndicators(.automatic)
+            Button("Cancel", role: .cancel) {}
+        } message: { appt in
+            Text("Are you sure you want to delete this appointment? This action cannot be undone.")
         }
         .onAppear {
             if let saved = UserDefaults.standard.string(forKey: filterKey),
@@ -148,6 +164,21 @@ struct AppointmentsSectionView: View {
             selectedAppointments.remove(appt)
         } else {
             selectedAppointments.insert(appt)
+        }
+    }
+    
+    private func deleteAppointment(_ appt: Appointment) {
+        withAnimation {
+            // Deselect if needed
+            selectedAppointments.remove(appt)
+            
+            // Delete from context
+            modelContext.delete(appt)
+            do {
+                try modelContext.save()
+            } catch {
+                print("Error saving after appointment deletion: \(error)")
+            }
         }
     }
 

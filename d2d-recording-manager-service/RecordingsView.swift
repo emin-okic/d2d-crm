@@ -46,12 +46,33 @@ struct RecordingsView: View {
     @State private var tickTimer: Timer?           // 👈 timer ref so we can stop it
     
     @Environment(\.dismiss) private var dismiss
+    
+    @State private var showTopObjectionsSheet = false
+    
+    private var topObjectionText: String {
+        objections
+            .filter { $0.text != "Converted To Sale" }
+            .sorted { $0.timesHeard > $1.timesHeard }
+            .first?.text ?? "—"
+    }
 
     var body: some View {
         NavigationView {
             ZStack {
                 // ========= MAIN CONTENT =========
                 VStack(alignment: .leading, spacing: 12) {
+                    
+                    // MARK: - Training Insights
+                    Button {
+                        showTopObjectionsSheet = true
+                    } label: {
+                        LeaderboardTextCardView(
+                            title: "Top Objection",
+                            text: topObjectionText
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 20)
 
                     
                     // Header
@@ -84,14 +105,17 @@ struct RecordingsView: View {
 
                     // List
                     if recordings.isEmpty {
-                        Text("No Recordings Yet")
-                            .font(.title3)                // bigger, like a subtitle
-                            .fontWeight(.semibold)
-                            .foregroundColor(.secondary)  // subtle but readable
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.vertical, 24)       // more breathing room
-                        
+                        VStack {
+                            Text("No Recordings Yet")
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.top, 24) // top spacing from header
+                            Spacer() // push content to top
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .padding(.horizontal, 20)
                     } else {
                         List {
                             ForEach(recordings) { recording in
@@ -240,6 +264,18 @@ struct RecordingsView: View {
                     recorder.delete(recording: recording, context: modelContext)
                     selectedRecording = nil
                 }
+            }
+        }
+        .sheet(isPresented: $showTopObjectionsSheet) {
+            NavigationStack {
+                ObjectionsSectionView()
+                    .navigationTitle("Top Objections")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { showTopObjectionsSheet = false }
+                        }
+                    }
             }
         }
         .navigationBarTitleDisplayMode(.inline)
