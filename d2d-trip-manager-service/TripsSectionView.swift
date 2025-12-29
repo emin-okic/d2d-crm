@@ -186,21 +186,24 @@ struct TripsSectionView: View {
             .zIndex(999)
         }
         .toolbar {
-            
-            // NEW: Export CSV button to the left of Done
-            ToolbarItem(placement: .confirmationAction) {
+            // Back button on the left
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    HStack {
+                        Image(systemName: "chevron.left")
+                    }
+                }
+            }
+
+            // Export CSV button on the right
+            ToolbarItem(placement: .navigationBarTrailing) {
                 if !filteredTrips.isEmpty {
                     ShareLink(item: csvFileURL()) {
                         Image(systemName: "square.and.arrow.up")
                     }
                     .disabled(filteredTrips.isEmpty)
-                }
-            }
-            
-            // Done button
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Done") {
-                    dismiss()
                 }
             }
         }
