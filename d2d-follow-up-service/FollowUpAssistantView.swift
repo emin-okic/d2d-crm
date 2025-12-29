@@ -77,7 +77,6 @@ struct FollowUpAssistantView: View {
                                     LeaderboardTextCardView(title: "Top Objection", text: topObjectionText)
                                 }
                                 .buttonStyle(.plain)
-                                .padding(.horizontal, 20)
 
                                 Button { showTripsSheet = true } label: {
                                     LeaderboardCardView(title: "Trips Made", count: totalTrips)
