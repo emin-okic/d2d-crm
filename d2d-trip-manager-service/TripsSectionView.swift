@@ -186,23 +186,21 @@ struct TripsSectionView: View {
             .zIndex(999)
         }
         .toolbar {
+            
+            // NEW: Export CSV button to the left of Done
+            ToolbarItem(placement: .confirmationAction) {
+                if !filteredTrips.isEmpty {
+                    ShareLink(item: csvFileURL()) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .disabled(filteredTrips.isEmpty)
+                }
+            }
+            
             // Done button
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") {
                     dismiss()
-                }
-            }
-
-            // NEW: Export CSV button to the left of Done
-            ToolbarItem(placement: .confirmationAction) {
-                if !filteredTrips.isEmpty {
-                    Button(action: exportCSV) {
-                        Image(systemName: "square.and.arrow.up")
-                    }
-                    .disabled(filteredTrips.isEmpty)
-                    .sheet(item: $csvURL) { identifiable in
-                        ShareLink(item: identifiable.url)
-                    }
                 }
             }
         }
@@ -229,6 +227,31 @@ struct TripsSectionView: View {
         } message: {
             Text("This action can’t be undone.")
         }
+    }
+    
+    private func csvFileURL() -> URL {
+        let fileName = "TripsExport.csv"
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+
+        var csvString = "Date,Start Address,End Address,Miles\n"
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MM/dd/yyyy"
+
+        for trip in filteredTrips {
+            let dateString = formatter.string(from: trip.date)
+            let start = trip.startAddress.replacingOccurrences(of: ",", with: " ")
+            let end = trip.endAddress.replacingOccurrences(of: ",", with: " ")
+            let miles = String(format: "%.2f", trip.miles)
+            csvString += "\(dateString),\(start),\(end),\(miles)\n"
+        }
+
+        do {
+            try csvString.write(to: tempURL, atomically: true, encoding: .utf8)
+        } catch {
+            print("Error exporting CSV: \(error)")
+        }
+
+        return tempURL
     }
     
     
