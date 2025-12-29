@@ -125,50 +125,25 @@ struct ProspectDetailsView: View {
             }
             
             // Bottom floating buttons
-            VStack {
-                Spacer()
-                HStack {
-                    // Delete button (left)
-                    Button(action: {
-                        showDeleteConfirmation = true
-                    }) {
-                        Image(systemName: "trash.fill")
-                            .foregroundColor(.white)
-                            .font(.title2)
-                            .padding()
-                            .background(Color.red)
-                            .clipShape(Circle())
-                            .shadow(radius: 5)
-                    }
-                    .sheet(isPresented: $showDeleteConfirmation) {
-                        DeleteProspectSheet(
-                            prospectName: prospect.fullName,
-                            onDelete: deleteProspect
-                        )
-                        .presentationDetents([.fraction(0.25)])
-                        .presentationDragIndicator(.visible)
-                    }
-                    
-                    Spacer() // Pushes the notes button to the right
-                    
-                    // Notes button (right)
-                    Button(action: {
-                        controller.showNotesSheet = true
-                    }) {
-                        Image(systemName: "note.text")
-                            .font(.title2)
-                            .foregroundColor(.white)
-                            .frame(width: 50, height: 50)
-                            .background(Color.blue)
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                            .shadow(radius: 5)
-                    }
-                    .sheet(isPresented: $controller.showNotesSheet) {
-                        NotesThreadFullView(prospect: prospect)
-                    }
+            ProspectFloatingActionsView(
+                onDeleteTapped: {
+                    showDeleteConfirmation = true
+                },
+                onNotesTapped: {
+                    controller.showNotesSheet = true
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 16)
+            )
+            .sheet(isPresented: $showDeleteConfirmation) {
+                DeleteProspectSheet(
+                    prospectName: prospect.fullName,
+                    onDelete: deleteProspect
+                )
+                .presentationDetents([.fraction(0.25)])
+                .presentationDragIndicator(.visible)
+            }
+
+            .sheet(isPresented: $controller.showNotesSheet) {
+                NotesThreadFullView(prospect: prospect)
             }
         }
         .navigationTitle("Edit Contact")
