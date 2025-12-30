@@ -37,48 +37,42 @@ struct RootView: View {
     @State private var searchText: String = ""
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            MapSearchView(
-                searchText: $searchText,
-                region: $region,
-                selectedList: $selectedList,
-                addressToCenter: $addressToCenter
-            )
-            .tabItem {
-                Label("Map", systemImage: "map.fill")
-            }
-            .tag(0)
+        TabView {
 
-            ContactManagementView(
-                selectedList: $selectedList,
-                onSave: { showingAddProspect = false }
-            )
-            .tabItem {
-                Label("Contacts", systemImage: "person.3.fill")
-            }
-            .tag(1)
-            
-            FollowUpAssistantView(
-            )
-            .tabItem {
-                Label("Pipeline", systemImage: "calendar")
-            }
-            .tag(2)
-            
-            SearchView()
-                .tabItem {
-                    Label("Search", systemImage: "magnifyingglass")
+            // 🗺 MAP
+            Tab("Map", systemImage: "map.fill") {
+                MapSearchView(
+                    searchText: $searchText,
+                    region: $region,
+                    selectedList: $selectedList,
+                    addressToCenter: $addressToCenter
+                )
+                .onAppear {
+                    NotificationCenter.default.post(
+                        name: .mapShouldRecenterAllMarkers,
+                        object: nil
+                    )
                 }
-                .tag(3)
+            }
+
+            // 👥 CONTACTS
+            Tab("Contacts", systemImage: "person.3.fill") {
+                ContactManagementView(
+                    selectedList: $selectedList,
+                    onSave: { showingAddProspect = false }
+                )
+            }
+
+            // 📅 PIPELINE
+            Tab("Pipeline", systemImage: "calendar") {
+                FollowUpAssistantView()
+            }
+            // 🔍 SEARCH — SYSTEM ROLE
+            Tab(role: .search) {
+                SearchView()
+            }
         }
-        .onChange(of: selectedTab) { newValue in
-                    if newValue == 0 {
-                        NotificationCenter.default.post(
-                            name: .mapShouldRecenterAllMarkers,
-                            object: nil
-                        )
-                    }
-                }
+
         
     }
 }
