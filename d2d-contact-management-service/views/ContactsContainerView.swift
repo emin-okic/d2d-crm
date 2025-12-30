@@ -14,6 +14,8 @@ struct ContactsContainerView: View {
     
     @Binding var isSearchExpanded: Bool
     @FocusState<Bool>.Binding var isSearchFocused: Bool
+    
+    @Binding var selectedProspect: Prospect?
 
     var body: some View {
         GeometryReader { geo in
@@ -26,6 +28,7 @@ struct ContactsContainerView: View {
 
                 ProspectsSectionView(
                     selectedList: $selectedList,
+                    selectedProspect: $selectedProspect,
                     containerHeight: targetHeight,
                     searchText: $searchText,
                     isSearchExpanded: $isSearchExpanded,

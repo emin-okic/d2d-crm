@@ -26,6 +26,8 @@ struct ProspectManagementView: View {
     private var totalProspects: Int {
         prospects.filter { $0.list == "Prospects" }.count
     }
+    
+    @Binding var selectedProspect: Prospect?
 
     var body: some View {
         VStack(spacing: 16) {
@@ -56,7 +58,8 @@ struct ProspectManagementView: View {
                 selectedList: $selectedList,  // 👈 use binding instead of .constant
                 searchText: $searchText,
                 isSearchExpanded: $isSearchExpanded,
-                isSearchFocused: $isSearchFocused
+                isSearchFocused: $isSearchFocused,
+                selectedProspect: $selectedProspect
             )
             .padding(.horizontal, 20)
             .padding(.vertical, 10)

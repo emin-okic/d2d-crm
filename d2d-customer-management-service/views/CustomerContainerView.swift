@@ -12,6 +12,8 @@ struct CustomerContainerView: View {
     
     @Binding var isSearchExpanded: Bool
     @FocusState<Bool>.Binding var isSearchFocused: Bool
+    
+    @Binding var selectedCustomer: Customer?
 
     var body: some View {
         GeometryReader { geo in
@@ -25,7 +27,8 @@ struct CustomerContainerView: View {
                 CustomersSectionView(
                     searchText: $searchText,
                     isSearchExpanded: $isSearchExpanded,
-                    isSearchFocused: $isSearchFocused
+                    isSearchFocused: $isSearchFocused,
+                    selectedCustomer: $selectedCustomer
                 )
                     .padding()
             }

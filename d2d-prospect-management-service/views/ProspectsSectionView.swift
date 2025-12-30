@@ -14,7 +14,7 @@ struct ProspectsSectionView: View {
     @Query private var allProspects: [Prospect]
 
     @Binding var selectedList: String
-    @State private var selectedProspect: Prospect?
+    @Binding var selectedProspect: Prospect?
     
     @State private var showDeleteConfirmation: Bool = false
     @State private var prospectToDelete: Prospect?
