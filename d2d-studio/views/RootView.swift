@@ -64,6 +64,12 @@ struct RootView: View {
                 Label("Pipeline", systemImage: "calendar")
             }
             .tag(2)
+            
+            SearchView()
+                .tabItem {
+                    Label("Search", systemImage: "magnifyingglass")
+                }
+                .tag(3)
         }
         .onChange(of: selectedTab) { newValue in
                     if newValue == 0 {
