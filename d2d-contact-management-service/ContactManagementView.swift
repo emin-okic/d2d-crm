@@ -42,22 +42,6 @@ struct ContactManagementView: View {
         NavigationView {
             ZStack {
                 
-                NavigationLink(
-                    destination: selectedProspect.map { ProspectDetailsView(prospect: $0) },
-                    isActive: Binding(
-                        get: { selectedProspect != nil },
-                        set: { if !$0 { selectedProspect = nil } }
-                    )
-                ) { EmptyView() }
-
-                NavigationLink(
-                    destination: selectedCustomer.map { CustomerDetailsView(customer: $0) },
-                    isActive: Binding(
-                        get: { selectedCustomer != nil },
-                        set: { if !$0 { selectedCustomer = nil } }
-                    )
-                ) { EmptyView() }
-                
                 if selectedList == "Prospects" {
                     ProspectManagementView(
                         searchText: $searchText,
@@ -65,7 +49,8 @@ struct ContactManagementView: View {
                         selectedList: $selectedList,
                         isSearchExpanded: $isSearchExpanded,
                         isSearchFocused: $isSearchFocused,
-                        onSave: onSave
+                        onSave: onSave,
+                        selectedProspect: $selectedProspect
                     )
                 } else {
                     CustomerManagementView(
