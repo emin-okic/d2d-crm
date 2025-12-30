@@ -17,6 +17,7 @@ struct ContactsToolbarView: View {
     @FocusState<Bool>.Binding var isSearchFocused: Bool
 
     var onAddTapped: () -> Void
+    var onSearchSubmit: () -> Void
 
     var body: some View {
         
@@ -38,7 +39,8 @@ struct ContactsToolbarView: View {
             FloatingNameSearchBar(
                 searchText: $searchText,
                 isExpanded: $isSearchExpanded,
-                isFocused: $isSearchFocused
+                isFocused: $isSearchFocused,
+                onSubmitSearch: onSearchSubmit
             )
 
             if !isSearchExpanded {

@@ -11,6 +11,8 @@ struct FloatingNameSearchBar: View {
     @Binding var searchText: String
     @Binding var isExpanded: Bool
     @FocusState<Bool>.Binding var isFocused: Bool
+    
+    var onSubmitSearch: () -> Void
 
     var body: some View {
         VStack(spacing: 10) {
@@ -25,9 +27,7 @@ struct FloatingNameSearchBar: View {
                         .autocapitalization(.words)
                         .submitLabel(.done)
                         .onSubmit {
-                            withAnimation {
-                                isExpanded = false
-                            }
+                            onSubmitSearch()
                         }
 
                     Button {
@@ -71,4 +71,5 @@ struct FloatingNameSearchBar: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
         .zIndex(999)
     }
+    
 }

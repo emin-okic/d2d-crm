@@ -33,10 +33,31 @@ struct ContactManagementView: View {
     @State private var showingAddProspect = false
     
     @State private var showingAddCustomer = false
+    
+    @State private var selectedProspect: Prospect?
+    @State private var selectedCustomer: Customer?
 
     var body: some View {
+        
         NavigationView {
             ZStack {
+                
+                NavigationLink(
+                    destination: selectedProspect.map { ProspectDetailsView(prospect: $0) },
+                    isActive: Binding(
+                        get: { selectedProspect != nil },
+                        set: { if !$0 { selectedProspect = nil } }
+                    )
+                ) { EmptyView() }
+
+                NavigationLink(
+                    destination: selectedCustomer.map { CustomerDetailsView(customer: $0) },
+                    isActive: Binding(
+                        get: { selectedCustomer != nil },
+                        set: { if !$0 { selectedCustomer = nil } }
+                    )
+                ) { EmptyView() }
+                
                 if selectedList == "Prospects" {
                     ProspectManagementView(
                         searchText: $searchText,
@@ -70,7 +91,8 @@ struct ContactManagementView: View {
                         } else {
                             showingAddCustomer = true
                         }
-                    }
+                    },
+                    onSearchSubmit: handleSearchSubmit
                 )
             }
             .navigationTitle("")
@@ -119,6 +141,52 @@ struct ContactManagementView: View {
                     }
                 }
             }
+        }
+    }
+    
+    func matchesSearch(_ text: String, name: String, address: String) -> Bool {
+        let query = text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return false }
+
+        return name.lowercased().contains(query)
+            || address.lowercased().contains(query)
+    }
+    
+    func firstMatchingProspect(
+        searchText: String,
+        prospects: [Prospect]
+    ) -> Prospect? {
+        prospects.first {
+            matchesSearch(searchText, name: $0.fullName, address: $0.address)
+        }
+    }
+
+    func firstMatchingCustomer(
+        searchText: String,
+        customers: [Customer]
+    ) -> Customer? {
+        customers.first {
+            matchesSearch(searchText, name: $0.fullName, address: $0.address)
+        }
+    }
+    
+    private func handleSearchSubmit() {
+        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        if selectedList == "Prospects",
+           let match = firstMatchingProspect(searchText: trimmed, prospects: prospects) {
+            selectedProspect = match
+        }
+
+        if selectedList == "Customers",
+           let match = firstMatchingCustomer(searchText: trimmed, customers: customers) {
+            selectedCustomer = match
+        }
+
+        withAnimation {
+            isSearchExpanded = false
+            isSearchFocused = false
         }
     }
 }
