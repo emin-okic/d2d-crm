@@ -12,22 +12,15 @@ struct SearchView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-
-                // 🔍 Native-style search field
-                TextField("Search prospects", text: $searchText)
-                    .textFieldStyle(.roundedBorder)
-                    .padding()
-
-                ProspectSearchResultsView(
-                    searchText: searchText,
-                    selectedProspect: $selectedProspect
-                )
-            }
+            ProspectSearchResultsView(
+                searchText: searchText,
+                selectedProspect: $selectedProspect
+            )
             .navigationTitle("Search")
             .navigationDestination(item: $selectedProspect) { prospect in
                 ProspectDetailsView(prospect: prospect)
             }
         }
+        .searchable(text: $searchText, prompt: "Search prospects")
     }
 }
