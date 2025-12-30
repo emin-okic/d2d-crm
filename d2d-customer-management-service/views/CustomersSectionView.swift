@@ -18,7 +18,7 @@ struct CustomersSectionView: View {
     @Binding var isSearchExpanded: Bool
     @FocusState<Bool>.Binding var isSearchFocused: Bool
 
-    @State private var selectedCustomer: Customer?
+    @Binding var selectedCustomer: Customer?
     
     @State private var showDeleteConfirmation: Bool = false
     @State private var customerToDelete: Customer?

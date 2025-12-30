@@ -27,6 +27,8 @@ struct CustomerManagementView: View {
     private var totalCustomers: Int {
         customers.count
     }
+    
+    @Binding var selectedCustomer: Customer?
 
     var body: some View {
         VStack(spacing: 16) {
@@ -38,7 +40,8 @@ struct CustomerManagementView: View {
             CustomerContainerView(
                 searchText: $searchText,
                 isSearchExpanded: $isSearchExpanded,
-                isSearchFocused: $isSearchFocused
+                isSearchFocused: $isSearchFocused,
+                selectedCustomer: $selectedCustomer
             )
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)
