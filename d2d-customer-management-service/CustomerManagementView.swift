@@ -32,6 +32,24 @@ struct CustomerManagementView: View {
 
     var body: some View {
         VStack(spacing: 16) {
+            
+            // 🔍 NEW — centered filter pill
+            CustomerFilterRow(
+                searchText: $searchText,
+                isSearchFocused: $isSearchFocused,
+                onSubmit: {
+                    let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !trimmed.isEmpty else { return }
+
+                    if let match = customers.first(where: {
+                        $0.fullName.localizedCaseInsensitiveContains(trimmed) ||
+                        $0.address.localizedCaseInsensitiveContains(trimmed)
+                    }) {
+                        selectedCustomer = match
+                    }
+                }
+            )
+            
             // ✅ Header + chips stay
             CustomerHeaderView(totalCustomers: totalCustomers)
             ToggleChipsView(selectedList: $selectedList)

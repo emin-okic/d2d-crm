@@ -31,10 +31,28 @@ struct ProspectManagementView: View {
 
     var body: some View {
         VStack(spacing: 16) {
+            
+            ProspectFilterRow(
+                searchText: $searchText,
+                isSearchFocused: $isSearchFocused,
+                onSubmit: {
+                    let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !trimmed.isEmpty else { return }
+
+                    if let match = prospects.first(where: {
+                        $0.fullName.localizedCaseInsensitiveContains(trimmed) ||
+                        $0.address.localizedCaseInsensitiveContains(trimmed)
+                    }) {
+                        selectedProspect = match
+                    }
+                }
+            )
+            
             ProspectHeaderView(totalProspects: totalProspects)
 
             // Toggle chips under header (uses shared binding now)
             ToggleChipsView(selectedList: $selectedList)
+            
 
             if let suggestion = suggestedProspect {
                 SuggestedProspectBannerView(
