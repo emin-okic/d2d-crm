@@ -15,7 +15,7 @@ struct CustomersSectionView: View {
     @Query private var allCustomers: [Customer]
     
     @Binding var searchText: String
-    @Binding var isSearchExpanded: Bool
+
     @FocusState<Bool>.Binding var isSearchFocused: Bool
 
     @Binding var selectedCustomer: Customer?
@@ -128,7 +128,6 @@ struct CustomersSectionView: View {
 
             DispatchQueue.main.async {
                 withAnimation {
-                    isSearchExpanded = false
                     isSearchFocused = false
                 }
 

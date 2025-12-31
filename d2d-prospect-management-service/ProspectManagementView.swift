@@ -16,7 +16,6 @@ struct ProspectManagementView: View {
     @Binding var suggestedProspect: Prospect?
     @Binding var selectedList: String   // 👈 add this
     
-    @Binding var isSearchExpanded: Bool
     @FocusState<Bool>.Binding var isSearchFocused: Bool
     
     var onSave: () -> Void
@@ -39,7 +38,6 @@ struct ProspectManagementView: View {
             ProspectContainerView(
                 selectedList: $selectedList,  // 👈 use binding instead of .constant
                 searchText: $searchText,
-                isSearchExpanded: $isSearchExpanded,
                 isSearchFocused: $isSearchFocused,
                 selectedProspect: $selectedProspect
             )
