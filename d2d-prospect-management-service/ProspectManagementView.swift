@@ -36,25 +36,7 @@ struct ProspectManagementView: View {
             // Toggle chips under header (uses shared binding now)
             ToggleChipsView(selectedList: $selectedList)
 
-            if let suggestion = suggestedProspect {
-                SuggestedProspectBannerView(
-                    suggestion: suggestion,
-                    onAdd: {
-                        modelContext.insert(suggestion)
-                        try? modelContext.save()
-                        suggestedProspect = nil
-                        searchText = ""
-                        onSave()
-                    },
-                    onDismiss: {
-                        suggestedProspect = nil
-                    }
-                )
-                .animation(.easeInOut(duration: 0.25), value: suggestedProspect)
-                .padding(.horizontal, 20)
-            }
-
-            ContactsContainerView(
+            ProspectContainerView(
                 selectedList: $selectedList,  // 👈 use binding instead of .constant
                 searchText: $searchText,
                 isSearchExpanded: $isSearchExpanded,
@@ -63,6 +45,21 @@ struct ProspectManagementView: View {
             )
             .padding(.horizontal, 20)
             .padding(.vertical, 10)
+        }
+        .sheet(item: $suggestedProspect) { suggestion in
+            SuggestedProspectSheetView(
+                suggestion: suggestion,
+                onAdd: {
+                    modelContext.insert(suggestion)
+                    try? modelContext.save()
+                    suggestedProspect = nil
+                    searchText = ""
+                    onSave()
+                },
+                onDismiss: {
+                    suggestedProspect = nil
+                }
+            )
         }
     }
 }
