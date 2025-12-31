@@ -16,7 +16,6 @@ struct CustomerManagementView: View {
     
     @Binding var selectedList: String
     
-    @Binding var isSearchExpanded: Bool
     @FocusState<Bool>.Binding var isSearchFocused: Bool
     
     var onSave: () -> Void
@@ -57,7 +56,6 @@ struct CustomerManagementView: View {
             // ✅ Section now wrapped in container for consistent style
             CustomerContainerView(
                 searchText: $searchText,
-                isSearchExpanded: $isSearchExpanded,
                 isSearchFocused: $isSearchFocused,
                 selectedCustomer: $selectedCustomer
             )

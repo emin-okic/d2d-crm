@@ -20,9 +20,6 @@ struct ContactManagementView: View {
     @State private var suggestedProspect: Prospect?
     @State private var suggestionSourceIndex = 0
 
-    @State private var isSearchExpanded: Bool = false
-    @FocusState private var isSearchFocused: Bool
-
     // Menu + overlays
     @State private var showingImportFromContacts = false
     @State private var showImportSuccess = false
@@ -36,6 +33,8 @@ struct ContactManagementView: View {
     
     @State private var selectedProspect: Prospect?
     @State private var selectedCustomer: Customer?
+    
+    @FocusState private var isSearchFocused: Bool
 
     var body: some View {
         
@@ -47,7 +46,6 @@ struct ContactManagementView: View {
                         searchText: $searchText,
                         suggestedProspect: $controller.suggestedProspect,
                         selectedList: $selectedList,
-                        isSearchExpanded: $isSearchExpanded,
                         isSearchFocused: $isSearchFocused,
                         onSave: onSave,
                         selectedProspect: $selectedProspect
@@ -56,7 +54,6 @@ struct ContactManagementView: View {
                     CustomerManagementView(
                         searchText: $searchText,
                         selectedList: $selectedList,
-                        isSearchExpanded: $isSearchExpanded,
                         isSearchFocused: $isSearchFocused,
                         onSave: onSave,
                         showingAddCustomer: $showingAddCustomer,
@@ -66,9 +63,6 @@ struct ContactManagementView: View {
 
                 // Toolbar
                 ContactsToolbarView(
-                    searchText: $searchText,
-                    isSearchExpanded: $isSearchExpanded,
-                    isSearchFocused: $isSearchFocused,
                     onAddTapped: {
                         if selectedList == "Prospects" {
                             withAnimation(.spring()) {
@@ -77,8 +71,7 @@ struct ContactManagementView: View {
                         } else {
                             showingAddCustomer = true
                         }
-                    },
-                    onSearchSubmit: handleSearchSubmit
+                    }
                 )
             }
             .navigationTitle("")
@@ -156,23 +149,4 @@ struct ContactManagementView: View {
         }
     }
     
-    private func handleSearchSubmit() {
-        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-
-        if selectedList == "Prospects",
-           let match = firstMatchingProspect(searchText: trimmed, prospects: prospects) {
-            selectedProspect = match
-        }
-
-        if selectedList == "Customers",
-           let match = firstMatchingCustomer(searchText: trimmed, customers: customers) {
-            selectedCustomer = match
-        }
-
-        withAnimation {
-            isSearchExpanded = false
-            isSearchFocused = false
-        }
-    }
 }

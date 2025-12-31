@@ -12,7 +12,6 @@ struct ContactsContainerView: View {
     @Binding var selectedList: String
     @Binding var searchText: String
     
-    @Binding var isSearchExpanded: Bool
     @FocusState<Bool>.Binding var isSearchFocused: Bool
     
     @Binding var selectedProspect: Prospect?
@@ -31,7 +30,6 @@ struct ContactsContainerView: View {
                     selectedProspect: $selectedProspect,
                     containerHeight: targetHeight,
                     searchText: $searchText,
-                    isSearchExpanded: $isSearchExpanded,
                     isSearchFocused: $isSearchFocused
                 )
                 .padding()

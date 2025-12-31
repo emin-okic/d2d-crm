@@ -10,7 +10,6 @@ import SwiftUI
 struct CustomerContainerView: View {
     @Binding var searchText: String
     
-    @Binding var isSearchExpanded: Bool
     @FocusState<Bool>.Binding var isSearchFocused: Bool
     
     @Binding var selectedCustomer: Customer?
@@ -26,7 +25,6 @@ struct CustomerContainerView: View {
 
                 CustomersSectionView(
                     searchText: $searchText,
-                    isSearchExpanded: $isSearchExpanded,
                     isSearchFocused: $isSearchFocused,
                     selectedCustomer: $selectedCustomer
                 )

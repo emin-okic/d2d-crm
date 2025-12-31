@@ -24,7 +24,6 @@ struct ProspectsSectionView: View {
     
     @Binding var searchText: String
     
-    @Binding var isSearchExpanded: Bool
     @FocusState<Bool>.Binding var isSearchFocused: Bool
 
     private let rowHeight: CGFloat = 88
@@ -131,7 +130,6 @@ struct ProspectsSectionView: View {
 
             DispatchQueue.main.async {
                 withAnimation {
-                    isSearchExpanded = false
                     isSearchFocused = false
                 }
 
