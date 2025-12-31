@@ -25,9 +25,28 @@ struct ProspectManagementView: View {
     }
     
     @Binding var selectedProspect: Prospect?
+    
+    @FocusState<Bool>.Binding var isSearchFocused: Bool
 
     var body: some View {
         VStack(spacing: 16) {
+            
+            ProspectFilterRow(
+                searchText: $searchText,
+                isSearchFocused: $isSearchFocused,
+                onSubmit: {
+                    let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !trimmed.isEmpty else { return }
+
+                    if let match = prospects.first(where: {
+                        $0.fullName.localizedCaseInsensitiveContains(trimmed) ||
+                        $0.address.localizedCaseInsensitiveContains(trimmed)
+                    }) {
+                        selectedProspect = match
+                    }
+                }
+            )
+            
             ProspectHeaderView(totalProspects: totalProspects)
 
             // Toggle chips under header (uses shared binding now)

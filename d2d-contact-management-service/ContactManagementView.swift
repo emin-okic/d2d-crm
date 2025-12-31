@@ -34,6 +34,8 @@ struct ContactManagementView: View {
     @State private var selectedProspect: Prospect?
     @State private var selectedCustomer: Customer?
     
+    @FocusState private var isSearchFocused: Bool
+    
 
     var body: some View {
         
@@ -46,7 +48,8 @@ struct ContactManagementView: View {
                         suggestedProspect: $controller.suggestedProspect,
                         selectedList: $selectedList,
                         onSave: onSave,
-                        selectedProspect: $selectedProspect
+                        selectedProspect: $selectedProspect,
+                        isSearchFocused: $isSearchFocused
                     )
                 } else {
                     CustomerManagementView(
@@ -54,7 +57,8 @@ struct ContactManagementView: View {
                         selectedList: $selectedList,
                         onSave: onSave,
                         showingAddCustomer: $showingAddCustomer,
-                        selectedCustomer: $selectedCustomer
+                        selectedCustomer: $selectedCustomer,
+                        isSearchFocused: $isSearchFocused
                     )
                 }
 
