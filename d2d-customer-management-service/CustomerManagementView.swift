@@ -16,8 +16,6 @@ struct CustomerManagementView: View {
     
     @Binding var selectedList: String
     
-    @FocusState<Bool>.Binding var isSearchFocused: Bool
-    
     var onSave: () -> Void
 
     @Binding var showingAddCustomer: Bool   // 👈 comes from parent now
@@ -38,7 +36,6 @@ struct CustomerManagementView: View {
             // ✅ Section now wrapped in container for consistent style
             CustomerContainerView(
                 searchText: $searchText,
-                isSearchFocused: $isSearchFocused,
                 selectedCustomer: $selectedCustomer
             )
                 .padding(.horizontal, 20)

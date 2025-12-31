@@ -23,8 +23,6 @@ struct ProspectsSectionView: View {
     let containerHeight: CGFloat
     
     @Binding var searchText: String
-    
-    @FocusState<Bool>.Binding var isSearchFocused: Bool
 
     private let rowHeight: CGFloat = 88
 
@@ -127,15 +125,6 @@ struct ProspectsSectionView: View {
         }
         .onChange(of: selectedProspect) { newValue in
             guard newValue != nil else { return }
-
-            DispatchQueue.main.async {
-                withAnimation {
-                    isSearchFocused = false
-                }
-
-                // Clear after collapse so the sheet wins the tap
-                searchText = ""
-            }
         }
     }
     

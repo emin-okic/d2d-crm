@@ -12,8 +12,6 @@ struct ProspectContainerView: View {
     @Binding var selectedList: String
     @Binding var searchText: String
     
-    @FocusState<Bool>.Binding var isSearchFocused: Bool
-    
     @Binding var selectedProspect: Prospect?
 
     var body: some View {
@@ -29,8 +27,7 @@ struct ProspectContainerView: View {
                     selectedList: $selectedList,
                     selectedProspect: $selectedProspect,
                     containerHeight: targetHeight,
-                    searchText: $searchText,
-                    isSearchFocused: $isSearchFocused
+                    searchText: $searchText
                 )
                 .padding()
             }

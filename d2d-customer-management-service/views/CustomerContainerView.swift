@@ -8,9 +8,8 @@
 import SwiftUI
 
 struct CustomerContainerView: View {
-    @Binding var searchText: String
     
-    @FocusState<Bool>.Binding var isSearchFocused: Bool
+    @Binding var searchText: String
     
     @Binding var selectedCustomer: Customer?
 
@@ -25,7 +24,6 @@ struct CustomerContainerView: View {
 
                 CustomersSectionView(
                     searchText: $searchText,
-                    isSearchFocused: $isSearchFocused,
                     selectedCustomer: $selectedCustomer
                 )
                     .padding()

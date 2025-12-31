@@ -16,8 +16,6 @@ struct ProspectManagementView: View {
     @Binding var suggestedProspect: Prospect?
     @Binding var selectedList: String   // 👈 add this
     
-    @FocusState<Bool>.Binding var isSearchFocused: Bool
-    
     var onSave: () -> Void
 
     @Query private var prospects: [Prospect]
@@ -38,7 +36,6 @@ struct ProspectManagementView: View {
             ProspectContainerView(
                 selectedList: $selectedList,  // 👈 use binding instead of .constant
                 searchText: $searchText,
-                isSearchFocused: $isSearchFocused,
                 selectedProspect: $selectedProspect
             )
             .padding(.horizontal, 20)

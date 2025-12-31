@@ -16,8 +16,6 @@ struct CustomersSectionView: View {
     
     @Binding var searchText: String
 
-    @FocusState<Bool>.Binding var isSearchFocused: Bool
-
     @Binding var selectedCustomer: Customer?
     
     @State private var showDeleteConfirmation: Bool = false
@@ -125,15 +123,6 @@ struct CustomersSectionView: View {
         }
         .onChange(of: selectedCustomer) { newValue in
             guard newValue != nil else { return }
-
-            DispatchQueue.main.async {
-                withAnimation {
-                    isSearchFocused = false
-                }
-
-                // Clear AFTER collapse so tap wins
-                searchText = ""
-            }
         }
     }
     
