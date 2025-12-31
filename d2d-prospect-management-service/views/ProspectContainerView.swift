@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ContactsContainerView: View {
+struct ProspectContainerView: View {
     
     @Binding var selectedList: String
     @Binding var searchText: String

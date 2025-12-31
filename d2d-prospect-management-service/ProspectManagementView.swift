@@ -71,7 +71,7 @@ struct ProspectManagementView: View {
                 .padding(.horizontal, 20)
             }
 
-            ContactsContainerView(
+            ProspectContainerView(
                 selectedList: $selectedList,  // 👈 use binding instead of .constant
                 searchText: $searchText,
                 isSearchFocused: $isSearchFocused,

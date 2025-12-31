@@ -28,7 +28,7 @@ struct ContactsToolbarView: View {
 
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-            .padding(.bottom, 110)
+            .padding(.bottom, 16)
             .padding(.leading, 20)
             .zIndex(998)
             
