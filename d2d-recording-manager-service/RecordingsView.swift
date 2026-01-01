@@ -72,7 +72,6 @@ struct RecordingsView: View {
                         )
                     }
                     .buttonStyle(.plain)
-                    .padding(.horizontal, 20)
 
                     
                     // Header

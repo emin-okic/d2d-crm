@@ -19,7 +19,7 @@ final class Objection: Hashable {
         response: String = "",
         timesHeard: Int = 0
     ) {
-        self.text = response
+        self.text = text
         self.response = response
         if !response.isEmpty {
             self.extraResponses = [response]
