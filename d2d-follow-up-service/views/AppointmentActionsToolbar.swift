@@ -25,6 +25,9 @@ struct AppointmentActionsToolbar: View {
     var onDelete: (() -> Void)? = nil
 
     var onReschedule: () -> Void
+    
+    @State private var showCalendarChoice = false
+    @StateObject private var calendarHelper = CalendarHelper()
 
     var body: some View {
         HStack(spacing: 24) {
@@ -75,11 +78,21 @@ struct AppointmentActionsToolbar: View {
                 Button("Cancel", role: .cancel) {}
             }
 
-            .alert("Add to Calendar?",
-                   isPresented: $showAddToCalendarConfirm) {
-                Button("Add") { addToCalendar() }
-                Button("Cancel", role: .cancel) {}
-            }
+                   .alert("Add to Calendar?",
+                          isPresented: $showAddToCalendarConfirm) {
+                       Button("Apple Calendar") {
+                           calendarHelper.addToAppleCalendar(appointment: appointment) { result in
+                               switch result {
+                               case .success: print("Added to Apple Calendar")
+                               case .failure(let error): print("Error: \(error)")
+                               }
+                           }
+                       }
+                       Button("Google Calendar") {
+                           calendarHelper.addToGoogleCalendar(appointment: appointment)
+                       }
+                       Button("Cancel", role: .cancel) {}
+                   }
 
             .alert("Open in Apple Maps?",
                    isPresented: $showOpenInMapsConfirm) {
