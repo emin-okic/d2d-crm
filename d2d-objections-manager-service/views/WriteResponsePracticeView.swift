@@ -74,7 +74,8 @@ struct WriteResponsePracticeView: View {
     }
 
     private func submit() {
-        objection.extraResponses.append(userResponse)
+        objection.addResponse(userResponse)   // add user-written response
+        objection.rotateResponse()            // pick a random one from the set
         try? modelContext.save()
 
         withAnimation {

@@ -10,20 +10,34 @@ import SwiftData
 @Model
 final class Objection: Hashable {
     var text: String
-    var response: String               // primary / best response
-    var extraResponses: [String] = []       // 👈 new
+    var response: String               // primary / currently displayed response
+    var extraResponses: [String] = []  // all generated + practiced responses
     var timesHeard: Int
 
     init(
         text: String,
         response: String = "",
-        extraResponses: [String] = [],
         timesHeard: Int = 0
     ) {
-        self.text = text
+        self.text = response
         self.response = response
-        self.extraResponses = extraResponses
+        if !response.isEmpty {
+            self.extraResponses = [response]
+        }
         self.timesHeard = timesHeard
+    }
+    
+    // Add a response if it doesn't exist
+    func addResponse(_ newResponse: String) {
+        if !extraResponses.contains(newResponse) {
+            extraResponses.append(newResponse)
+        }
+    }
+    
+    // Pick a random response to display
+    func rotateResponse() {
+        guard !extraResponses.isEmpty else { return }
+        response = extraResponses.randomElement()!
     }
 
     static func == (lhs: Objection, rhs: Objection) -> Bool {

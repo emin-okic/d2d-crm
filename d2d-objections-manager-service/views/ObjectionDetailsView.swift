@@ -55,10 +55,6 @@ struct ObjectionDetailsView: View {
                         }
                     )
                     
-                    if !objection.extraResponses.isEmpty {
-                        SavedResponsesList(responses: objection.extraResponses)
-                    }
-                    
                     WriteResponseCTA {
                         showPracticeSheet = true
                     }
@@ -118,7 +114,9 @@ struct ObjectionDetailsView: View {
         .alert("Regenerate response?", isPresented: $showRegenerateAlert) {
             Button("Regenerate", role: .destructive) {
                 Task {
-                    objection.response = await ResponseGenerator.shared.generate(for: objection.text)
+                    let generated = await ResponseGenerator.shared.generate(for: objection.text)
+                    objection.addResponse(generated)  // add to the set
+                    objection.rotateResponse()         // rotate to a random response
                     try? modelContext.save()
                 }
             }
