@@ -1,0 +1,161 @@
+//
+//  AppointmentActionsToolbar.swift
+//  d2d-studio
+//
+//  Created by Emin Okic on 12/31/25.
+//
+
+import SwiftUI
+import SwiftData
+import EventKit
+
+struct AppointmentActionsToolbar: View {
+
+    @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
+
+    let appointment: Appointment
+
+    // State
+    @State private var showRescheduleConfirm = false
+    @State private var showCancelConfirm = false
+    @State private var showAddToCalendarConfirm = false
+    @State private var showOpenInMapsConfirm = false
+    
+    var onDelete: (() -> Void)? = nil
+
+    var onReschedule: () -> Void
+
+    var body: some View {
+        HStack(spacing: 24) {
+
+            actionButton(
+                icon: "arrow.clockwise",
+                title: "Reschedule",
+                color: .blue
+            ) {
+                showRescheduleConfirm = true
+            }
+
+            actionButton(
+                icon: "calendar.badge.plus",
+                title: "Calendar",
+                color: .purple
+            ) {
+                showAddToCalendarConfirm = true
+            }
+
+            actionButton(
+                icon: "car.fill",
+                title: "Directions",
+                color: .orange
+            ) {
+                showOpenInMapsConfirm = true
+            }
+
+            actionButton(
+                icon: "trash.fill",
+                title: "Cancel",
+                color: .red
+            ) {
+                showCancelConfirm = true
+            }
+        }
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity)
+        .overlay(confirmationDialogs)
+    }
+
+    // MARK: - Confirmation dialogs
+    private var confirmationDialogs: some View {
+        EmptyView()
+            .alert("Reschedule Appointment?",
+                   isPresented: $showRescheduleConfirm) {
+                Button("Continue") { onReschedule() }
+                Button("Cancel", role: .cancel) {}
+            }
+
+            .alert("Add to Calendar?",
+                   isPresented: $showAddToCalendarConfirm) {
+                Button("Add") { addToCalendar() }
+                Button("Cancel", role: .cancel) {}
+            }
+
+            .alert("Open in Apple Maps?",
+                   isPresented: $showOpenInMapsConfirm) {
+                Button("Open Maps") {
+                    openInMaps(destination: appointment.location)
+                }
+                Button("Cancel", role: .cancel) {}
+            }
+
+            .alert("Cancel Appointment?",
+                   isPresented: $showCancelConfirm) {
+                Button("Delete", role: .destructive) {
+                    context.delete(appointment)
+                    try? context.save()
+                    dismiss()
+                    onDelete?()
+                }
+                Button("Keep", role: .cancel) {}
+            } message: {
+                Text("This will permanently delete this appointment.")
+            }
+    }
+
+    // MARK: - Shared CRM-style action button
+    private func actionButton(
+        icon: String,
+        title: String,
+        color: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(color.opacity(0.15))
+                        .frame(width: 60, height: 60)
+
+                    Image(systemName: icon)
+                        .font(.title2)
+                        .foregroundColor(color)
+                }
+
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.primary)
+            }
+            .padding(4)
+        }
+        .buttonStyle(.plain)
+        .shadow(color: color.opacity(0.25), radius: 4, x: 0, y: 2)
+    }
+
+    // MARK: - Helpers
+    private func openInMaps(destination: String) {
+        let encoded = destination.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let urlString = "http://maps.apple.com/?daddr=\(encoded)&dirflg=d"
+
+        if let url = URL(string: urlString),
+           UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.open(url)
+        }
+    }
+
+    private func addToCalendar() {
+        let store = EKEventStore()
+        store.requestAccess(to: .event) { granted, _ in
+            guard granted else { return }
+
+            let event = EKEvent(eventStore: store)
+            event.title = appointment.title
+            event.startDate = appointment.date
+            event.endDate = appointment.date.addingTimeInterval(60 * 30)
+            event.location = appointment.location
+            event.calendar = store.defaultCalendarForNewEvents
+
+            try? store.save(event, span: .thisEvent)
+        }
+    }
+}
