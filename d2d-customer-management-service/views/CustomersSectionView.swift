@@ -116,7 +116,6 @@ struct CustomersSectionView: View {
                                 }
                             }
                             .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
                     }
                     .onMove(perform: moveCustomers)
                     .listRowInsets(EdgeInsets())

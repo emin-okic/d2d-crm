@@ -115,7 +115,6 @@ struct ProspectsSectionView: View {
                                 }
                             }
                             .listRowBackground(Color.clear)  // make individual rows’ background transparent
-                            .listRowSeparator(.hidden)
                     }
                     .onMove(perform: moveProspects)
                     .listRowInsets(EdgeInsets()) // optional, to control spacing like LazyVStack
