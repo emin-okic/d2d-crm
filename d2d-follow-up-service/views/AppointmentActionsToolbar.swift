@@ -117,29 +117,28 @@ struct AppointmentActionsToolbar: View {
     }
 
     // MARK: - Shared CRM-style action button
-    private func actionButton(
-        icon: String,
-        title: String,
-        color: Color,
-        action: @escaping () -> Void
-    ) -> some View {
+    @ViewBuilder
+    private func actionButton(icon: String, title: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 6) {
+            VStack(spacing: 4) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(color.opacity(0.15))
-                        .frame(width: 60, height: 60)
-
+                        .frame(width: 50, height: 50) // slightly smaller icon container
+                    
                     Image(systemName: icon)
-                        .font(.title2)
+                        .font(.title3) // slightly smaller icon
                         .foregroundColor(color)
                 }
 
                 Text(title)
-                    .font(.caption)
+                    .font(.caption2) // smaller text
                     .foregroundColor(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6) // shrink to fit instead of wrapping
+                    .frame(maxWidth: 60) // same as icon width
             }
-            .padding(4)
+            .padding(2)
         }
         .buttonStyle(.plain)
         .shadow(color: color.opacity(0.25), radius: 4, x: 0, y: 2)

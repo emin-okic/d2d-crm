@@ -85,7 +85,12 @@ struct AppointmentDetailsView: View {
                 .navigationTitle("Appointment Details")
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("Done") { dismiss() }
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "chevron.backward")
+                                .font(.headline)
+                        }
                     }
                 }
                 .sheet(isPresented: $showRescheduleSheet) {
