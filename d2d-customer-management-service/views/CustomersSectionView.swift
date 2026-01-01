@@ -15,8 +15,6 @@ struct CustomersSectionView: View {
     @Query private var allCustomers: [Customer]
     
     @Binding var searchText: String
-    @Binding var isSearchExpanded: Bool
-    @FocusState<Bool>.Binding var isSearchFocused: Bool
 
     @Binding var selectedCustomer: Customer?
     
@@ -44,6 +42,9 @@ struct CustomersSectionView: View {
     }
     
     @State private var draggingCustomerID: PersistentIdentifier?
+    
+    @Binding var isDeleting: Bool
+    @Binding var selectedCustomers: Set<Customer>
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -54,7 +55,32 @@ struct CustomersSectionView: View {
             if !filtered.isEmpty {
                 List {
                     ForEach(filtered) { c in
-                        CustomerRowView(customer: c)
+                        HStack(spacing: 12) {
+
+                            if isDeleting {
+                                Image(systemName: selectedCustomers.contains(c)
+                                      ? "checkmark.circle.fill"
+                                      : "circle")
+                                    .foregroundColor(.red)
+                            }
+
+                            CustomerRowView(customer: c)
+                        }
+                        .padding(.leading, isDeleting ? 6 : 0)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(isDeleting && selectedCustomers.contains(c)
+                                      ? Color.red.opacity(0.06)
+                                      : Color.clear)
+                        )
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            if isDeleting {
+                                toggleSelection(c)
+                            } else {
+                                selectedCustomer = c
+                            }
+                        }
                             .scaleEffect(draggingCustomerID == c.persistentModelID ? 1.03 : 1.0)
                             .shadow(
                                 color: draggingCustomerID == c.persistentModelID
@@ -89,11 +115,7 @@ struct CustomersSectionView: View {
                                     Label("Delete", systemImage: "trash.fill")
                                 }
                             }
-                            .onTapGesture {
-                                selectedCustomer = c
-                            }
                             .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
                     }
                     .onMove(perform: moveCustomers)
                     .listRowInsets(EdgeInsets())
@@ -125,16 +147,14 @@ struct CustomersSectionView: View {
         }
         .onChange(of: selectedCustomer) { newValue in
             guard newValue != nil else { return }
-
-            DispatchQueue.main.async {
-                withAnimation {
-                    isSearchExpanded = false
-                    isSearchFocused = false
-                }
-
-                // Clear AFTER collapse so tap wins
-                searchText = ""
-            }
+        }
+    }
+    
+    private func toggleSelection(_ customer: Customer) {
+        if selectedCustomers.contains(customer) {
+            selectedCustomers.remove(customer)
+        } else {
+            selectedCustomers.insert(customer)
         }
     }
     

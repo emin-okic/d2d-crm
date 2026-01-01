@@ -16,9 +16,6 @@ struct ProspectManagementView: View {
     @Binding var suggestedProspect: Prospect?
     @Binding var selectedList: String   // 👈 add this
     
-    @Binding var isSearchExpanded: Bool
-    @FocusState<Bool>.Binding var isSearchFocused: Bool
-    
     var onSave: () -> Void
 
     @Query private var prospects: [Prospect]
@@ -28,20 +25,42 @@ struct ProspectManagementView: View {
     }
     
     @Binding var selectedProspect: Prospect?
+    
+    @FocusState<Bool>.Binding var isSearchFocused: Bool
+    
+    @Binding var isDeleting: Bool
+    @Binding var selectedProspects: Set<Prospect>
 
     var body: some View {
         VStack(spacing: 16) {
+            
+            ProspectFilterRow(
+                searchText: $searchText,
+                isSearchFocused: $isSearchFocused,
+                onSubmit: {
+                    let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !trimmed.isEmpty else { return }
+
+                    if let match = prospects.first(where: {
+                        $0.fullName.localizedCaseInsensitiveContains(trimmed) ||
+                        $0.address.localizedCaseInsensitiveContains(trimmed)
+                    }) {
+                        selectedProspect = match
+                    }
+                }
+            )
+            
             ProspectHeaderView(totalProspects: totalProspects)
 
             // Toggle chips under header (uses shared binding now)
             ToggleChipsView(selectedList: $selectedList)
 
             ProspectContainerView(
-                selectedList: $selectedList,  // 👈 use binding instead of .constant
+                selectedList: $selectedList,
                 searchText: $searchText,
-                isSearchExpanded: $isSearchExpanded,
-                isSearchFocused: $isSearchFocused,
-                selectedProspect: $selectedProspect
+                selectedProspect: $selectedProspect,
+                isDeleting: $isDeleting,
+                selectedProspects: $selectedProspects
             )
             .padding(.horizontal, 20)
             .padding(.vertical, 10)

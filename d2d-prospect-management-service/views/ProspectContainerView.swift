@@ -12,10 +12,10 @@ struct ProspectContainerView: View {
     @Binding var selectedList: String
     @Binding var searchText: String
     
-    @Binding var isSearchExpanded: Bool
-    @FocusState<Bool>.Binding var isSearchFocused: Bool
-    
     @Binding var selectedProspect: Prospect?
+    
+    @Binding var isDeleting: Bool
+    @Binding var selectedProspects: Set<Prospect>
 
     var body: some View {
         GeometryReader { geo in
@@ -31,8 +31,8 @@ struct ProspectContainerView: View {
                     selectedProspect: $selectedProspect,
                     containerHeight: targetHeight,
                     searchText: $searchText,
-                    isSearchExpanded: $isSearchExpanded,
-                    isSearchFocused: $isSearchFocused
+                    isDeleting: $isDeleting,
+                    selectedProspects: $selectedProspects
                 )
                 .padding()
             }

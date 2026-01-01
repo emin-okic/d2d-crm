@@ -8,12 +8,13 @@
 import SwiftUI
 
 struct CustomerContainerView: View {
+    
     @Binding var searchText: String
     
-    @Binding var isSearchExpanded: Bool
-    @FocusState<Bool>.Binding var isSearchFocused: Bool
-    
     @Binding var selectedCustomer: Customer?
+    
+    @Binding var isDeleting: Bool
+    @Binding var selectedCustomers: Set<Customer>
 
     var body: some View {
         GeometryReader { geo in
@@ -26,9 +27,9 @@ struct CustomerContainerView: View {
 
                 CustomersSectionView(
                     searchText: $searchText,
-                    isSearchExpanded: $isSearchExpanded,
-                    isSearchFocused: $isSearchFocused,
-                    selectedCustomer: $selectedCustomer
+                    selectedCustomer: $selectedCustomer,
+                    isDeleting: $isDeleting,
+                    selectedCustomers: $selectedCustomers
                 )
                     .padding()
             }

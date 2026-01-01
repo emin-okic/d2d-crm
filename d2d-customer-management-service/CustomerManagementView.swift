@@ -16,9 +16,6 @@ struct CustomerManagementView: View {
     
     @Binding var selectedList: String
     
-    @Binding var isSearchExpanded: Bool
-    @FocusState<Bool>.Binding var isSearchFocused: Bool
-    
     var onSave: () -> Void
 
     @Binding var showingAddCustomer: Bool   // 👈 comes from parent now
@@ -29,9 +26,32 @@ struct CustomerManagementView: View {
     }
     
     @Binding var selectedCustomer: Customer?
+    
+    @FocusState<Bool>.Binding var isSearchFocused: Bool
+    
+    @Binding var isDeleting: Bool
+    @Binding var selectedCustomers: Set<Customer>
 
     var body: some View {
         VStack(spacing: 16) {
+            
+            // 🔍 NEW — centered filter pill
+            CustomerFilterRow(
+                searchText: $searchText,
+                isSearchFocused: $isSearchFocused,
+                onSubmit: {
+                    let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !trimmed.isEmpty else { return }
+
+                    if let match = customers.first(where: {
+                        $0.fullName.localizedCaseInsensitiveContains(trimmed) ||
+                        $0.address.localizedCaseInsensitiveContains(trimmed)
+                    }) {
+                        selectedCustomer = match
+                    }
+                }
+            )
+            
             // ✅ Header + chips stay
             CustomerHeaderView(totalCustomers: totalCustomers)
             ToggleChipsView(selectedList: $selectedList)
@@ -39,9 +59,9 @@ struct CustomerManagementView: View {
             // ✅ Section now wrapped in container for consistent style
             CustomerContainerView(
                 searchText: $searchText,
-                isSearchExpanded: $isSearchExpanded,
-                isSearchFocused: $isSearchFocused,
-                selectedCustomer: $selectedCustomer
+                selectedCustomer: $selectedCustomer,
+                isDeleting: $isDeleting,
+                selectedCustomers: $selectedCustomers
             )
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)

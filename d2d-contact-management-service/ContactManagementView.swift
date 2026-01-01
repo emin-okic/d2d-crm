@@ -20,9 +20,6 @@ struct ContactManagementView: View {
     @State private var suggestedProspect: Prospect?
     @State private var suggestionSourceIndex = 0
 
-    @State private var isSearchExpanded: Bool = false
-    @FocusState private var isSearchFocused: Bool
-
     // Menu + overlays
     @State private var showingImportFromContacts = false
     @State private var showImportSuccess = false
@@ -36,39 +33,29 @@ struct ContactManagementView: View {
     
     @State private var selectedProspect: Prospect?
     @State private var selectedCustomer: Customer?
-
+    
+    @FocusState private var isSearchFocused: Bool
+    
+    @State private var isDeletingContacts = false
+    @State private var selectedProspects: Set<Prospect> = []
+    @State private var selectedCustomers: Set<Customer> = []
+    @State private var showDeleteContactsConfirm = false
+    
+    private var selectedDeleteCount: Int {
+        selectedList == "Prospects"
+            ? selectedProspects.count
+            : selectedCustomers.count
+    }
+    
     var body: some View {
         
         NavigationView {
             ZStack {
                 
-                if selectedList == "Prospects" {
-                    ProspectManagementView(
-                        searchText: $searchText,
-                        suggestedProspect: $controller.suggestedProspect,
-                        selectedList: $selectedList,
-                        isSearchExpanded: $isSearchExpanded,
-                        isSearchFocused: $isSearchFocused,
-                        onSave: onSave,
-                        selectedProspect: $selectedProspect
-                    )
-                } else {
-                    CustomerManagementView(
-                        searchText: $searchText,
-                        selectedList: $selectedList,
-                        isSearchExpanded: $isSearchExpanded,
-                        isSearchFocused: $isSearchFocused,
-                        onSave: onSave,
-                        showingAddCustomer: $showingAddCustomer,
-                        selectedCustomer: $selectedCustomer
-                    )
-                }
+                managementContent
 
                 // Toolbar
                 ContactsToolbarView(
-                    searchText: $searchText,
-                    isSearchExpanded: $isSearchExpanded,
-                    isSearchFocused: $isSearchFocused,
                     onAddTapped: {
                         if selectedList == "Prospects" {
                             withAnimation(.spring()) {
@@ -78,8 +65,13 @@ struct ContactManagementView: View {
                             showingAddCustomer = true
                         }
                     },
-                    onSearchSubmit: handleSearchSubmit
+                    isDeleting: $isDeletingContacts,
+                    selectedCount: selectedDeleteCount,
+                    onDeleteConfirmed: {
+                        showDeleteContactsConfirm = true
+                    }
                 )
+                
             }
             .navigationTitle("")
             .overlay(
@@ -117,6 +109,15 @@ struct ContactManagementView: View {
                 .presentationDetents([.fraction(0.5)]) // 50% of screen height
                 .presentationDragIndicator(.visible)    // optional: show the drag handle
             }
+            .alert("Delete selected contacts?",
+                   isPresented: $showDeleteContactsConfirm) {
+
+                Button("Delete", role: .destructive) {
+                    deleteSelectedContacts()
+                }
+
+                Button("Cancel", role: .cancel) {}
+            }
             .onChange(of: selectedList) { newValue in
                 if newValue == "Prospects" {
                     Task {
@@ -127,6 +128,55 @@ struct ContactManagementView: View {
                     }
                 }
             }
+        }
+    }
+    
+    @ViewBuilder
+    private var managementContent: some View {
+        if selectedList == "Prospects" {
+            ProspectManagementView(
+                searchText: $searchText,
+                suggestedProspect: $controller.suggestedProspect,
+                selectedList: $selectedList,
+                onSave: onSave,
+                selectedProspect: $selectedProspect,
+                isSearchFocused: $isSearchFocused,
+                isDeleting: $isDeletingContacts,
+                selectedProspects: $selectedProspects
+            )
+        } else {
+            CustomerManagementView(
+                searchText: $searchText,
+                selectedList: $selectedList,
+                onSave: onSave,
+                showingAddCustomer: $showingAddCustomer,
+                selectedCustomer: $selectedCustomer,
+                isSearchFocused: $isSearchFocused,
+                isDeleting: $isDeletingContacts,
+                selectedCustomers: $selectedCustomers
+            )
+        }
+    }
+    
+    private func deleteSelectedContacts() {
+        withAnimation {
+
+            if selectedList == "Prospects" {
+                for p in selectedProspects {
+                    p.appointments.forEach { modelContext.delete($0) }
+                    modelContext.delete(p)
+                }
+                selectedProspects.removeAll()
+            } else {
+                for c in selectedCustomers {
+                    c.appointments.forEach { modelContext.delete($0) }
+                    modelContext.delete(c)
+                }
+                selectedCustomers.removeAll()
+            }
+
+            try? modelContext.save()
+            isDeletingContacts = false
         }
     }
     
@@ -168,11 +218,6 @@ struct ContactManagementView: View {
         if selectedList == "Customers",
            let match = firstMatchingCustomer(searchText: trimmed, customers: customers) {
             selectedCustomer = match
-        }
-
-        withAnimation {
-            isSearchExpanded = false
-            isSearchFocused = false
         }
     }
 }
