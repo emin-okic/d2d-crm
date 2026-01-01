@@ -27,6 +27,9 @@ struct ProspectManagementView: View {
     @Binding var selectedProspect: Prospect?
     
     @FocusState<Bool>.Binding var isSearchFocused: Bool
+    
+    @Binding var isDeleting: Bool
+    @Binding var selectedProspects: Set<Prospect>
 
     var body: some View {
         VStack(spacing: 16) {
@@ -53,9 +56,11 @@ struct ProspectManagementView: View {
             ToggleChipsView(selectedList: $selectedList)
 
             ProspectContainerView(
-                selectedList: $selectedList,  // 👈 use binding instead of .constant
+                selectedList: $selectedList,
                 searchText: $searchText,
-                selectedProspect: $selectedProspect
+                selectedProspect: $selectedProspect,
+                isDeleting: $isDeleting,
+                selectedProspects: $selectedProspects
             )
             .padding(.horizontal, 20)
             .padding(.vertical, 10)

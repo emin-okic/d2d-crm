@@ -28,6 +28,9 @@ struct CustomerManagementView: View {
     @Binding var selectedCustomer: Customer?
     
     @FocusState<Bool>.Binding var isSearchFocused: Bool
+    
+    @Binding var isDeleting: Bool
+    @Binding var selectedCustomers: Set<Customer>
 
     var body: some View {
         VStack(spacing: 16) {
@@ -56,7 +59,9 @@ struct CustomerManagementView: View {
             // ✅ Section now wrapped in container for consistent style
             CustomerContainerView(
                 searchText: $searchText,
-                selectedCustomer: $selectedCustomer
+                selectedCustomer: $selectedCustomer,
+                isDeleting: $isDeleting,
+                selectedCustomers: $selectedCustomers
             )
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)

@@ -49,6 +49,9 @@ struct ProspectsSectionView: View {
     }
     
     @State private var draggingProspectID: PersistentIdentifier?
+    
+    @Binding var isDeleting: Bool
+    @Binding var selectedProspects: Set<Prospect>
 
     var body: some View {
         let tableAreaHeight = max(containerHeight, rowHeight * 2)
@@ -60,7 +63,32 @@ struct ProspectsSectionView: View {
             if !filtered.isEmpty {
                 List {
                     ForEach(filtered) { p in
-                        ProspectRowView(prospect: p)
+                        HStack(spacing: 12) {
+
+                            if isDeleting {
+                                Image(systemName: selectedProspects.contains(p)
+                                      ? "checkmark.circle.fill"
+                                      : "circle")
+                                    .foregroundColor(.red)
+                            }
+
+                            ProspectRowView(prospect: p)
+                        }
+                        .padding(.leading, isDeleting ? 6 : 0)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(isDeleting && selectedProspects.contains(p)
+                                      ? Color.red.opacity(0.06)
+                                      : Color.clear)
+                        )
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            if isDeleting {
+                                toggleSelection(p)
+                            } else {
+                                selectedProspect = p
+                            }
+                        }
                             .scaleEffect(draggingProspectID == p.persistentModelID ? 1.03 : 1.0)
                             .shadow(
                                 color: draggingProspectID == p.persistentModelID
@@ -85,9 +113,6 @@ struct ProspectsSectionView: View {
                                 } label: {
                                     Label("Delete", systemImage: "trash.fill")
                                 }
-                            }
-                            .onTapGesture {
-                                selectedProspect = p
                             }
                             .listRowBackground(Color.clear)  // make individual rows’ background transparent
                             .listRowSeparator(.hidden)
@@ -125,6 +150,14 @@ struct ProspectsSectionView: View {
         }
         .onChange(of: selectedProspect) { newValue in
             guard newValue != nil else { return }
+        }
+    }
+    
+    private func toggleSelection(_ prospect: Prospect) {
+        if selectedProspects.contains(prospect) {
+            selectedProspects.remove(prospect)
+        } else {
+            selectedProspects.insert(prospect)
         }
     }
     

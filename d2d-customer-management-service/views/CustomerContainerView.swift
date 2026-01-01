@@ -12,6 +12,9 @@ struct CustomerContainerView: View {
     @Binding var searchText: String
     
     @Binding var selectedCustomer: Customer?
+    
+    @Binding var isDeleting: Bool
+    @Binding var selectedCustomers: Set<Customer>
 
     var body: some View {
         GeometryReader { geo in
@@ -24,7 +27,9 @@ struct CustomerContainerView: View {
 
                 CustomersSectionView(
                     searchText: $searchText,
-                    selectedCustomer: $selectedCustomer
+                    selectedCustomer: $selectedCustomer,
+                    isDeleting: $isDeleting,
+                    selectedCustomers: $selectedCustomers
                 )
                     .padding()
             }

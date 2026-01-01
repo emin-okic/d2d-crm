@@ -13,6 +13,9 @@ struct ProspectContainerView: View {
     @Binding var searchText: String
     
     @Binding var selectedProspect: Prospect?
+    
+    @Binding var isDeleting: Bool
+    @Binding var selectedProspects: Set<Prospect>
 
     var body: some View {
         GeometryReader { geo in
@@ -27,7 +30,9 @@ struct ProspectContainerView: View {
                     selectedList: $selectedList,
                     selectedProspect: $selectedProspect,
                     containerHeight: targetHeight,
-                    searchText: $searchText
+                    searchText: $searchText,
+                    isDeleting: $isDeleting,
+                    selectedProspects: $selectedProspects
                 )
                 .padding()
             }
