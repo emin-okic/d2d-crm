@@ -41,17 +41,24 @@ final class CalendarHelper: ObservableObject {
         }
     }
 
+
     func addToGoogleCalendar(appointment: Appointment) {
-        // Build a Google Calendar link for web or app
-        let start = iso8601String(for: appointment.date)
-        let end = iso8601String(for: appointment.date.addingTimeInterval(60 * 30))
+        // Google Calendar expects UTC in this exact format: yyyyMMdd'T'HHmmss'Z'
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd'T'HHmmss'Z'"
+        formatter.timeZone = TimeZone(secondsFromGMT: 0) // UTC
+
+        let startUTC = formatter.string(from: appointment.date)
+        let endUTC = formatter.string(from: appointment.date.addingTimeInterval(60 * 30))
+
         let title = appointment.title.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         let location = appointment.location.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         let details = appointment.notes.joined(separator: "\n").addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
 
         let urlString = """
-        https://calendar.google.com/calendar/render?action=TEMPLATE&text=\(title)&dates=\(start)/\(end)&details=\(details)&location=\(location)&sf=true&output=xml
+        https://calendar.google.com/calendar/render?action=TEMPLATE&text=\(title)&dates=\(startUTC)/\(endUTC)&details=\(details)&location=\(location)&sf=true&output=xml
         """
+
         if let url = URL(string: urlString), UIApplication.shared.canOpenURL(url) {
             UIApplication.shared.open(url)
         }
