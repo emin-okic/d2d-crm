@@ -44,82 +44,16 @@ struct AppointmentDetailsView: View {
                     }
                     .padding(.top)
 
-                    // MARK: Actions
-                    HStack(spacing: 32) {
-                        Button {
-                            showRescheduleConfirmation = true
-                        } label: {
-                            Image(systemName: "arrow.clockwise.circle")
-                                .font(.title2)
+                    AppointmentActionsToolbar(
+                        appointment: appointment,
+                        onDelete: {
+                            dismiss()
+                        },
+                        onReschedule: {
+                            newDate = appointment.date
+                            showRescheduleSheet = true
                         }
-                        .alert("Reschedule Appointment", isPresented: $showRescheduleConfirmation) {
-                            Button("Continue") {
-                                newDate = appointment.date
-                                showRescheduleSheet = true
-                            }
-                            Button("Cancel", role: .cancel) { }
-                        } message: {
-                            Text("Pick a new date and time for this appointment.")
-                        }
-
-                        Button {
-                            showCancelConfirmation = true
-                        } label: {
-                            Image(systemName: "trash.fill")
-                                .font(.title2)
-                                .foregroundColor(.red)
-                        }
-                        .alert("Cancel Appointment", isPresented: $showCancelConfirmation) {
-                            Button("Yes", role: .destructive) {
-                                context.delete(appointment)
-                                try? context.save()
-                                dismiss()
-                            }
-                            Button("No", role: .cancel) { }
-                        } message: {
-                            Text("This will permanently delete this appointment. Are you sure?")
-                        }
-
-                        Button {
-                            showAddToCalendarPrompt = true
-                        } label: {
-                            Image(systemName: "calendar.badge.plus")
-                                .font(.title2)
-                        }
-                        .alert("Add to Calendar", isPresented: $showAddToCalendarPrompt) {
-                            Button("Yes") {
-                                addAppointmentToCalendar(appointment)
-                            }
-                            Button("No", role: .cancel) { }
-                        } message: {
-                            Text("Do you want to add this appointment to your iOS Calendar?")
-                        }
-
-                        if let error = calendarError {
-                            Text(error)
-                                .font(.footnote)
-                                .foregroundColor(.secondary)
-                                .padding(.top, 4)
-                        }
-                        
-                        // This is action button for opening in maps
-                        Button {
-                            showOpenInMapsPrompt = true
-                        } label: {
-                            Image(systemName: "car.fill")
-                                .font(.title2)
-                        }
-                        .alert("Open in Apple Maps", isPresented: $showOpenInMapsPrompt) {
-                            Button("Yes") {
-                                openInAppleMaps(destination: appointment.location)
-                            }
-                            Button("No", role: .cancel) { }
-                        } message: {
-                            Text("Would you like to open directions in Apple Maps?")
-                        }
-                        
-                    }
-                    .padding(.bottom)
+                    )
 
                     // MARK: Who & Where
                     VStack(alignment: .leading, spacing: 6) {
@@ -151,7 +85,12 @@ struct AppointmentDetailsView: View {
                 .navigationTitle("Appointment Details")
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("Done") { dismiss() }
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "chevron.backward")
+                                .font(.headline)
+                        }
                     }
                 }
                 .sheet(isPresented: $showRescheduleSheet) {
