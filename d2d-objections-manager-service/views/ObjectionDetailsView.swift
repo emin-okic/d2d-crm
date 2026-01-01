@@ -15,6 +15,8 @@ struct ObjectionDetailsView: View {
 
     @State private var showDeleteAlert = false
     @State private var showRegenerateAlert = false
+    
+    @State private var showPracticeSheet = false
 
     var body: some View {
         ZStack {
@@ -52,6 +54,17 @@ struct ObjectionDetailsView: View {
                             )
                         }
                     )
+                    
+                    if !objection.extraResponses.isEmpty {
+                        SavedResponsesList(responses: objection.extraResponses)
+                    }
+                    
+                    WriteResponseCTA {
+                        showPracticeSheet = true
+                    }
+                    .sheet(isPresented: $showPracticeSheet) {
+                        WriteResponsePracticeView(objection: objection)
+                    }
                 }
                 .padding()
                 .padding(.bottom, 80) // space for floating delete button

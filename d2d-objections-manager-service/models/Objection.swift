@@ -10,17 +10,24 @@ import SwiftData
 @Model
 final class Objection: Hashable {
     var text: String
-    var response: String
+    var response: String               // primary / best response
+    var extraResponses: [String] = []       // 👈 new
     var timesHeard: Int
 
-    init(text: String, response: String = "", timesHeard: Int = 0) {
+    init(
+        text: String,
+        response: String = "",
+        extraResponses: [String] = [],
+        timesHeard: Int = 0
+    ) {
         self.text = text
         self.response = response
+        self.extraResponses = extraResponses
         self.timesHeard = timesHeard
     }
 
     static func == (lhs: Objection, rhs: Objection) -> Bool {
-        return lhs.id == rhs.id
+        lhs.id == rhs.id
     }
 
     func hash(into hasher: inout Hasher) {
