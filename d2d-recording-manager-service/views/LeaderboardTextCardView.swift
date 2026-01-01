@@ -10,28 +10,37 @@ import SwiftUI
 struct LeaderboardTextCardView: View {
     let title: String
     let text: String
+    let topObjections: [String] = ["Price", "Timing", "Need Approval"] // optional mini pills
 
     var body: some View {
-        VStack(spacing: 6) {
-            Text(title)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .minimumScaleFactor(0.7)
-                .frame(maxWidth: .infinity, alignment: .top)
+        VStack(alignment: .leading, spacing: 12) {
 
+            // Title
+            Text(title.uppercased())
+                .font(.caption2.weight(.semibold))
+                .foregroundColor(.secondary)
+                .tracking(1.0)
+
+            // Main value
             Text(text.isEmpty ? "—" : text)
-                .font(.system(size: 20, weight: .semibold))
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
+                .font(.system(size: 28, weight: .bold))
+                .foregroundColor(.blue)
+                .lineLimit(1)
                 .minimumScaleFactor(0.7)
-                .frame(maxWidth: .infinity)
         }
-        .padding()
-        .frame(minWidth: 0, maxWidth: .infinity, minHeight: 90) // medium widget-ish
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+        .padding(16)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(
+                    LinearGradient(
+                        colors: [Color(.systemBackground), Color(.secondarySystemBackground)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 4)
+        )
+        .padding(.horizontal, 10)
     }
 }
