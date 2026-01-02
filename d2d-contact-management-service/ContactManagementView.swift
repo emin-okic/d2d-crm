@@ -47,6 +47,9 @@ struct ContactManagementView: View {
             : selectedCustomers.count
     }
     
+    @State private var exportURL: URL?
+    @State private var showExportSheet = false
+    
     var body: some View {
         
         NavigationView {
@@ -74,6 +77,33 @@ struct ContactManagementView: View {
                 
             }
             .navigationTitle("")
+            .overlay(
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        ExportCSVButton {
+                            do {
+                                if selectedList == "Prospects" {
+                                    exportURL = try CSVExportService.exportProspects(prospects)
+                                } else {
+                                    exportURL = try CSVExportService.exportCustomers(customers)
+                                }
+                                showExportSheet = true
+                            } catch {
+                                print("❌ Export failed:", error)
+                            }
+                        }
+                    }
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 30)
+                }
+            )
+            .sheet(isPresented: $showExportSheet) {
+                if let url = exportURL {
+                    ShareSheet(activityItems: [url])
+                }
+            }
             .overlay(
                 ImportOverlayView(
                     showingImportFromContacts: $showingImportFromContacts,
