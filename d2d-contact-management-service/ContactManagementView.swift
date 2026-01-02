@@ -106,6 +106,8 @@ struct ContactManagementView: View {
                 ExportEmailGateView {
                     performExport()
                 }
+                .presentationDetents([.fraction(0.5)])
+                .presentationDragIndicator(.visible)
             }
             .overlay(
                 ImportOverlayView(
