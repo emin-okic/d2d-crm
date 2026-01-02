@@ -50,6 +50,9 @@ struct ContactManagementView: View {
     @State private var exportURL: URL?
     @State private var showExportSheet = false
     
+    @State private var showEmailGate = false
+    @StateObject private var emailGate = EmailGateManager.shared
+    
     var body: some View {
         
         NavigationView {
@@ -83,15 +86,10 @@ struct ContactManagementView: View {
                     HStack {
                         Spacer()
                         ExportCSVButton {
-                            do {
-                                if selectedList == "Prospects" {
-                                    exportURL = try CSVExportService.exportProspects(prospects)
-                                } else {
-                                    exportURL = try CSVExportService.exportCustomers(customers)
-                                }
-                                showExportSheet = true
-                            } catch {
-                                print("❌ Export failed:", error)
+                            if emailGate.isUnlocked {
+                                performExport()
+                            } else {
+                                showEmailGate = true
                             }
                         }
                     }
@@ -102,6 +100,11 @@ struct ContactManagementView: View {
             .sheet(isPresented: $showExportSheet) {
                 if let url = exportURL {
                     ShareSheet(activityItems: [url])
+                }
+            }
+            .sheet(isPresented: $showEmailGate) {
+                ExportEmailGateView {
+                    performExport()
                 }
             }
             .overlay(
@@ -158,6 +161,19 @@ struct ContactManagementView: View {
                     }
                 }
             }
+        }
+    }
+    
+    private func performExport() {
+        do {
+            if selectedList == "Prospects" {
+                exportURL = try CSVExportService.exportProspects(prospects)
+            } else {
+                exportURL = try CSVExportService.exportCustomers(customers)
+            }
+            showExportSheet = true
+        } catch {
+            print("❌ Export failed:", error)
         }
     }
     
