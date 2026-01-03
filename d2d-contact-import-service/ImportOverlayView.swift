@@ -31,6 +31,8 @@ struct ImportOverlayView: View {
     
     @StateObject private var importManager: ContactImportManager
     
+    @Binding var showDuplicateToast: Bool
+    @Binding var duplicateNames: [String]
     
     // ✅ Custom initializer to properly inject StateObject
     init(
@@ -42,7 +44,9 @@ struct ImportOverlayView: View {
         customers: [Customer],
         modelContext: ModelContext,
         onSave: @escaping () -> Void,
-        onAddManually: @escaping () -> Void
+        onAddManually: @escaping () -> Void,
+        showDuplicateToast: Binding<Bool>,
+        duplicateNames: Binding<[String]>
     ) {
         self._showingImportFromContacts = showingImportFromContacts
         self._showImportSuccess = showImportSuccess
@@ -61,6 +65,9 @@ struct ImportOverlayView: View {
             customers: customers,
             onSave: onSave
         ))
+        
+        self._showDuplicateToast = showDuplicateToast
+        self._duplicateNames = duplicateNames
     }
 
     var body: some View {
@@ -157,12 +164,6 @@ struct ImportOverlayView: View {
                     }
                 )
             }
-            .alert("Duplicate Contact",
-                   isPresented: $importManager.showDuplicateAlert) {
-                Button("OK") {}
-            } message: {
-                Text("\(importManager.duplicateContactName) already exists in your prospects or customers.")
-            }
         }
     }
     
@@ -194,14 +195,24 @@ struct ImportOverlayView: View {
         showContactsPicker = false
         showingImportFromContacts = false
 
-        importManager.importContacts(contacts)
+        let (didAdd, duplicates) = importManager.importContacts(contacts)
 
         selectedList = "Prospects"
         searchText = ""
-        showImportSuccess = true
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            showImportSuccess = false
+        if didAdd {
+            showImportSuccess = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                showImportSuccess = false
+            }
+        }
+
+        if !duplicates.isEmpty {
+            duplicateNames = duplicates
+            showDuplicateToast = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                showDuplicateToast = false
+            }
         }
     }
 

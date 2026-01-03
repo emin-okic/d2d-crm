@@ -53,6 +53,9 @@ struct ContactManagementView: View {
     @State private var showEmailGate = false
     @StateObject private var emailGate = EmailGateManager.shared
     
+    @State private var showDuplicateToast = false
+    @State private var duplicateNames: [String] = []
+    
     var body: some View {
         
         NavigationView {
@@ -120,13 +123,18 @@ struct ContactManagementView: View {
                     onSave: onSave,
                     onAddManually: {
                         showingAddProspect = true
-                    }
+                    },
+                    showDuplicateToast: $showDuplicateToast,
+                    duplicateNames: $duplicateNames
                 )
             )
             .overlay(
                 Group {
                     if showImportSuccess {
                         ToastMessageView(message: "Contacts imported successfully!")
+                    } else if showDuplicateToast {
+                        let message = duplicateNames.joined(separator: ", ") + " already exist."
+                        ToastMessageView(message: message)
                     }
                 }
             )

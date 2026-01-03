@@ -16,9 +16,6 @@ final class ContactImportManager: ObservableObject {
     let customers: [Customer]
     let onSave: () -> Void
 
-    @Published var showDuplicateAlert = false
-    @Published var duplicateContactName: String = ""
-
     init(modelContext: ModelContext,
          prospects: [Prospect],
          customers: [Customer],
@@ -29,7 +26,11 @@ final class ContactImportManager: ObservableObject {
         self.onSave = onSave
     }
 
-    func importContacts(_ contacts: [CNContact]) {
+    /// Returns: (didAddAny, duplicateNames)
+    func importContacts(_ contacts: [CNContact]) -> (Bool, [String]) {
+        var didAddAny = false
+        var duplicateNames: [String] = []
+
         for contact in contacts {
             let fullName =
                 CNContactFormatter.string(from: contact, style: .fullName)
@@ -44,17 +45,15 @@ final class ContactImportManager: ObservableObject {
             let phone = contact.phoneNumbers.first?.value.stringValue ?? ""
             let email = contact.emailAddresses.first?.value as String? ?? ""
 
-            // Check for duplicates in both prospects AND customers
+            // Check for duplicates
             let isDuplicate = prospects.contains { $0.fullName == fullName && $0.address == addressString } ||
                               customers.contains { $0.fullName == fullName && $0.address == addressString }
 
             if isDuplicate {
-                duplicateContactName = fullName
-                showDuplicateAlert = true
+                duplicateNames.append(fullName)
                 continue
             }
 
-            // Otherwise create new prospect
             let newProspect = Prospect(
                 fullName: fullName,
                 address: addressString,
@@ -64,7 +63,6 @@ final class ContactImportManager: ObservableObject {
             newProspect.contactPhone = phone
             newProspect.contactEmail = email
 
-            // Geocode
             CLGeocoder().geocodeAddressString(addressString) { placemarks, _ in
                 if let coord = placemarks?.first?.location?.coordinate {
                     newProspect.latitude = coord.latitude
@@ -74,6 +72,10 @@ final class ContactImportManager: ObservableObject {
                 try? self.modelContext.save()
                 self.onSave()
             }
+
+            didAddAny = true
         }
+
+        return (didAddAny, duplicateNames)
     }
 }
