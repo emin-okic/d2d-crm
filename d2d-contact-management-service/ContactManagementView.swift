@@ -115,6 +115,7 @@ struct ContactManagementView: View {
                     selectedList: $selectedList,
                     searchText: $searchText,
                     prospects: prospects,
+                    customers: customers,
                     modelContext: modelContext,
                     onSave: onSave,
                     onAddManually: {

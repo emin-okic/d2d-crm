@@ -18,6 +18,7 @@ struct ImportOverlayView: View {
     @Binding var searchText: String
 
     let prospects: [Prospect]
+    let customers: [Customer]
     let modelContext: ModelContext
     let onSave: () -> Void
     
@@ -27,8 +28,43 @@ struct ImportOverlayView: View {
     
     @State private var showBusinessCardScanner = false
     @State private var scannedProspectDraft: ProspectDraft?
+    
+    @StateObject private var importManager: ContactImportManager
+    
+    
+    // ✅ Custom initializer to properly inject StateObject
+    init(
+        showingImportFromContacts: Binding<Bool>,
+        showImportSuccess: Binding<Bool>,
+        selectedList: Binding<String>,
+        searchText: Binding<String>,
+        prospects: [Prospect],
+        customers: [Customer],
+        modelContext: ModelContext,
+        onSave: @escaping () -> Void,
+        onAddManually: @escaping () -> Void
+    ) {
+        self._showingImportFromContacts = showingImportFromContacts
+        self._showImportSuccess = showImportSuccess
+        self._selectedList = selectedList
+        self._searchText = searchText
+        self.prospects = prospects
+        self.customers = customers
+        self.modelContext = modelContext
+        self.onSave = onSave
+        self.onAddManually = onAddManually
+
+        // ✅ Initialize StateObject here
+        _importManager = StateObject(wrappedValue: ContactImportManager(
+            modelContext: modelContext,
+            prospects: prospects,
+            customers: customers,
+            onSave: onSave
+        ))
+    }
 
     var body: some View {
+        
         if showingImportFromContacts {
             VStack(spacing: 20) {
                 Capsule()
@@ -121,6 +157,12 @@ struct ImportOverlayView: View {
                     }
                 )
             }
+            .alert("Duplicate Contact",
+                   isPresented: $importManager.showDuplicateAlert) {
+                Button("OK") {}
+            } message: {
+                Text("\(importManager.duplicateContactName) already exists in your prospects or customers.")
+            }
         }
     }
     
@@ -152,48 +194,7 @@ struct ImportOverlayView: View {
         showContactsPicker = false
         showingImportFromContacts = false
 
-        for contact in contacts {
-            let fullName =
-                CNContactFormatter.string(from: contact, style: .fullName)
-                ?? "No Name"
-
-            let addressString =
-                contact.postalAddresses.first.map {
-                    CNPostalAddressFormatter
-                        .string(from: $0.value, style: .mailingAddress)
-                        .replacingOccurrences(of: "\n", with: ", ")
-                } ?? "No Address"
-
-            let phone = contact.phoneNumbers.first?.value.stringValue ?? ""
-            let email = contact.emailAddresses.first?.value as String? ?? ""
-
-            let isDuplicate = prospects.contains {
-                $0.fullName == fullName && $0.address == addressString
-            }
-
-            guard !isDuplicate else { continue }
-
-            let newProspect = Prospect(
-                fullName: fullName,
-                address: addressString,
-                count: 0,
-                list: "Prospects"
-            )
-
-            newProspect.contactPhone = phone
-            newProspect.contactEmail = email
-
-            CLGeocoder().geocodeAddressString(addressString) { placemarks, _ in
-                if let coord = placemarks?.first?.location?.coordinate {
-                    newProspect.latitude = coord.latitude
-                    newProspect.longitude = coord.longitude
-                }
-
-                modelContext.insert(newProspect)
-                try? modelContext.save()
-                onSave()
-            }
-        }
+        importManager.importContacts(contacts)
 
         selectedList = "Prospects"
         searchText = ""
