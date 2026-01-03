@@ -8,80 +8,94 @@
 import SwiftUI
 
 struct AppointmentsToolbar: View {
-    
-    // MARK: - Bindings & State
+
     @Binding var showProspectPicker: Bool
     @Binding var isEditing: Bool
     @Binding var selectedAppointments: Set<Appointment>
     @Binding var showDeleteConfirm: Bool
-    @State private var trashPulse: Bool = false
+
+    let todaysAppointments: [Appointment]
+
+    @State private var trashPulse = false
 
     var body: some View {
-        VStack(spacing: 12) {
-            
-            // Add Appointment
-            Button {
-                showProspectPicker = true
-            } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(width: 50, height: 50)
-                    .background(Circle().fill(Color.blue))
-                    .shadow(radius: 4)
-            }
+        VStack {
+            Spacer()
 
-            // Trash / Delete button
-            Button {
-                if isEditing {
-                    if selectedAppointments.isEmpty {
-                        withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
-                            isEditing = false
-                            trashPulse = false
-                        }
+            LiquidGlassToolbarContainer {
+
+                // MARK: Add Appointment
+                toolbarButton(
+                    icon: "plus",
+                    color: .blue
+                ) {
+                    showProspectPicker = true
+                }
+
+                // MARK: Delete / Edit Mode
+                toolbarButton(
+                    icon: "trash.fill",
+                    color: isEditing ? .red : .blue
+                ) {
+                    if isEditing {
+                        selectedAppointments.isEmpty
+                        ? exitEditMode()
+                        : showDeleteConfirm.toggle()
                     } else {
-                        showDeleteConfirm = true
-                    }
-                } else {
-                    withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
-                        isEditing = true
-                        trashPulse = true
+                        enterEditMode()
                     }
                 }
-            } label: {
-                ZStack(alignment: .topTrailing) {
-                    Image(systemName: "trash.fill")
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(width: 50, height: 50)
-                        .background(Circle().fill(isEditing ? Color.red : Color.blue))
-                        .scaleEffect(isEditing ? (trashPulse ? 1.06 : 1.0) : 1.0)
-                        .rotationEffect(.degrees(isEditing ? (trashPulse ? 2 : -2) : 0))
-                        .shadow(color: (isEditing ? Color.red.opacity(0.45) : Color.black.opacity(0.25)),
-                                radius: 6, x: 0, y: 2)
-                        .animation(
-                            isEditing
-                            ? .easeInOut(duration: 0.75).repeatForever(autoreverses: true)
-                            : .default,
-                            value: trashPulse
-                        )
 
-                    if isEditing && !selectedAppointments.isEmpty {
-                        Text("\(selectedAppointments.count)")
-                            .font(.caption2).bold()
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Capsule().fill(Color.black.opacity(0.7)))
-                            .offset(x: 10, y: -10)
-                    }
+                if isEditing && !selectedAppointments.isEmpty {
+                    Text("\(selectedAppointments.count)")
+                        .font(.caption.bold())
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(Color.black.opacity(0.6)))
                 }
+
+                // MARK: Apple Maps Button (NEW LOCATION)
+                OpenInAppleMapsButton(
+                    appointments: todaysAppointments
+                )
             }
-            .accessibilityLabel(isEditing ? "Delete selected appointments" : "Enter delete mode")
+            .frame(width: 72)
+            .frame(maxHeight: 130)
+            .padding(.leading, 16)
+            .padding(.bottom, 30)
         }
-        .padding(.bottom, 30)
-        .padding(.leading, 20)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+        .frame(maxWidth: .infinity, alignment: .bottomLeading)
         .zIndex(999)
+    }
+
+    // MARK: Helpers
+
+    private func enterEditMode() {
+        withAnimation(.spring()) {
+            isEditing = true
+            trashPulse = true
+        }
+    }
+
+    private func exitEditMode() {
+        withAnimation(.spring()) {
+            isEditing = false
+            trashPulse = false
+        }
+    }
+
+    private func toolbarButton(
+        icon: String,
+        color: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 20, weight: .bold))
+                .foregroundColor(.white)
+                .frame(width: 48, height: 48)
+                .background(Circle().fill(color))
+        }
     }
 }

@@ -44,7 +44,7 @@ struct d2d_widget_serviceEntryView: View {
         .padding()
         
         // make the whole widget tappable
-        .widgetURL(URL(string: "d2dcrm://todaysappointments"))
+        .widgetURL(URL(string: "d2dcrm://followup?filter=today"))
     }
 }
 

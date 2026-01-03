@@ -81,20 +81,19 @@ struct ContactManagementView: View {
             }
             .navigationTitle("")
             .overlay(
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        ExportCSVButton {
-                            if emailGate.isUnlocked {
-                                performExport()
-                            } else {
-                                showEmailGate = true
-                            }
+                GeometryReader { geo in
+                    ExportCSVButton(isUnlocked: emailGate.isUnlocked) {
+                        if emailGate.isUnlocked {
+                            performExport()
+                        } else {
+                            showEmailGate = true
                         }
                     }
-                    .padding(.trailing, 20)
-                    .padding(.bottom, 30)
+                    .position(
+                        x: geo.size.width - 45, // 20 trailing + 25 half width
+                        y: geo.size.height - 55 // 30 bottom + 25 half height
+                    )
+                    .zIndex(999)
                 }
             )
             .sheet(isPresented: $showExportSheet) {

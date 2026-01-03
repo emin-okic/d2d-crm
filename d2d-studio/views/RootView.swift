@@ -35,6 +35,8 @@ struct RootView: View {
     @State private var addressToCenter: String? = nil
     
     @State private var searchText: String = ""
+    
+    @State private var followUpFilter: AppointmentFilter? = nil
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -59,11 +61,20 @@ struct RootView: View {
             .tag(1)
             
             FollowUpAssistantView(
+                deepLinkFilter: $followUpFilter
             )
             .tabItem {
                 Label("Pipeline", systemImage: "calendar")
             }
             .tag(2)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openFollowUpAssistant)) { notification in
+            selectedTab = 2 // Pipeline tab
+
+            if let raw = notification.object as? String,
+               let filter = AppointmentFilter(rawValue: raw.capitalized) {
+                followUpFilter = filter
+            }
         }
         .onChange(of: selectedTab) { newValue in
                     if newValue == 0 {
@@ -79,4 +90,8 @@ struct RootView: View {
 
 extension Notification.Name {
     static let mapShouldRecenterAllMarkers = Notification.Name("MapShouldRecenterAllMarkers")
+}
+
+extension Notification.Name {
+    static let openFollowUpAssistant = Notification.Name("OpenFollowUpAssistant")
 }

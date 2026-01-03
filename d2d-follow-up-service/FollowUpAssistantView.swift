@@ -70,6 +70,8 @@ struct FollowUpAssistantView: View {
     @State private var showAppointmentsPicker = false
     
     @State private var filteredAppointments: [Appointment] = []
+    
+    @Binding var deepLinkFilter: AppointmentFilter?
 
     var body: some View {
         NavigationView {
@@ -138,30 +140,22 @@ struct FollowUpAssistantView: View {
                     .padding(.bottom, 5)
                 }
                 
-                
-                // Floating Apple Maps button
-                if !appointments.isEmpty {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            OpenInAppleMapsButton(
-                                appointments: appointments.filter { Calendar.current.isDate($0.date, inSameDayAs: Date()) }
-                            )
-                            .padding(.bottom, 30)
-                            .padding(.trailing, 20)
-                        }
-                    }
-                    .zIndex(998)
-                }
-                
                 AppointmentsToolbar(
                     showProspectPicker: $showAppointmentsPicker,
                     isEditing: $isEditingAppointments,
                     selectedAppointments: $selectedAppointments,
-                    showDeleteConfirm: $showDeleteAppointmentsConfirm
+                    showDeleteConfirm: $showDeleteAppointmentsConfirm,
+                    todaysAppointments: filteredAppointments
                 )
                 
+            }
+            .onAppear {
+                if let deepLinkFilter {
+                    UserDefaults.standard.set(deepLinkFilter.rawValue, forKey: "lastSelectedAppointmentFilter")
+                }
+            }
+            .onChange(of: deepLinkFilter) { _ in
+                deepLinkFilter = nil
             }
             .onAppear {
                 let defaults = UserDefaults(suiteName: "group.okic.d2dcrm")
