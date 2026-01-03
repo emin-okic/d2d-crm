@@ -16,37 +16,35 @@ struct ProspectFloatingActionsView: View {
             Spacer()
 
             HStack {
-                // Delete button (left)
-                Button(action: onDeleteTapped) {
-                    Image(systemName: "trash.fill")
-                        .foregroundColor(.white)
-                        .font(.title2)
-                        .padding()
-                        .background(Color.red)
-                        .clipShape(Circle())
-                        .shadow(radius: 5)
-                }
+                // Align to left
+                ProspectDetailsLiquidGlass {
+                    VStack(spacing: 16) {
+                        // Notes button above trash
+                        Button(action: onNotesTapped) {
+                            Image(systemName: "note.text")
+                                .font(.title2)
+                                .foregroundColor(.white)
+                                .frame(width: 50, height: 50)
+                                .background(Circle().fill(Color.blue))
+                                .shadow(radius: 5)
+                        }
 
-                Spacer()
-
-                // Notes button (right)
-                Button(action: onNotesTapped) {
-                    Image(systemName: "note.text")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                        .frame(width: 50, height: 50)
-                        .background(Color.blue)
-                        .clipShape(
-                            RoundedRectangle(
-                                cornerRadius: 12,
-                                style: .continuous
-                            )
-                        )
-                        .shadow(radius: 5)
+                        // Trash button
+                        Button(action: onDeleteTapped) {
+                            Image(systemName: "trash.fill")
+                                .font(.title2)
+                                .foregroundColor(.white)
+                                .frame(width: 50, height: 50)
+                                .background(Circle().fill(Color.red))
+                                .shadow(radius: 5)
+                        }
+                    }
                 }
+                .padding(.bottom, 16)
+                .padding(.leading, 16) // align to left
+
+                Spacer() // push it to left
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
     }
