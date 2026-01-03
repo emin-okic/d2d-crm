@@ -12,18 +12,26 @@ struct ProspectAppointmentsView: View {
     @Bindable var prospect: Prospect
     @ObservedObject var controller: ProspectController
 
+    // Fixed height for the appointments container
+    let containerHeight: CGFloat = 200
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if prospect.appointments.filter({ $0.date >= Date() }).isEmpty {
-                Text("No upcoming follow-ups.")
-                    .foregroundColor(.gray)
-                    .font(.callout)
-                    .padding(.top, 16)
-                    .frame(maxWidth: .infinity, alignment: .center)
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(prospect.appointments.filter { $0.date >= Date() }.sorted { $0.date < $1.date }) { appt in
+        VStack(spacing: 0) {
+            // Scrollable appointment list
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    let upcoming = prospect.appointments
+                        .filter { $0.date >= Date() }
+                        .sorted { $0.date < $1.date }
+
+                    if upcoming.isEmpty {
+                        Text("No upcoming follow-ups.")
+                            .foregroundColor(.gray)
+                            .font(.callout)
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 16)
+                    } else {
+                        ForEach(upcoming) { appt in
                             Button {
                                 controller.selectedAppointmentDetails = appt
                             } label: {
@@ -53,12 +61,17 @@ struct ProspectAppointmentsView: View {
                             .buttonStyle(.plain)
                         }
                     }
-                    .padding(.horizontal, 4)
-                    .padding(.top, 8)
-                    .padding(.bottom, 60) // extra padding so last row isn't cut off by floating toolbar
                 }
+                .padding(.horizontal, 4)
+                .padding(.top, 8)
+                .padding(.bottom, 8) // extra padding inside scroll
             }
+            .frame(height: containerHeight)
+            .background(Color(.systemBackground))
+            .cornerRadius(14)
+            .shadow(color: Color.black.opacity(0.02), radius: 4, x: 0, y: 2)
 
+            // Fixed bottom button
             HStack {
                 Spacer()
                 Button {
@@ -74,7 +87,9 @@ struct ProspectAppointmentsView: View {
                         .shadow(radius: 4)
                 }
             }
-            .padding(.bottom, 8)
+            .padding(.top, 6)
+            .padding(.bottom, 4)
+            .padding(.horizontal, 8)
         }
         .padding(.horizontal, 12)
     }
