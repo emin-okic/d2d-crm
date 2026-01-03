@@ -45,15 +45,16 @@ final class ContactImportManager: ObservableObject {
             let phone = contact.phoneNumbers.first?.value.stringValue ?? ""
             let email = contact.emailAddresses.first?.value as String? ?? ""
 
-            // Check for duplicates
+            // ✅ Check for duplicates
             let isDuplicate = prospects.contains { $0.fullName == fullName && $0.address == addressString } ||
                               customers.contains { $0.fullName == fullName && $0.address == addressString }
 
             if isDuplicate {
                 duplicateNames.append(fullName)
-                continue
+                continue // Skip duplicates completely
             }
 
+            // ✅ Insert only unique prospects
             let newProspect = Prospect(
                 fullName: fullName,
                 address: addressString,
@@ -63,6 +64,7 @@ final class ContactImportManager: ObservableObject {
             newProspect.contactPhone = phone
             newProspect.contactEmail = email
 
+            // Geocode asynchronously
             CLGeocoder().geocodeAddressString(addressString) { placemarks, _ in
                 if let coord = placemarks?.first?.location?.coordinate {
                     newProspect.latitude = coord.latitude
