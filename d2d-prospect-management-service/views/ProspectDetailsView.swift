@@ -83,39 +83,9 @@ struct ProspectDetailsView: View {
                     .padding(.bottom, 6)
                     
                     switch controller.selectedTab {
+                        
                     case .appointments:
-                        let upcoming = prospect.appointments
-                            .filter { $0.date >= Date() }
-                            .sorted { $0.date < $1.date }
-                            .prefix(3)
-                        
-                        if upcoming.isEmpty {
-                            Text("No upcoming follow-ups.")
-                                .foregroundColor(.gray)
-                        } else {
-                            ForEach(upcoming) { appt in
-                                Button {
-                                    controller.selectedAppointmentDetails = appt
-                                } label: {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("Follow Up With \(prospect.fullName)")
-                                            .font(.subheadline).fontWeight(.medium)
-                                        Text(prospect.address)
-                                            .font(.caption).foregroundColor(.gray)
-                                        Text(appt.date.formatted(date: .abbreviated, time: .shortened))
-                                            .font(.caption).foregroundColor(.gray)
-                                    }
-                                    .padding(.vertical, 4)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        
-                        Button {
-                            controller.showAppointmentSheet = true
-                        } label: {
-                            Label("Add Appointment", systemImage: "calendar.badge.plus")
-                        }
+                        ProspectAppointmentsView(prospect: prospect, controller: controller)
                         
                     case .knocks:
                         ProspectKnockingHistoryView(prospect: prospect)
