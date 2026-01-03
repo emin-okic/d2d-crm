@@ -165,26 +165,12 @@ struct FollowUpAssistantView: View {
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
 
-            // SHEETS
             .sheet(isPresented: $showAppointmentsPicker) {
-                NavigationStack {
-                    List(prospects) { prospect in
-                        Button {
-                            selectedProspect = prospect
-                            showAppointmentsPicker = false
-                        } label: {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(prospect.fullName)
-                                Text(prospect.address)
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            .padding(.vertical, 10)
-                        }
-                    }
-                    .navigationTitle("Pick Prospect")
-                    .listStyle(.plain)
-                }
+                ProspectPickerView(
+                    prospects: prospects,
+                    selectedProspect: $selectedProspect,
+                    title: "Pick Prospect"
+                )
             }
             .alert("Delete selected appointments?", isPresented: $showDeleteAppointmentsConfirm) {
                 Button("Delete", role: .destructive) {
@@ -241,26 +227,11 @@ struct FollowUpAssistantView: View {
                 }
             }
 
-            // NEW: Prospect picker for scheduling
             .sheet(isPresented: $showingProspectPicker) {
-                NavigationStack {
-                    List(prospects) { prospect in
-                        Button {
-                            selectedProspect = prospect
-                            showingProspectPicker = false
-                        } label: {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(prospect.fullName)
-                                Text(prospect.address)
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            .padding(.vertical, 10)
-                        }
-                    }
-                    .navigationTitle("Pick Prospect")
-                    .listStyle(.plain)
-                }
+                ProspectPickerView(
+                    prospects: prospects,
+                    selectedProspect: $selectedProspect
+                )
             }
             .sheet(item: $selectedProspect) { p in
                 // You can pass a default date if you like
