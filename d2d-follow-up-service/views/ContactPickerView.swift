@@ -8,11 +8,11 @@
 import SwiftUI
 import SwiftData
 
-struct ProspectPickerView: View {
+struct ContactPickerView: View {
     let contacts: [any ContactProtocol]   // now supports both Prospect & Customer
     @Binding var selectedProspect: Prospect?
     @Environment(\.dismiss) private var dismiss
-    var title: String = "Pick Prospect / Customer"
+    var title: String = "Pick Contact"
 
     @State private var searchText: String = ""
 

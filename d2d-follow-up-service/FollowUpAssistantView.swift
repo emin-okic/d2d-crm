@@ -168,7 +168,7 @@ struct FollowUpAssistantView: View {
             .navigationBarTitleDisplayMode(.inline)
 
             .sheet(isPresented: $showAppointmentsPicker) {
-                ProspectPickerView(
+                ContactPickerView(
                     contacts: prospects as [any ContactProtocol] + customers as [any ContactProtocol],
                     selectedProspect: $selectedProspect
                 )
@@ -229,7 +229,7 @@ struct FollowUpAssistantView: View {
             }
 
             .sheet(isPresented: $showingProspectPicker) {
-                ProspectPickerView(
+                ContactPickerView(
                     contacts: prospects as [any ContactProtocol] + customers as [any ContactProtocol],
                     selectedProspect: $selectedProspect
                 )
