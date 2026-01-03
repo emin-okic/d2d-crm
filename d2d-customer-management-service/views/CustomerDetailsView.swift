@@ -98,46 +98,15 @@ struct CustomerDetailsView: View {
                 }
             }
             
-            // Bottom floating buttons (Delete + Notes)
-            VStack {
-                Spacer()
-                HStack {
-                    // Delete (left)
-                    Button(action: {
-                        showDeleteConfirmation = true
-                    }) {
-                        Image(systemName: "trash.fill")
-                            .foregroundColor(.white)
-                            .font(.title2)
-                            .padding()
-                            .background(Color.red)
-                            .clipShape(Circle())
-                            .shadow(radius: 5)
-                    }
-
-                    Spacer()
-
-                    // Notes (right)
-                    Button(action: {
-                        showNotesSheet = true
-                    }) {
-                        Image(systemName: "note.text")
-                            .font(.title2)
-                            .foregroundColor(.white)
-                            .frame(width: 50, height: 50)
-                            .background(Color.blue)
-                            .clipShape(
-                                RoundedRectangle(
-                                    cornerRadius: 12,
-                                    style: .continuous
-                                )
-                            )
-                            .shadow(radius: 5)
-                    }
+            CustomerFloatingActionsView(
+                onDeleteTapped: {
+                    showDeleteConfirmation = true
+                },
+                onNotesTapped: {
+                    showNotesSheet = true
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 16)
-            }
+            )
+            
             .ignoresSafeArea(.keyboard, edges: .bottom)
             .sheet(isPresented: $showNotesSheet) {
                 CustomerNotesThreadFullView(customer: customer)

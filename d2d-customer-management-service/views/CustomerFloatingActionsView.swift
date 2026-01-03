@@ -1,13 +1,13 @@
 //
-//  ProspectFloatingActionsView.swift
+//  CustomerFloatingActionsView.swift
 //  d2d-studio
 //
-//  Created by Emin Okic on 12/29/25.
+//  Created by Emin Okic on 1/3/26.
 //
 
 import SwiftUI
 
-struct ProspectFloatingActionsView: View {
+struct CustomerFloatingActionsView: View {
     let onDeleteTapped: () -> Void
     let onNotesTapped: () -> Void
 
@@ -41,9 +41,9 @@ struct ProspectFloatingActionsView: View {
                     }
                 }
                 .padding(.bottom, 16)
-                .padding(.leading, 16) // align to left
+                .padding(.leading, 16) // bottom-left corner
 
-                Spacer() // push it to left
+                Spacer() // push to left
             }
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
