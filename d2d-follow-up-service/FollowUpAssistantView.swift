@@ -70,6 +70,8 @@ struct FollowUpAssistantView: View {
     @State private var showAppointmentsPicker = false
     
     @State private var filteredAppointments: [Appointment] = []
+    
+    @Binding var deepLinkFilter: AppointmentFilter?
 
     var body: some View {
         NavigationView {
@@ -162,6 +164,14 @@ struct FollowUpAssistantView: View {
                     showDeleteConfirm: $showDeleteAppointmentsConfirm
                 )
                 
+            }
+            .onAppear {
+                if let deepLinkFilter {
+                    UserDefaults.standard.set(deepLinkFilter.rawValue, forKey: "lastSelectedAppointmentFilter")
+                }
+            }
+            .onChange(of: deepLinkFilter) { _ in
+                deepLinkFilter = nil
             }
             .onAppear {
                 let defaults = UserDefaults(suiteName: "group.okic.d2dcrm")
