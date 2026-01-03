@@ -72,6 +72,8 @@ struct FollowUpAssistantView: View {
     @State private var filteredAppointments: [Appointment] = []
     
     @Binding var deepLinkFilter: AppointmentFilter?
+    
+    @Query private var customers: [Customer]
 
     var body: some View {
         NavigationView {
@@ -167,9 +169,8 @@ struct FollowUpAssistantView: View {
 
             .sheet(isPresented: $showAppointmentsPicker) {
                 ProspectPickerView(
-                    prospects: prospects,
-                    selectedProspect: $selectedProspect,
-                    title: "Pick Prospect"
+                    contacts: prospects as [any ContactProtocol] + customers as [any ContactProtocol],
+                    selectedProspect: $selectedProspect
                 )
             }
             .alert("Delete selected appointments?", isPresented: $showDeleteAppointmentsConfirm) {
@@ -229,7 +230,7 @@ struct FollowUpAssistantView: View {
 
             .sheet(isPresented: $showingProspectPicker) {
                 ProspectPickerView(
-                    prospects: prospects,
+                    contacts: prospects as [any ContactProtocol] + customers as [any ContactProtocol],
                     selectedProspect: $selectedProspect
                 )
             }

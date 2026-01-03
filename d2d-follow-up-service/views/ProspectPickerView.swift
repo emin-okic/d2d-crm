@@ -9,17 +9,16 @@ import SwiftUI
 import SwiftData
 
 struct ProspectPickerView: View {
-    let prospects: [Prospect]
+    let contacts: [any ContactProtocol]   // now supports both Prospect & Customer
     @Binding var selectedProspect: Prospect?
     @Environment(\.dismiss) private var dismiss
-    var title: String = "Pick Prospect"
+    var title: String = "Pick Prospect / Customer"
 
-    // Optional: search state
     @State private var searchText: String = ""
 
-    var filteredProspects: [Prospect] {
-        if searchText.isEmpty { return prospects }
-        return prospects.filter {
+    var filteredContacts: [any ContactProtocol] {
+        if searchText.isEmpty { return contacts }
+        return contacts.filter {
             $0.fullName.localizedCaseInsensitiveContains(searchText) ||
             $0.address.localizedCaseInsensitiveContains(searchText)
         }
@@ -35,28 +34,47 @@ struct ProspectPickerView: View {
                     .padding(.top, 8)
                     .padding(.bottom, 6)
                 
-                // Optional search bar
-                TextField("Search Prospects", text: $searchText)
+                // Search bar
+                TextField("Search Contacts", text: $searchText)
                     .textFieldStyle(.roundedBorder)
                     .padding(.horizontal)
                     .padding(.bottom, 5)
                 
                 ScrollView {
-                    LazyVStack(spacing: 12, pinnedViews: []) {
-                        ForEach(filteredProspects) { prospect in
+                    LazyVStack(spacing: 12) {
+                        ForEach(filteredContacts, id: \.fullName) { contact in
                             Button {
-                                selectedProspect = prospect
+                                if let prospect = contact as? Prospect {
+                                    selectedProspect = prospect
+                                } else if let customer = contact as? Customer {
+                                    // Convert customer to Prospect if needed or handle differently
+                                    let tempProspect = Prospect(
+                                        fullName: customer.fullName,
+                                        address: customer.address,
+                                        count: customer.knockCount
+                                    )
+                                    selectedProspect = tempProspect
+                                }
                                 dismiss()
                             } label: {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(prospect.fullName)
-                                        .font(.headline)
-                                    Text(prospect.address)
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(contact.fullName)
+                                            .font(.headline)
+                                        Text(contact.address)
+                                            .font(.subheadline)
+                                            .foregroundColor(.gray)
+                                    }
+                                    Spacer()
+                                    
+                                    // Show a star for customers
+                                    if contact is Customer {
+                                        Image(systemName: "star.fill")
+                                            .foregroundColor(.yellow)
+                                    }
                                 }
                                 .padding()
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .frame(maxWidth: .infinity)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12)
                                         .fill(Color(.systemBackground))
@@ -74,7 +92,6 @@ struct ProspectPickerView: View {
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
         }
-        // DETENTED SHEET: only 50% height
         .presentationDetents([.fraction(0.5)])
         .presentationDragIndicator(.visible)
     }
