@@ -9,30 +9,34 @@ import SwiftUI
 import SwiftData
 
 struct OpenInAppleMapsButton: View {
-    var appointments: [Appointment]
+    let appointments: [Appointment]
     @Environment(\.modelContext) private var modelContext
-    var buttonColor: Color = .blue
-    var size: CGFloat = 50
+
+    private var isEnabled: Bool {
+        !appointments.isEmpty
+    }
 
     var body: some View {
         Button {
             Task {
-                if appointments.isEmpty {
-                    print("No appointments to navigate")
-                    return
-                }
-                await RoutePlannerController.planAndOpenTodaysRoute(
+                await RoutePlannerController.planAndOpenRoute(
                     appointments: appointments,
                     modelContext: modelContext
                 )
             }
         } label: {
             Image(systemName: "car.fill")
-                .font(.system(size: 22, weight: .bold))
+                .font(.system(size: 20, weight: .bold))
                 .foregroundColor(.white)
-                .frame(width: size, height: size)
-                .background(RoundedRectangle(cornerRadius: 12).fill(buttonColor))
-                .shadow(radius: 4)
+                .frame(width: 48, height: 48)
+                .background(
+                    Circle()
+                        .fill(isEnabled ? Color.blue : Color.gray.opacity(0.45))
+                )
         }
+        .disabled(!isEnabled)
+        .opacity(isEnabled ? 1 : 0.55)
+        .animation(.easeInOut(duration: 0.2), value: isEnabled)
+        .accessibilityLabel("Open route in Apple Maps")
     }
 }

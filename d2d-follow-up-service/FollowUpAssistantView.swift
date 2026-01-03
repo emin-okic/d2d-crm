@@ -140,28 +140,12 @@ struct FollowUpAssistantView: View {
                     .padding(.bottom, 5)
                 }
                 
-                
-                // Floating Apple Maps button
-                if !appointments.isEmpty {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            OpenInAppleMapsButton(
-                                appointments: appointments.filter { Calendar.current.isDate($0.date, inSameDayAs: Date()) }
-                            )
-                            .padding(.bottom, 30)
-                            .padding(.trailing, 20)
-                        }
-                    }
-                    .zIndex(998)
-                }
-                
                 AppointmentsToolbar(
                     showProspectPicker: $showAppointmentsPicker,
                     isEditing: $isEditingAppointments,
                     selectedAppointments: $selectedAppointments,
-                    showDeleteConfirm: $showDeleteAppointmentsConfirm
+                    showDeleteConfirm: $showDeleteAppointmentsConfirm,
+                    todaysAppointments: filteredAppointments
                 )
                 
             }

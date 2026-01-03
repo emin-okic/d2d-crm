@@ -46,6 +46,30 @@ enum RoutePlannerController {
         // Open in Apple Maps with Current Location -> addr1 -> addr2 -> ...
         openAppleMapsMultiStop(addresses: addresses)
     }
+    
+    @MainActor
+    static func planAndOpenRoute(
+        appointments: [Appointment],
+        modelContext: ModelContext
+    ) async {
+        guard !appointments.isEmpty else { return }
+
+        let sorted = appointments.sorted { $0.date < $1.date }
+
+        var addresses = sorted.compactMap { appt -> String? in
+            let addr = (appt.prospect?.address.isEmpty == false
+                        ? appt.prospect?.address
+                        : appt.location) ?? ""
+            return addr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                ? nil
+                : addr
+        }
+
+        addresses = Array(LinkedHashSet(addresses))
+        guard !addresses.isEmpty else { return }
+
+        openAppleMapsMultiStop(addresses: addresses)
+    }
 
     // MARK: Helpers
 
