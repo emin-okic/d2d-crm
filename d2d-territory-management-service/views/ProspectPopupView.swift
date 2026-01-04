@@ -7,8 +7,13 @@
 
 import SwiftUI
 import MapKit
+import SwiftData
 
 struct ProspectPopupView: View {
+    
+    @Query private var prospects: [Prospect]
+    @Query private var customers: [Customer]
+    
     let place: IdentifiablePlace
     let isCustomer: Bool
     var onClose: () -> Void
@@ -25,6 +30,8 @@ struct ProspectPopupView: View {
     @State private var currentFileName: String?
 
     private let recorder = RecordingManager()
+    
+    var onViewDetails: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -46,10 +53,16 @@ struct ProspectPopupView: View {
             }
             .padding(.horizontal, 5)
 
-            Text("Name: \(findProspectName(for: place.address))")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 5)
+            Button(action: onViewDetails) {
+                HStack(spacing: 4) {
+                    Text(findProspectName(for: place.address))
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                }
+                .foregroundColor(.blue)
+            }
+            .padding(.horizontal, 5)
+            .buttonStyle(.plain)
 
             Divider().padding(.vertical, 4)
 
@@ -273,6 +286,15 @@ struct ProspectPopupView: View {
     }
 
     private func findProspectName(for address: String) -> String {
+        if isCustomer {
+            if let customer = customers.first(where: { $0.address == address }) {
+                return customer.fullName
+            }
+        } else {
+            if let prospect = prospects.first(where: { $0.address == address }) {
+                return prospect.fullName
+            }
+        }
         return "Prospect"
     }
 }
