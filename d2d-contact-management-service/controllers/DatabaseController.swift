@@ -102,27 +102,6 @@ class DatabaseController {
         }
     }
 
-    func updateProspect(_ prospect: Prospect) {
-        guard let db = db else { return }
-
-        let prospectToUpdate = prospects.filter(list == "Prospects")
-
-        do {
-            let update = prospectToUpdate.update(
-                fullName <- prospect.fullName,
-                address <- prospect.address,
-                list <- prospect.list
-            )
-            if try db.run(update) > 0 {
-                print("Successfully updated prospect")
-            } else {
-                print("No prospect found to update")
-            }
-        } catch {
-            print("Update failed: \(error)")
-        }
-    }
-
     func getAllProspects() -> [(String, String, String)] {
         var result: [(String, String, String)] = []
         do {
