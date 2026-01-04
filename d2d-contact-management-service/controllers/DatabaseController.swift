@@ -137,65 +137,6 @@ class DatabaseController {
 }
 
 extension DatabaseController {
-    func suggestNeighborProspect(from customerAddress: String) {
-        let geocoder = CLGeocoder()
-
-        geocoder.geocodeAddressString(customerAddress) { placemarks, error in
-            guard let location = placemarks?.first?.location?.coordinate else {
-                print("❌ Could not geocode customer address: \(error?.localizedDescription ?? "Unknown error")")
-                return
-            }
-
-            let neighborCoord = CLLocationCoordinate2D(
-                latitude: location.latitude + 0.0001,
-                longitude: location.longitude + 0.0001
-            )
-
-            let neighborLocation = CLLocation(latitude: neighborCoord.latitude, longitude: neighborCoord.longitude)
-
-            geocoder.reverseGeocodeLocation(neighborLocation) { neighborPlacemarks, error in
-                guard let placemark = neighborPlacemarks?.first else {
-                    print("❌ Could not reverse geocode neighbor location")
-                    return
-                }
-
-                let components = [
-                    placemark.subThoroughfare,
-                    placemark.thoroughfare,
-                    placemark.locality
-                ].compactMap { $0 }
-
-                let joinedAddress = components.joined(separator: " ")
-
-                guard let neighborAddress = joinedAddress.nilIfEmpty else {
-                    print("❌ Neighbor address could not be constructed")
-                    return
-                }
-
-                do {
-                    if let db = self.db {
-                        let prospectQuery = self.prospects.filter(self.address == neighborAddress)
-                        let count = try db.scalar(prospectQuery.count)
-
-                        guard count == 0 else {
-                            print("ℹ️ Neighbor already exists in database: \(neighborAddress)")
-                            return
-                        }
-
-                        let insert = self.prospects.insert(
-                            self.fullName <- "Suggested Neighbor",
-                            self.address <- neighborAddress,
-                            self.list <- "Prospects"
-                        )
-                        try db.run(insert)
-                        print("✅ Suggested neighbor added: \(neighborAddress)")
-                    }
-                } catch {
-                    print("❌ Failed to check or insert neighbor: \(error)")
-                }
-            }
-        }
-    }
 
     func geocodeAndSuggestNeighbor(
         from customerAddress: String,
