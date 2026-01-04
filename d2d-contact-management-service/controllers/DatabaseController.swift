@@ -133,40 +133,7 @@ class DatabaseController {
             print("Insert knock failed: \(error)")
         }
     }
-
-    func getProspectsWithKnocks() -> [Prospect] {
-        var results: [Prospect] = []
-
-        do {
-            for row in try db!.prepare(prospects) {
-                let pId = row[id]
-                let name = row[fullName]
-                let addr = row[address]
-                let listName = row[list]
-
-                var knocksArray: [Knock] = []
-                let knockQuery = knocks.filter(prospectId == pId)
-
-                for knockRow in try db!.prepare(knockQuery) {
-                    let dateVal = knockRow[knockDate]
-                    let statusVal = knockRow[knockStatus]
-                    let lat = knockRow[Expression<Double>("latitude")]
-                    let lon = knockRow[Expression<Double>("longitude")]
-                    let knock = Knock(date: dateVal, status: statusVal, latitude: lat, longitude: lon)
-                    knocksArray.append(knock)
-                }
-
-                let count = knocksArray.count
-                let prospect = Prospect(fullName: name, address: addr, count: count, list: listName)
-                prospect.knockHistory = knocksArray
-                results.append(prospect)
-            }
-        } catch {
-            print("Fetching prospects with knocks failed: \(error)")
-        }
-
-        return results
-    }
+    
 }
 
 extension DatabaseController {
