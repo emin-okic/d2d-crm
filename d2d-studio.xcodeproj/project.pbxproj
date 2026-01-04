@@ -85,7 +85,6 @@
 		C5E6A71F2E2BE6CD00EC05F4 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		C5E6A7212E2BE6CD00EC05F4 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		C5E6A7362E2BEBCF00EC05F4 /* d2d-widget-serviceExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "d2d-widget-serviceExtension.entitlements"; sourceTree = "<group>"; };
-		C5E9F14F2DEB6CAB000A771B /* d2d-map-service.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "d2d-map-service.xctestplan"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -174,16 +173,6 @@
 			path = "d2d-studio";
 			sourceTree = "<group>";
 		};
-		C5BE4B442DE7CC9F005C37B1 /* d2d-map-serviceTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "d2d-map-serviceTests";
-			sourceTree = "<group>";
-		};
-		C5BE4B4E2DE7CC9F005C37B1 /* d2d-map-serviceUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "d2d-map-serviceUITests";
-			sourceTree = "<group>";
-		};
 		C5C0794D2F01A18600449E7A /* d2d-trip-analytics-service */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "d2d-trip-analytics-service";
@@ -253,7 +242,6 @@
 				C5CDA5B22E15A65300FD96B7 /* PRIVACYPOLICY.md */,
 				C54048432DF4B32A00721D49 /* README.md */,
 				C5855D882DF073A300B479AE /* .gitignore */,
-				C5E9F14F2DEB6CAB000A771B /* d2d-map-service.xctestplan */,
 				C5BE4B362DE7CC9E005C37B1 /* d2d-studio */,
 				C5E6A7232E2BE6CD00EC05F4 /* d2d-widget-service */,
 				C55449012E5A104300677585 /* d2d-ad-engine-service */,
@@ -271,8 +259,6 @@
 				C5C0794D2F01A18600449E7A /* d2d-trip-analytics-service */,
 				C5B1B5652E3FC3A6004766E8 /* d2d-objections-manager-service */,
 				C5B1B5662E3FC3AE004766E8 /* d2d-recording-manager-service */,
-				C5BE4B442DE7CC9F005C37B1 /* d2d-map-serviceTests */,
-				C5BE4B4E2DE7CC9F005C37B1 /* d2d-map-serviceUITests */,
 				C5E6A71E2E2BE6CD00EC05F4 /* Frameworks */,
 				C5BE4B352DE7CC9E005C37B1 /* Products */,
 			);
@@ -357,9 +343,6 @@
 			dependencies = (
 				C5BE4B432DE7CC9F005C37B1 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				C5BE4B442DE7CC9F005C37B1 /* d2d-map-serviceTests */,
-			);
 			name = "d2d-map-serviceTests";
 			packageProductDependencies = (
 			);
@@ -379,9 +362,6 @@
 			);
 			dependencies = (
 				C5BE4B4D2DE7CC9F005C37B1 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				C5BE4B4E2DE7CC9F005C37B1 /* d2d-map-serviceUITests */,
 			);
 			name = "d2d-map-serviceUITests";
 			packageProductDependencies = (
