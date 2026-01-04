@@ -92,6 +92,9 @@ struct MapSearchView: View {
     
     @State private var selectedUnitGroup: UnitGroup?
     
+    @State private var selectedProspect: Prospect?
+    @State private var selectedCustomer: Customer?
+    
     init(searchText: Binding<String>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
@@ -435,7 +438,10 @@ struct MapSearchView: View {
                         handleOutcome(outcome, recordingFileName: fileName)
                     }
                 },
-                recordingModeEnabled: recordingModeEnabled
+                recordingModeEnabled: recordingModeEnabled,
+                onViewDetails: {
+                    openDetails(for: popup.place)
+                }
             )
             .presentationDetents([.fraction(0.5)])
             .presentationDragIndicator(.visible)
@@ -603,6 +609,47 @@ struct MapSearchView: View {
             )
             .presentationDetents([.fraction(0.5)])
             .presentationDragIndicator(.visible)
+        }
+        .sheet(item: $selectedProspect) { prospect in
+            NavigationStack {
+                ProspectDetailsView(prospect: prospect)
+            }
+        }
+
+        .sheet(item: $selectedCustomer) { customer in
+            NavigationStack {
+                CustomerDetailsView(customer: customer)
+            }
+        }
+    }
+    
+    private func openDetails(for place: IdentifiablePlace) {
+        // Close popup first (important for UX)
+        closePopup()
+
+        if place.list == "Customers" ,
+           let customer = customers.first(where: { $0.address == place.address }) {
+            selectedCustomer = customer
+            return
+        }
+
+        if let prospect = prospects.first(where: { $0.address == place.address }) {
+            selectedProspect = prospect
+        }
+    }
+    
+    @MainActor
+    private func closePopup() {
+        popupState = nil
+        selectedPlaceID = nil
+
+        // Force MapKit to deselect the annotation
+        if let mapView = MapDisplayView.cachedMapView {
+            DispatchQueue.main.async {
+                mapView.selectedAnnotations.forEach {
+                    mapView.deselectAnnotation($0, animated: false)
+                }
+            }
         }
     }
     

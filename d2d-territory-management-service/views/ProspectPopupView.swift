@@ -25,6 +25,8 @@ struct ProspectPopupView: View {
     @State private var currentFileName: String?
 
     private let recorder = RecordingManager()
+    
+    var onViewDetails: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -46,10 +48,14 @@ struct ProspectPopupView: View {
             }
             .padding(.horizontal, 5)
 
-            Text("Name: \(findProspectName(for: place.address))")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 5)
+            Button(action: onViewDetails) {
+                Text(findProspectName(for: place.address))
+                    .font(.subheadline)
+                    .foregroundColor(.blue)
+                    .underline()
+            }
+            .padding(.horizontal, 5)
+            .buttonStyle(.plain)
 
             Divider().padding(.vertical, 4)
 
