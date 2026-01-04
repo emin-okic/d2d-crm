@@ -9,7 +9,7 @@ import XCTest
 import SwiftData
 @testable import d2d_studio
 
-final class CustomerTests: XCTestCase {
+final class CustomerModelTests: XCTestCase {
 
     var container: ModelContainer!
     var context: ModelContext!
