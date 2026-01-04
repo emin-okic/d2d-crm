@@ -49,10 +49,12 @@ struct ProspectPopupView: View {
             .padding(.horizontal, 5)
 
             Button(action: onViewDetails) {
-                Text(findProspectName(for: place.address))
-                    .font(.subheadline)
-                    .foregroundColor(.blue)
-                    .underline()
+                HStack(spacing: 4) {
+                    Text(findProspectName(for: place.address))
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                }
+                .foregroundColor(.blue)
             }
             .padding(.horizontal, 5)
             .buttonStyle(.plain)
