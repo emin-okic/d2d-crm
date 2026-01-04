@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "4C308F09-D0F1-46DB-AD42-64EF9033AED8",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:d2d-studio.xcodeproj",
+        "identifier" : "C5B3EE7D2F0B002A00732B79",
+        "name" : "d2d-studioTests"
+      }
+    }
+  ],
+  "version" : 1
+}
