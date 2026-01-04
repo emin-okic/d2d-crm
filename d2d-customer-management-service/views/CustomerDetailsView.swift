@@ -80,7 +80,8 @@ struct CustomerDetailsView: View {
                 Section {
                     CustomerActionsToolbar(
                         customer: customer,
-                        onClose: { presentationMode.wrappedValue.dismiss() }
+                        onClose: { presentationMode.wrappedValue.dismiss() },
+                        modelContext: modelContext
                     )
                 }
                 
