@@ -19,48 +19,53 @@ struct FloatingSearchAndMicButtons: View {
     var onSubmit: () -> Void
     var onSelectResult: (MKLocalSearchCompletion) -> Void
     
-    // For the center on my location button
     var userLocationManager: UserLocationManager
     var mapController: MapController
+    
+    private let floatingButtonSize: CGFloat = 50
 
     var body: some View {
-        VStack(spacing: 10) {
-            
-            if !isExpanded {
-                VStack(spacing: 10) {
-                    Button {
-                        if let loc = userLocationManager.location {
-                            mapController.region.center = loc.coordinate
+        VStack {
+            Spacer()
+
+            HStack {
+                // 🔹 Glass wraps ONLY the toolbar content
+                MapScreenToolbarLiquidGlass {
+                    VStack(spacing: 10) {
+
+                        if !isExpanded {
+                            Button {
+                                if let loc = userLocationManager.location {
+                                    mapController.region.center = loc.coordinate
+                                }
+                            } label: {
+                                Image(systemName: "location.fill")
+                                    .foregroundColor(.white)
+                                    .frame(width: floatingButtonSize, height: floatingButtonSize)
+                                    .background(Circle().fill(Color.blue))
+                                    .shadow(radius: 4)
+                            }
+                            .transition(.opacity)
                         }
-                    } label: {
-                        Image(systemName: "location.fill")
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(
-                                    Circle().fill(Color.blue)
-                                )
-                                .shadow(radius: 4)
+
+                        ExpandableSearchView(
+                            searchText: $searchText,
+                            isExpanded: $isExpanded,
+                            isFocused: $isFocused,
+                            viewModel: viewModel,
+                            animationNamespace: animationNamespace,
+                            onSubmit: onSubmit,
+                            onSelectResult: onSelectResult
+                        )
                     }
-
                 }
-                .transition(.opacity)
-                .padding(.bottom, 10)
-            }
-            
-            ExpandableSearchView(
-                searchText: $searchText,
-                isExpanded: $isExpanded,
-                isFocused: $isFocused,
-                viewModel: viewModel,
-                animationNamespace: animationNamespace,
-                onSubmit: onSubmit,
-                onSelectResult: onSelectResult
-            )
 
+                Spacer()
+            }
+            .padding(.leading, 20)
+            .padding(.bottom, 20)
         }
-        .padding(.bottom, 30)
-        .padding(.leading, 20)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .zIndex(999)
     }
 }

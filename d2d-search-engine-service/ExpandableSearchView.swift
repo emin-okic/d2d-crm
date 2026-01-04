@@ -18,6 +18,8 @@ struct ExpandableSearchView: View {
     var animationNamespace: Namespace.ID
     var onSubmit: () -> Void
     var onSelectResult: (MKLocalSearchCompletion) -> Void
+    
+    private let floatingButtonSize: CGFloat = 50
 
     var body: some View {
         VStack {
@@ -67,11 +69,10 @@ struct ExpandableSearchView: View {
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(.white)
                             .padding()
+                            .frame(width: floatingButtonSize, height: floatingButtonSize)
                             .background(Circle().fill(Color.blue))
                     }
                     .matchedGeometryEffect(id: "search", in: animationNamespace)
-                    // .padding(.trailing, 10)
-                    .padding(.bottom, 10)
                     .shadow(radius: 4)
                 }
             }
