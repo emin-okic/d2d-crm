@@ -104,10 +104,3 @@ struct CustomerAppointmentsView: View {
         }
     }
 }
-
-// MARK: - Controller for State Management
-@available(iOS 18.0, *)
-final class CustomerAppointmentsController: ObservableObject {
-    @Published var showAppointmentSheet: Bool = false
-    @Published var selectedAppointment: Appointment?
-}

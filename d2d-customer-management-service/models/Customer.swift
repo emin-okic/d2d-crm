@@ -48,28 +48,6 @@ final class Customer: ContactProtocol {
 }
 
 extension Customer {
-    static func fromProspect(_ prospect: Prospect) -> Customer {
-        let customer = Customer(
-            fullName: prospect.fullName,
-            address: prospect.address,
-            count: prospect.knockCount
-        )
-        customer.contactPhone = prospect.contactPhone
-        customer.contactEmail = prospect.contactEmail
-        customer.notes = prospect.notes
-        customer.appointments = prospect.appointments
-        customer.knockHistory = prospect.knockHistory
-        
-        // 🔑 Preserve spatial identity
-        customer.latitude = prospect.latitude
-        customer.longitude = prospect.longitude
-        
-        // Return the customer object that was convertred from the prospect object
-        return customer
-    }
-}
-
-extension Customer {
     var coordinate: CLLocationCoordinate2D? {
         guard let lat = latitude, let lon = longitude else { return nil }
         return CLLocationCoordinate2D(latitude: lat, longitude: lon)
