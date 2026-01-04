@@ -69,7 +69,10 @@ struct ProspectDetailsView: View {
                 
                 // ✅ Actions Toolbar (unchanged)
                 Section {
-                    ProspectActionsToolbar(prospect: prospect)
+                    ProspectActionsToolbar(
+                        prospect: prospect,
+                        modelContext: modelContext
+                    )
                 }
                 
                 // Tabs for Appointments / Knocks / Notes

@@ -5,11 +5,11 @@
 //  Created by Emin Okic on 7/21/25.
 //
 
-
 import SwiftUI
 import MessageUI
 import Contacts
 import PhoneNumberKit
+import SwiftData
 
 struct ProspectActionsToolbar: View {
     @Bindable var prospect: Prospect
@@ -30,6 +30,13 @@ struct ProspectActionsToolbar: View {
     
     // This variable is used for keeping track of the original phone # on changing it for note taking purposes
     @State private var originalPhone: String?
+    
+    private let customerController: CustomerController
+    
+    init(prospect: Prospect, modelContext: ModelContext) {
+        self._prospect = Bindable(prospect)
+        self.customerController = CustomerController(modelContext: modelContext)
+    }
 
     var body: some View {
         ZStack {
@@ -331,7 +338,7 @@ struct ProspectActionsToolbar: View {
         }
 
         // ✅ Create Customer record
-        let customer = Customer.fromProspect(prospect)
+        let customer = customerController.fromProspect(prospect)
 
         // overwrite with cloned data (safe)
         customer.notes = clonedNotes
