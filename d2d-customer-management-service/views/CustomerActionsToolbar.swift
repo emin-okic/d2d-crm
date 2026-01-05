@@ -46,7 +46,7 @@ struct CustomerActionsToolbar: View {
 
         }
 
-        .confirmationDialog("Call \(controller.formattedPhone(controller.customer.contactPhone))?",
+        .confirmationDialog("Call \(PhoneValidator.formatted(controller.customer.contactPhone))?",
                             isPresented: $controller.showCallConfirmation,
                             titleVisibility: .visible) {
             Button("Call") {
@@ -78,7 +78,7 @@ struct CustomerActionsToolbar: View {
         
         .sheet(isPresented: $controller.showCallSheet) {
             CallActionBottomSheet(
-                phone: controller.formattedPhone(controller.customer.contactPhone),
+                phone: PhoneValidator.formatted(controller.customer.contactPhone),
                 onCall: {
                     controller.logCustomerCallNote()
                     if let url = URL(string: "tel://\(controller.customer.contactPhone.filter(\.isNumber))") {
