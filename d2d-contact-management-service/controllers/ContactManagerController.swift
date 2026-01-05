@@ -7,11 +7,16 @@
 
 import Foundation
 import SwiftData
+import CoreLocation
 
 @MainActor
 class ContactManagerController: ObservableObject {
+    
     @Published var suggestedProspect: Prospect?
+    
     private var suggestionSourceIndex = 0
+    
+    var geocodeNeighborClosure: ((_ address: String, _ existingProspects: [Prospect], _ completion: @escaping (String?, CLLocationCoordinate2D?) -> Void) -> Void)?
     
     // 🔑 Now uses customers directly
     func fetchNextSuggestedNeighbor(from customers: [Customer], existingProspects: [Prospect]) async {
@@ -31,36 +36,24 @@ class ContactManagerController: ObservableObject {
             let customer = customers[safeIndex]
 
             let result = await withCheckedContinuation { (continuation: CheckedContinuation<Prospect?, Never>) in
-                DatabaseController.shared.geocodeAndSuggestNeighbor(from: customer.address) { address, coordinate in
-                    if let addr = address,
-                       let coord = coordinate,
-                       !existingProspects.contains(where: {
-                           $0.address.caseInsensitiveCompare(addr) == .orderedSame
-                       }) {
-
-                        let suggested = Prospect(
-                            fullName: "Suggested Neighbor",
-                            address: addr,
-                            count: 0,
-                            list: "Prospects"
-                        )
-
-                        // 🔑 Attach coordinates here
-                        suggested.latitude = coord.latitude
-                        suggested.longitude = coord.longitude
-                        
-                        // 🧪 Debug print on creation
-                        print("""
-                        📍 Suggested Prospect Created
-                        Address: \(addr)
-                        Latitude: \(coord.latitude)
-                        Longitude: \(coord.longitude)
-                        """)
-
-                        continuation.resume(returning: suggested)
-                    } else {
+                
+                // Use injected closure if available, otherwise default behavior
+                let geocodeFunction = geocodeNeighborClosure ?? self.geocodeAndSuggestNeighbor
+                geocodeFunction(customer.address, existingProspects) { addr, coord in
+                    guard let addr, let coord else {
                         continuation.resume(returning: nil)
+                        return
                     }
+
+                    let suggested = Prospect(
+                        fullName: "Suggested Neighbor",
+                        address: addr,
+                        count: 0,
+                        list: "Prospects"
+                    )
+                    suggested.latitude = coord.latitude
+                    suggested.longitude = coord.longitude
+                    continuation.resume(returning: suggested)
                 }
             }
 
@@ -75,4 +68,43 @@ class ContactManagerController: ObservableObject {
 
         suggestedProspect = found
     }
+    
+    /// Attempts to geocode a customer address and suggests a neighbor not already in existingProspects.
+    fileprivate func geocodeAndSuggestNeighbor(
+        from customerAddress: String,
+        existingProspects: [Prospect],
+        completion: @escaping (_ address: String?, _ coordinate: CLLocationCoordinate2D?) -> Void
+    ) {
+        let components = customerAddress.components(separatedBy: " ")
+        guard let first = components.first,
+              let baseNumber = Int(first) else {
+            completion(nil, nil)
+            return
+        }
+
+        let streetRemainder = components.dropFirst().joined(separator: " ")
+        let maxAttempts = 10
+        let existingAddresses = existingProspects.map { $0.address.lowercased() }
+        let geocoder = CLGeocoder()
+
+        func tryOffset(_ offset: Int) {
+            let newAddress = "\(baseNumber + offset) \(streetRemainder)"
+
+            if existingAddresses.contains(newAddress.lowercased()) {
+                offset < maxAttempts ? tryOffset(offset + 1) : completion(nil, nil)
+                return
+            }
+
+            geocoder.geocodeAddressString(newAddress) { placemarks, _ in
+                guard let location = placemarks?.first?.location else {
+                    offset < maxAttempts ? tryOffset(offset + 1) : completion(nil, nil)
+                    return
+                }
+                completion(newAddress, location.coordinate)
+            }
+        }
+
+        tryOffset(1)
+    }
+    
 }

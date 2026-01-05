@@ -102,27 +102,6 @@ class DatabaseController {
         }
     }
 
-    func updateProspect(_ prospect: Prospect) {
-        guard let db = db else { return }
-
-        let prospectToUpdate = prospects.filter(list == "Prospects")
-
-        do {
-            let update = prospectToUpdate.update(
-                fullName <- prospect.fullName,
-                address <- prospect.address,
-                list <- prospect.list
-            )
-            if try db.run(update) > 0 {
-                print("Successfully updated prospect")
-            } else {
-                print("No prospect found to update")
-            }
-        } catch {
-            print("Update failed: \(error)")
-        }
-    }
-
     func getAllProspects() -> [(String, String, String)] {
         var result: [(String, String, String)] = []
         do {
@@ -154,102 +133,10 @@ class DatabaseController {
             print("Insert knock failed: \(error)")
         }
     }
-
-    func getProspectsWithKnocks() -> [Prospect] {
-        var results: [Prospect] = []
-
-        do {
-            for row in try db!.prepare(prospects) {
-                let pId = row[id]
-                let name = row[fullName]
-                let addr = row[address]
-                let listName = row[list]
-
-                var knocksArray: [Knock] = []
-                let knockQuery = knocks.filter(prospectId == pId)
-
-                for knockRow in try db!.prepare(knockQuery) {
-                    let dateVal = knockRow[knockDate]
-                    let statusVal = knockRow[knockStatus]
-                    let lat = knockRow[Expression<Double>("latitude")]
-                    let lon = knockRow[Expression<Double>("longitude")]
-                    let knock = Knock(date: dateVal, status: statusVal, latitude: lat, longitude: lon)
-                    knocksArray.append(knock)
-                }
-
-                let count = knocksArray.count
-                let prospect = Prospect(fullName: name, address: addr, count: count, list: listName)
-                prospect.knockHistory = knocksArray
-                results.append(prospect)
-            }
-        } catch {
-            print("Fetching prospects with knocks failed: \(error)")
-        }
-
-        return results
-    }
+    
 }
 
 extension DatabaseController {
-    func suggestNeighborProspect(from customerAddress: String) {
-        let geocoder = CLGeocoder()
-
-        geocoder.geocodeAddressString(customerAddress) { placemarks, error in
-            guard let location = placemarks?.first?.location?.coordinate else {
-                print("❌ Could not geocode customer address: \(error?.localizedDescription ?? "Unknown error")")
-                return
-            }
-
-            let neighborCoord = CLLocationCoordinate2D(
-                latitude: location.latitude + 0.0001,
-                longitude: location.longitude + 0.0001
-            )
-
-            let neighborLocation = CLLocation(latitude: neighborCoord.latitude, longitude: neighborCoord.longitude)
-
-            geocoder.reverseGeocodeLocation(neighborLocation) { neighborPlacemarks, error in
-                guard let placemark = neighborPlacemarks?.first else {
-                    print("❌ Could not reverse geocode neighbor location")
-                    return
-                }
-
-                let components = [
-                    placemark.subThoroughfare,
-                    placemark.thoroughfare,
-                    placemark.locality
-                ].compactMap { $0 }
-
-                let joinedAddress = components.joined(separator: " ")
-
-                guard let neighborAddress = joinedAddress.nilIfEmpty else {
-                    print("❌ Neighbor address could not be constructed")
-                    return
-                }
-
-                do {
-                    if let db = self.db {
-                        let prospectQuery = self.prospects.filter(self.address == neighborAddress)
-                        let count = try db.scalar(prospectQuery.count)
-
-                        guard count == 0 else {
-                            print("ℹ️ Neighbor already exists in database: \(neighborAddress)")
-                            return
-                        }
-
-                        let insert = self.prospects.insert(
-                            self.fullName <- "Suggested Neighbor",
-                            self.address <- neighborAddress,
-                            self.list <- "Prospects"
-                        )
-                        try db.run(insert)
-                        print("✅ Suggested neighbor added: \(neighborAddress)")
-                    }
-                } catch {
-                    print("❌ Failed to check or insert neighbor: \(error)")
-                }
-            }
-        }
-    }
 
     func geocodeAndSuggestNeighbor(
         from customerAddress: String,

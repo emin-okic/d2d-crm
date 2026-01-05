@@ -7,11 +7,6 @@
 import SwiftUI
 import PhoneNumberKit
 
-enum PhoneSheetMode {
-    case add
-    case edit
-}
-
 struct AddPhoneBottomSheet: View {
     let mode: PhoneSheetMode
 

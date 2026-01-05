@@ -17,8 +17,6 @@ struct ContactManagementView: View {
     // Shared state
     @State private var searchText: String = ""
     @StateObject private var controller = ContactManagerController()
-    @State private var suggestedProspect: Prospect?
-    @State private var suggestionSourceIndex = 0
 
     // Menu + overlays
     @State private var showingImportFromContacts = false
@@ -236,44 +234,4 @@ struct ContactManagementView: View {
         }
     }
     
-    func matchesSearch(_ text: String, name: String, address: String) -> Bool {
-        let query = text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return false }
-
-        return name.lowercased().contains(query)
-            || address.lowercased().contains(query)
-    }
-    
-    func firstMatchingProspect(
-        searchText: String,
-        prospects: [Prospect]
-    ) -> Prospect? {
-        prospects.first {
-            matchesSearch(searchText, name: $0.fullName, address: $0.address)
-        }
-    }
-
-    func firstMatchingCustomer(
-        searchText: String,
-        customers: [Customer]
-    ) -> Customer? {
-        customers.first {
-            matchesSearch(searchText, name: $0.fullName, address: $0.address)
-        }
-    }
-    
-    private func handleSearchSubmit() {
-        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-
-        if selectedList == "Prospects",
-           let match = firstMatchingProspect(searchText: trimmed, prospects: prospects) {
-            selectedProspect = match
-        }
-
-        if selectedList == "Customers",
-           let match = firstMatchingCustomer(searchText: trimmed, customers: customers) {
-            selectedCustomer = match
-        }
-    }
 }
