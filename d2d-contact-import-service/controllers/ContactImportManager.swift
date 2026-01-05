@@ -32,29 +32,30 @@ final class ContactImportManager: ObservableObject {
         var duplicateNames: [String] = []
 
         for contact in contacts {
-            let fullName =
-                CNContactFormatter.string(from: contact, style: .fullName)
-                ?? "No Name"
-            let addressString =
-                contact.postalAddresses.first.map {
-                    CNPostalAddressFormatter
-                        .string(from: $0.value, style: .mailingAddress)
-                        .replacingOccurrences(of: "\n", with: ", ")
-                } ?? "No Address"
+            let fullName = CNContactFormatter.string(from: contact, style: .fullName) ?? "No Name"
+            let addressString = contact.postalAddresses.first.map {
+                CNPostalAddressFormatter
+                    .string(from: $0.value, style: .mailingAddress)
+                    .replacingOccurrences(of: "\n", with: ", ")
+            } ?? "No Address"
 
             let phone = contact.phoneNumbers.first?.value.stringValue ?? ""
             let email = contact.emailAddresses.first?.value as String? ?? ""
 
-            // ✅ Check for duplicates
-            let isDuplicate = prospects.contains { $0.fullName == fullName && $0.address == addressString } ||
-                              customers.contains { $0.fullName == fullName && $0.address == addressString }
+            // ✅ Dynamically check duplicates in modelContext
+            let existingProspect = try? modelContext.fetch(FetchDescriptor<Prospect>(predicate: #Predicate { $0.fullName == fullName && $0.address == addressString }))
+            let existingCustomer = try? modelContext.fetch(FetchDescriptor<Customer>(predicate: #Predicate { $0.fullName == fullName && $0.address == addressString }))
 
-            if isDuplicate {
+            if let p = existingProspect, !p.isEmpty {
                 duplicateNames.append(fullName)
-                continue // Skip duplicates completely
+                continue
+            }
+            if let c = existingCustomer, !c.isEmpty {
+                duplicateNames.append(fullName)
+                continue
             }
 
-            // ✅ Insert only unique prospects
+            // Insert only unique prospects
             let newProspect = Prospect(
                 fullName: fullName,
                 address: addressString,
