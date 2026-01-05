@@ -11,8 +11,12 @@ import CoreLocation
 
 @MainActor
 class ContactManagerController: ObservableObject {
+    
     @Published var suggestedProspect: Prospect?
+    
     private var suggestionSourceIndex = 0
+    
+    var geocodeNeighborClosure: ((_ address: String, _ existingProspects: [Prospect], _ completion: @escaping (String?, CLLocationCoordinate2D?) -> Void) -> Void)?
     
     // 🔑 Now uses customers directly
     func fetchNextSuggestedNeighbor(from customers: [Customer], existingProspects: [Prospect]) async {
@@ -32,7 +36,10 @@ class ContactManagerController: ObservableObject {
             let customer = customers[safeIndex]
 
             let result = await withCheckedContinuation { (continuation: CheckedContinuation<Prospect?, Never>) in
-                geocodeAndSuggestNeighbor(from: customer.address, existingProspects: existingProspects) { addr, coord in
+                
+                // Use injected closure if available, otherwise default behavior
+                let geocodeFunction = geocodeNeighborClosure ?? self.geocodeAndSuggestNeighbor
+                geocodeFunction(customer.address, existingProspects) { addr, coord in
                     guard let addr, let coord else {
                         continuation.resume(returning: nil)
                         return
@@ -46,15 +53,6 @@ class ContactManagerController: ObservableObject {
                     )
                     suggested.latitude = coord.latitude
                     suggested.longitude = coord.longitude
-
-                    // Debug
-                    print("""
-                    📍 Suggested Prospect Created
-                    Address: \(addr)
-                    Latitude: \(coord.latitude)
-                    Longitude: \(coord.longitude)
-                    """)
-
                     continuation.resume(returning: suggested)
                 }
             }
@@ -72,7 +70,7 @@ class ContactManagerController: ObservableObject {
     }
     
     /// Attempts to geocode a customer address and suggests a neighbor not already in existingProspects.
-    private func geocodeAndSuggestNeighbor(
+    fileprivate func geocodeAndSuggestNeighbor(
         from customerAddress: String,
         existingProspects: [Prospect],
         completion: @escaping (_ address: String?, _ coordinate: CLLocationCoordinate2D?) -> Void
