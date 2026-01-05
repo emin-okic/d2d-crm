@@ -30,15 +30,6 @@ class ProspectController: ObservableObject {
         tempEmail = prospect.contactEmail
     }
     
-    func isDirty(prospect: Prospect) -> Bool {
-        
-        guard let baseline else { return false }
-
-        let current = ProspectSnapshot(from: prospect)
-        
-        return current != baseline
-    }
-    
     func saveProspect(_ prospect: Prospect, modelContext: ModelContext) {
         try? modelContext.save()
         captureBaseline(from: prospect)
