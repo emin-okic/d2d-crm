@@ -27,4 +27,14 @@ struct PhoneValidator {
     static func normalized(_ value: String?) -> String {
         value?.filter(\.isNumber) ?? ""
     }
+    
+    /// Formats a raw phone number as (XXX) XXX-XXXX if possible
+    static func formatted(_ raw: String) -> String {
+        
+        let digits = raw.filter(\.isNumber)
+        
+        guard digits.count == 10 else { return raw }
+        
+        return "(\(digits.prefix(3))) \(digits.dropFirst(3).prefix(3))-\(digits.suffix(4))"
+    }
 }

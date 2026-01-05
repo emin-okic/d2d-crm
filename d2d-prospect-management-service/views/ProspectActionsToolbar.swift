@@ -89,7 +89,7 @@ struct ProspectActionsToolbar: View {
         // Phone confirmation
         .sheet(isPresented: $showCallSheet) {
             CallActionBottomSheet(
-                phone: formattedPhone(prospect.contactPhone),
+                phone: PhoneValidator.formatted(prospect.contactPhone),
                 onCall: {
                     logCallNote()
 
@@ -257,7 +257,9 @@ struct ProspectActionsToolbar: View {
     
     /// This function is intended to log call activity for prospects
     private func logCallNote() {
-        let formatted = formattedPhone(prospect.contactPhone)
+        
+        let formatted = PhoneValidator.formatted(prospect.contactPhone)
+        
         let content = "Called prospect at \(formatted) on \(Date().formatted(date: .abbreviated, time: .shortened))."
 
         let note = Note(content: content, date: Date(), prospect: prospect)
@@ -276,12 +278,15 @@ struct ProspectActionsToolbar: View {
             return
         }
 
-        let formattedNew = formattedPhone(new)
+        let formattedNew = PhoneValidator.formatted(new)
 
         let content: String
         if !oldNormalized.isEmpty {
-            let formattedOld = formattedPhone(old ?? "")
+            
+            let formattedOld = PhoneValidator.formatted(old ?? "")
+            
             content = "Updated phone number from \(formattedOld) to \(formattedNew)."
+            
         } else {
             content = "Added phone number \(formattedNew)."
         }
@@ -300,12 +305,6 @@ struct ProspectActionsToolbar: View {
             phoneError = nil
             return true
         }
-    }
-
-    private func formattedPhone(_ raw: String) -> String {
-        let digits = raw.filter(\.isNumber)
-        guard digits.count == 10 else { return raw }
-        return "(\(digits.prefix(3))) \(digits.dropFirst(3).prefix(3))-\(digits.suffix(4))"
     }
 
     
