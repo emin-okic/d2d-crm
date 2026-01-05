@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ProspectDetailsLiquidGlass<Content: View>: View {
+struct LiquidGlassToolbarBackground<Content: View>: View {
     let content: Content
 
     init(@ViewBuilder content: () -> Content) {

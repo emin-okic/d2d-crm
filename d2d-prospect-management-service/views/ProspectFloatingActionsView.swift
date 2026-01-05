@@ -17,7 +17,7 @@ struct ProspectFloatingActionsView: View {
 
             HStack {
                 // Align to left
-                ProspectDetailsLiquidGlass {
+                LiquidGlassToolbarBackground {
                     VStack(spacing: 16) {
                         // Notes button above trash
                         Button(action: onNotesTapped) {
