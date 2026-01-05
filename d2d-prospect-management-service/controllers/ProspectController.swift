@@ -22,38 +22,20 @@ class ProspectController: ObservableObject {
     @Published var selectedTab: ProspectTab = .appointments
     @Published var showNotesSheet: Bool = false
     
-    // Snapshot to detect edits
-    private struct ProspectSnapshot: Equatable {
-        var fullName: String
-        var address: String
-        var phone: String
-        var email: String
-        var list: String
-    }
-    
     private var baseline: ProspectSnapshot?
     
     func captureBaseline(from prospect: Prospect) {
-        baseline = ProspectSnapshot(
-            fullName: prospect.fullName.trimmingCharacters(in: .whitespacesAndNewlines),
-            address: prospect.address.trimmingCharacters(in: .whitespacesAndNewlines),
-            phone: prospect.contactPhone.trimmingCharacters(in: .whitespacesAndNewlines),
-            email: prospect.contactEmail.trimmingCharacters(in: .whitespacesAndNewlines),
-            list: prospect.list
-        )
+        baseline = ProspectSnapshot(from: prospect)
         tempPhone = prospect.contactPhone
         tempEmail = prospect.contactEmail
     }
     
     func isDirty(prospect: Prospect) -> Bool {
+        
         guard let baseline else { return false }
-        let current = ProspectSnapshot(
-            fullName: prospect.fullName.trimmingCharacters(in: .whitespacesAndNewlines),
-            address: prospect.address.trimmingCharacters(in: .whitespacesAndNewlines),
-            phone: prospect.contactPhone.trimmingCharacters(in: .whitespacesAndNewlines),
-            email: prospect.contactEmail.trimmingCharacters(in: .whitespacesAndNewlines),
-            list: prospect.list
-        )
+
+        let current = ProspectSnapshot(from: prospect)
+        
         return current != baseline
     }
     
