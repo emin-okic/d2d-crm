@@ -17,8 +17,6 @@ struct ContactManagementView: View {
     // Shared state
     @State private var searchText: String = ""
     @StateObject private var controller = ContactManagerController()
-    @State private var suggestedProspect: Prospect?
-    @State private var suggestionSourceIndex = 0
 
     // Menu + overlays
     @State private var showingImportFromContacts = false
