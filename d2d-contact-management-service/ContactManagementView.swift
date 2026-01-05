@@ -236,20 +236,12 @@ struct ContactManagementView: View {
         }
     }
     
-    func matchesSearch(_ text: String, name: String, address: String) -> Bool {
-        let query = text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return false }
-
-        return name.lowercased().contains(query)
-            || address.lowercased().contains(query)
-    }
-    
     func firstMatchingProspect(
         searchText: String,
         prospects: [Prospect]
     ) -> Prospect? {
         prospects.first {
-            matchesSearch(searchText, name: $0.fullName, address: $0.address)
+            controller.matchesSearch(searchText, name: $0.fullName, address: $0.address)
         }
     }
 
@@ -258,7 +250,7 @@ struct ContactManagementView: View {
         customers: [Customer]
     ) -> Customer? {
         customers.first {
-            matchesSearch(searchText, name: $0.fullName, address: $0.address)
+            controller.matchesSearch(searchText, name: $0.fullName, address: $0.address)
         }
     }
     
