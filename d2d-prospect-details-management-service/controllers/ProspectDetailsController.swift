@@ -1,8 +1,8 @@
 //
-//  ProspectController.swift
+//  ProspectDetailsController.swift
 //  d2d-studio
 //
-//  Created by Emin Okic on 9/23/25.
+//  Created by Emin Okic on 1/5/26.
 //
 
 import Foundation
@@ -12,13 +12,16 @@ import PhoneNumberKit
 import MapKit
 
 @MainActor
-class ProspectController: ObservableObject {
+class ProspectDetailsController: ObservableObject {
+    
     @Published var tempPhone: String = ""
     @Published var tempEmail: String = ""
     @Published var phoneError: String?
     @Published var showConversionSheet = false
+    
     @Published var showAppointmentSheet = false
     @Published var selectedAppointmentDetails: Appointment?
+    
     @Published var selectedTab: ProspectDetailsTab = .appointments
     @Published var showNotesSheet: Bool = false
     

@@ -9,8 +9,10 @@ import SwiftUI
 import SwiftData
 
 struct ProspectAppointmentsView: View {
+    
     @Bindable var prospect: Prospect
-    @ObservedObject var controller: ProspectController
+    
+    @ObservedObject var controller: ProspectDetailsController
 
     // Fixed height for the appointments container
     let containerHeight: CGFloat = 200

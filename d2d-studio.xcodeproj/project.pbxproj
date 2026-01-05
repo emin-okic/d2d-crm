@@ -99,6 +99,16 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		C510D6C72F0BA7ED00D7938E /* d2d-prospect-details-management-service */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "d2d-prospect-details-management-service";
+			sourceTree = "<group>";
+		};
+		C510D6D62F0BAD6C00D7938E /* d2d-customer-details-management-service */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "d2d-customer-details-management-service";
+			sourceTree = "<group>";
+		};
 		C511DEA22E40EF5C001BAA36 /* d2d-trip-manager-service */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "d2d-trip-manager-service";
@@ -240,7 +250,9 @@
 				C55449012E5A104300677585 /* d2d-ad-engine-service */,
 				C59705F92E198214006C3B55 /* d2d-contact-management-service */,
 				C5E346E02E82F62D00CAE776 /* d2d-prospect-management-service */,
+				C510D6C72F0BA7ED00D7938E /* d2d-prospect-details-management-service */,
 				C51C3CC42E82FAA80081B571 /* d2d-customer-management-service */,
+				C510D6D62F0BAD6C00D7938E /* d2d-customer-details-management-service */,
 				C591DBC02F00877B000C99BD /* d2d-contact-import-service */,
 				C5B391272F0974E30061B04A /* d2d-contact-export-service */,
 				C56CD3852E1993CB00232EF7 /* d2d-territory-management-service */,
@@ -319,6 +331,8 @@
 				C5E6A72E2E2BE6CD00EC05F4 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				C510D6C72F0BA7ED00D7938E /* d2d-prospect-details-management-service */,
+				C510D6D62F0BAD6C00D7938E /* d2d-customer-details-management-service */,
 				C511DEA22E40EF5C001BAA36 /* d2d-trip-manager-service */,
 				C511E0372E40F502001BAA36 /* d2d-search-engine-service */,
 				C51C3CC42E82FAA80081B571 /* d2d-customer-management-service */,
