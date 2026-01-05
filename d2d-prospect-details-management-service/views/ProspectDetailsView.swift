@@ -15,7 +15,7 @@ struct ProspectDetailsView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.modelContext) private var modelContext
 
-    @StateObject private var controller = ProspectController()
+    @StateObject private var controller = ProspectDetailsController()
     @StateObject private var searchViewModel = SearchCompleterViewModel()
     @FocusState private var isAddressFieldFocused: Bool
 
