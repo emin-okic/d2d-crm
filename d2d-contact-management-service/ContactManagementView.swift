@@ -236,36 +236,4 @@ struct ContactManagementView: View {
         }
     }
     
-    func firstMatchingProspect(
-        searchText: String,
-        prospects: [Prospect]
-    ) -> Prospect? {
-        prospects.first {
-            controller.matchesSearch(searchText, name: $0.fullName, address: $0.address)
-        }
-    }
-
-    func firstMatchingCustomer(
-        searchText: String,
-        customers: [Customer]
-    ) -> Customer? {
-        customers.first {
-            controller.matchesSearch(searchText, name: $0.fullName, address: $0.address)
-        }
-    }
-    
-    private func handleSearchSubmit() {
-        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-
-        if selectedList == "Prospects",
-           let match = firstMatchingProspect(searchText: trimmed, prospects: prospects) {
-            selectedProspect = match
-        }
-
-        if selectedList == "Customers",
-           let match = firstMatchingCustomer(searchText: trimmed, customers: customers) {
-            selectedCustomer = match
-        }
-    }
 }

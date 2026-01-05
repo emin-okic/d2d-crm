@@ -76,11 +76,4 @@ class ContactManagerController: ObservableObject {
         suggestedProspect = found
     }
     
-    func matchesSearch(_ text: String, name: String, address: String) -> Bool {
-        let query = text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return false }
-
-        return name.lowercased().contains(query)
-            || address.lowercased().contains(query)
-    }
 }
