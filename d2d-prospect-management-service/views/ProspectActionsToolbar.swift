@@ -292,58 +292,6 @@ struct ProspectActionsToolbar: View {
         try? modelContext.save()
     }
     
-    // MARK: - Core: Convert to Customer (Appointments Clone Fix)
-    private func createCustomer(from prospect: Prospect) {
-        // ✅ Deep copy notes, knocks, and appointments
-        let clonedNotes = prospect.notes.map { Note(content: $0.content, date: $0.date) }
-        let clonedKnocks = prospect.knockHistory.map {
-            Knock(date: $0.date, status: $0.status, latitude: $0.latitude, longitude: $0.longitude)
-        }
-        let clonedAppointments = prospect.appointments.map { appt in
-            Appointment(
-                title: appt.title,
-                location: appt.location,
-                clientName: appt.clientName,
-                date: appt.date,
-                type: appt.type,
-                notes: appt.notes,
-                prospect: prospect // temporary, rebind below
-            )
-        }
-
-        // ✅ Create Customer record
-        let customer = customerController.fromProspect(prospect)
-
-        // overwrite with cloned data (safe)
-        customer.notes = clonedNotes
-        customer.knockHistory = clonedKnocks
-
-        // ✅ Link cloned appointments to the new customer
-        for appointment in clonedAppointments {
-            appointment.prospect = nil // break old link
-            customer.appointments.append(appointment)
-        }
-
-        // ✅ Insert & delete old records
-        modelContext.insert(customer)
-        for appointment in prospect.appointments {
-            modelContext.delete(appointment)
-        }
-        modelContext.delete(prospect)
-
-        do {
-            try modelContext.save()
-            DispatchQueue.main.async {
-                if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                   let root = scene.windows.first?.rootViewController {
-                    root.dismiss(animated: true)
-                }
-            }
-        } catch {
-            print("❌ Failed to create customer: \(error)")
-        }
-    }
-    
     private func validatePhoneNumber() -> Bool {
         if let error = PhoneValidator.validate(newPhone) {
             phoneError = error
