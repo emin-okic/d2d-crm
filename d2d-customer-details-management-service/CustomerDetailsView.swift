@@ -16,7 +16,7 @@ struct CustomerDetailsView: View {
     @Environment(\.presentationMode) private var presentationMode
     @Environment(\.modelContext) private var modelContext
 
-    @State private var selectedTab: CustomerTab = .appointments
+    @State private var selectedTab: CustomerDetailsTab = .appointments
 
     // Local editable copies
     @State private var tempFullName: String = ""
@@ -88,7 +88,7 @@ struct CustomerDetailsView: View {
                 // ✅ Tabs (Appointments, Knocks, Notes)
                 Section {
                     Picker("View", selection: $selectedTab) {
-                        ForEach(CustomerTab.allCases, id: \.self) { tab in
+                        ForEach(CustomerDetailsTab.allCases, id: \.self) { tab in
                             Text(tab.rawValue).tag(tab)
                         }
                     }
@@ -361,9 +361,4 @@ struct CustomerDetailsView: View {
             CustomerKnockingHistoryView(customer: customer)
         }
     }
-}
-
-enum CustomerTab: String, CaseIterable {
-    case appointments = "Appointments"
-    case knocks = "Knocks"
 }
