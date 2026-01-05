@@ -13,12 +13,15 @@ import MapKit
 
 @MainActor
 class ProspectDetailsController: ObservableObject {
+    
     @Published var tempPhone: String = ""
     @Published var tempEmail: String = ""
     @Published var phoneError: String?
     @Published var showConversionSheet = false
+    
     @Published var showAppointmentSheet = false
     @Published var selectedAppointmentDetails: Appointment?
+    
     @Published var selectedTab: ProspectDetailsTab = .appointments
     @Published var showNotesSheet: Bool = false
     

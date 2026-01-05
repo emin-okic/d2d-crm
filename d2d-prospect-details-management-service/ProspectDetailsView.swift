@@ -17,8 +17,6 @@ struct ProspectDetailsView: View {
 
     @StateObject private var controller = ProspectDetailsController()
     
-    @StateObject private var appointmentsController = ProspectController()
-    
     @StateObject private var searchViewModel = SearchCompleterViewModel()
     @FocusState private var isAddressFieldFocused: Bool
 
@@ -91,7 +89,7 @@ struct ProspectDetailsView: View {
                     switch controller.selectedTab {
                         
                     case .appointments:
-                        ProspectAppointmentsView(prospect: prospect, controller: appointmentsController)
+                        ProspectAppointmentsView(prospect: prospect, controller: controller)
                         
                     case .knocks:
                         ProspectKnockingHistoryView(prospect: prospect)
