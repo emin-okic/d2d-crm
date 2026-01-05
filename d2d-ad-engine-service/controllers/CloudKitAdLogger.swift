@@ -1,22 +1,11 @@
 //
-//  AdCloud.swift
+//  CloudKitAdLogger.swift
 //  d2d-studio
 //
-//  Created by Emin Okic on 8/24/25.
+//  Created by Emin Okic on 1/5/26.
 //
 
 import CloudKit
-
-enum AdCloud {
-    static let container = CKContainer(identifier: "iCloud.com.d2d-studio")
-    static let db = container.publicCloudDatabase
-}
-
-struct ImpressionPayload {
-    let adId: String
-    let event: String   // "impression" | "click" | "cancel"
-    let timestamp: Date
-}
 
 @MainActor
 final class CloudKitAdLogger {

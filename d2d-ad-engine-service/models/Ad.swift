@@ -48,14 +48,3 @@ public struct Ad: Identifiable, Codable, Equatable {
         self.maxImpressionsPerHour = maxImpressionsPerHour
     }
 }
-
-public struct AdImpression: Codable {
-    public let adId: String
-    public let timestamp: Date
-}
-
-public enum AdEvent: String {
-    case impression
-    case click
-    case dismiss
-}
