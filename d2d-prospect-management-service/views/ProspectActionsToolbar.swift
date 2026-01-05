@@ -302,17 +302,6 @@ struct ProspectActionsToolbar: View {
         }
     }
 
-    // MARK: - Utility buttons & validation
-    private func iconButton(systemName: String, color: Color = .accentColor, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: systemName)
-                .font(.title2)
-                .foregroundColor(color)
-                .frame(width: 44, height: 44)
-        }
-        .buttonStyle(.plain)
-    }
-
     private func formattedPhone(_ raw: String) -> String {
         let digits = raw.filter(\.isNumber)
         guard digits.count == 10 else { return raw }
