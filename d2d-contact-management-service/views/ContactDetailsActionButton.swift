@@ -1,5 +1,5 @@
 //
-//  CustomerActionButtonView.swift
+//  CRMActionButton.swift
 //  d2d-studio
 //
 //  Created by Emin Okic on 1/4/26.
@@ -7,12 +7,13 @@
 
 import SwiftUI
 
-struct CustomerActionButtonView: View {
+/// A modern CRM-style action button used in ProspectActionsToolbar
+struct ContactDetailsActionButton: View {
     let icon: String
     let title: String
     let color: Color
     let action: () -> Void
-
+    
     var body: some View {
         Button(action: action) {
             VStack(spacing: 6) {
@@ -20,12 +21,12 @@ struct CustomerActionButtonView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(color.opacity(0.15))
                         .frame(width: 60, height: 60)
-
+                    
                     Image(systemName: icon)
                         .font(.title2)
                         .foregroundColor(color)
                 }
-
+                
                 Text(title)
                     .font(.caption)
                     .foregroundColor(.primary)
@@ -39,7 +40,8 @@ struct CustomerActionButtonView: View {
 }
 
 #Preview {
-    CustomerActionButtonView(icon: "phone.fill", title: "Call", color: .blue) {
+    ContactDetailsActionButton(icon: "phone.fill", title: "Call", color: .blue) {
         print("Call tapped")
     }
 }
+

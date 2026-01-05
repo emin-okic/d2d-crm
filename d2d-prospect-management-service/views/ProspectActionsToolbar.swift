@@ -43,7 +43,7 @@ struct ProspectActionsToolbar: View {
             HStack(spacing: 24) {
                 
                 // Phone
-                actionButton(
+                ContactDetailsActionButton(
                     icon: "phone.fill",
                     title: "Call",
                     color: .blue
@@ -58,7 +58,7 @@ struct ProspectActionsToolbar: View {
                 }
 
                 // Email
-                actionButton(
+                ContactDetailsActionButton(
                     icon: "envelope.fill",
                     title: "Email",
                     color: .purple
@@ -71,7 +71,7 @@ struct ProspectActionsToolbar: View {
                 }
 
                 if prospect.list == "Prospects" {
-                    actionButton(
+                    ContactDetailsActionButton(
                         icon: "checkmark.seal.fill",
                         title: "Convert",
                         color: .green
@@ -89,7 +89,7 @@ struct ProspectActionsToolbar: View {
         // Phone confirmation
         .sheet(isPresented: $showCallSheet) {
             CallActionBottomSheet(
-                phone: formattedPhone(prospect.contactPhone),
+                phone: PhoneValidator.formatted(prospect.contactPhone),
                 onCall: {
                     logCallNote()
 
@@ -255,35 +255,11 @@ struct ProspectActionsToolbar: View {
         }
     }
     
-    // MARK: - Modern CRM style button
-    @ViewBuilder
-    private func actionButton(icon: String, title: String, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack(spacing: 6) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(color.opacity(0.15))
-                        .frame(width: 60, height: 60)
-                    
-                    Image(systemName: icon)
-                        .font(.title2)
-                        .foregroundColor(color)
-                }
-                
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(.primary)
-            }
-            .padding(4)
-        }
-        .buttonStyle(.plain)
-        .shadow(color: color.opacity(0.25), radius: 4, x: 0, y: 2)
-        .animation(.spring(response: 0.25, dampingFraction: 0.6), value: UUID())
-    }
-    
     /// This function is intended to log call activity for prospects
     private func logCallNote() {
-        let formatted = formattedPhone(prospect.contactPhone)
+        
+        let formatted = PhoneValidator.formatted(prospect.contactPhone)
+        
         let content = "Called prospect at \(formatted) on \(Date().formatted(date: .abbreviated, time: .shortened))."
 
         let note = Note(content: content, date: Date(), prospect: prospect)
@@ -302,12 +278,15 @@ struct ProspectActionsToolbar: View {
             return
         }
 
-        let formattedNew = formattedPhone(new)
+        let formattedNew = PhoneValidator.formatted(new)
 
         let content: String
         if !oldNormalized.isEmpty {
-            let formattedOld = formattedPhone(old ?? "")
+            
+            let formattedOld = PhoneValidator.formatted(old ?? "")
+            
             content = "Updated phone number from \(formattedOld) to \(formattedNew)."
+            
         } else {
             content = "Added phone number \(formattedNew)."
         }
@@ -318,58 +297,6 @@ struct ProspectActionsToolbar: View {
         try? modelContext.save()
     }
     
-    // MARK: - Core: Convert to Customer (Appointments Clone Fix)
-    private func createCustomer(from prospect: Prospect) {
-        // ✅ Deep copy notes, knocks, and appointments
-        let clonedNotes = prospect.notes.map { Note(content: $0.content, date: $0.date) }
-        let clonedKnocks = prospect.knockHistory.map {
-            Knock(date: $0.date, status: $0.status, latitude: $0.latitude, longitude: $0.longitude)
-        }
-        let clonedAppointments = prospect.appointments.map { appt in
-            Appointment(
-                title: appt.title,
-                location: appt.location,
-                clientName: appt.clientName,
-                date: appt.date,
-                type: appt.type,
-                notes: appt.notes,
-                prospect: prospect // temporary, rebind below
-            )
-        }
-
-        // ✅ Create Customer record
-        let customer = customerController.fromProspect(prospect)
-
-        // overwrite with cloned data (safe)
-        customer.notes = clonedNotes
-        customer.knockHistory = clonedKnocks
-
-        // ✅ Link cloned appointments to the new customer
-        for appointment in clonedAppointments {
-            appointment.prospect = nil // break old link
-            customer.appointments.append(appointment)
-        }
-
-        // ✅ Insert & delete old records
-        modelContext.insert(customer)
-        for appointment in prospect.appointments {
-            modelContext.delete(appointment)
-        }
-        modelContext.delete(prospect)
-
-        do {
-            try modelContext.save()
-            DispatchQueue.main.async {
-                if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                   let root = scene.windows.first?.rootViewController {
-                    root.dismiss(animated: true)
-                }
-            }
-        } catch {
-            print("❌ Failed to create customer: \(error)")
-        }
-    }
-    
     private func validatePhoneNumber() -> Bool {
         if let error = PhoneValidator.validate(newPhone) {
             phoneError = error
@@ -378,23 +305,6 @@ struct ProspectActionsToolbar: View {
             phoneError = nil
             return true
         }
-    }
-
-    // MARK: - Utility buttons & validation
-    private func iconButton(systemName: String, color: Color = .accentColor, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: systemName)
-                .font(.title2)
-                .foregroundColor(color)
-                .frame(width: 44, height: 44)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func formattedPhone(_ raw: String) -> String {
-        let digits = raw.filter(\.isNumber)
-        guard digits.count == 10 else { return raw }
-        return "(\(digits.prefix(3))) \(digits.dropFirst(3).prefix(3))-\(digits.suffix(4))"
     }
 
     

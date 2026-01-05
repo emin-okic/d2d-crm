@@ -27,15 +27,15 @@ struct CustomerActionsToolbar: View {
             HStack(spacing: 32) {
                 Spacer()
 
-                CustomerActionButtonView(icon: "phone.fill", title: "Call", color: .blue) {
+                ContactDetailsActionButton(icon: "phone.fill", title: "Call", color: .blue) {
                     controller.callTapped()
                 }
 
-                CustomerActionButtonView(icon: "envelope.fill", title: "Email", color: .purple) {
+                ContactDetailsActionButton(icon: "envelope.fill", title: "Email", color: .purple) {
                     controller.emailTapped()
                 }
 
-                CustomerActionButtonView(icon: "person.crop.circle.badge.xmark", title: "Sale Lost", color: .red) {
+                ContactDetailsActionButton(icon: "person.crop.circle.badge.xmark", title: "Sale Lost", color: .red) {
                     controller.confirmCustomerLost()
                 }
 
@@ -46,7 +46,7 @@ struct CustomerActionsToolbar: View {
 
         }
 
-        .confirmationDialog("Call \(controller.formattedPhone(controller.customer.contactPhone))?",
+        .confirmationDialog("Call \(PhoneValidator.formatted(controller.customer.contactPhone))?",
                             isPresented: $controller.showCallConfirmation,
                             titleVisibility: .visible) {
             Button("Call") {
@@ -78,7 +78,7 @@ struct CustomerActionsToolbar: View {
         
         .sheet(isPresented: $controller.showCallSheet) {
             CallActionBottomSheet(
-                phone: controller.formattedPhone(controller.customer.contactPhone),
+                phone: PhoneValidator.formatted(controller.customer.contactPhone),
                 onCall: {
                     controller.logCustomerCallNote()
                     if let url = URL(string: "tel://\(controller.customer.contactPhone.filter(\.isNumber))") {

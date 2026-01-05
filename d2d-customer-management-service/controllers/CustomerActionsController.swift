@@ -111,24 +111,31 @@ final class CustomerActionsController: ObservableObject {
     // MARK: - Helpers
 
     func logCustomerCallNote() {
-        let formatted = formattedPhone(customer.contactPhone)
+        
+        let formatted = PhoneValidator.formatted(customer.contactPhone)
+        
         let content = "Called customer at \(formatted) on \(Date().formatted(date: .abbreviated, time: .shortened))."
+        
         customer.notes.append(Note(content: content, date: Date()))
+        
         try? modelContext.save()
     }
 
     func logCustomerPhoneChangeNote(old: String?, new: String) {
+        
         let oldNormalized = PhoneValidator.normalized(old)
         let newNormalized = PhoneValidator.normalized(new)
 
         guard oldNormalized != newNormalized else { return }
 
-        let formattedNew = formattedPhone(new)
+        let formattedNew = PhoneValidator.formatted(new)
+        
         let content = oldNormalized.isEmpty
             ? "Added phone number \(formattedNew)."
-            : "Updated phone number from \(formattedPhone(old ?? "")) to \(formattedNew)."
+            : "Updated phone number from \(PhoneValidator.formatted(old ?? "")) to \(formattedNew)."
 
         customer.notes.append(Note(content: content, date: Date()))
+        
         try? modelContext.save()
     }
 
@@ -139,12 +146,6 @@ final class CustomerActionsController: ObservableObject {
         }
         phoneError = nil
         return true
-    }
-
-    func formattedPhone(_ raw: String) -> String {
-        let digits = raw.filter(\.isNumber)
-        guard digits.count == 10 else { return raw }
-        return "(\(digits.prefix(3))) \(digits.dropFirst(3).prefix(3))-\(digits.suffix(4))"
     }
 
     private func convertCustomerToProspect(customer: Customer) {

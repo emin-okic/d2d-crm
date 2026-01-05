@@ -78,7 +78,7 @@ struct ProspectDetailsView: View {
                 // Tabs for Appointments / Knocks / Notes
                 Section {
                     Picker("View", selection: $controller.selectedTab) {
-                        ForEach(ProspectTab.allCases, id: \.self) { tab in
+                        ForEach(ProspectDetailsTab.allCases, id: \.self) { tab in
                             Text(tab.rawValue).tag(tab)
                         }
                     }
@@ -107,9 +107,12 @@ struct ProspectDetailsView: View {
                 }
             )
             .sheet(isPresented: $showDeleteConfirmation) {
+                
                 DeleteProspectSheet(
                     prospectName: prospect.fullName,
-                    onDelete: deleteProspect
+                    onDelete: {
+                        controller.deleteProspect(prospect, modelContext: modelContext)
+                    }
                 )
                 .presentationDetents([.fraction(0.25)])
                 .presentationDragIndicator(.visible)
@@ -316,38 +319,6 @@ struct ProspectDetailsView: View {
             isAddressFieldFocused = false
         }
     }
-    
-    // MARK: - Delete customer and their appointments
-    private func deleteProspect() {
-        for appointment in prospect.appointments {
-            modelContext.delete(appointment)
-        }
-        modelContext.delete(prospect)
-        try? modelContext.save()
-        DispatchQueue.main.async {
-            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let root = scene.windows.first?.rootViewController {
-                root.dismiss(animated: true)
-            }
-        }
-    }
-    
-    private func deleteProspectAndAppointments() {
-        // Delete all appointments linked to the prospect
-        for appointment in prospect.appointments {
-            modelContext.delete(appointment)
-        }
-
-        // Now delete the prospect itself
-        modelContext.delete(prospect)
-
-        do {
-            try modelContext.save()
-        } catch {
-            print("❌ Failed to delete prospect or appointments: \(error)")
-        }
-
-    }
 
     // MARK: - Logic
     private var hasUnsavedEdits: Bool {
@@ -399,9 +370,4 @@ struct ProspectDetailsView: View {
         }
     }
     
-}
-
-enum ProspectTab: String, CaseIterable {
-    case appointments = "Appointments"
-    case knocks = "Knocks"
 }
