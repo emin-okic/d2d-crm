@@ -85,12 +85,15 @@ struct ExportEmailGateView: View {
     }
 
     private func handleUnlock() {
+        
         let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.contains("@") else {
+        
+        if let error = EmailValidator.validate(trimmed) {
             showError = true
+            // Optional: store error.rawValue to display a specific message
             return
         }
-
+        
         showError = false
         EmailGateManager.shared.unlock(with: trimmed)
 
