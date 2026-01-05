@@ -27,15 +27,15 @@ struct CustomerActionsToolbar: View {
             HStack(spacing: 32) {
                 Spacer()
 
-                CustomerActionButtonView(icon: "phone.fill", title: "Call", color: .blue) {
+                ContactDetailsActionButton(icon: "phone.fill", title: "Call", color: .blue) {
                     controller.callTapped()
                 }
 
-                CustomerActionButtonView(icon: "envelope.fill", title: "Email", color: .purple) {
+                ContactDetailsActionButton(icon: "envelope.fill", title: "Email", color: .purple) {
                     controller.emailTapped()
                 }
 
-                CustomerActionButtonView(icon: "person.crop.circle.badge.xmark", title: "Sale Lost", color: .red) {
+                ContactDetailsActionButton(icon: "person.crop.circle.badge.xmark", title: "Sale Lost", color: .red) {
                     controller.confirmCustomerLost()
                 }
 

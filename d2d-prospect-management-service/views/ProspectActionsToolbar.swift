@@ -43,7 +43,7 @@ struct ProspectActionsToolbar: View {
             HStack(spacing: 24) {
                 
                 // Phone
-                CRMActionButton(
+                ContactDetailsActionButton(
                     icon: "phone.fill",
                     title: "Call",
                     color: .blue
@@ -58,7 +58,7 @@ struct ProspectActionsToolbar: View {
                 }
 
                 // Email
-                CRMActionButton(
+                ContactDetailsActionButton(
                     icon: "envelope.fill",
                     title: "Email",
                     color: .purple
@@ -71,7 +71,7 @@ struct ProspectActionsToolbar: View {
                 }
 
                 if prospect.list == "Prospects" {
-                    CRMActionButton(
+                    ContactDetailsActionButton(
                         icon: "checkmark.seal.fill",
                         title: "Convert",
                         color: .green

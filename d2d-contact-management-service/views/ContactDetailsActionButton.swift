@@ -8,7 +8,7 @@
 import SwiftUI
 
 /// A modern CRM-style action button used in ProspectActionsToolbar
-struct CRMActionButton: View {
+struct ContactDetailsActionButton: View {
     let icon: String
     let title: String
     let color: Color
@@ -38,3 +38,10 @@ struct CRMActionButton: View {
         .animation(.spring(response: 0.25, dampingFraction: 0.6), value: UUID())
     }
 }
+
+#Preview {
+    ContactDetailsActionButton(icon: "phone.fill", title: "Call", color: .blue) {
+        print("Call tapped")
+    }
+}
+
