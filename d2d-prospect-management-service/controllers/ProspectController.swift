@@ -94,12 +94,4 @@ class ProspectController: ObservableObject {
         }
     }
     
-    func fetchAddress(for completion: MKLocalSearchCompletion, prospect: Prospect) {
-        Task {
-            if let fullAddress = await SearchBarController.resolveFormattedPostalAddress(from: completion) {
-                prospect.address = fullAddress
-            }
-        }
-    }
-    
 }
