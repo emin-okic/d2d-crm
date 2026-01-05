@@ -107,9 +107,12 @@ struct ProspectDetailsView: View {
                 }
             )
             .sheet(isPresented: $showDeleteConfirmation) {
+                
                 DeleteProspectSheet(
                     prospectName: prospect.fullName,
-                    onDelete: deleteProspect
+                    onDelete: {
+                        controller.deleteProspect(prospect, modelContext: modelContext)
+                    }
                 )
                 .presentationDetents([.fraction(0.25)])
                 .presentationDragIndicator(.visible)
@@ -314,21 +317,6 @@ struct ProspectDetailsView: View {
             tempFullName = prospect.fullName
             tempAddress = prospect.address
             isAddressFieldFocused = false
-        }
-    }
-    
-    // MARK: - Delete customer and their appointments
-    private func deleteProspect() {
-        for appointment in prospect.appointments {
-            modelContext.delete(appointment)
-        }
-        modelContext.delete(prospect)
-        try? modelContext.save()
-        DispatchQueue.main.async {
-            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let root = scene.windows.first?.rootViewController {
-                root.dismiss(animated: true)
-            }
         }
     }
 

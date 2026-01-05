@@ -24,6 +24,25 @@ class ProspectController: ObservableObject {
     
     private var baseline: ProspectSnapshot?
     
+    func deleteProspect(_ prospect: Prospect, modelContext: ModelContext) {
+        // Delete related appointments first
+        for appointment in prospect.appointments {
+            modelContext.delete(appointment)
+        }
+
+        // Delete the prospect
+        modelContext.delete(prospect)
+        try? modelContext.save()
+
+        // Dismiss any presented UI safely
+        DispatchQueue.main.async {
+            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let root = scene.windows.first?.rootViewController {
+                root.dismiss(animated: true)
+            }
+        }
+    }
+    
     func captureBaseline(from prospect: Prospect) {
         baseline = ProspectSnapshot(from: prospect)
         tempPhone = prospect.contactPhone
