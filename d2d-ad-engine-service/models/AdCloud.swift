@@ -11,9 +11,3 @@ enum AdCloud {
     static let container = CKContainer(identifier: "iCloud.com.d2d-studio")
     static let db = container.publicCloudDatabase
 }
-
-struct ImpressionPayload {
-    let adId: String
-    let event: String   // "impression" | "click" | "cancel"
-    let timestamp: Date
-}
