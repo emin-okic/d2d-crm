@@ -78,7 +78,7 @@ struct ProspectDetailsView: View {
                 // Tabs for Appointments / Knocks / Notes
                 Section {
                     Picker("View", selection: $controller.selectedTab) {
-                        ForEach(ProspectTab.allCases, id: \.self) { tab in
+                        ForEach(ProspectDetailsTab.allCases, id: \.self) { tab in
                             Text(tab.rawValue).tag(tab)
                         }
                     }
@@ -382,9 +382,4 @@ struct ProspectDetailsView: View {
         }
     }
     
-}
-
-enum ProspectTab: String, CaseIterable {
-    case appointments = "Appointments"
-    case knocks = "Knocks"
 }
