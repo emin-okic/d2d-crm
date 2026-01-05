@@ -331,23 +331,6 @@ struct ProspectDetailsView: View {
             }
         }
     }
-    
-    private func deleteProspectAndAppointments() {
-        // Delete all appointments linked to the prospect
-        for appointment in prospect.appointments {
-            modelContext.delete(appointment)
-        }
-
-        // Now delete the prospect itself
-        modelContext.delete(prospect)
-
-        do {
-            try modelContext.save()
-        } catch {
-            print("❌ Failed to delete prospect or appointments: \(error)")
-        }
-
-    }
 
     // MARK: - Logic
     private var hasUnsavedEdits: Bool {
