@@ -129,15 +129,4 @@ class ProspectController: ObservableObject {
         }
     }
     
-    @discardableResult
-    func validatePhoneNumber() -> Bool {
-        if let error = PhoneValidator.validate(tempPhone) {
-            phoneError = error
-            return false
-        } else {
-            phoneError = nil
-            return true
-        }
-    }
-    
 }
