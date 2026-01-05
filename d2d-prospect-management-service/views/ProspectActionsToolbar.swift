@@ -43,7 +43,7 @@ struct ProspectActionsToolbar: View {
             HStack(spacing: 24) {
                 
                 // Phone
-                actionButton(
+                CRMActionButton(
                     icon: "phone.fill",
                     title: "Call",
                     color: .blue
@@ -58,7 +58,7 @@ struct ProspectActionsToolbar: View {
                 }
 
                 // Email
-                actionButton(
+                CRMActionButton(
                     icon: "envelope.fill",
                     title: "Email",
                     color: .purple
@@ -71,7 +71,7 @@ struct ProspectActionsToolbar: View {
                 }
 
                 if prospect.list == "Prospects" {
-                    actionButton(
+                    CRMActionButton(
                         icon: "checkmark.seal.fill",
                         title: "Convert",
                         color: .green
@@ -253,32 +253,6 @@ struct ProspectActionsToolbar: View {
         } catch {
             print("❌ Failed to convert prospect to customer:", error)
         }
-    }
-    
-    // MARK: - Modern CRM style button
-    @ViewBuilder
-    private func actionButton(icon: String, title: String, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack(spacing: 6) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(color.opacity(0.15))
-                        .frame(width: 60, height: 60)
-                    
-                    Image(systemName: icon)
-                        .font(.title2)
-                        .foregroundColor(color)
-                }
-                
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(.primary)
-            }
-            .padding(4)
-        }
-        .buttonStyle(.plain)
-        .shadow(color: color.opacity(0.25), radius: 4, x: 0, y: 2)
-        .animation(.spring(response: 0.25, dampingFraction: 0.6), value: UUID())
     }
     
     /// This function is intended to log call activity for prospects
