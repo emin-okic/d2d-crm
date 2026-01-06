@@ -27,97 +27,23 @@ struct NewTripView: View {
                 VStack(spacing: 24) {
                     
                     // MARK: - Start Address
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Start Address")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                                .background(RoundedRectangle(cornerRadius: 12).fill(Color(.secondarySystemBackground)))
-                            
-                            VStack(spacing: 0) {
-                                TextField("Enter start address", text: $startAddress)
-                                    .focused($focusedField, equals: .start)
-                                    .padding(12)
-                                    .onChange(of: startAddress) { searchVM.updateQuery($0) }
-                                
-                                if focusedField == .start && !searchVM.results.isEmpty {
-                                    VStack(spacing: 0) {
-                                        ForEach(searchVM.results.prefix(3), id: \.self) { result in
-                                            Button {
-                                                SearchBarController.resolveAndSelectAddress(from: result) { resolved in
-                                                    startAddress = resolved
-                                                    searchVM.results = []
-                                                    focusedField = nil
-                                                }
-                                            } label: {
-                                                VStack(alignment: .leading, spacing: 2) {
-                                                    Text(result.title).bold()
-                                                    Text(result.subtitle)
-                                                        .font(.subheadline)
-                                                        .foregroundColor(.gray)
-                                                }
-                                                .padding(.horizontal, 12)
-                                                .padding(.vertical, 8)
-                                                .background(Color(.systemBackground))
-                                            }
-                                            Divider()
-                                        }
-                                    }
-                                    .background(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.3)))
-                                }
-                            }
-                        }
-                    }
+                    AddressInputField(
+                        title: "Start Address",
+                        text: $startAddress,
+                        focusedField: $focusedField,
+                        field: .start,
+                        searchVM: searchVM
+                    )
 
                     // MARK: - End Address
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("End Address")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                                .background(RoundedRectangle(cornerRadius: 12).fill(Color(.secondarySystemBackground)))
-                            
-                            VStack(spacing: 0) {
-                                TextField("Enter end address", text: $endAddress)
-                                    .focused($focusedField, equals: .end)
-                                    .padding(12)
-                                    .onChange(of: endAddress) { searchVM.updateQuery($0) }
-                                
-                                if focusedField == .end && !searchVM.results.isEmpty {
-                                    VStack(spacing: 0) {
-                                        ForEach(searchVM.results.prefix(3), id: \.self) { result in
-                                            Button {
-                                                SearchBarController.resolveAndSelectAddress(from: result) { resolved in
-                                                    endAddress = resolved
-                                                    searchVM.results = []
-                                                    focusedField = nil
-                                                }
-                                            } label: {
-                                                VStack(alignment: .leading, spacing: 2) {
-                                                    Text(result.title).bold()
-                                                    Text(result.subtitle)
-                                                        .font(.subheadline)
-                                                        .foregroundColor(.gray)
-                                                }
-                                                .padding(.horizontal, 12)
-                                                .padding(.vertical, 8)
-                                                .background(Color(.systemBackground))
-                                            }
-                                            Divider()
-                                        }
-                                    }
-                                    .background(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.3)))
-                                }
-                            }
-                        }
-                    }
-
+                    AddressInputField(
+                        title: "End Address",
+                        text: $endAddress,
+                        focusedField: $focusedField,
+                        field: .end,
+                        searchVM: searchVM
+                    )
+                    
                     // MARK: - Trip Date
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Trip Date & Time")
@@ -126,14 +52,17 @@ struct NewTripView: View {
                         
                         DatePicker("Select Date & Time", selection: $tripDate, displayedComponents: [.date, .hourAndMinute])
                             .labelsHidden()
-                            .padding(12)
-                            .background(RoundedRectangle(cornerRadius: 12).fill(Color(.secondarySystemBackground)))
+                            .padding(14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.secondarySystemBackground))
+                            )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
                                     .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                             )
                     }
-
+                    
                     // MARK: - Save Button
                     Button {
                         saveTrip()
@@ -147,6 +76,7 @@ struct NewTripView: View {
                             .cornerRadius(12)
                     }
                     .disabled(startAddress.isEmpty || endAddress.isEmpty)
+                    
                 }
                 .padding()
             }
