@@ -1,0 +1,100 @@
+//
+//  RecordingStudioToolbarView.swift
+//  d2d-studio
+//
+//  Created by Emin Okic on 1/6/26.
+//
+
+import SwiftUI
+
+struct RecordingStudioToolbarView: View {
+    @Binding var isRecording: Bool
+    @Binding var isEditing: Bool
+    @Binding var selectedRecordings: Set<Recording>
+    @Binding var trashPulse: Bool
+    @Binding var showingObjectionPicker: Bool
+    @Binding var showDeleteConfirm: Bool
+
+    var currentFileName: String?
+    var onStartRecording: () -> Void
+    var onStopRecording: (String) -> Void
+    var onDeleteSelected: () -> Void
+
+    var body: some View {
+        RecordingStudioToolbarBackground {
+            
+            VStack(spacing: 12) {
+                // Add Recording (top)
+                Button {
+                    showingObjectionPicker = true
+                } label: {
+                    Image(systemName: "mic.fill")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 50, height: 50)
+                        .background(Circle().fill(Color.blue))
+                        .shadow(radius: 4)
+                }
+                
+                // Trash (bottom)
+                Button {
+                    if isEditing {
+                        // Second tap: if nothing selected, exit edit mode; if selected, ask to confirm delete
+                        if selectedRecordings.isEmpty {
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
+                                isEditing = false
+                                trashPulse = false
+                            }
+                        } else {
+                            showDeleteConfirm = true
+                        }
+                    } else {
+                        // First tap: enter edit mode + start pulsing
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
+                            isEditing = true
+                            trashPulse = true
+                        }
+                    }
+                } label: {
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: "trash.fill")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(
+                                Circle()
+                                    .fill(isEditing ? Color.red : Color.blue)
+                            )
+                            .scaleEffect(isEditing ? (trashPulse ? 1.06 : 1.0) : 1.0)
+                            .rotationEffect(.degrees(isEditing ? (trashPulse ? 2 : -2) : 0))
+                            .shadow(color: (isEditing ? Color.red.opacity(0.45) : Color.black.opacity(0.25)),
+                                    radius: 6, x: 0, y: 2)
+                            .animation(
+                                isEditing
+                                ? .easeInOut(duration: 0.75).repeatForever(autoreverses: true)
+                                : .default,
+                                value: trashPulse
+                            )
+                        
+                        // Selection count badge in delete mode
+                        if isEditing && !selectedRecordings.isEmpty {
+                            Text("\(selectedRecordings.count)")
+                                .font(.caption2).bold()
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Capsule().fill(Color.black.opacity(0.7)))
+                                .offset(x: 10, y: -10)
+                        }
+                    }
+                }
+                .accessibilityLabel(isEditing ? "Delete selected recordings" : "Enter delete mode")
+            }
+            
+        }
+        .padding(.bottom, 30)
+        .padding(.leading, 20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+        .zIndex(999)
+    }
+}

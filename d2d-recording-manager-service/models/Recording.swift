@@ -10,13 +10,21 @@ import SwiftData
 
 @Model
 final class Recording {
-    var fileName: String
+    var fileName: String          // immutable disk identifier
+    var title: String             // user-editable
     var date: Date
     var objection: Objection?
-    var rating: Int? // New
+    var rating: Int?
 
-    init(fileName: String, date: Date, objection: Objection?, rating: Int? = nil) {
+    init(
+        fileName: String,
+        title: String,
+        date: Date,
+        objection: Objection?,
+        rating: Int? = nil
+    ) {
         self.fileName = fileName
+        self.title = title
         self.date = date
         self.objection = objection
         self.rating = rating

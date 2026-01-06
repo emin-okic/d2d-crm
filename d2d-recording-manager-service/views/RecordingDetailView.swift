@@ -7,102 +7,151 @@
 
 import SwiftUI
 import AVFoundation
+import SwiftData
 
 struct RecordingDetailView: View {
-    let recording: Recording
+    @Bindable var recording: Recording
     let onDelete: () -> Void
-    @Environment(\.dismiss) var dismiss
 
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+
+    // MARK: - Editing State
+    @State private var tempFileName: String = ""
+    @State private var showRevertConfirmation = false
+
+    // MARK: - Audio
     @State private var audioPlayer: AVAudioPlayer?
     @State private var waveformSamples: [CGFloat] = []
     @State private var duration: TimeInterval = 1
     @State private var currentTime: TimeInterval = 0
     @State private var timer: Timer?
+    
+    @State private var tempTitle: String = ""
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 24) {
-                VStack(spacing: 8) {
-                    Text("Now Playing")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-
-                    Text(recording.fileName.replacingOccurrences(of: ".m4a", with: ""))
-                        .font(.title.bold())
-                        .multilineTextAlignment(.center)
-
-                    if let text = recording.objection?.text {
-                        Text("Objection: \(text)")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    if let rating = recording.rating {
-                        HStack(spacing: 12) {
-                            ForEach(0..<5) { i in
-                                Image(systemName: i < rating ? "star.fill" : "star")
-                                    .resizable()
-                                    .frame(width: 30, height: 30)
-                                    .foregroundColor(i < rating ? .yellow : .gray.opacity(0.4))
+        NavigationStack {
+            ZStack {
+                ScrollView {
+                    VStack(spacing: 20) {
+                        
+                        // MARK: - Header Card
+                        VStack(alignment: .leading, spacing: 12) {
+                            
+                            // Editable Title
+                            TextField("Recording Title", text: $tempTitle)
+                                .font(.title2.bold())
+                                .textFieldStyle(.plain)
+                            
+                            if let text = recording.objection?.text {
+                                TagView(text: text, color: .blue)
+                            }
+                            
+                            // Always show stars, even if rating is nil or 0
+                            HStack(spacing: 4) {
+                                ForEach(0..<5, id: \.self) { i in
+                                    Image(systemName: i < (recording.rating ?? 0) ? "star.fill" : "star")
+                                        .foregroundColor(i < (recording.rating ?? 0) ? .yellow : .gray.opacity(0.4))
+                                        .onTapGesture {
+                                            recording.rating = i + 1
+                                            try? modelContext.save()
+                                        }
+                                }
                             }
                         }
-                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(cardBackground)
+                        
+                        // MARK: - Playback Card
+                        VStack(spacing: 16) {
+                            
+                            WaveformView(
+                                samples: waveformSamples,
+                                currentProgress: currentTime / duration
+                            ) { seek(to: $0) }
+                                .frame(height: 60)
+                            
+                            HStack {
+                                Text(formatTime(currentTime))
+                                    .font(.caption.monospacedDigit())
+                                    .foregroundColor(.secondary)
+                                
+                                Spacer()
+                                
+                                Text(formatTime(duration))
+                                    .font(.caption.monospacedDigit())
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Button(action: playOrPause) {
+                                HStack(spacing: 10) {
+                                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                                    Text(isPlaying ? "Pause" : "Play Recording")
+                                        .fontWeight(.semibold)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(isPlaying ? Color.orange : Color.blue)
+                                .foregroundColor(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
+                        }
+                        .padding()
+                        .background(cardBackground)
+                        
+                    }
+                    .padding()
+                }
+                .navigationTitle("Recording")
+                .navigationBarTitleDisplayMode(.inline)
+                
+                
+                RecordingDetailToolbarView(
+                    onDeleteTapped: {
+                        onDelete()
+                        dismiss()
+                    }
+                )
+                
+            }
+
+            // MARK: - Toolbar
+            .toolbar {
+
+                // ⬅️ Back Button
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
                     }
                 }
-                .padding(.top)
 
-                WaveformView(samples: waveformSamples, currentProgress: currentTime / duration) { tappedProgress in
-                    seek(to: tappedProgress)
-                }
-                .frame(height: 60)
-                .padding(.horizontal)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.1))
-                )
-
-                // Time and controls
-                HStack {
-                    Text(formatTime(currentTime))
-                        .font(.caption.monospacedDigit())
-                    Spacer()
-                    Text(formatTime(duration))
-                        .font(.caption.monospacedDigit())
-                }
-                .padding(.horizontal)
-
-                Button(action: playOrPause) {
-                    Image(systemName: (audioPlayer?.isPlaying ?? false) ? "pause.circle.fill" : "play.circle.fill")
-                        .resizable()
-                        .frame(width: 70, height: 70)
-                        .foregroundColor(.blue)
-                        .shadow(radius: 4)
-                }
-                .padding(.vertical)
-
-                Spacer()
-
-                Button(role: .destructive) {
-                    onDelete()
-                    dismiss()
-                } label: {
-                    Label("Delete Recording", systemImage: "trash")
+                // Save / Revert
+                if hasUnsavedEdits {
+                    ToolbarItemGroup(placement: .navigationBarTrailing) {
+                        Button("Revert") {
+                            showRevertConfirmation = true
+                        }
                         .foregroundColor(.red)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.red.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                        Button("Save") {
+                            commitEdits()
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
                 }
             }
-            .padding()
-            .navigationTitle("Recording Details")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
+            .alert("Revert Changes?", isPresented: $showRevertConfirmation) {
+                Button("Revert", role: .destructive) {
+                    revertEdits()
                 }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This will discard any unsaved changes.")
             }
             .onAppear {
+                tempTitle = recording.title
                 loadAudio()
             }
             .onDisappear {
@@ -112,14 +161,53 @@ struct RecordingDetailView: View {
         }
     }
 
+    // MARK: - Derived State
+
+    private var hasUnsavedEdits: Bool {
+        tempTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+            != recording.title.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var isPlaying: Bool {
+        audioPlayer?.isPlaying ?? false
+    }
+
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 16)
+            .fill(Color(.secondarySystemBackground))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.black.opacity(0.04))
+            )
+    }
+
+    // MARK: - Save / Revert
+
+    private func commitEdits() {
+        let trimmed = tempTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        recording.title = trimmed
+        try? modelContext.save()
+    }
+
+    private func revertEdits() {
+        tempTitle = recording.title
+    }
+
+    // MARK: - Audio Helpers
+
     func loadAudio() {
-        let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(recording.fileName)
+        let url = FileManager.default
+            .urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent(recording.fileName)
+
         do {
             audioPlayer = try AVAudioPlayer(contentsOf: url)
             duration = audioPlayer?.duration ?? 1
             waveformSamples = generateFakeWaveform()
         } catch {
-            print("Failed to load audio: \(error)")
+            print("❌ Failed to load audio:", error)
         }
     }
 
@@ -140,9 +228,7 @@ struct RecordingDetailView: View {
         let time = Double(progress) * player.duration
         player.currentTime = time
         currentTime = time
-        if !player.isPlaying {
-            player.play()
-        }
+        if !player.isPlaying { player.play() }
         startTimer()
     }
 
