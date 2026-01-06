@@ -279,6 +279,7 @@ struct MapSearchView: View {
                                let name = pendingRecordingFileName {
                                 let rec = Recording(
                                     fileName: name,
+                                    title: obj.text,
                                     date: .now,
                                     objection: obj,
                                     rating: 3
@@ -484,7 +485,14 @@ struct MapSearchView: View {
                 onSelect: { obj in
                     selectedObjection = obj
                     if let name = pendingRecordingFileName {
-                        let newRecording = Recording(fileName: name, date: .now, objection: obj, rating: 3)
+                        
+                        let newRecording = Recording(
+                            fileName: name,
+                            title: obj.text,
+                            date: .now,
+                            objection: obj,
+                            rating: 3
+                        )
                         modelContext.insert(newRecording)
                         try? modelContext.save()
                         pendingRecordingFileName = nil
@@ -838,6 +846,7 @@ struct MapSearchView: View {
                            let name = pendingRecordingFileName {
                             let rec = Recording(
                                 fileName: name,
+                                title: obj.text,
                                 date: .now,
                                 objection: obj,
                                 rating: 3

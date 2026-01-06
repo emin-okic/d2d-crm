@@ -396,6 +396,7 @@ struct RecordingsView: View {
 
                 let newRecording = Recording(
                     fileName: fileName,
+                    title: "New Recording",
                     date: Date(),
                     objection: selectedObjection,
                     rating: score

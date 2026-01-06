@@ -7,17 +7,27 @@
 
 import SwiftUI
 import AVFoundation
+import SwiftData
 
 struct RecordingDetailView: View {
-    let recording: Recording
+    @Bindable var recording: Recording
     let onDelete: () -> Void
-    @Environment(\.dismiss) var dismiss
 
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+
+    // MARK: - Editing State
+    @State private var tempFileName: String = ""
+    @State private var showRevertConfirmation = false
+
+    // MARK: - Audio
     @State private var audioPlayer: AVAudioPlayer?
     @State private var waveformSamples: [CGFloat] = []
     @State private var duration: TimeInterval = 1
     @State private var currentTime: TimeInterval = 0
     @State private var timer: Timer?
+    
+    @State private var tempTitle: String = ""
 
     var body: some View {
         NavigationStack {
@@ -26,25 +36,27 @@ struct RecordingDetailView: View {
 
                     // MARK: - Header Card
                     VStack(alignment: .leading, spacing: 12) {
-                        Text(recording.fileName.replacingOccurrences(of: ".m4a", with: ""))
-                            .font(.title2.bold())
 
-                        HStack(spacing: 8) {
-                            if let text = recording.objection?.text {
-                                TagView(text: text, color: .blue)
-                            }
+                        // Editable Title
+                        TextField("Recording Title", text: $tempTitle)
+                            .font(.title2.bold())
+                            .textFieldStyle(.plain)
+
+                        if let text = recording.objection?.text {
+                            TagView(text: text, color: .blue)
                         }
 
                         if let rating = recording.rating {
                             HStack(spacing: 4) {
                                 ForEach(0..<5, id: \.self) { i in
                                     Image(systemName: i < rating ? "star.fill" : "star")
-                                        .foregroundColor(i < rating ? .yellow : .gray.opacity(0.4))
+                                        .foregroundColor(
+                                            i < rating ? .yellow : .gray.opacity(0.4)
+                                        )
                                 }
                             }
                         }
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
                     .background(cardBackground)
 
@@ -54,9 +66,7 @@ struct RecordingDetailView: View {
                         WaveformView(
                             samples: waveformSamples,
                             currentProgress: currentTime / duration
-                        ) { tappedProgress in
-                            seek(to: tappedProgress)
-                        }
+                        ) { seek(to: $0) }
                         .frame(height: 60)
 
                         HStack {
@@ -88,17 +98,15 @@ struct RecordingDetailView: View {
                     .background(cardBackground)
 
                     // MARK: - Danger Zone
-                    VStack(spacing: 8) {
-                        Button(role: .destructive) {
-                            onDelete()
-                            dismiss()
-                        } label: {
-                            Label("Delete Recording", systemImage: "trash")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.red.opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                        }
+                    Button(role: .destructive) {
+                        onDelete()
+                        dismiss()
+                    } label: {
+                        Label("Delete Recording", systemImage: "trash")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.red.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .padding(.top, 8)
                 }
@@ -106,12 +114,46 @@ struct RecordingDetailView: View {
             }
             .navigationTitle("Recording")
             .navigationBarTitleDisplayMode(.inline)
+
+            // MARK: - Toolbar
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Close") { dismiss() }
+
+                // ⬅️ Back Button
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                    }
+                }
+
+                // Save / Revert
+                if hasUnsavedEdits {
+                    ToolbarItemGroup(placement: .navigationBarTrailing) {
+                        Button("Revert") {
+                            showRevertConfirmation = true
+                        }
+                        .foregroundColor(.red)
+
+                        Button("Save") {
+                            commitEdits()
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
                 }
             }
-            .onAppear { loadAudio() }
+            .alert("Revert Changes?", isPresented: $showRevertConfirmation) {
+                Button("Revert", role: .destructive) {
+                    revertEdits()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This will discard any unsaved changes.")
+            }
+            .onAppear {
+                tempTitle = recording.title
+                loadAudio()
+            }
             .onDisappear {
                 timer?.invalidate()
                 audioPlayer?.stop()
@@ -119,7 +161,12 @@ struct RecordingDetailView: View {
         }
     }
 
-    // MARK: - Helpers
+    // MARK: - Derived State
+
+    private var hasUnsavedEdits: Bool {
+        tempTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+            != recording.title.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 
     private var isPlaying: Bool {
         audioPlayer?.isPlaying ?? false
@@ -133,6 +180,22 @@ struct RecordingDetailView: View {
                     .stroke(Color.black.opacity(0.04))
             )
     }
+
+    // MARK: - Save / Revert
+
+    private func commitEdits() {
+        let trimmed = tempTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        recording.title = trimmed
+        try? modelContext.save()
+    }
+
+    private func revertEdits() {
+        tempTitle = recording.title
+    }
+
+    // MARK: - Audio Helpers
 
     func loadAudio() {
         let url = FileManager.default
