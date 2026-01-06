@@ -200,6 +200,11 @@
 			path = "d2d-widget-service";
 			sourceTree = "<group>";
 		};
+		C5ED3D262F0DA1EC00B89750 /* docs */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = docs;
+			sourceTree = "<group>";
+		};
 		C5EDA8FA2F0026580016F579 /* d2d-map-screen-analytics-service */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "d2d-map-screen-analytics-service";
@@ -245,6 +250,7 @@
 				C5CDA5B22E15A65300FD96B7 /* PRIVACYPOLICY.md */,
 				C54048432DF4B32A00721D49 /* README.md */,
 				C5855D882DF073A300B479AE /* .gitignore */,
+				C5ED3D262F0DA1EC00B89750 /* docs */,
 				C5BE4B362DE7CC9E005C37B1 /* d2d-studio */,
 				C5E6A7232E2BE6CD00EC05F4 /* d2d-widget-service */,
 				C55449012E5A104300677585 /* d2d-ad-engine-service */,
@@ -348,6 +354,7 @@
 				C5BE4B362DE7CC9E005C37B1 /* d2d-studio */,
 				C5C0794D2F01A18600449E7A /* d2d-trip-analytics-service */,
 				C5E346E02E82F62D00CAE776 /* d2d-prospect-management-service */,
+				C5ED3D262F0DA1EC00B89750 /* docs */,
 				C5EDA8FA2F0026580016F579 /* d2d-map-screen-analytics-service */,
 			);
 			name = "d2d-studio";
