@@ -20,91 +20,98 @@ struct RecordingDetailView: View {
     @State private var timer: Timer?
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 24) {
-                VStack(spacing: 8) {
-                    Text("Now Playing")
-                        .font(.caption)
-                        .foregroundColor(.gray)
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
 
-                    Text(recording.fileName.replacingOccurrences(of: ".m4a", with: ""))
-                        .font(.title.bold())
-                        .multilineTextAlignment(.center)
+                    // MARK: - Header Card
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(recording.fileName.replacingOccurrences(of: ".m4a", with: ""))
+                            .font(.title2.bold())
 
-                    if let text = recording.objection?.text {
-                        Text("Objection: \(text)")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    if let rating = recording.rating {
-                        HStack(spacing: 12) {
-                            ForEach(0..<5) { i in
-                                Image(systemName: i < rating ? "star.fill" : "star")
-                                    .resizable()
-                                    .frame(width: 30, height: 30)
-                                    .foregroundColor(i < rating ? .yellow : .gray.opacity(0.4))
+                        HStack(spacing: 8) {
+                            if let text = recording.objection?.text {
+                                TagView(text: text, color: .blue)
                             }
                         }
-                        .frame(maxWidth: .infinity)
+
+                        if let rating = recording.rating {
+                            HStack(spacing: 4) {
+                                ForEach(0..<5, id: \.self) { i in
+                                    Image(systemName: i < rating ? "star.fill" : "star")
+                                        .foregroundColor(i < rating ? .yellow : .gray.opacity(0.4))
+                                }
+                            }
+                        }
                     }
-                }
-                .padding(.top)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(cardBackground)
 
-                WaveformView(samples: waveformSamples, currentProgress: currentTime / duration) { tappedProgress in
-                    seek(to: tappedProgress)
-                }
-                .frame(height: 60)
-                .padding(.horizontal)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.1))
-                )
+                    // MARK: - Playback Card
+                    VStack(spacing: 16) {
 
-                // Time and controls
-                HStack {
-                    Text(formatTime(currentTime))
-                        .font(.caption.monospacedDigit())
-                    Spacer()
-                    Text(formatTime(duration))
-                        .font(.caption.monospacedDigit())
-                }
-                .padding(.horizontal)
+                        WaveformView(
+                            samples: waveformSamples,
+                            currentProgress: currentTime / duration
+                        ) { tappedProgress in
+                            seek(to: tappedProgress)
+                        }
+                        .frame(height: 60)
 
-                Button(action: playOrPause) {
-                    Image(systemName: (audioPlayer?.isPlaying ?? false) ? "pause.circle.fill" : "play.circle.fill")
-                        .resizable()
-                        .frame(width: 70, height: 70)
-                        .foregroundColor(.blue)
-                        .shadow(radius: 4)
-                }
-                .padding(.vertical)
+                        HStack {
+                            Text(formatTime(currentTime))
+                                .font(.caption.monospacedDigit())
+                                .foregroundColor(.secondary)
 
-                Spacer()
+                            Spacer()
 
-                Button(role: .destructive) {
-                    onDelete()
-                    dismiss()
-                } label: {
-                    Label("Delete Recording", systemImage: "trash")
-                        .foregroundColor(.red)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.red.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                            Text(formatTime(duration))
+                                .font(.caption.monospacedDigit())
+                                .foregroundColor(.secondary)
+                        }
+
+                        Button(action: playOrPause) {
+                            HStack(spacing: 10) {
+                                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                                Text(isPlaying ? "Pause" : "Play Recording")
+                                    .fontWeight(.semibold)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(isPlaying ? Color.orange : Color.blue)
+                            .foregroundColor(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                    }
+                    .padding()
+                    .background(cardBackground)
+
+                    // MARK: - Danger Zone
+                    VStack(spacing: 8) {
+                        Button(role: .destructive) {
+                            onDelete()
+                            dismiss()
+                        } label: {
+                            Label("Delete Recording", systemImage: "trash")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.red.opacity(0.1))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                    }
+                    .padding(.top, 8)
                 }
+                .padding()
             }
-            .padding()
-            .navigationTitle("Recording Details")
+            .navigationTitle("Recording")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Close") { dismiss() }
                 }
             }
-            .onAppear {
-                loadAudio()
-            }
+            .onAppear { loadAudio() }
             .onDisappear {
                 timer?.invalidate()
                 audioPlayer?.stop()
@@ -112,14 +119,32 @@ struct RecordingDetailView: View {
         }
     }
 
+    // MARK: - Helpers
+
+    private var isPlaying: Bool {
+        audioPlayer?.isPlaying ?? false
+    }
+
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 16)
+            .fill(Color(.secondarySystemBackground))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.black.opacity(0.04))
+            )
+    }
+
     func loadAudio() {
-        let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(recording.fileName)
+        let url = FileManager.default
+            .urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent(recording.fileName)
+
         do {
             audioPlayer = try AVAudioPlayer(contentsOf: url)
             duration = audioPlayer?.duration ?? 1
             waveformSamples = generateFakeWaveform()
         } catch {
-            print("Failed to load audio: \(error)")
+            print("❌ Failed to load audio:", error)
         }
     }
 
@@ -140,9 +165,7 @@ struct RecordingDetailView: View {
         let time = Double(progress) * player.duration
         player.currentTime = time
         currentTime = time
-        if !player.isPlaying {
-            player.play()
-        }
+        if !player.isPlaying { player.play() }
         startTimer()
     }
 
