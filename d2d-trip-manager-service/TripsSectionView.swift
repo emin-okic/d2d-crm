@@ -103,7 +103,8 @@ struct TripsSectionView: View {
                                 trip: trip,
                                 isEditing: isEditing,
                                 isSelected: selectedTrips.contains(trip),
-                                toggleSelection: toggleSelection(for:)
+                                toggleSelection: toggleSelection(for:),
+                                openDetails: { selectedTrip = $0 }
                             )
                         }
                     }
@@ -213,9 +214,10 @@ struct TripsSectionView: View {
                 .presentationDetents([.fraction(0.75)])
                 .presentationDragIndicator(.visible)
         }
-        // Trip details (single)
         .sheet(item: $selectedTrip) { trip in
             TripDetailsView(trip: trip)
+                .presentationDetents([.fraction(0.75)])
+                .presentationDragIndicator(.visible)
         }
         // NEW: bulk delete confirmation
         .alert("Delete selected trips?", isPresented: $showDeleteConfirm) {

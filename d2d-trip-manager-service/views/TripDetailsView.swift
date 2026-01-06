@@ -43,7 +43,13 @@ struct TripDetailsView: View {
         ZStack {
             NavigationStack {
                 Form {
-                    Section(header: Text("General Trip Details")) {
+                    
+                    RouteMapView(startAddress: startAddress, endAddress: endAddress)
+                        .frame(height: 100)
+                        .cornerRadius(12)
+                        .padding(.vertical, 8)
+                    
+                    Section(header: Text("Trip Details")) {
                         TripAddressFieldView(
                             iconName: "circle",
                             placeholder: "Start Address",
@@ -71,13 +77,6 @@ struct TripDetailsView: View {
                                 .labelsHidden()
                         }
                         
-                    }
-
-                    Section(header: Text("Route Details")) {
-                        RouteMapView(startAddress: startAddress, endAddress: endAddress)
-                            .frame(height: 200)
-                            .cornerRadius(12)
-                            .padding(.vertical, 8)
                     }
                 }
                 .navigationTitle("Trip Details")

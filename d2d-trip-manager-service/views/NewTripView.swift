@@ -16,109 +16,88 @@ struct NewTripView: View {
 
     @State private var startAddress = ""
     @State private var endAddress = ""
-    @State private var miles = ""
-    
     @State private var tripDate = Date()
     
     @StateObject private var searchVM = SearchCompleterViewModel()
     @FocusState private var focusedField: Field?
 
     var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("Trip Details")) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        TextField("Start Address", text: $startAddress)
-                            .focused($focusedField, equals: .start)
-                            .onChange(of: startAddress) { searchVM.updateQuery($0) }
-
-                        if focusedField == .start && !searchVM.results.isEmpty {
-                            
-                            ForEach(searchVM.results.prefix(3), id: \.self) { result in
-                                Button {
-                                    SearchBarController.resolveAndSelectAddress(from: result) { resolved in
-                                        startAddress = resolved
-                                        searchVM.results = []
-                                        focusedField = nil
-                                    }
-                                } label: {
-                                    VStack(alignment: .leading) {
-                                        Text(result.title).bold()
-                                        Text(result.subtitle).font(.subheadline).foregroundColor(.gray)
-                                    }
-                                    .padding(.vertical, 6)
-                                }
-                            }
-                        }
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        TextField("End Address", text: $endAddress)
-                            .focused($focusedField, equals: .end)
-                            .onChange(of: endAddress) { searchVM.updateQuery($0) }
-
-                        if focusedField == .end && !searchVM.results.isEmpty {
-                            
-                            ForEach(searchVM.results.prefix(3), id: \.self) { result in
-                                Button {
-                                    SearchBarController.resolveAndSelectAddress(from: result) { resolved in
-                                        endAddress = resolved
-                                        searchVM.results = []
-                                        focusedField = nil
-                                    }
-                                } label: {
-                                    VStack(alignment: .leading) {
-                                        Text(result.title).bold()
-                                        Text(result.subtitle).font(.subheadline).foregroundColor(.gray)
-                                    }
-                                    .padding(.vertical, 6)
-                                }
-                            }
-                            
-                        }
-                    }
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 24) {
                     
-                    // Trip Date / Time Picker
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Trip Date & Time").font(.footnote).foregroundColor(.secondary)
+                    // MARK: - Start Address
+                    AddressInputField(
+                        title: "Start Address",
+                        text: $startAddress,
+                        focusedField: $focusedField,
+                        field: .start,
+                        searchVM: searchVM
+                    )
+
+                    // MARK: - End Address
+                    AddressInputField(
+                        title: "End Address",
+                        text: $endAddress,
+                        focusedField: $focusedField,
+                        field: .end,
+                        searchVM: searchVM
+                    )
+                    
+                    // MARK: - Trip Date
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Trip Date & Time")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
                         DatePicker("Select Date & Time", selection: $tripDate, displayedComponents: [.date, .hourAndMinute])
                             .labelsHidden()
+                            .padding(14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.secondarySystemBackground))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                            )
                     }
-                }
-
-                Button("Save Trip") {
-                    guard !startAddress.isEmpty && !endAddress.isEmpty else { return }
                     
-                    Task {
-                        let distance = await TripsController.shared.calculateMiles(from: startAddress, to: endAddress)
-                        print("🧭 Calculated distance: \(distance)")
-
-                        guard !distance.isNaN else {
-                            print("❌ Invalid distance. Trip not saved.")
-                            return
-                        }
-
-                        let trip = Trip(
-                            startAddress: startAddress,
-                            endAddress: endAddress,
-                            miles: distance,
-                            date: tripDate
-                        )
-
-                        await MainActor.run {
-                            context.insert(trip)
-                            try? context.save()
-                            onSave()
-                            dismiss()
-                        }
+                    // MARK: - Save Button
+                    Button {
+                        saveTrip()
+                    } label: {
+                        Text("Save Trip")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(startAddress.isEmpty || endAddress.isEmpty ? Color.gray.opacity(0.3) : Color.blue)
+                            .foregroundColor(.white)
+                            .font(.headline)
+                            .cornerRadius(12)
                     }
+                    .disabled(startAddress.isEmpty || endAddress.isEmpty)
+                    
                 }
-                .disabled(startAddress.isEmpty || endAddress.isEmpty)
+                .padding()
             }
             .navigationTitle("New Trip")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
-    
+
+    private func saveTrip() {
+        guard !startAddress.isEmpty && !endAddress.isEmpty else { return }
+        Task {
+            let distance = await TripsController.shared.calculateMiles(from: startAddress, to: endAddress)
+            let trip = Trip(startAddress: startAddress, endAddress: endAddress, miles: distance, date: tripDate)
+            await MainActor.run {
+                context.insert(trip)
+                try? context.save()
+                onSave()
+                dismiss()
+            }
+        }
+    }
 }
 
 enum Field {
