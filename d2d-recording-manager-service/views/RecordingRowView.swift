@@ -31,7 +31,7 @@ struct RecordingRowView: View {
                     })
                     .textFieldStyle(.roundedBorder)
                 } else {
-                    Text(recording.fileName)
+                    Text(recording.title)
                         .font(.headline)
                         .lineLimit(1)
                         .onTapGesture(count: 2) {
