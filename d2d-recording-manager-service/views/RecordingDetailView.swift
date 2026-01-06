@@ -47,14 +47,15 @@ struct RecordingDetailView: View {
                                 TagView(text: text, color: .blue)
                             }
                             
-                            if let rating = recording.rating {
-                                HStack(spacing: 4) {
-                                    ForEach(0..<5, id: \.self) { i in
-                                        Image(systemName: i < rating ? "star.fill" : "star")
-                                            .foregroundColor(
-                                                i < rating ? .yellow : .gray.opacity(0.4)
-                                            )
-                                    }
+                            // Always show stars, even if rating is nil or 0
+                            HStack(spacing: 4) {
+                                ForEach(0..<5, id: \.self) { i in
+                                    Image(systemName: i < (recording.rating ?? 0) ? "star.fill" : "star")
+                                        .foregroundColor(i < (recording.rating ?? 0) ? .yellow : .gray.opacity(0.4))
+                                        .onTapGesture {
+                                            recording.rating = i + 1
+                                            try? modelContext.save()
+                                        }
                                 }
                             }
                         }
