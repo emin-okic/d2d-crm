@@ -31,89 +31,88 @@ struct RecordingDetailView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-
-                    // MARK: - Header Card
-                    VStack(alignment: .leading, spacing: 12) {
-
-                        // Editable Title
-                        TextField("Recording Title", text: $tempTitle)
-                            .font(.title2.bold())
-                            .textFieldStyle(.plain)
-
-                        if let text = recording.objection?.text {
-                            TagView(text: text, color: .blue)
-                        }
-
-                        if let rating = recording.rating {
-                            HStack(spacing: 4) {
-                                ForEach(0..<5, id: \.self) { i in
-                                    Image(systemName: i < rating ? "star.fill" : "star")
-                                        .foregroundColor(
-                                            i < rating ? .yellow : .gray.opacity(0.4)
-                                        )
+            ZStack {
+                ScrollView {
+                    VStack(spacing: 20) {
+                        
+                        // MARK: - Header Card
+                        VStack(alignment: .leading, spacing: 12) {
+                            
+                            // Editable Title
+                            TextField("Recording Title", text: $tempTitle)
+                                .font(.title2.bold())
+                                .textFieldStyle(.plain)
+                            
+                            if let text = recording.objection?.text {
+                                TagView(text: text, color: .blue)
+                            }
+                            
+                            if let rating = recording.rating {
+                                HStack(spacing: 4) {
+                                    ForEach(0..<5, id: \.self) { i in
+                                        Image(systemName: i < rating ? "star.fill" : "star")
+                                            .foregroundColor(
+                                                i < rating ? .yellow : .gray.opacity(0.4)
+                                            )
+                                    }
                                 }
                             }
                         }
-                    }
-                    .padding()
-                    .background(cardBackground)
-
-                    // MARK: - Playback Card
-                    VStack(spacing: 16) {
-
-                        WaveformView(
-                            samples: waveformSamples,
-                            currentProgress: currentTime / duration
-                        ) { seek(to: $0) }
-                        .frame(height: 60)
-
-                        HStack {
-                            Text(formatTime(currentTime))
-                                .font(.caption.monospacedDigit())
-                                .foregroundColor(.secondary)
-
-                            Spacer()
-
-                            Text(formatTime(duration))
-                                .font(.caption.monospacedDigit())
-                                .foregroundColor(.secondary)
-                        }
-
-                        Button(action: playOrPause) {
-                            HStack(spacing: 10) {
-                                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                                Text(isPlaying ? "Pause" : "Play Recording")
-                                    .fontWeight(.semibold)
+                        .padding()
+                        .background(cardBackground)
+                        
+                        // MARK: - Playback Card
+                        VStack(spacing: 16) {
+                            
+                            WaveformView(
+                                samples: waveformSamples,
+                                currentProgress: currentTime / duration
+                            ) { seek(to: $0) }
+                                .frame(height: 60)
+                            
+                            HStack {
+                                Text(formatTime(currentTime))
+                                    .font(.caption.monospacedDigit())
+                                    .foregroundColor(.secondary)
+                                
+                                Spacer()
+                                
+                                Text(formatTime(duration))
+                                    .font(.caption.monospacedDigit())
+                                    .foregroundColor(.secondary)
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(isPlaying ? Color.orange : Color.blue)
-                            .foregroundColor(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            
+                            Button(action: playOrPause) {
+                                HStack(spacing: 10) {
+                                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                                    Text(isPlaying ? "Pause" : "Play Recording")
+                                        .fontWeight(.semibold)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(isPlaying ? Color.orange : Color.blue)
+                                .foregroundColor(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
                         }
+                        .padding()
+                        .background(cardBackground)
+                        
                     }
                     .padding()
-                    .background(cardBackground)
-
-                    // MARK: - Danger Zone
-                    Button(role: .destructive) {
+                }
+                .navigationTitle("Recording")
+                .navigationBarTitleDisplayMode(.inline)
+                
+                
+                RecordingDetailToolbarView(
+                    onDeleteTapped: {
                         onDelete()
                         dismiss()
-                    } label: {
-                        Label("Delete Recording", systemImage: "trash")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.red.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
-                    .padding(.top, 8)
-                }
-                .padding()
+                )
+                
             }
-            .navigationTitle("Recording")
-            .navigationBarTitleDisplayMode(.inline)
 
             // MARK: - Toolbar
             .toolbar {
