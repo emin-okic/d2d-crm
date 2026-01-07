@@ -7,5 +7,4 @@
 
 enum ProspectDetailsTab: String, CaseIterable {
     case appointments = "Appointments"
-    case knocks = "Knocks"
 }

@@ -33,6 +33,9 @@ struct ProspectDetailsView: View {
     @State private var showExportPrompt = false
     @State private var showExportSuccessBanner = false
     @State private var exportSuccessMessage = ""
+    
+    @State private var showAppointmentsSheet = false
+    @State private var showKnocksSheet = false
 
     var body: some View {
         ZStack {
@@ -56,6 +59,29 @@ struct ProspectDetailsView: View {
             }
             
             Form {
+                
+                Section {
+                    HStack(spacing: 12) {
+                        ProspectScorecard(
+                            title: "Upcoming Meetings",
+                            value: "\(prospect.appointments.filter { $0.date >= Date() }.count)",
+                            icon: "calendar.badge.clock",
+                            color: .blue
+                        ) {
+                            showAppointmentsSheet = true
+                        }
+
+                        ProspectScorecard(
+                            title: "Total Knocks",
+                            value: "\(prospect.knockHistory.count)",
+                            icon: "hand.tap.fill",
+                            color: .orange
+                        ) {
+                            showKnocksSheet = true
+                        }
+                    }
+                }
+                
                 // Prospect info
                 Section(header: Text("Prospect Details")) {
                     TextField("Full Name", text: $tempFullName)
@@ -76,26 +102,6 @@ struct ProspectDetailsView: View {
                     )
                 }
                 
-                // Tabs for Appointments / Knocks / Notes
-                Section {
-                    Picker("View", selection: $controller.selectedTab) {
-                        ForEach(ProspectDetailsTab.allCases, id: \.self) { tab in
-                            Text(tab.rawValue).tag(tab)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.bottom, 6)
-                    
-                    switch controller.selectedTab {
-                        
-                    case .appointments:
-                        ProspectAppointmentsView(prospect: prospect, controller: controller)
-                        
-                    case .knocks:
-                        ProspectKnockingHistoryView(prospect: prospect)
-                        
-                    }
-                }
             }
             
             // Bottom floating buttons
@@ -193,6 +199,25 @@ struct ProspectDetailsView: View {
             // Initialize local edit copies
             tempFullName = prospect.fullName
             tempAddress = prospect.address
+        }
+        .sheet(isPresented: $showAppointmentsSheet) {
+            NavigationStack {
+                ProspectAppointmentsView(
+                    prospect: prospect,
+                    controller: controller
+                )
+                .navigationTitle("Upcoming Meetings")
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+            }
+        }
+        .sheet(isPresented: $showKnocksSheet) {
+            NavigationStack {
+                ProspectKnockingHistoryView(prospect: prospect)
+                    .navigationTitle("Knocking History")
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
         }
         .sheet(isPresented: $controller.showConversionSheet) {
             NavigationView {
