@@ -24,6 +24,8 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     
     private var activeRadiusOverlay: MKCircle?
     private let bulkAddRadius: CLLocationDistance = 35
+    
+    private var hasZoomedForActiveRadius = false
 
     init(
         userLocationManager: UserLocationManager,
@@ -149,6 +151,9 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         switch gesture.state {
 
         case .began:
+            
+            hasZoomedForActiveRadius = false
+
             // Remove old overlay if any
             if let overlay = activeRadiusOverlay {
                 mapView.removeOverlay(overlay)
@@ -157,8 +162,13 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             let circle = MKCircle(center: coord, radius: bulkAddRadius)
             activeRadiusOverlay = circle
             mapView.addOverlay(circle)
+            
+            // 🔍 Zoom in right away so user sees placement context
+            zoomToBulkAddArea(center: coord, radius: bulkAddRadius)
+            hasZoomedForActiveRadius = true
 
         case .changed:
+            
             if let overlay = activeRadiusOverlay {
                 mapView.removeOverlay(overlay)
             }
@@ -174,26 +184,21 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             let center = overlay.coordinate
             let radius = overlay.radius
 
-            // Let the radius be visible briefly before animating
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+            // Brief pause so the user visually confirms placement
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
                 guard let self, let mapView = self.mapView else { return }
 
-                // Zoom first
-                self.zoomToBulkAddArea(center: center, radius: radius)
-
-                // Fade out the ring during zoom
+                // Fade out the ring
                 self.fadeOutRadiusOverlay(overlay)
 
-                // Remove overlay after fade completes
+                // Remove overlay after fade
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                     mapView.removeOverlay(overlay)
                     self.activeRadiusOverlay = nil
                 }
 
-                // Notify bulk add slightly after zoom starts
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    self.notifyBulkAdd(center: center, radius: radius)
-                }
+                // Trigger bulk add
+                self.notifyBulkAdd(center: center, radius: radius)
             }
 
         default:
