@@ -168,19 +168,43 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             mapView.addOverlay(circle)
 
         case .ended:
+            
             guard let overlay = activeRadiusOverlay else { return }
 
             let center = overlay.coordinate
             let radius = overlay.radius
 
             mapView.removeOverlay(overlay)
+            
             activeRadiusOverlay = nil
+            
+            // Zoom before showing confirmation
+            zoomToBulkAddArea(center: center, radius: radius)
 
             notifyBulkAdd(center: center, radius: radius)
 
         default:
             break
         }
+    }
+    
+    private func zoomToBulkAddArea(
+        center: CLLocationCoordinate2D,
+        radius: CLLocationDistance,
+        animated: Bool = true
+    ) {
+        guard let mapView else { return }
+
+        // Slightly larger than the radius so the ring fits comfortably
+        let paddingMultiplier: CLLocationDistance = 2.4
+
+        let region = MKCoordinateRegion(
+            center: center,
+            latitudinalMeters: radius * paddingMultiplier,
+            longitudinalMeters: radius * paddingMultiplier
+        )
+
+        mapView.setRegion(region, animated: animated)
     }
 
     @objc func handleTap(_ gesture: UITapGestureRecognizer) {
