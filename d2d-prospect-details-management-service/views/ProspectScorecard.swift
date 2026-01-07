@@ -33,7 +33,6 @@ struct ProspectScorecard: View {
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.8)
                 }
 
                 Spacer()
@@ -43,8 +42,11 @@ struct ProspectScorecard: View {
             .frame(maxWidth: .infinity, maxHeight: 72)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.secondarySystemBackground))
-                    .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
+                    .fill(.ultraThinMaterial)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(color.opacity(0.25), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
