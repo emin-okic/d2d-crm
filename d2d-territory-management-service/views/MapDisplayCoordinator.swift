@@ -24,6 +24,8 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     
     private var activeRadiusOverlay: MKCircle?
     private let bulkAddRadius: CLLocationDistance = 35
+    
+    private var hasZoomedForActiveRadius = false
 
     init(
         userLocationManager: UserLocationManager,
@@ -149,6 +151,9 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         switch gesture.state {
 
         case .began:
+            
+            hasZoomedForActiveRadius = false
+
             // Remove old overlay if any
             if let overlay = activeRadiusOverlay {
                 mapView.removeOverlay(overlay)
@@ -157,8 +162,13 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             let circle = MKCircle(center: coord, radius: bulkAddRadius)
             activeRadiusOverlay = circle
             mapView.addOverlay(circle)
+            
+            // 🔍 Zoom in right away so user sees placement context
+            zoomToBulkAddArea(center: coord, radius: bulkAddRadius)
+            hasZoomedForActiveRadius = true
 
         case .changed:
+            
             if let overlay = activeRadiusOverlay {
                 mapView.removeOverlay(overlay)
             }
@@ -168,19 +178,92 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             mapView.addOverlay(circle)
 
         case .ended:
+            
             guard let overlay = activeRadiusOverlay else { return }
 
             let center = overlay.coordinate
             let radius = overlay.radius
 
-            mapView.removeOverlay(overlay)
-            activeRadiusOverlay = nil
+            // Brief pause so the user visually confirms placement
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+                guard let self, let mapView = self.mapView else { return }
 
-            notifyBulkAdd(center: center, radius: radius)
+                // Fade out the ring
+                self.fadeOutRadiusOverlay(overlay)
+
+                // Remove overlay after fade
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                    mapView.removeOverlay(overlay)
+                    self.activeRadiusOverlay = nil
+                }
+
+                // Trigger bulk add
+                self.notifyBulkAdd(center: center, radius: radius)
+            }
 
         default:
             break
         }
+    }
+    
+    private func fadeOutRadiusOverlay(
+        _ overlay: MKCircle,
+        duration: TimeInterval = 0.25
+    ) {
+        guard
+            let mapView,
+            let renderer = mapView.renderer(for: overlay) as? MKCircleRenderer
+        else { return }
+
+        let start = Date()
+        let initialAlpha: CGFloat = 1.0
+
+        renderer.alpha = initialAlpha
+
+        let displayLink = CADisplayLink(target: BlockTarget { [weak renderer] link in
+            let elapsed = Date().timeIntervalSince(start)
+            let progress = min(elapsed / duration, 1.0)
+
+            renderer?.alpha = initialAlpha * (1.0 - progress)
+
+            if progress >= 1.0 {
+                renderer?.alpha = 0.0
+                link.invalidate()
+            }
+        }, selector: #selector(BlockTarget.tick))
+
+        displayLink.add(to: .main, forMode: .common)
+    }
+    
+    private final class BlockTarget {
+        let block: (CADisplayLink) -> Void
+
+        init(_ block: @escaping (CADisplayLink) -> Void) {
+            self.block = block
+        }
+
+        @objc func tick(_ link: CADisplayLink) {
+            block(link)
+        }
+    }
+    
+    private func zoomToBulkAddArea(
+        center: CLLocationCoordinate2D,
+        radius: CLLocationDistance,
+        animated: Bool = true
+    ) {
+        guard let mapView else { return }
+
+        // Slightly larger than the radius so the ring fits comfortably
+        let paddingMultiplier: CLLocationDistance = 2.4
+
+        let region = MKCoordinateRegion(
+            center: center,
+            latitudinalMeters: radius * paddingMultiplier,
+            longitudinalMeters: radius * paddingMultiplier
+        )
+
+        mapView.setRegion(region, animated: animated)
     }
 
     @objc func handleTap(_ gesture: UITapGestureRecognizer) {
