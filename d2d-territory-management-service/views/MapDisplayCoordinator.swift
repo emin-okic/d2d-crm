@@ -174,17 +174,71 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             let center = overlay.coordinate
             let radius = overlay.radius
 
-            mapView.removeOverlay(overlay)
-            
-            activeRadiusOverlay = nil
-            
-            // Zoom before showing confirmation
-            zoomToBulkAddArea(center: center, radius: radius)
+            // Let the radius be visible briefly before animating
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                guard let self, let mapView = self.mapView else { return }
 
-            notifyBulkAdd(center: center, radius: radius)
+                // Zoom first
+                self.zoomToBulkAddArea(center: center, radius: radius)
+
+                // Fade out the ring during zoom
+                self.fadeOutRadiusOverlay(overlay)
+
+                // Remove overlay after fade completes
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                    mapView.removeOverlay(overlay)
+                    self.activeRadiusOverlay = nil
+                }
+
+                // Notify bulk add slightly after zoom starts
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    self.notifyBulkAdd(center: center, radius: radius)
+                }
+            }
 
         default:
             break
+        }
+    }
+    
+    private func fadeOutRadiusOverlay(
+        _ overlay: MKCircle,
+        duration: TimeInterval = 0.25
+    ) {
+        guard
+            let mapView,
+            let renderer = mapView.renderer(for: overlay) as? MKCircleRenderer
+        else { return }
+
+        let start = Date()
+        let initialAlpha: CGFloat = 1.0
+
+        renderer.alpha = initialAlpha
+
+        let displayLink = CADisplayLink(target: BlockTarget { [weak renderer] link in
+            let elapsed = Date().timeIntervalSince(start)
+            let progress = min(elapsed / duration, 1.0)
+
+            renderer?.alpha = initialAlpha * (1.0 - progress)
+
+            if progress >= 1.0 {
+                renderer?.alpha = 0.0
+                link.invalidate()
+            }
+        }, selector: #selector(BlockTarget.tick))
+
+        displayLink.add(to: .main, forMode: .common)
+    }
+    
+    private final class BlockTarget {
+        let block: (CADisplayLink) -> Void
+
+        init(_ block: @escaping (CADisplayLink) -> Void) {
+            self.block = block
+        }
+
+        @objc func tick(_ link: CADisplayLink) {
+            block(link)
         }
     }
     
