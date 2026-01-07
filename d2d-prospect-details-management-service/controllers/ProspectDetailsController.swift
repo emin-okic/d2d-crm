@@ -22,7 +22,6 @@ class ProspectDetailsController: ObservableObject {
     @Published var showAppointmentSheet = false
     @Published var selectedAppointmentDetails: Appointment?
     
-    @Published var selectedTab: ProspectDetailsTab = .appointments
     @Published var showNotesSheet: Bool = false
     
     private var baseline: ProspectSnapshot?
