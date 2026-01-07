@@ -95,25 +95,22 @@ struct FollowUpAssistantView: View {
                         VStack(spacing: 12) {
                             HStack(spacing: 12) {
                                 
-                                // Recordings scorecard (NEW)
-                                Button {
+                                RecordingsScorecardView(
+                                    unlocked: studioUnlocked,
+                                    count: recordings.count
+                                ) {
                                     if studioUnlocked {
                                         showRecordingsSheet = true
                                     } else {
                                         showPromo = true
                                     }
-                                } label: {
-                                    RecordingsScorecardView(
-                                        unlocked: studioUnlocked,
-                                        count: recordings.count
-                                    )
                                 }
                                 .buttonStyle(.plain)
                                 
                                 Button {
                                     showTripsSheet = true
                                 } label: {
-                                    LeaderboardCardView(
+                                    TripManagerScorecardView(
                                         title: "Trips Today",
                                         count: dailyTrips
                                     )
