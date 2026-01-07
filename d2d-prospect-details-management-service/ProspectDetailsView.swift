@@ -245,14 +245,6 @@ struct ProspectDetailsView: View {
                 }
             }
         }
-        .sheet(isPresented: $controller.showAppointmentSheet) {
-            NavigationStack {
-                ScheduleAppointmentView(prospect: prospect)
-            }
-        }
-        .sheet(item: $controller.selectedAppointmentDetails) { appointment in
-            AppointmentDetailsView(appointment: appointment)
-        }
     }
     
     private func exportToContacts() {

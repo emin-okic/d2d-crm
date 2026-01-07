@@ -94,5 +94,13 @@ struct ProspectAppointmentsView: View {
             .padding(.horizontal, 8)
         }
         .padding(.horizontal, 12)
+        .sheet(isPresented: $controller.showAppointmentSheet) {
+            NavigationStack {
+                ScheduleAppointmentView(prospect: prospect)
+            }
+        }
+        .sheet(item: $controller.selectedAppointmentDetails) { appointment in
+            AppointmentDetailsView(appointment: appointment)
+        }
     }
 }
