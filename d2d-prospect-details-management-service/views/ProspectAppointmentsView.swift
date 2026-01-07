@@ -11,15 +11,14 @@ import SwiftData
 struct ProspectAppointmentsView: View {
     
     @Bindable var prospect: Prospect
-    
     @ObservedObject var controller: ProspectDetailsController
 
-    // Fixed height for the appointments container
-    let containerHeight: CGFloat = 200
+    // ~3 rows worth of height (tweak if needed)
+    private let maxListHeight: CGFloat = 220
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Scrollable appointment list
+        VStack(spacing: 12) {
+
             ScrollView {
                 LazyVStack(spacing: 12) {
                     let upcoming = prospect.appointments
@@ -31,56 +30,34 @@ struct ProspectAppointmentsView: View {
                             .foregroundColor(.gray)
                             .font(.callout)
                             .frame(maxWidth: .infinity)
-                            .padding(.top, 16)
+                            .padding(.vertical, 24)
                     } else {
                         ForEach(upcoming) { appt in
                             Button {
                                 controller.selectedAppointmentDetails = appt
                             } label: {
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("Follow Up With \(prospect.fullName)")
-                                            .font(.subheadline)
-                                            .fontWeight(.medium)
-                                        Text(prospect.address)
-                                            .font(.caption)
-                                            .foregroundColor(.gray)
-                                        Text(appt.date.formatted(date: .abbreviated, time: .shortened))
-                                            .font(.caption2)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(.gray)
-                                }
-                                .padding(12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color(.secondarySystemBackground))
-                                        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-                                )
+                                appointmentRow(appt)
                             }
                             .buttonStyle(.plain)
                         }
                     }
                 }
                 .padding(.horizontal, 4)
-                .padding(.top, 8)
-                .padding(.bottom, 8) // extra padding inside scroll
+                .padding(.vertical, 8)
             }
-            .frame(height: containerHeight)
+            .frame(maxHeight: maxListHeight) // ✅ THIS is the magic
             .background(Color(.systemBackground))
             .cornerRadius(14)
-            .shadow(color: Color.black.opacity(0.02), radius: 4, x: 0, y: 2)
+            .shadow(color: .black.opacity(0.03), radius: 4)
 
-            // Fixed bottom button
+            // Fixed bottom action
             HStack {
                 Spacer()
                 Button {
                     controller.showAppointmentSheet = true
                 } label: {
                     Label("Add Appointment", systemImage: "calendar.badge.plus")
-                        .font(.subheadline).bold()
+                        .font(.subheadline.bold())
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)
                         .background(Color.blue)
@@ -89,8 +66,6 @@ struct ProspectAppointmentsView: View {
                         .shadow(radius: 4)
                 }
             }
-            .padding(.top, 6)
-            .padding(.bottom, 4)
             .padding(.horizontal, 8)
         }
         .padding(.horizontal, 12)
@@ -102,5 +77,41 @@ struct ProspectAppointmentsView: View {
         .sheet(item: $controller.selectedAppointmentDetails) { appointment in
             AppointmentDetailsView(appointment: appointment)
         }
+    }
+
+    // MARK: - Row View (kept clean)
+    @ViewBuilder
+    private func appointmentRow(_ appt: Appointment) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Follow Up With \(prospect.fullName)")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+
+                Text(prospect.address)
+                    .font(.caption)
+                    .foregroundColor(.gray)
+
+                Text(
+                    appt.date.formatted(
+                        date: .abbreviated,
+                        time: .shortened
+                    )
+                )
+                .font(.caption2)
+                .foregroundColor(.secondary)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .foregroundColor(.gray)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.secondarySystemBackground))
+                .shadow(color: Color.black.opacity(0.05), radius: 4)
+        )
     }
 }

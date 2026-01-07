@@ -63,7 +63,7 @@ struct ProspectDetailsView: View {
                 Section {
                     HStack(spacing: 12) {
                         ProspectScorecard(
-                            title: "Upcoming Meetings",
+                            title: "Meetings",
                             value: "\(prospect.appointments.filter { $0.date >= Date() }.count)",
                             icon: "calendar.badge.clock",
                             color: .blue
@@ -207,8 +207,7 @@ struct ProspectDetailsView: View {
                     controller: controller
                 )
                 .navigationTitle("Upcoming Meetings")
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
+                .presentationDetents([.medium])
             }
         }
         .sheet(isPresented: $showKnocksSheet) {
