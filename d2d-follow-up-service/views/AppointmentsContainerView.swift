@@ -26,8 +26,8 @@ struct AppointmentsContainerView: View {
                 filteredAppointments: $filteredAppointments,
                 maxScrollHeight: UIScreen.main.bounds.height * 0.5
             )
-                .padding()
+            .padding()
         }
-        .frame(height: 500) // 3 rows + padding
+        .frame(height: 550) // 3 rows + padding
     }
 }

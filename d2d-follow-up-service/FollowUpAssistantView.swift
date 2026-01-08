@@ -130,11 +130,11 @@ struct FollowUpAssistantView: View {
                                     filteredAppointments: $filteredAppointments
                                 )
                                 .padding(.horizontal, 20)
-                                .frame(maxHeight: 500)
+                                .frame(maxHeight: 550)
                                 
                             }
                         }
-                        .frame(maxHeight: 700)
+                        .frame(maxHeight: 750)
                     }
                     .padding(.bottom, 5)
                 }
