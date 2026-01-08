@@ -41,6 +41,9 @@ struct CustomerDetailsView: View {
     @State private var exportSuccessMessage = ""
     
     @State private var showNotesSheet = false
+    
+    @State private var showAppointmentsSheet = false
+    @State private var showKnocksSheet = false
 
     var body: some View {
         ZStack {
@@ -64,6 +67,29 @@ struct CustomerDetailsView: View {
             }
             
             Form {
+                
+                Section {
+                    HStack(spacing: 12) {
+                        CustomerDetailsScorecard(
+                            title: "Meetings",
+                            value: "\(customer.appointments.filter { $0.date >= Date() }.count)",
+                            icon: "calendar.badge.clock",
+                            color: .blue
+                        ) {
+                            showAppointmentsSheet = true
+                        }
+
+                        CustomerDetailsScorecard(
+                            title: "Total Knocks",
+                            value: "\(customer.knockHistory.count)",
+                            icon: "hand.tap.fill",
+                            color: .orange
+                        ) {
+                            showKnocksSheet = true
+                        }
+                    }
+                }
+                
                 // ✅ Customer core info
                 Section(header: Text("Customer Details")) {
                     TextField("Full Name", text: $tempFullName)
@@ -85,18 +111,6 @@ struct CustomerDetailsView: View {
                     )
                 }
                 
-                // ✅ Tabs (Appointments, Knocks, Notes)
-                Section {
-                    Picker("View", selection: $selectedTab) {
-                        ForEach(CustomerDetailsTab.allCases, id: \.self) { tab in
-                            Text(tab.rawValue).tag(tab)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.bottom)
-                    
-                    tabContent
-                }
             }
             
             CustomerFloatingActionsView(
@@ -111,6 +125,23 @@ struct CustomerDetailsView: View {
             .ignoresSafeArea(.keyboard, edges: .bottom)
             .sheet(isPresented: $showNotesSheet) {
                 CustomerNotesThreadFullView(customer: customer)
+            }
+            .sheet(isPresented: $showAppointmentsSheet) {
+                NavigationStack {
+                    CustomerAppointmentsView(
+                        customer: customer
+                    )
+                    .navigationTitle("Upcoming Meetings")
+                    .presentationDetents([.medium])
+                }
+            }
+            .sheet(isPresented: $showKnocksSheet) {
+                NavigationStack {
+                    CustomerKnockingHistoryView(customer: customer)
+                        .navigationTitle("Knocking History")
+                        .presentationDetents([.medium, .large])
+                        .presentationDragIndicator(.visible)
+                }
             }
             .sheet(isPresented: $showDeleteConfirmation) {
                 DeleteCustomerSheet(
@@ -351,14 +382,4 @@ struct CustomerDetailsView: View {
         }
     }
 
-    // MARK: - Tab Content
-    @ViewBuilder
-    private var tabContent: some View {
-        switch selectedTab {
-        case .appointments:
-            CustomerAppointmentsView(customer: customer)
-        case .knocks:
-            CustomerKnockingHistoryView(customer: customer)
-        }
-    }
 }

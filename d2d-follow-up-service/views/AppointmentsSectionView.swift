@@ -60,8 +60,8 @@ struct AppointmentsSectionView: View {
         ZStack {
                 VStack(alignment: .leading, spacing: 12) {
 
-                    // Header
-                    VStack(alignment: .center, spacing: 5) {
+                    // ===== White pill header =====
+                    VStack(spacing: 4) {
                         Text("Appointments")
                             .font(.title2)
                             .fontWeight(.semibold)
@@ -77,7 +77,11 @@ struct AppointmentsSectionView: View {
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.top)
+                    .padding(.vertical, 10)
+                    .background(Color.white)
+                    .cornerRadius(16)
+                    .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+                    .padding(.horizontal, 20)
                     
                     // Toggle chips
                     HStack(spacing: 8) {
