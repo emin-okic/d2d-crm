@@ -476,7 +476,7 @@ struct MapSearchView: View {
             .presentationDetents([.height(260)])
             .presentationDragIndicator(.visible)
             .onAppear {
-                // ✨ Gratifying entry sound
+                // ✨ Entry sound
                 MapScreenSoundController.shared.playPropertyOpen()
             }
         }
