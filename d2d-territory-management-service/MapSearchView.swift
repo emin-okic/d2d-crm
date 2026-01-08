@@ -158,6 +158,9 @@ struct MapSearchView: View {
                     },
                     onMapTapped: { coordinate in
                         
+                        // 🎯 Haptic: instant response
+                        MapScreenHapticsController.shared.mapTap()
+                        
                         selectedPlaceID = nil
                         
                         // CLOSE SEARCH FIRST if click anywhere other than search
@@ -456,6 +459,14 @@ struct MapSearchView: View {
                             address: item.address,
                             coordinate: item.coordinate
                         )
+                    
+                    
+                    // 🏆 Reward haptic — feels like a win
+                    MapScreenHapticsController.shared.propertyAdded()
+                    
+                    // 🏆 Haptic + sound = reward
+                    MapScreenSoundController.shared.playPropertyAdded()
+                    
                     pendingAddProperty = nil
                 },
                 onCancel: {
@@ -464,6 +475,10 @@ struct MapSearchView: View {
             )
             .presentationDetents([.height(260)])
             .presentationDragIndicator(.visible)
+            .onAppear {
+                // ✨ Entry sound
+                MapScreenSoundController.shared.playPropertyOpen()
+            }
         }
         .sheet(isPresented: $showNoteInput) {
             if let prospect = prospectToNote {
