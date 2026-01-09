@@ -72,7 +72,7 @@ struct ProspectDetailsView: View {
                         }
 
                         ProspectScorecard(
-                            title: "Total Knocks",
+                            title: "Knocks",
                             value: "\(prospect.knockHistory.count)",
                             icon: "hand.tap.fill",
                             color: .orange
