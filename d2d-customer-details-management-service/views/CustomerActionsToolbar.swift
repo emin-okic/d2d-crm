@@ -28,14 +28,29 @@ struct CustomerActionsToolbar: View {
                 Spacer()
 
                 ContactDetailsActionButton(icon: "phone.fill", title: "Call", color: .blue) {
+                    
+                    // ✅ Haptic + sound
+                    ContactDetailsHapticsController.shared.propertyAdded()
+                    ContactScreenSoundController.shared.playPropertyAdded()
+                    
                     controller.callTapped()
                 }
 
                 ContactDetailsActionButton(icon: "envelope.fill", title: "Email", color: .purple) {
+                    
+                    // ✅ Haptic + sound
+                    ContactDetailsHapticsController.shared.propertyAdded()
+                    ContactScreenSoundController.shared.playPropertyAdded()
+                    
                     controller.emailTapped()
                 }
 
                 ContactDetailsActionButton(icon: "person.crop.circle.badge.xmark", title: "Sale Lost", color: .red) {
+                    
+                    // ✅ Haptic + sound
+                    ContactDetailsHapticsController.shared.propertyAdded()
+                    ContactScreenSoundController.shared.playPropertyAdded()
+                    
                     controller.confirmCustomerLost()
                 }
 

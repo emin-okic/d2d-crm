@@ -134,7 +134,14 @@ struct ProspectDetailsView: View {
             // Back Button
             ToolbarItem(placement: .navigationBarLeading) {
                 Button {
+                    
+                    // ✅ Play haptic + sound when closing the details screen
+                    ContactDetailsHapticsController.shared.propertyAdded()
+                    ContactScreenSoundController.shared.playPropertyAdded()
+                    
+                    // Then dismiss the screen
                     presentationMode.wrappedValue.dismiss()
+                    
                 } label: {
                     Label("Back", systemImage: "chevron.left")
                 }

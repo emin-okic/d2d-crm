@@ -461,6 +461,10 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
 
         selectedPlaceID = annotation.place.id
         onMarkerTapped(annotation.place)
+        
+        // ✅ Play the same feedback as adding a new property
+        MapScreenHapticsController.shared.propertyAdded()
+        MapScreenSoundController.shared.playPropertyAdded()
 
         refreshAllAnnotations(on: mapView)
     }

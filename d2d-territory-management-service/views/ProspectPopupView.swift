@@ -37,7 +37,15 @@ struct ProspectPopupView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Spacer()
-                Button(action: onClose) {
+                Button(action: {
+                    
+                    // ✅ Play haptic + sound when closing
+                    MapScreenHapticsController.shared.propertyAdded()
+                    MapScreenSoundController.shared.playPropertyAdded()
+                    
+                    // Then perform the original close action
+                    onClose()
+                }) {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(.gray)
                         .imageScale(.large)
@@ -53,7 +61,14 @@ struct ProspectPopupView: View {
             }
             .padding(.horizontal, 5)
 
-            Button(action: onViewDetails) {
+            Button(action: {
+                // ✅ Play haptic + sound when selecting the prospect name
+                MapScreenHapticsController.shared.propertyAdded()
+                MapScreenSoundController.shared.playPropertyAdded()
+                
+                // Then perform the original action
+                onViewDetails()
+            }) {
                 HStack(spacing: 4) {
                     Text(findProspectName(for: place.address))
                     Image(systemName: "chevron.right")
@@ -263,6 +278,11 @@ struct ProspectPopupView: View {
     }
 
     private func stopAndHandleOutcome(_ outcome: String) {
+        
+        // ✅ Play the same haptic and sound as adding a property
+        MapScreenHapticsController.shared.propertyAdded()
+        MapScreenSoundController.shared.playPropertyAdded()
+        
         recorder.stop()
         isRecording = false
 

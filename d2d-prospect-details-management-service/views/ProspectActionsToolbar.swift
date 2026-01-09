@@ -48,6 +48,11 @@ struct ProspectActionsToolbar: View {
                     title: "Call",
                     color: .blue
                 ) {
+                    
+                    // ✅ Haptic + sound
+                    ContactDetailsHapticsController.shared.propertyAdded()
+                    ContactScreenSoundController.shared.playPropertyAdded()
+                    
                     if prospect.contactPhone.isEmpty {
                         // Set the original phone number to nil for note taking purposes
                         originalPhone = nil
@@ -63,6 +68,11 @@ struct ProspectActionsToolbar: View {
                     title: "Email",
                     color: .purple
                 ) {
+                    
+                    // ✅ Haptic + sound
+                    ContactDetailsHapticsController.shared.propertyAdded()
+                    ContactScreenSoundController.shared.playPropertyAdded()
+                    
                     if prospect.contactEmail.nilIfEmpty == nil {
                         showAddEmailSheet = true
                     } else {
@@ -76,6 +86,11 @@ struct ProspectActionsToolbar: View {
                         title: "Convert",
                         color: .green
                     ) {
+                        
+                        // ✅ Haptic + sound
+                        ContactDetailsHapticsController.shared.propertyAdded()
+                        ContactScreenSoundController.shared.playPropertyAdded()
+                        
                         showCreateSaleSheet = true
                     }
                 }
