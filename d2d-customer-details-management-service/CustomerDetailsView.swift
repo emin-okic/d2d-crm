@@ -69,6 +69,14 @@ struct CustomerDetailsView: View {
             Form {
                 
                 Section {
+                    Text("Customer Details")
+                        .font(.largeTitle)
+                        .bold()
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
+                
+                Section {
                     HStack(spacing: 12) {
                         CustomerDetailsScorecard(
                             title: "Meetings",
@@ -88,10 +96,12 @@ struct CustomerDetailsView: View {
                             showKnocksSheet = true
                         }
                     }
+                    .padding(.horizontal, 10)
                 }
+                .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
+                .listRowBackground(Color.clear)
                 
-                // ✅ Customer core info
-                Section(header: Text("Customer Details")) {
+                Section() {
                     TextField("Full Name", text: $tempFullName)
                     
                     // 👇 Autocomplete-enabled address field
@@ -153,7 +163,6 @@ struct CustomerDetailsView: View {
             }
             
         }
-        .navigationTitle("Customer Details")
         .toolbar {
             // Back Button
             ToolbarItem(placement: .navigationBarLeading) {

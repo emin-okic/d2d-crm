@@ -42,7 +42,8 @@ struct CustomerDetailsScorecard: View {
             .frame(maxWidth: .infinity, maxHeight: 72)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(.ultraThinMaterial)
+                    .fill(Color.white)
+                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
