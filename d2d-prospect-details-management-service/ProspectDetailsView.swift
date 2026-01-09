@@ -87,6 +87,7 @@ struct ProspectDetailsView: View {
                             showKnocksSheet = true
                         }
                     }
+                    .padding(.horizontal, 10) // ← give horizontal breathing room
                 }
                 .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
                 .listRowBackground(Color.clear)
