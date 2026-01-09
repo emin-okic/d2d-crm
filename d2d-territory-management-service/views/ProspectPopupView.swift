@@ -37,7 +37,15 @@ struct ProspectPopupView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Spacer()
-                Button(action: onClose) {
+                Button(action: {
+                    
+                    // ✅ Play haptic + sound when closing
+                    MapScreenHapticsController.shared.propertyAdded()
+                    MapScreenSoundController.shared.playPropertyAdded()
+                    
+                    // Then perform the original close action
+                    onClose()
+                }) {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(.gray)
                         .imageScale(.large)
