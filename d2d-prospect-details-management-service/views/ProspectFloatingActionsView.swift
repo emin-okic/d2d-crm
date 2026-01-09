@@ -18,9 +18,19 @@ struct ProspectFloatingActionsView: View {
             HStack {
                 // Align to left
                 LiquidGlassToolbarBackground {
+                    
                     VStack(spacing: 16) {
+                        
                         // Notes button above trash
-                        Button(action: onNotesTapped) {
+                        Button(action: {
+                            
+                            // ✅ Haptic + sound feedback
+                            ContactDetailsHapticsController.shared.propertyAdded()
+                            ContactScreenSoundController.shared.playPropertyAdded()
+                            
+                            // Original action
+                            onNotesTapped()
+                        }) {
                             Image(systemName: "note.text")
                                 .font(.title2)
                                 .foregroundColor(.white)
@@ -30,7 +40,15 @@ struct ProspectFloatingActionsView: View {
                         }
 
                         // Trash button
-                        Button(action: onDeleteTapped) {
+                        Button(action: {
+                            
+                            // ✅ Haptic + sound feedback
+                            ContactDetailsHapticsController.shared.propertyAdded()
+                            ContactScreenSoundController.shared.playPropertyAdded()
+                            
+                            // Original action
+                            onDeleteTapped()
+                        }) {
                             Image(systemName: "trash.fill")
                                 .font(.title2)
                                 .foregroundColor(.white)
