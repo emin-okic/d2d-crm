@@ -59,6 +59,13 @@ struct ProspectDetailsView: View {
             }
             
             Form {
+                Section {
+                    Text("Prospect Details")
+                        .font(.largeTitle)
+                        .bold()
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
                 
                 Section {
                     HStack(spacing: 12) {
@@ -72,7 +79,7 @@ struct ProspectDetailsView: View {
                         }
 
                         ProspectScorecard(
-                            title: "Total Knocks",
+                            title: "Knocks",
                             value: "\(prospect.knockHistory.count)",
                             icon: "hand.tap.fill",
                             color: .orange
@@ -80,10 +87,13 @@ struct ProspectDetailsView: View {
                             showKnocksSheet = true
                         }
                     }
+                    .padding(.horizontal, 10) // ← give horizontal breathing room
                 }
+                .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
+                .listRowBackground(Color.clear)
                 
                 // Prospect info
-                Section(header: Text("Prospect Details")) {
+                Section() {
                     TextField("Full Name", text: $tempFullName)
                     
                     // Address with autocomplete
@@ -129,7 +139,7 @@ struct ProspectDetailsView: View {
                 NotesThreadFullView(prospect: prospect)
             }
         }
-        .navigationTitle("Edit Contact")
+        // .navigationTitle("Edit Contact")
         .toolbar {
             // Back Button
             ToolbarItem(placement: .navigationBarLeading) {
