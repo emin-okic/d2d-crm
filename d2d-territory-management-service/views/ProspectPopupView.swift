@@ -61,7 +61,14 @@ struct ProspectPopupView: View {
             }
             .padding(.horizontal, 5)
 
-            Button(action: onViewDetails) {
+            Button(action: {
+                // ✅ Play haptic + sound when selecting the prospect name
+                MapScreenHapticsController.shared.propertyAdded()
+                MapScreenSoundController.shared.playPropertyAdded()
+                
+                // Then perform the original action
+                onViewDetails()
+            }) {
                 HStack(spacing: 4) {
                     Text(findProspectName(for: place.address))
                     Image(systemName: "chevron.right")
