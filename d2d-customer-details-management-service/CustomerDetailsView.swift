@@ -88,7 +88,7 @@ struct CustomerDetailsView: View {
                         }
 
                         CustomerDetailsScorecard(
-                            title: "Total Knocks",
+                            title: "Knocks",
                             value: "\(customer.knockHistory.count)",
                             icon: "hand.tap.fill",
                             color: .orange
