@@ -14,27 +14,14 @@ struct d2d_studioApp: App {
     
     @State private var sessionId = UUID().uuidString
     
-    @State private var showSplash = true
     @State private var deepLinkURL: URL?
 
     var body: some Scene {
         WindowGroup {
-            ZStack {
-                if showSplash {
-                    SplashPeelView()
-                        .onAppear {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
-                                withAnimation { showSplash = false }
-                            }
-                        }
-                        // Catch deep-link even while splash is up
-                        .onOpenURL { url in handleDeepLink(url) }
-                } else {
-                    RootView()
-                        .onOpenURL { url in handleDeepLink(url) }
-                }
-            }
-            .preferredColorScheme(.light)
+            
+            RootView()
+                .onOpenURL { url in handleDeepLink(url) }
+                .preferredColorScheme(.light)
             
         }
         .modelContainer(sharedModelContainer)
@@ -55,8 +42,6 @@ struct d2d_studioApp: App {
             )
             return
         }
-
-        // existing import logic stays untouched
     }
     
 }
