@@ -263,6 +263,11 @@ struct ProspectPopupView: View {
     }
 
     private func stopAndHandleOutcome(_ outcome: String) {
+        
+        // ✅ Play the same haptic and sound as adding a property
+        MapScreenHapticsController.shared.propertyAdded()
+        MapScreenSoundController.shared.playPropertyAdded()
+        
         recorder.stop()
         isRecording = false
 
