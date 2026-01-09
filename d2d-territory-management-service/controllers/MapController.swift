@@ -114,18 +114,16 @@ class MapController: ObservableObject {
         
         var grouped: [String: [UnitContact]] = [:]
 
-        // 🔹 Collect PROSPECT units
+        // Collect PROSPECTs
         for p in prospects {
             guard let coord = p.coordinate else { continue }
-
             let base = parseAddress(p.address).base
             grouped[base, default: []].append(.prospect(p))
         }
 
-        // 🔹 Collect CUSTOMER units
+        // Collect CUSTOMERS
         for c in customers {
             guard let coord = c.coordinate else { continue }
-
             let base = parseAddress(c.address).base
             grouped[base, default: []].append(.customer(c))
         }
@@ -133,9 +131,9 @@ class MapController: ObservableObject {
         for (base, units) in grouped {
             guard let coord = units.first?.coordinate else { continue }
 
-            let isMultiUnit = units.count > 1
+            // 🔹 Determine if it's a true multi-unit (Unit 1, Unit 2, etc.)
+            let isMultiUnit = units.contains { parseAddress($0.address).unit != nil }
 
-            // Marker "role" rules
             let hasCustomer = units.contains { $0.isCustomer }
             let hasUnqualified = units.contains { $0.isUnqualified }
 
@@ -143,7 +141,6 @@ class MapController: ObservableObject {
             let isUnqualified = !hasCustomer && hasUnqualified
 
             let totalKnocks = units.reduce(0) { $0 + $1.knockCount }
-            
             let unitCount = units.count
 
             markers.append(
@@ -154,7 +151,7 @@ class MapController: ObservableObject {
                     unitCount: unitCount,
                     list: list,
                     isUnqualified: isUnqualified,
-                    isMultiUnit: isMultiUnit
+                    isMultiUnit: isMultiUnit // TRUE only if real "Unit X"
                 )
             )
         }

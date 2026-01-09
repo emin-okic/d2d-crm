@@ -410,17 +410,37 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     }
 
     private func standardMarkerView(for annotation: IdentifiableAnnotation) -> MKAnnotationView {
-
         let id = "customMarker"
-
-        let view =
-            mapView?.dequeueReusableAnnotationView(withIdentifier: id)
+        let view = mapView?.dequeueReusableAnnotationView(withIdentifier: id)
             ?? MKAnnotationView(annotation: annotation, reuseIdentifier: id)
 
         view.annotation = annotation
         view.canShowCallout = false
 
         configure(view, for: annotation)
+
+        // 🔢 Show badge if multiple contacts at same address (normal marker)
+        if !annotation.place.isMultiUnit && annotation.place.unitCount > 1 {
+            let badgeSize: CGFloat = 16
+
+            let badge = UILabel()
+            badge.text = "\(annotation.place.unitCount)"
+            badge.textColor = .white
+            badge.font = .boldSystemFont(ofSize: 10)
+            badge.textAlignment = .center
+            badge.backgroundColor = .systemBlue
+            badge.layer.cornerRadius = badgeSize / 2
+            badge.layer.masksToBounds = true
+
+            badge.frame = CGRect(
+                x: view.bounds.maxX - badgeSize + 2,
+                y: -2,
+                width: badgeSize,
+                height: badgeSize
+            )
+
+            view.addSubview(badge)
+        }
 
         return view
     }
