@@ -18,72 +18,65 @@ struct MultiContactPopupView: View {
 
             // Header
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(address)
-                        .font(.headline)
-                        .lineLimit(2)
-
-                    Text("\(contacts.count) contacts")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
                 Spacer()
-
                 Button(action: onClose) {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.gray)
+                        .imageScale(.large)
                 }
             }
 
+            Text(address)
+                .font(.headline)
+                .multilineTextAlignment(.center)
+
             Divider()
 
-            // Contact list
-            ForEach(contacts) { contact in
-                Button {
-                    onSelect(contact)
-                } label: {
-                    contactRow(contact)
+            ScrollView {
+                VStack(spacing: 8) {
+                    ForEach(contacts) { contact in
+                        Button {
+                            onSelect(contact)
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(displayName(for: contact))
+                                        .font(.headline)
+                                        .foregroundStyle(.primary)
+
+                                    Text(contact.list)
+                                        .font(.caption)
+                                        .foregroundStyle(contact.isCustomer ? .green : .secondary)
+                                }
+
+                                Spacer()
+
+                                if contact.knockCount > 0 {
+                                    Text("\(contact.knockCount)")
+                                        .font(.caption.bold())
+                                        .padding(6)
+                                        .background(Color.secondary.opacity(0.15))
+                                        .clipShape(Circle())
+                                }
+
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(.ultraThinMaterial)
+                            )
+                        }
+                    }
                 }
             }
         }
         .padding()
+        .frame(width: 280, height: 320)
         .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(radius: 10)
-    }
-
-    // MARK: - Row
-
-    @ViewBuilder
-    private func contactRow(_ contact: UnitContact) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(displayName(for: contact))
-                    .font(.body)
-                    .foregroundStyle(.primary)
-
-                Text(contact.list)
-                    .font(.caption)
-                    .foregroundStyle(contact.isCustomer ? .green : .secondary)
-            }
-
-            Spacer()
-
-            if contact.knockCount > 0 {
-                Text("\(contact.knockCount)")
-                    .font(.caption.bold())
-                    .padding(6)
-                    .background(Color.secondary.opacity(0.15))
-                    .clipShape(Circle())
-            }
-
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .padding(.vertical, 8)
+        .cornerRadius(18)
+        .shadow(radius: 8)
     }
 
     private func displayName(for contact: UnitContact) -> String {

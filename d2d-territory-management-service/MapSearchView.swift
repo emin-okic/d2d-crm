@@ -95,7 +95,7 @@ struct MapSearchView: View {
     @State private var selectedProspect: Prospect?
     @State private var selectedCustomer: Customer?
     
-    @State private var multiContactState: (address: String, contacts: [UnitContact])?
+    @State private var multiContactState: MultiContactState?
     
     
     var multiContactSheet: some View {
@@ -285,7 +285,7 @@ struct MapSearchView: View {
                         }
 
                         // Multiple contacts → show MultiContactPopupView
-                        multiContactState = (
+                        multiContactState = MultiContactState(
                             address: group.base + (unitKey.map { ", Unit \($0)" } ?? ""),
                             contacts: contacts
                         )
@@ -341,8 +341,19 @@ struct MapSearchView: View {
                 .presentationDetents([.fraction(0.5)])
                 .presentationDragIndicator(.visible)
             }
-            Group {
-                multiContactSheet
+            // MARK: - Multi-contact detented sheet
+            .sheet(item: $multiContactState) { state in
+                MultiContactPopupView(
+                    address: state.address,
+                    contacts: state.contacts,
+                    onSelect: { contact in
+                        multiContactState = nil
+                        handleMultiContactSelection(contact)
+                    },
+                    onClose: { multiContactState = nil }
+                )
+                .presentationDetents([.fraction(0.5)])
+                .presentationDragIndicator(.visible)
             }
             
             // Other Stuff
