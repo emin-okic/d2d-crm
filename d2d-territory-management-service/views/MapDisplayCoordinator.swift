@@ -420,7 +420,7 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         configure(view, for: annotation)
 
         // 🔢 Show badge if multiple contacts at same address (normal marker)
-        if annotation.place.showsMultiContact {
+        if annotation.place.showsMultiContact && annotation.place.contactCount > 1 {
 
             let badgeSize: CGFloat = 16
 

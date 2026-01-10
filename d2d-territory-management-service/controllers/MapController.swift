@@ -145,7 +145,7 @@ class MapController: ObservableObject {
             
             let isMultiUnit = unitCount > 1
             
-            let showsMultiContact = !isMultiUnit && contactCount > 1
+            let showsMultiContact = (!isMultiUnit && contactCount > 1)
             
             let hasCustomer = unitsDict.values.flatMap { $0 }.contains { $0.isCustomer }
             let hasUnqualified = unitsDict.values.flatMap { $0 }.contains { $0.isUnqualified }
