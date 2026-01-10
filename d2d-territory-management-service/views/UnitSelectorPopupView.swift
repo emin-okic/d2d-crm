@@ -37,7 +37,7 @@ struct UnitSelectorPopupView: View {
                             onSelect(unit)
                         } label: {
                             HStack {
-                                Text(unitLabel(for: unit.address))
+                                Text(unitLabel(for: unit))
                                     .font(.headline)
 
                                 if unit.isUnqualified {
@@ -81,5 +81,19 @@ struct UnitSelectorPopupView: View {
 
     private func unitLabel(for address: String) -> String {
         parseAddress(address).unit.map { "Unit \($0)" } ?? "Main"
+    }
+    
+    private func unitLabel(for unit: UnitContact) -> String {
+        if let unitNumber = parseAddress(unit.address).unit {
+            return "Unit \(unitNumber)"
+        } else {
+            // Use the Prospect/Customer fullName
+            switch unit {
+            case .prospect(let p):
+                return p.fullName
+            case .customer(let c):
+                return c.fullName
+            }
+        }
     }
 }
