@@ -95,6 +95,8 @@ struct MapSearchView: View {
     @State private var selectedProspect: Prospect?
     @State private var selectedCustomer: Customer?
     
+    @State private var pendingSelectedContact: UnitContact? = nil
+    
     init(searchText: Binding<String>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
@@ -282,6 +284,7 @@ struct MapSearchView: View {
                     },
                     onOutcomeSelected: { outcome, fileName in
                         pendingAddress = popup.place.address
+                        pendingSelectedContact = popup.place.selectedContact   // 👈 store it
                         isTappedAddressCustomer = popup.place.list == "Customers"
                         popupState = nil
                         selectedPlaceID = nil
@@ -658,6 +661,21 @@ struct MapSearchView: View {
         }
     }
     
+    private func resolveProspectForSale(address: String) -> Prospect? {
+        // 1) If user selected a specific contact, use it
+        if let selected = pendingSelectedContact {
+            switch selected {
+            case .prospect(let p):
+                return p
+            case .customer:
+                return nil
+            }
+        }
+
+        // 2) Fallback: single-contact address
+        return prospects.first { addressesMatch($0.address, address) }
+    }
+    
     // For converting to customer
     @ViewBuilder
     private func stepperOverlay(geo: GeometryProxy) -> some View {
@@ -824,19 +842,17 @@ struct MapSearchView: View {
         switch status {
 
         case "Converted To Sale":
-            if let prospect = prospects.first(where: {
-                addressesMatch($0.address, addr)
-            }) {
-                
-                // 1️⃣ Log the "Converted To Sale" knock
+            if let prospect = resolveProspectForSale(address: addr) {
+
+                // Log knock
                 knockController?.saveKnockOnly(
                     address: addr,
-                    status: status,          // "Converted To Sale"
+                    status: status,
                     prospects: prospects,
                     onUpdateMarkers: { updateMarkers() }
                 )
-                
-                // 2️⃣ Trigger the conversion sheet
+
+                // Trigger sale sheet with CORRECT person
                 prospectToConvert = prospect
                 showConversionSheet = true
             }
@@ -897,6 +913,7 @@ struct MapSearchView: View {
         }
 
         try? modelContext.save()
+        pendingSelectedContact = nil
     }
     
     private func openDetails(for place: IdentifiablePlace) {
