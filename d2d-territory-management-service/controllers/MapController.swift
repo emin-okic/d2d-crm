@@ -112,37 +112,47 @@ class MapController: ObservableObject {
         
         clearMarkers()
         
-        var grouped: [String: [UnitContact]] = [:]
-
-        // Collect PROSPECTs
+        var groups: [String: AddressGroup] = [:]
+        
         for p in prospects {
-            guard let coord = p.coordinate else { continue }
-            let base = parseAddress(p.address).base
-            grouped[base, default: []].append(.prospect(p))
-        }
-
-        // Collect CUSTOMERS
-        for c in customers {
-            guard let coord = c.coordinate else { continue }
-            let base = parseAddress(c.address).base
-            grouped[base, default: []].append(.customer(c))
+            let parsed = parseAddress(p.address)
+            groups[parsed.base, default: AddressGroup(base: parsed.base, units: [:])]
+                .units[parsed.unit, default: []]
+                .append(.prospect(p))
         }
         
-        for (base, units) in grouped {
-            guard let coord = units.first?.coordinate else { continue }
-
-            // 🔹 Determine if it's a true multi-unit (Unit 1, Unit 2, etc.)
-            let isMultiUnit = units.contains { parseAddress($0.address).unit != nil }
-
-            let hasCustomer = units.contains { $0.isCustomer }
-            let hasUnqualified = units.contains { $0.isUnqualified }
-
+        for c in customers {
+            let parsed = parseAddress(c.address)
+            groups[parsed.base, default: AddressGroup(base: parsed.base, units: [:])]
+                .units[parsed.unit, default: []]
+                .append(.customer(c))
+        }
+        
+        for (_, group) in groups {
+            let base = group.base
+            let unitsDict = group.units
+            
+            // Pick any contact to get a coordinate
+            guard let firstContact = unitsDict.values.first?.first,
+                  let coord = firstContact.coordinate else { continue }
+            
+            // ---- Step 2: Decide marker type ----
+            let contactCount = unitsDict.values.reduce(0) { $0 + $1.count }
+            let unitKeys = unitsDict.keys.compactMap { $0 }
+            let unitCount = Set(unitKeys).count
+            let isMultiUnit = unitCount > 1
+            let showsMultiContact = !isMultiUnit && contactCount > 1
+            
+            let hasCustomer = unitsDict.values.flatMap { $0 }.contains { $0.isCustomer }
+            let hasUnqualified = unitsDict.values.flatMap { $0 }.contains { $0.isUnqualified }
+            
             let list = hasCustomer ? "Customers" : "Prospects"
             let isUnqualified = !hasCustomer && hasUnqualified
-
-            let totalKnocks = units.reduce(0) { $0 + $1.knockCount }
-            let unitCount = units.count
-
+            
+            let totalKnocks = unitsDict.values
+                .flatMap { $0 }
+                .reduce(0) { $0 + $1.knockCount }
+            
             markers.append(
                 IdentifiablePlace(
                     address: base,
@@ -151,7 +161,8 @@ class MapController: ObservableObject {
                     unitCount: unitCount,
                     list: list,
                     isUnqualified: isUnqualified,
-                    isMultiUnit: isMultiUnit // TRUE only if real "Unit X"
+                    isMultiUnit: isMultiUnit,
+                    showsMultiContact: showsMultiContact
                 )
             )
         }

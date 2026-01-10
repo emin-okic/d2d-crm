@@ -60,6 +60,8 @@ struct IdentifiablePlace: Identifiable {
     let isUnqualified: Bool
     
     let isMultiUnit: Bool
+    
+    let showsMultiContact: Bool
 
     /// Initializes a new `IdentifiablePlace`.
     ///
@@ -75,7 +77,8 @@ struct IdentifiablePlace: Identifiable {
         unitCount: Int = 1,
         list: String = "Prospects",
         isUnqualified: Bool = false,
-        isMultiUnit: Bool = false
+        isMultiUnit: Bool = false,
+        showsMultiContact: Bool = false   // 👈 add
     ) {
         self.address = address
         self.location = location
@@ -84,5 +87,6 @@ struct IdentifiablePlace: Identifiable {
         self.list = list
         self.isUnqualified = isUnqualified
         self.isMultiUnit = isMultiUnit
+        self.showsMultiContact = showsMultiContact
     }
 }
