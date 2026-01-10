@@ -812,7 +812,12 @@ struct MapSearchView: View {
                         status: "Requalified",
                         prospects: prospects,
                         onUpdateMarkers: { [weak controller] in
-                            controller?.updateMarker(for: prospect)
+                            guard let controller else { return }
+                            controller.updateMarker(for: prospect)
+                            
+                            // Force SwiftUI to re-render
+                            // controller.markers = controller.markers
+                            controller.setMarkers(prospects: prospects, customers: customers)
                         }
                     )
 
