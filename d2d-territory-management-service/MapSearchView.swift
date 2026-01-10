@@ -97,6 +97,22 @@ struct MapSearchView: View {
     
     @State private var multiContactState: MultiContactState?
     
+    enum ActivePopup: Identifiable {
+        case prospect(PopupState)
+        case multiContact(MultiContactState)
+        case unitGroup(UnitGroup)
+        
+        var id: UUID {
+            switch self {
+            case .prospect(let p): return p.id
+            case .multiContact(let m): return m.id
+            case .unitGroup(let u): return u.id
+            }
+        }
+    }
+
+    @State private var activePopup: ActivePopup? = nil
+    
     
     var multiContactSheet: some View {
         if let state = multiContactState {
@@ -145,28 +161,15 @@ struct MapSearchView: View {
                         
                         let grouped = unitGroupsForBaseAddress(parts.base)
 
-                        if grouped.count > 1 {
-                            
-                            // ✅ Center map on the apartment complex itself
-                            centerMapForPopup(coordinate: place.location)
-                            
-                            // Show unit selector instead of prospect popup
-                            selectedUnitGroup = UnitGroup(base: parts.base, units: grouped)
-                            
-                            return
-                        }
-                        
-
-                        // 2️⃣ If multiple units OR multiple contacts in a unit → show selector
                         if grouped.count > 1 || grouped.values.flatMap({ $0 }).count > 1 {
-                            
-                            // Center the map on the building/address
-                            centerMapForPopup(coordinate: place.location)
-                            
-                            // 3️⃣ Show UnitSelectorPopupView for multi-unit
-                            selectedUnitGroup = UnitGroup(base: parts.base, units: grouped)
+                            let group = UnitGroup(base: parts.base, units: grouped)
+                            activePopup = .unitGroup(group)
                             return
                         }
+
+                        // Single contact → show ProspectPopupView
+                        let popup = PopupState(place: place)
+                        activePopup = .prospect(popup)
 
                         // 4️⃣ Only a single contact → show ProspectPopupView
                         showPopup(for: place)
@@ -257,103 +260,97 @@ struct MapSearchView: View {
                 }
                 
             }
-            // Prospect Popup Stuff
-            .sheet(item: $selectedUnitGroup) { group in
-                UnitSelectorPopupView(
-                    baseAddress: group.base,
-                    units: group.units,
-                    onSelectUnit: { unitKey, contacts in
-                        selectedUnitGroup = nil
+            .sheet(item: $activePopup) { popup in
+                switch popup {
+                case .prospect(let state):
+                    ProspectPopupView(
+                        place: state.place,
+                        isCustomer: state.place.list == "Customers",
+                        onClose: { activePopup = nil; selectedPlaceID = nil },
+                        onOutcomeSelected: { outcome, fileName in
+                            if let selectedContact = state.place.selectedContact {
+                                switch outcome {
+                                case "Converted To Sale":
+                                    if let prospect = selectedContact as? Prospect ?? prospects.first(where: { $0.address == selectedContact.address }) {
+                                        prospectToConvert = prospect
+                                        showConversionSheet = true
+                                    }
+                                default:
+                                    pendingAddress = state.place.address
+                                    isTappedAddressCustomer = state.place.list == "Customers"
+                                    handleOutcome(outcome, recordingFileName: fileName)
+                                }
+                            } else {
+                                pendingAddress = state.place.address
+                                isTappedAddressCustomer = state.place.list == "Customers"
+                                handleOutcome(outcome, recordingFileName: fileName)
+                            }
+                        },
+                        recordingModeEnabled: recordingModeEnabled,
+                        onViewDetails: { openDetails(for: state.place) }
+                    )
+                    .presentationDetents([.fraction(0.5)])
+                    .presentationDragIndicator(.visible)
 
-                        // 1 contact → go straight to prospect popup
-                        if contacts.count == 1 {
-                            let unit = contacts[0]
+                case .multiContact(let state):
+                    MultiContactPopupView(
+                        address: state.address,
+                        contacts: state.contacts,
+                        onSelect: { contact in
+                            // Wrap in IdentifiablePlace
                             let place = IdentifiablePlace(
-                                address: unit.address,
-                                location: unit.coordinate ?? controller.region.center,
-                                count: unit.knockCount,
+                                address: contact.address,
+                                location: contact.coordinate ?? controller.region.center,
+                                count: contact.knockCount,
                                 unitCount: 1,
                                 contactCount: 1,
-                                list: unit.list,
-                                isUnqualified: unit.isUnqualified,
+                                list: contact.list,
+                                isUnqualified: contact.isUnqualified,
                                 isMultiUnit: false,
                                 showsMultiContact: false,
-                                selectedContact: unit
+                                selectedContact: contact
                             )
-                            showPopup(for: place)
-                            return
-                        }
+                            activePopup = .prospect(PopupState(place: place))
+                        },
+                        onClose: { activePopup = nil }
+                    )
+                    .presentationDetents([.fraction(0.5)])
+                    .presentationDragIndicator(.visible)
 
-                        // Multiple contacts → show MultiContactPopupView
-                        multiContactState = MultiContactState(
-                            address: group.base + (unitKey.map { ", Unit \($0)" } ?? ""),
-                            contacts: contacts
-                        )
-                    },
-                    onClose: { selectedUnitGroup = nil }
-                )
-                .presentationDetents([.fraction(0.5)])
-                .presentationDragIndicator(.visible)
-            }
-            // This is for the contact popup display
-            .sheet(item: $popupState) { popup in
-                ProspectPopupView(
-                    place: popup.place,
-                    isCustomer: popup.place.list == "Customers",
-                    onClose: {
-                        popupState = nil
-                        selectedPlaceID = nil
-                        
-                        // 🔑 Force MapKit to deselect the annotation
-                        if let mapView = MapDisplayView.cachedMapView {
-                            DispatchQueue.main.async {
-                                mapView.selectedAnnotations.forEach {
-                                    mapView.deselectAnnotation($0, animated: false)
-                                }
-                            }
-                        }
-                        
-                    },
-                    onOutcomeSelected: { outcome, fileName in
-                        pendingAddress = popup.place.address
-                        isTappedAddressCustomer = popup.place.list == "Customers"
-                        popupState = nil
-                        selectedPlaceID = nil
-
-                        if outcome == "Follow Up Later" {
-                            pendingRecordingFileName = fileName
-                            stepperState = .init(
-                                ctx: .init(
-                                    address: popup.place.address,
-                                    isCustomer: isTappedAddressCustomer,
-                                    prospect: nil
+                case .unitGroup(let group):
+                    UnitSelectorPopupView(
+                        baseAddress: group.base,
+                        units: group.units,
+                        onSelectUnit: { unitKey, contacts in
+                            activePopup = nil
+                            if contacts.count == 1 {
+                                let unit = contacts[0]
+                                let place = IdentifiablePlace(
+                                    address: unit.address,
+                                    location: unit.coordinate ?? controller.region.center,
+                                    count: unit.knockCount,
+                                    unitCount: 1,
+                                    contactCount: 1,
+                                    list: unit.list,
+                                    isUnqualified: unit.isUnqualified,
+                                    isMultiUnit: false,
+                                    showsMultiContact: false,
+                                    selectedContact: unit
                                 )
-                            )
-                        } else {
-                            handleOutcome(outcome, recordingFileName: fileName)
-                        }
-                    },
-                    recordingModeEnabled: recordingModeEnabled,
-                    onViewDetails: {
-                        openDetails(for: popup.place)
-                    }
-                )
-                .presentationDetents([.fraction(0.5)])
-                .presentationDragIndicator(.visible)
-            }
-            // MARK: - Multi-contact detented sheet
-            .sheet(item: $multiContactState) { state in
-                MultiContactPopupView(
-                    address: state.address,
-                    contacts: state.contacts,
-                    onSelect: { contact in
-                        multiContactState = nil
-                        handleMultiContactSelection(contact)
-                    },
-                    onClose: { multiContactState = nil }
-                )
-                .presentationDetents([.fraction(0.5)])
-                .presentationDragIndicator(.visible)
+                                activePopup = .prospect(PopupState(place: place))
+                            } else {
+                                let state = MultiContactState(
+                                    address: group.base + (unitKey.map { ", Unit \($0)" } ?? ""),
+                                    contacts: contacts
+                                )
+                                activePopup = .multiContact(state)
+                            }
+                        },
+                        onClose: { activePopup = nil }
+                    )
+                    .presentationDetents([.fraction(0.5)])
+                    .presentationDragIndicator(.visible)
+                }
             }
             
             // Other Stuff
