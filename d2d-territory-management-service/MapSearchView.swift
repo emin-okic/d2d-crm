@@ -156,16 +156,20 @@ struct MapSearchView: View {
                             return
                         }
                         
-                        // Center the map each time a prospect is selected
-                        centerMapForPopup(coordinate: place.location)
-                        
-                        // Keep ProspectPopupView behavior as-is
-                        let state = PopupState(place: place)
-                        popupState = nil
-                        
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-                            popupState = state
+
+                        // 2️⃣ If multiple units OR multiple contacts in a unit → show selector
+                        if grouped.count > 1 || grouped.values.flatMap({ $0 }).count > 1 {
+                            
+                            // Center the map on the building/address
+                            centerMapForPopup(coordinate: place.location)
+                            
+                            // 3️⃣ Show UnitSelectorPopupView for multi-unit
+                            selectedUnitGroup = UnitGroup(base: parts.base, units: grouped)
+                            return
                         }
+
+                        // 4️⃣ Only a single contact → show ProspectPopupView
+                        showPopup(for: place)
 
                         if let mapView = MapDisplayView.cachedMapView {
                             let raw = mapView.convert(place.location, toPointTo: mapView)
