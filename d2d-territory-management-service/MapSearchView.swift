@@ -231,6 +231,79 @@ struct MapSearchView: View {
                 }
                 
             }
+            // Prospect Popup Stuff
+            .sheet(item: $selectedUnitGroup) { group in
+                UnitSelectorPopupView(
+                    baseAddress: group.base,
+                    units: group.units,
+                    onSelect: { unit in
+                        selectedUnitGroup = nil
+
+                        let place = IdentifiablePlace(
+                            address: unit.address,
+                            location: unit.coordinate ?? controller.region.center,
+                            count: unit.knockCount,
+                            list: unit.list,
+                            isUnqualified: unit.isUnqualified
+                        )
+
+                        showPopup(for: place)
+                    },
+                    onClose: {
+                        selectedUnitGroup = nil
+                    }
+                )
+                .presentationDetents([.fraction(0.5)])
+                .presentationDragIndicator(.visible)
+            }
+            // This is for the contact popup display
+            .sheet(item: $popupState) { popup in
+                ProspectPopupView(
+                    place: popup.place,
+                    isCustomer: popup.place.list == "Customers",
+                    onClose: {
+                        popupState = nil
+                        selectedPlaceID = nil
+                        
+                        // 🔑 Force MapKit to deselect the annotation
+                        if let mapView = MapDisplayView.cachedMapView {
+                            DispatchQueue.main.async {
+                                mapView.selectedAnnotations.forEach {
+                                    mapView.deselectAnnotation($0, animated: false)
+                                }
+                            }
+                        }
+                        
+                    },
+                    onOutcomeSelected: { outcome, fileName in
+                        pendingAddress = popup.place.address
+                        isTappedAddressCustomer = popup.place.list == "Customers"
+                        popupState = nil
+                        selectedPlaceID = nil
+
+                        if outcome == "Follow Up Later" {
+                            pendingRecordingFileName = fileName
+                            stepperState = .init(
+                                ctx: .init(
+                                    address: popup.place.address,
+                                    isCustomer: isTappedAddressCustomer,
+                                    prospect: nil
+                                )
+                            )
+                        } else {
+                            handleOutcome(outcome, recordingFileName: fileName)
+                        }
+                    },
+                    recordingModeEnabled: recordingModeEnabled,
+                    onViewDetails: {
+                        openDetails(for: popup.place)
+                    }
+                )
+                .presentationDetents([.fraction(0.5)])
+                .presentationDragIndicator(.visible)
+            }
+            
+            // Other Stuff
             // inside body chain where you had the presenter & lifecycle hooks
             .presentRotatingAdsCentered()
             .onAppear {
@@ -341,30 +414,7 @@ struct MapSearchView: View {
                     }
                 }
             }
-            .sheet(item: $selectedUnitGroup) { group in
-                UnitSelectorPopupView(
-                    baseAddress: group.base,
-                    units: group.units,
-                    onSelect: { unit in
-                        selectedUnitGroup = nil
-
-                        let place = IdentifiablePlace(
-                            address: unit.address,
-                            location: unit.coordinate ?? controller.region.center,
-                            count: unit.knockCount,
-                            list: unit.list,
-                            isUnqualified: unit.isUnqualified
-                        )
-
-                        showPopup(for: place)
-                    },
-                    onClose: {
-                        selectedUnitGroup = nil
-                    }
-                )
-                .presentationDetents([.fraction(0.5)])
-                .presentationDragIndicator(.visible)
-            }            // Listen for search focus and close popup
+           // Listen for search focus and close popup
             .onChange(of: isSearchFocused) { focused in
                 if focused {
                     // Close any open popup when the search bar is tapped/focused
@@ -406,52 +456,6 @@ struct MapSearchView: View {
         .onChange(of: addressToCenter) { handleMapCenterChange(newAddress: $0) }
         .onTapGesture {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to:nil,from:nil,for:nil)
-        }
-        // This is for the contact popup display
-        .sheet(item: $popupState) { popup in
-            ProspectPopupView(
-                place: popup.place,
-                isCustomer: popup.place.list == "Customers",
-                onClose: {
-                    popupState = nil
-                    selectedPlaceID = nil
-                    
-                    // 🔑 Force MapKit to deselect the annotation
-                    if let mapView = MapDisplayView.cachedMapView {
-                        DispatchQueue.main.async {
-                            mapView.selectedAnnotations.forEach {
-                                mapView.deselectAnnotation($0, animated: false)
-                            }
-                        }
-                    }
-                    
-                },
-                onOutcomeSelected: { outcome, fileName in
-                    pendingAddress = popup.place.address
-                    isTappedAddressCustomer = popup.place.list == "Customers"
-                    popupState = nil
-                    selectedPlaceID = nil
-
-                    if outcome == "Follow Up Later" {
-                        pendingRecordingFileName = fileName
-                        stepperState = .init(
-                            ctx: .init(
-                                address: popup.place.address,
-                                isCustomer: isTappedAddressCustomer,
-                                prospect: nil
-                            )
-                        )
-                    } else {
-                        handleOutcome(outcome, recordingFileName: fileName)
-                    }
-                },
-                recordingModeEnabled: recordingModeEnabled,
-                onViewDetails: {
-                    openDetails(for: popup.place)
-                }
-            )
-            .presentationDetents([.fraction(0.5)])
-            .presentationDragIndicator(.visible)
         }
         // This is the menu option for new properties - all else is handled during the popup
         .sheet(item: $pendingAddProperty) { item in
