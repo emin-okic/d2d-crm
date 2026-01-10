@@ -255,145 +255,9 @@ struct MapSearchView: View {
             }
             // inside body chain where you had the presenter & lifecycle hooks
             .presentRotatingAdsCentered()
-            .onAppear {
-                // 🔹 Show exactly one ad for this app session (centered). Will differ each launch.
-                AdEngine.shared.startSingleShot(inventory: AdDemoInventory.defaultAds)
-            }
             .onDisappear {
                 // No-op for single-shot, but keep if you want to explicitly clear.
                 AdEngine.shared.stop()
-            }
-            // Stepper overlay — presented ONLY when stepperState is set (Follow-Up Later path)
-            //.overlay(stepperOverlay(geo: geo))
-            .sheet(item: $stepperState) { state in
-                VStack {
-                    Spacer() // push content to center vertically
-                    KnockStepperPopupView(
-                        context: state.ctx,
-                        objections: objections,
-                        saveKnock: { outcome in
-                            if state.ctx.isCustomer {
-                                let customerController = CustomerKnockActionController(
-                                    modelContext: modelContext,
-                                    controller: controller
-                                )
-                                let customer = customerController.saveKnockOnly(
-                                    address: state.ctx.address,
-                                    status: outcome.rawValue,
-                                    customers: customers,
-                                    onUpdateMarkers: { updateMarkers() }
-                                )
-                                let p = Prospect(
-                                    fullName: customer.fullName,
-                                    address: customer.address,
-                                    count: customer.knockCount,
-                                    list: "Customers"
-                                )
-                                p.latitude = customer.latitude
-                                p.longitude = customer.longitude
-                                return p
-                            } else {
-                                return knockController!.saveKnockOnly(
-                                    address: state.ctx.address,
-                                    status: outcome.rawValue,
-                                    prospects: prospects,
-                                    onUpdateMarkers: { updateMarkers() }
-                                )
-                            }
-                        },
-                        incrementObjection: { obj in
-                            obj.timesHeard += 1
-                            if recordingFeaturesActive,
-                               let name = pendingRecordingFileName {
-                                let rec = Recording(
-                                    fileName: name,
-                                    title: obj.text,
-                                    date: .now,
-                                    objection: obj,
-                                    rating: 3
-                                )
-                                modelContext.insert(rec)
-                                pendingRecordingFileName = nil
-                            }
-                            try? modelContext.save()
-                        },
-                        saveFollowUp: { prospect, date in
-                            saveFollowUp(for: state.ctx, prospect: prospect, date: date)
-                        },
-                        convertToCustomer: { prospect, done in
-                            prospectToConvert = prospect
-                            showConversionSheet = true
-                            done()
-                        },
-                        addNote: { prospect, text in
-                            prospect.notes.append(Note(content: text))
-                            try? modelContext.save()
-                        },
-                        logTrip: { start, end, date in
-                            guard !end.isEmpty else { return }
-                            let trip = Trip(
-                                startAddress: start,
-                                endAddress: end,
-                                miles: 0,
-                                date: date
-                            )
-                            modelContext.insert(trip)
-                            try? modelContext.save()
-                        },
-                        onClose: {
-                            stepperState = nil
-                            withAnimation { showConfetti = true }
-                        }
-                    )
-                    .frame(width: 280, height: 280)
-                    .cornerRadius(16)
-                    .shadow(radius: 8)
-                    Spacer() // push content to center vertically
-                }
-                .presentationDetents([.fraction(0.45)])
-                .presentationDragIndicator(.visible)
-            }
-            .onChange(of: popupState) { newValue in
-                // Close the search bar when a popup opens
-                if newValue != nil, isSearchExpanded {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        isSearchExpanded = false
-                        isSearchFocused = false
-                        searchText = ""
-                    }
-                }
-            }
-            .sheet(item: $selectedUnitGroup) { group in
-                UnitSelectorPopupView(
-                    baseAddress: group.base,
-                    units: group.units,
-                    onSelect: { unit in
-                        // 1️⃣ Close the unit selector
-                        selectedUnitGroup = nil
-
-                        // 2️⃣ Delegate popup decision
-                        handleUnitSelected(unit)
-
-                        // 3️⃣ Center + position popup
-                        if let coordinate = unit.coordinate {
-                            centerMapForPopup(coordinate: coordinate)
-                            updatePopupScreenPosition(for: coordinate)
-                        }
-                    },
-                    onClose: {
-                        selectedUnitGroup = nil
-                    }
-                )
-                .presentationDetents([.fraction(0.5)])
-                .presentationDragIndicator(.visible)
-            }
-            .onChange(of: isSearchFocused) { focused in
-                if focused {
-                    // Close any open popup when the search bar is tapped/focused
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        popupState = nil
-                    }
-                }
             }
             
             if showConfetti {
@@ -409,57 +273,6 @@ struct MapSearchView: View {
                     }
             }
             
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .mapShouldRecenterAllMarkers)) { _ in
-                    controller.recenterToFitAllMarkers()
-                }
-        .onChange(of: searchText) { searchVM.updateQuery($0) }
-        .onAppear {
-            updateMarkers()
-            knockController = ProspectKnockActionController(modelContext: modelContext, controller: controller)
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    NotificationCenter.default.post(name: .mapShouldRecenterAllMarkers, object: nil)
-                }
-            
-        }
-        .onChange(of: prospects) { _ in updateMarkers() }
-        .onChange(of: selectedList) { _ in updateMarkers() }
-        .onChange(of: addressToCenter) { handleMapCenterChange(newAddress: $0) }
-        .onTapGesture {
-            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to:nil,from:nil,for:nil)
-        }
-        .sheet(item: $popup) { popup in
-            switch popup {
-
-            case .prospect(let place):
-                ProspectPopupView(
-                    place: place,
-                    isCustomer: place.list == "Customers",
-                    onClose: { popup = nil },
-                    onOutcomeSelected: handleOutcome,
-                    recordingModeEnabled: recordingModeEnabled,
-                    onViewDetails: { openDetails(for: place) }
-                )
-
-            case .unitSelector(let group):
-                UnitSelectorPopupView(
-                    baseAddress: group.baseAddress,
-                    units: group.units.values.flatMap { $0 },
-                    onSelect: { handleUnitSelected($0) },
-                    onClose: { popup = nil }
-                )
-
-            case .multiContact(let address, let contacts):
-                MultiContactPopupView(
-                    address: address,
-                    contacts: contacts,
-                    onSelect: { contact in
-                        popup = .prospect(place: placeFor(contact))
-                    },
-                    onClose: { popup = nil }
-                )
-            }
         }
         // This is the menu option for new properties - all else is handled during the popup
         .sheet(item: $pendingAddProperty) { item in
@@ -486,10 +299,6 @@ struct MapSearchView: View {
             )
             .presentationDetents([.height(260)])
             .presentationDragIndicator(.visible)
-            .onAppear {
-                // ✨ Entry sound
-                MapScreenSoundController.shared.playPropertyOpen()
-            }
         }
         .sheet(isPresented: $showNoteInput) {
             if let prospect = prospectToNote {
@@ -590,42 +399,6 @@ struct MapSearchView: View {
                 }
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .didRequestBulkAdd)) { note in
-            guard let bulk = note.object as? PendingBulkAdd else { return }
-
-            Task { @MainActor in
-                var resolved: [PendingAddProperty] = []
-                var seenAddresses: Set<String> = [] // Track normalized addresses in this bulk
-
-                for prop in bulk.properties {
-
-                    let snapped = await snapToNearestRoad(coordinate: prop.coordinate)
-
-                    let address = await reverseGeocode(coordinate: snapped) ?? "Unknown Address"
-
-                    let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-
-                    // Skip if address already exists globally
-                    let existsGlobally = prospects.contains {
-                        $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
-                    } || customers.contains {
-                        $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
-                    }
-
-                    // Skip if duplicate inside this bulk
-                    guard !existsGlobally, !seenAddresses.contains(normalized) else { continue }
-
-                    resolved.append(PendingAddProperty(address: address, coordinate: snapped))
-                    seenAddresses.insert(normalized)
-                }
-
-                pendingBulkAdd = PendingBulkAdd(
-                    center: bulk.center,
-                    radius: bulk.radius,
-                    properties: resolved
-                )
             }
         }
         .sheet(item: $pendingBulkAdd) { bulk in
@@ -1513,4 +1286,233 @@ struct MapSearchView: View {
 
 extension MapSearchView {
     struct KnockStepperState: Identifiable, Equatable { let id = UUID(); var ctx: KnockContext }
+}
+
+
+private extension MapSearchView {
+    func mapLifecycleHandlers() -> some View {
+        self
+            .onAppear {
+                // 🔹 Show exactly one ad for this app session (centered). Will differ each launch.
+                AdEngine.shared.startSingleShot(inventory: AdDemoInventory.defaultAds)
+            }
+            .onAppear {
+                // ✨ Entry sound
+                MapScreenSoundController.shared.playPropertyOpen()
+            }
+            .onAppear {
+                updateMarkers()
+                knockController = ProspectKnockActionController(modelContext: modelContext, controller: controller)
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        NotificationCenter.default.post(name: .mapShouldRecenterAllMarkers, object: nil)
+                    }
+                
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .mapShouldRecenterAllMarkers)) { _ in
+                        controller.recenterToFitAllMarkers()
+                    }
+            .onReceive(NotificationCenter.default.publisher(for: .didRequestBulkAdd)) { note in
+                guard let bulk = note.object as? PendingBulkAdd else { return }
+
+                Task { @MainActor in
+                    var resolved: [PendingAddProperty] = []
+                    var seenAddresses: Set<String> = [] // Track normalized addresses in this bulk
+
+                    for prop in bulk.properties {
+
+                        let snapped = await snapToNearestRoad(coordinate: prop.coordinate)
+
+                        let address = await reverseGeocode(coordinate: snapped) ?? "Unknown Address"
+
+                        let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+
+                        // Skip if address already exists globally
+                        let existsGlobally = prospects.contains {
+                            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
+                        } || customers.contains {
+                            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
+                        }
+
+                        // Skip if duplicate inside this bulk
+                        guard !existsGlobally, !seenAddresses.contains(normalized) else { continue }
+
+                        resolved.append(PendingAddProperty(address: address, coordinate: snapped))
+                        seenAddresses.insert(normalized)
+                    }
+
+                    pendingBulkAdd = PendingBulkAdd(
+                        center: bulk.center,
+                        radius: bulk.radius,
+                        properties: resolved
+                    )
+                }
+            }
+            .onChange(of: searchText) { searchVM.updateQuery($0) }
+            .onChange(of: prospects) { _ in updateMarkers() }
+            .onChange(of: selectedList) { _ in updateMarkers() }
+            .onChange(of: addressToCenter) { handleMapCenterChange(newAddress: $0) }
+            .onTapGesture {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to:nil,from:nil,for:nil)
+            }
+            .onChange(of: popupState) { newValue in
+                // Close the search bar when a popup opens
+                if newValue != nil, isSearchExpanded {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isSearchExpanded = false
+                        isSearchFocused = false
+                        searchText = ""
+                    }
+                }
+            }
+    }
+
+    func mapSheetsAndAlerts() -> some View {
+        self
+            .sheet(item: $stepperState) { state in
+                VStack {
+                    Spacer() // push content to center vertically
+                    KnockStepperPopupView(
+                        context: state.ctx,
+                        objections: objections,
+                        saveKnock: { outcome in
+                            if state.ctx.isCustomer {
+                                let customerController = CustomerKnockActionController(
+                                    modelContext: modelContext,
+                                    controller: controller
+                                )
+                                let customer = customerController.saveKnockOnly(
+                                    address: state.ctx.address,
+                                    status: outcome.rawValue,
+                                    customers: customers,
+                                    onUpdateMarkers: { updateMarkers() }
+                                )
+                                let p = Prospect(
+                                    fullName: customer.fullName,
+                                    address: customer.address,
+                                    count: customer.knockCount,
+                                    list: "Customers"
+                                )
+                                p.latitude = customer.latitude
+                                p.longitude = customer.longitude
+                                return p
+                            } else {
+                                return knockController!.saveKnockOnly(
+                                    address: state.ctx.address,
+                                    status: outcome.rawValue,
+                                    prospects: prospects,
+                                    onUpdateMarkers: { updateMarkers() }
+                                )
+                            }
+                        },
+                        incrementObjection: { obj in
+                            obj.timesHeard += 1
+                            if recordingFeaturesActive,
+                               let name = pendingRecordingFileName {
+                                let rec = Recording(
+                                    fileName: name,
+                                    title: obj.text,
+                                    date: .now,
+                                    objection: obj,
+                                    rating: 3
+                                )
+                                modelContext.insert(rec)
+                                pendingRecordingFileName = nil
+                            }
+                            try? modelContext.save()
+                        },
+                        saveFollowUp: { prospect, date in
+                            saveFollowUp(for: state.ctx, prospect: prospect, date: date)
+                        },
+                        convertToCustomer: { prospect, done in
+                            prospectToConvert = prospect
+                            showConversionSheet = true
+                            done()
+                        },
+                        addNote: { prospect, text in
+                            prospect.notes.append(Note(content: text))
+                            try? modelContext.save()
+                        },
+                        logTrip: { start, end, date in
+                            guard !end.isEmpty else { return }
+                            let trip = Trip(
+                                startAddress: start,
+                                endAddress: end,
+                                miles: 0,
+                                date: date
+                            )
+                            modelContext.insert(trip)
+                            try? modelContext.save()
+                        },
+                        onClose: {
+                            stepperState = nil
+                            withAnimation { showConfetti = true }
+                        }
+                    )
+                    .frame(width: 280, height: 280)
+                    .cornerRadius(16)
+                    .shadow(radius: 8)
+                    Spacer() // push content to center vertically
+                }
+                .presentationDetents([.fraction(0.45)])
+                .presentationDragIndicator(.visible)
+            }
+            .sheet(item: $selectedUnitGroup) { group in
+                UnitSelectorPopupView(
+                    baseAddress: group.base,
+                    units: group.units,
+                    onSelect: { unit in
+                        // 1️⃣ Close the unit selector
+                        selectedUnitGroup = nil
+
+                        // 2️⃣ Delegate popup decision
+                        handleUnitSelected(unit)
+
+                        // 3️⃣ Center + position popup
+                        if let coordinate = unit.coordinate {
+                            centerMapForPopup(coordinate: coordinate)
+                            updatePopupScreenPosition(for: coordinate)
+                        }
+                    },
+                    onClose: {
+                        selectedUnitGroup = nil
+                    }
+                )
+                .presentationDetents([.fraction(0.5)])
+                .presentationDragIndicator(.visible)
+            }
+            .sheet(item: $popup) { currentPopup in
+                switch currentPopup {
+
+                case .prospect(let place):
+                    ProspectPopupView(
+                        place: place,
+                        isCustomer: place.list == "Customers",
+                        onClose: { popup = nil }, // now refers to the @State variable
+                        onOutcomeSelected: handleOutcome,
+                        recordingModeEnabled: recordingFeaturesActive,
+                        onViewDetails: { openDetails(for: place) }
+                    )
+
+                case .unitSelector(let group):
+                    UnitSelectorPopupView(
+                        baseAddress: group.baseAddress,
+                        units: group.units.values.flatMap { $0 },
+                        onSelect: { handleUnitSelected($0) },
+                        onClose: { popup = nil }
+                    )
+
+                case .multiContact(let address, let contacts):
+                    MultiContactPopupView(
+                        address: address,
+                        contacts: contacts,
+                        onSelect: { contact in
+                            popup = .prospect(place: placeFor(contact))
+                        },
+                        onClose: { popup = nil }
+                    )
+                }
+            }
+        //next
+    }
 }
