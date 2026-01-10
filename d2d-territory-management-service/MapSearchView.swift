@@ -95,6 +95,10 @@ struct MapSearchView: View {
     @State private var selectedProspect: Prospect?
     @State private var selectedCustomer: Customer?
     
+    @State private var popup: MapPopup?
+    
+    @State private var addressGroups: [String: AddressGroup] = [:]
+    
     init(searchText: Binding<String>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
@@ -153,6 +157,24 @@ struct MapSearchView: View {
                             let offsetY = halfH + 14
                             let x = min(max(raw.x, halfW), geo.size.width - halfW)
                             let y = min(max(raw.y - offsetY, halfH), geo.size.height - halfH)
+                            popupScreenPosition = CGPoint(x: x, y: y)
+                        }
+                        
+                        // 🔹 STEP 3: Delegate popup decision to coordinator
+                        handleMarkerTapped(place)
+
+                        // 🔹 STEP 4: Calculate popup screen position (shared for all popup types)
+                        if let mapView = MapDisplayView.cachedMapView {
+                            let raw = mapView.convert(place.location, toPointTo: mapView)
+
+                            let popupW: CGFloat = 260
+                            let halfW = popupW / 2
+                            let halfH: CGFloat = 70
+                            let offsetY = halfH + 16
+
+                            let x = min(max(raw.x, halfW), geo.size.width - halfW)
+                            let y = min(max(raw.y - offsetY, halfH), geo.size.height - halfH)
+
                             popupScreenPosition = CGPoint(x: x, y: y)
                         }
                     },
@@ -346,17 +368,17 @@ struct MapSearchView: View {
                     baseAddress: group.base,
                     units: group.units,
                     onSelect: { unit in
+                        // 1️⃣ Close the unit selector
                         selectedUnitGroup = nil
 
-                        let place = IdentifiablePlace(
-                            address: unit.address,
-                            location: unit.coordinate ?? controller.region.center,
-                            count: unit.knockCount,
-                            list: unit.list,
-                            isUnqualified: unit.isUnqualified
-                        )
+                        // 2️⃣ Delegate popup decision
+                        handleUnitSelected(unit)
 
-                        showPopup(for: place)
+                        // 3️⃣ Center + position popup
+                        if let coordinate = unit.coordinate {
+                            centerMapForPopup(coordinate: coordinate)
+                            updatePopupScreenPosition(for: coordinate)
+                        }
                     },
                     onClose: {
                         selectedUnitGroup = nil
@@ -364,7 +386,7 @@ struct MapSearchView: View {
                 )
                 .presentationDetents([.fraction(0.5)])
                 .presentationDragIndicator(.visible)
-            }            // Listen for search focus and close popup
+            }
             .onChange(of: isSearchFocused) { focused in
                 if focused {
                     // Close any open popup when the search bar is tapped/focused
@@ -407,51 +429,37 @@ struct MapSearchView: View {
         .onTapGesture {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to:nil,from:nil,for:nil)
         }
-        // This is for the contact popup display
-        .sheet(item: $popupState) { popup in
-            ProspectPopupView(
-                place: popup.place,
-                isCustomer: popup.place.list == "Customers",
-                onClose: {
-                    popupState = nil
-                    selectedPlaceID = nil
-                    
-                    // 🔑 Force MapKit to deselect the annotation
-                    if let mapView = MapDisplayView.cachedMapView {
-                        DispatchQueue.main.async {
-                            mapView.selectedAnnotations.forEach {
-                                mapView.deselectAnnotation($0, animated: false)
-                            }
-                        }
-                    }
-                    
-                },
-                onOutcomeSelected: { outcome, fileName in
-                    pendingAddress = popup.place.address
-                    isTappedAddressCustomer = popup.place.list == "Customers"
-                    popupState = nil
-                    selectedPlaceID = nil
+        .sheet(item: $popup) { popup in
+            switch popup {
 
-                    if outcome == "Follow Up Later" {
-                        pendingRecordingFileName = fileName
-                        stepperState = .init(
-                            ctx: .init(
-                                address: popup.place.address,
-                                isCustomer: isTappedAddressCustomer,
-                                prospect: nil
-                            )
-                        )
-                    } else {
-                        handleOutcome(outcome, recordingFileName: fileName)
-                    }
-                },
-                recordingModeEnabled: recordingModeEnabled,
-                onViewDetails: {
-                    openDetails(for: popup.place)
-                }
-            )
-            .presentationDetents([.fraction(0.5)])
-            .presentationDragIndicator(.visible)
+            case .prospect(let place):
+                ProspectPopupView(
+                    place: place,
+                    isCustomer: place.list == "Customers",
+                    onClose: { popup = nil },
+                    onOutcomeSelected: handleOutcome,
+                    recordingModeEnabled: recordingModeEnabled,
+                    onViewDetails: { openDetails(for: place) }
+                )
+
+            case .unitSelector(let group):
+                UnitSelectorPopupView(
+                    baseAddress: group.baseAddress,
+                    units: group.units.values.flatMap { $0 },
+                    onSelect: { handleUnitSelected($0) },
+                    onClose: { popup = nil }
+                )
+
+            case .multiContact(let address, let contacts):
+                MultiContactPopupView(
+                    address: address,
+                    contacts: contacts,
+                    onSelect: { contact in
+                        popup = .prospect(place: placeFor(contact))
+                    },
+                    onClose: { popup = nil }
+                )
+            }
         }
         // This is the menu option for new properties - all else is handled during the popup
         .sheet(item: $pendingAddProperty) { item in
@@ -646,6 +654,96 @@ struct MapSearchView: View {
             NavigationStack {
                 CustomerDetailsView(customer: customer)
             }
+        }
+    }
+    
+    func updatePopupScreenPosition(for coordinate: CLLocationCoordinate2D) {
+        guard let mapView = MapDisplayView.cachedMapView else { return }
+
+        let raw = mapView.convert(coordinate, toPointTo: mapView)
+
+        let popupW: CGFloat = 260
+        let halfW = popupW / 2
+        let halfH = CGFloat(70)
+        let offsetY = halfH + 16
+
+        let x = min(max(raw.x, halfW), mapView.bounds.width - halfW)
+        let y = min(max(raw.y - offsetY, halfH), mapView.bounds.height - halfH)
+
+        popupScreenPosition = CGPoint(x: x, y: y)
+    }
+    
+    func handleUnitSelected(_ unit: UnitContact) {
+        let parsed = parseAddress(unit.address)
+        guard let group = addressGroups[parsed.base] else { return }
+
+        let contacts = group.units[parsed.unit] ?? []
+
+        if contacts.count == 1 {
+            popup = .prospect(place: placeFor(unit))
+        } else {
+            popup = .multiContact(
+                address: unit.address,
+                contacts: contacts
+            )
+        }
+    }
+    
+    func placeFor(_ unit: UnitContact) -> IdentifiablePlace {
+        IdentifiablePlace(
+            address: unit.address,
+            location: unit.coordinate ?? region.center,
+            count: unit.knockCount,
+            list: unit.list,
+            isUnqualified: unit.isUnqualified
+        )
+    }
+    
+    private func buildAddressGroups(
+        prospects: [Prospect],
+        customers: [Customer]
+    ) -> [String: AddressGroup] {
+
+        var groups: [String: [String?: [UnitContact]]] = [:]
+
+        func add(_ contact: UnitContact) {
+            guard let coord = contact.coordinate else { return }
+            let parsed = parseAddress(contact.address)
+            groups[parsed.base, default: [:]][parsed.unit, default: []].append(contact)
+        }
+
+        prospects.forEach { add(.prospect($0)) }
+        customers.forEach { add(.customer($0)) }
+
+        return groups.compactMapValues { unitMap in
+            guard let coord = unitMap.values.first?.first?.coordinate else { return nil }
+            return AddressGroup(
+                baseAddress: parseAddress(unitMap.values.first!.first!.address).base,
+                coordinate: coord,
+                units: unitMap
+            )
+        }
+    }
+    
+    func handleMarkerTapped(_ place: IdentifiablePlace) {
+        guard let group = addressGroups[place.address] else { return }
+
+        // 🏢 CASE A: Multi-unit
+        if group.isMultiUnit {
+            popup = .unitSelector(group: group)
+            return
+        }
+
+        // 🏠 CASE B: Single-unit
+        let contacts = group.units[nil] ?? []
+
+        if contacts.count == 1 {
+            popup = .prospect(place: place)
+        } else {
+            popup = .multiContact(
+                address: group.baseAddress,
+                contacts: contacts
+            )
         }
     }
     

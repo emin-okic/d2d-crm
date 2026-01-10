@@ -109,42 +109,40 @@ class MapController: ObservableObject {
     /// Replaces existing markers with those derived from the provided list of prospects.
     /// - Parameter prospects: Array of `Prospect` objects to display.
     func setMarkers(prospects: [Prospect], customers: [Customer]) {
-        
+
         clearMarkers()
-        
-        var grouped: [String: [UnitContact]] = [:]
 
-        // 🔹 Collect PROSPECT units
-        for p in prospects {
-            guard let coord = p.coordinate else { continue }
+        // baseAddress -> unit -> contacts
+        var groups: [String: [String?: [UnitContact]]] = [:]
 
-            let base = parseAddress(p.address).base
-            grouped[base, default: []].append(.prospect(p))
+        func add(_ contact: UnitContact) {
+            guard contact.coordinate != nil else { return }
+            let parsed = parseAddress(contact.address)
+
+            groups[parsed.base, default: [:]][parsed.unit, default: []]
+                .append(contact)
         }
 
-        // 🔹 Collect CUSTOMER units
-        for c in customers {
-            guard let coord = c.coordinate else { continue }
+        prospects.forEach { add(.prospect($0)) }
+        customers.forEach { add(.customer($0)) }
 
-            let base = parseAddress(c.address).base
-            grouped[base, default: []].append(.customer(c))
-        }
-        
-        for (base, units) in grouped {
-            guard let coord = units.first?.coordinate else { continue }
+        for (base, unitMap) in groups {
 
-            let isMultiUnit = units.count > 1
+            // Any contact coord is fine (they all geocode to same pin)
+            guard let coord = unitMap.values.first?.first?.coordinate else { continue }
 
-            // Marker "role" rules
-            let hasCustomer = units.contains { $0.isCustomer }
-            let hasUnqualified = units.contains { $0.isUnqualified }
+            // Flatten all contacts at this base address
+            let allContacts = unitMap.values.flatMap { $0 }
 
-            let list = hasCustomer ? "Customers" : "Prospects"
-            let isUnqualified = !hasCustomer && hasUnqualified
+            let hasCustomer = allContacts.contains { $0.isCustomer }
+            let hasUnqualified = allContacts.contains { $0.isUnqualified }
 
-            let totalKnocks = units.reduce(0) { $0 + $1.knockCount }
-            
-            let unitCount = units.count
+            // A "true" multi-unit only exists if there are MULTIPLE DISTINCT UNITS
+            let unitCount = unitMap.keys.compactMap { $0 }.count
+            let isMultiUnit = unitCount > 1
+
+            // Knock count is total across all contacts
+            let totalKnocks = allContacts.reduce(0) { $0 + $1.knockCount }
 
             markers.append(
                 IdentifiablePlace(
@@ -152,8 +150,8 @@ class MapController: ObservableObject {
                     location: coord,
                     count: totalKnocks,
                     unitCount: unitCount,
-                    list: list,
-                    isUnqualified: isUnqualified,
+                    list: hasCustomer ? "Customers" : "Prospects",
+                    isUnqualified: !hasCustomer && hasUnqualified,
                     isMultiUnit: isMultiUnit
                 )
             )
