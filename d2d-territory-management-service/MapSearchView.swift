@@ -697,6 +697,141 @@ struct MapSearchView: View {
         }
     }
     
+    private func handleOutcome(_ status: String, recordingFileName: String?) {
+
+        guard let addr = pendingAddress else { return }
+
+        // =========================
+        // CUSTOMER FLOW
+        // =========================
+        if isTappedAddressCustomer {
+
+            switch status {
+
+            case "Wasn't Home":
+                let customerController = CustomerKnockActionController(
+                    modelContext: modelContext,
+                    controller: controller
+                )
+
+                customerController.handleKnockAndUpdateMarker(
+                    address: addr,
+                    status: status,
+                    customers: customers,
+                    onUpdateMarkers: { updateMarkers() }
+                )
+
+            case "Follow Up Later":
+                pendingRecordingFileName = recordingFileName
+                stepperState = .init(
+                    ctx: .init(
+                        address: addr,
+                        isCustomer: true,
+                        prospect: nil
+                    )
+                )
+            
+            case "Customer Lost":
+                convertCustomerToProspect(address: addr)
+
+            default:
+                // Customers should never hit Converted To Sale
+                assertionFailure("Invalid outcome '\(status)' for Customer")
+            }
+
+            try? modelContext.save()
+            return
+        }
+
+        // =========================
+        // PROSPECT FLOW
+        // =========================
+        switch status {
+
+        case "Converted To Sale":
+            if let prospect = prospects.first(where: {
+                addressesMatch($0.address, addr)
+            }) {
+                
+                // 1️⃣ Log the "Converted To Sale" knock
+                knockController?.saveKnockOnly(
+                    address: addr,
+                    status: status,          // "Converted To Sale"
+                    prospects: prospects,
+                    onUpdateMarkers: { updateMarkers() }
+                )
+                
+                // 2️⃣ Trigger the conversion sheet
+                prospectToConvert = prospect
+                showConversionSheet = true
+            }
+
+        case "Follow Up Later":
+            pendingRecordingFileName = recordingFileName
+            stepperState = .init(
+                ctx: .init(
+                    address: addr,
+                    isCustomer: false,
+                    prospect: nil
+                )
+            )
+
+        case "Wasn't Home":
+            knockController?.handleKnockAndPromptNote(
+                address: addr,
+                status: status,
+                prospects: prospects,
+                onUpdateMarkers: { updateMarkers() },
+                onShowNoteInput: { prospect in
+                    prospectToNote = prospect
+                    showNoteInput = true
+                }
+            )
+            
+        case "Unqualified":
+            knockController?.saveKnockOnly(
+                address: addr,
+                status: status,
+                prospects: prospects,
+                onUpdateMarkers: { updateMarkers() }
+            )
+        
+        case "Requalified":
+            if let prospect = prospects.first(where: { addressesMatch($0.address, addr) }) {
+                // Ensure we're on the main actor
+                Task { @MainActor in
+                    // 1️⃣ Clear unqualified flag
+                    prospect.isUnqualified = false
+
+                    // 2️⃣ Clean up name
+                    prospect.fullName = prospect.fullName.replacingOccurrences(of: " - Unqualified", with: "")
+
+                    // 3️⃣ Save a knock for history
+                    knockController?.saveKnockOnly(
+                        address: addr,
+                        status: "Requalified",
+                        prospects: prospects,
+                        onUpdateMarkers: { [weak controller] in
+                            controller?.updateMarker(for: prospect)
+                        }
+                    )
+
+                    // 4️⃣ Save the context
+                    do {
+                        try modelContext.save()
+                    } catch {
+                        print("Failed to save requalified prospect:", error)
+                    }
+                }
+            }
+
+        default:
+            break
+        }
+
+        try? modelContext.save()
+    }
+    
     private func handleMultiContactSelection(_ contact: UnitContact) {
         let place = IdentifiablePlace(
             address: contact.address,
@@ -1095,133 +1230,6 @@ struct MapSearchView: View {
             showObjectionPicker = true
         }
     }
-
-    private func handleOutcome(_ status: String, recordingFileName: String?) {
-
-        guard let addr = pendingAddress else { return }
-
-        // =========================
-        // CUSTOMER FLOW
-        // =========================
-        if isTappedAddressCustomer {
-
-            switch status {
-
-            case "Wasn't Home":
-                let customerController = CustomerKnockActionController(
-                    modelContext: modelContext,
-                    controller: controller
-                )
-
-                customerController.handleKnockAndUpdateMarker(
-                    address: addr,
-                    status: status,
-                    customers: customers,
-                    onUpdateMarkers: { updateMarkers() }
-                )
-
-            case "Follow Up Later":
-                pendingRecordingFileName = recordingFileName
-                stepperState = .init(
-                    ctx: .init(
-                        address: addr,
-                        isCustomer: true,
-                        prospect: nil
-                    )
-                )
-            
-            case "Customer Lost":
-                convertCustomerToProspect(address: addr)
-
-            default:
-                // Customers should never hit Converted To Sale
-                assertionFailure("Invalid outcome '\(status)' for Customer")
-            }
-
-            try? modelContext.save()
-            return
-        }
-
-        // =========================
-        // PROSPECT FLOW
-        // =========================
-        switch status {
-
-        case "Converted To Sale":
-            if let prospect = prospects.first(where: {
-                addressesMatch($0.address, addr)
-            }) {
-                
-                // 1️⃣ Log the "Converted To Sale" knock
-                knockController?.saveKnockOnly(
-                    address: addr,
-                    status: status,          // "Converted To Sale"
-                    prospects: prospects,
-                    onUpdateMarkers: { updateMarkers() }
-                )
-                
-                // 2️⃣ Trigger the conversion sheet
-                prospectToConvert = prospect
-                showConversionSheet = true
-            }
-
-        case "Follow Up Later":
-            pendingRecordingFileName = recordingFileName
-            stepperState = .init(
-                ctx: .init(
-                    address: addr,
-                    isCustomer: false,
-                    prospect: nil
-                )
-            )
-
-        case "Wasn't Home":
-            knockController?.handleKnockAndPromptNote(
-                address: addr,
-                status: status,
-                prospects: prospects,
-                onUpdateMarkers: { updateMarkers() },
-                onShowNoteInput: { prospect in
-                    prospectToNote = prospect
-                    showNoteInput = true
-                }
-            )
-            
-        case "Unqualified":
-            knockController?.saveKnockOnly(
-                address: addr,
-                status: status,
-                prospects: prospects,
-                onUpdateMarkers: { updateMarkers() }
-            )
-        
-        case "Requalified":
-            if let prospect = prospects.first(where: {
-                addressesMatch($0.address, addr)
-            }) {
-
-                // 1️⃣ Clear unqualified flag
-                prospect.isUnqualified = false
-
-                // 2️⃣ Clean up name (remove suffix)
-                prospect.fullName = prospect.fullName
-                    .replacingOccurrences(of: " - Unqualified", with: "")
-
-                // 3️⃣ Log a knock for history
-                knockController?.saveKnockOnly(
-                    address: addr,
-                    status: "Requalified",
-                    prospects: prospects,
-                    onUpdateMarkers: { updateMarkers() }
-                )
-            }
-
-        default:
-            break
-        }
-
-        try? modelContext.save()
-    }
     
     @MainActor
     private func convertCustomerToProspect(address: String) {
@@ -1470,6 +1478,7 @@ struct MapSearchView: View {
     private func updateMarkers() {
         controller.setMarkers(prospects: prospects, customers: customers)
     }
+    
 }
 
 // MARK: - Stepper types used here

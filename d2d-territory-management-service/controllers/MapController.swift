@@ -57,11 +57,7 @@ class MapController: ObservableObject {
                 if let existingIndex = self.markers.firstIndex(where: { self.normalized($0.address) == key }) {
                     self.markers[existingIndex].count += 1
                 } else {
-                    let newPlace = IdentifiablePlace(
-                        address: query,
-                        location: location.coordinate,
-                        count: 1
-                    )
+                    let newPlace = IdentifiablePlace(address: query, location: location.coordinate, count: 1)
                     self.markers.append(newPlace)
                 }
                 // self.updateRegionToFitAllMarkers()
@@ -199,6 +195,32 @@ class MapController: ObservableObject {
                 // self.updateRegionToFitAllMarkers()
             }
         }
+    }
+    
+    func updateMarker(for prospect: Prospect) {
+        markers = markers.map { place in
+            if addressesMatch(place.address, prospect.address) {
+                var updated = place
+                updated.isUnqualified = prospect.isUnqualified
+                updated.count = prospect.knockCount
+                return updated
+            }
+            return place
+        }
+    }
+    
+    private func addressesMatch(_ a: String, _ b: String) -> Bool {
+        let normalize: (String) -> String = {
+            $0.lowercased()
+              .replacingOccurrences(of: ",", with: "")
+              .replacingOccurrences(of: "  ", with: " ")
+              .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        let na = normalize(a)
+        let nb = normalize(b)
+
+        return na.contains(nb) || nb.contains(na)
     }
 }
 

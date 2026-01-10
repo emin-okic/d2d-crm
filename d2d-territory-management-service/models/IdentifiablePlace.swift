@@ -57,7 +57,7 @@ struct IdentifiablePlace: Identifiable {
         }
     }
     
-    let isUnqualified: Bool
+    var isUnqualified: Bool
     
     let isMultiUnit: Bool
     
