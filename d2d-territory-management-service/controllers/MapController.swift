@@ -137,11 +137,11 @@ class MapController: ObservableObject {
                   let coord = firstContact.coordinate else { continue }
             
             // ---- Step 2: Decide marker type ----
-            let contactCount = unitsDict.values.reduce(0) { $0 + $1.count }
+            let contactCount = unitsDict.values.flatMap { $0 }.count
             
             let unitKeys = unitsDict.keys.compactMap { $0 }
             
-            let unitCount = Set(unitKeys).count
+            let unitCount = Set(unitKeys).count + (unitsDict.keys.contains(nil) ? 1 : 0)
             
             let isMultiUnit = unitCount > 1
             
