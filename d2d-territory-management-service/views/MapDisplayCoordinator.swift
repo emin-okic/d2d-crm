@@ -544,8 +544,11 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         view.layer.removeAllAnimations()
 
         if annotation.place.list == "Customers" {
-            view.image = UIImage(systemName: "star.circle.fill")?
+            
+            let config = UIImage.SymbolConfiguration(pointSize: size * 0.5, weight: .regular)
+            view.image = UIImage(systemName: "star.circle.fill", withConfiguration: config)?
                 .withTintColor(.systemBlue, renderingMode: .alwaysOriginal)
+            
             view.backgroundColor = .clear
         } else {
             view.image = nil
