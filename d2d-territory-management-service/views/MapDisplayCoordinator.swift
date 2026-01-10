@@ -413,36 +413,15 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         let id = "customMarker"
         let view = mapView?.dequeueReusableAnnotationView(withIdentifier: id)
             ?? MKAnnotationView(annotation: annotation, reuseIdentifier: id)
-
         view.annotation = annotation
         view.canShowCallout = false
+        view.subviews.forEach { $0.removeFromSuperview() } // reset reuse
 
         configure(view, for: annotation)
 
-        // 🔢 Show badge if multiple contacts at same address (normal marker)
-        if annotation.place.showsMultiContact && annotation.place.contactCount > 1 {
-
-            let badgeSize: CGFloat = 16
-
-            let badge = UILabel()
-            
-            badge.text = "\(annotation.place.contactCount)"
-            
-            badge.textColor = .white
-            badge.font = .boldSystemFont(ofSize: 10)
-            badge.textAlignment = .center
-            badge.backgroundColor = .systemBlue
-            badge.layer.cornerRadius = badgeSize / 2
-            badge.layer.masksToBounds = true
-
-            badge.frame = CGRect(
-                x: view.bounds.maxX - badgeSize + 2,
-                y: -2,
-                width: badgeSize,
-                height: badgeSize
-            )
-
-            view.addSubview(badge)
+        // Only show multi-contact badge if not multi-unit
+        if !annotation.place.isMultiUnit && annotation.place.showsMultiContact {
+            addBadge(to: view, count: annotation.place.contactCount)
         }
 
         return view
@@ -494,6 +473,32 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
 
     func mapView(_ mapView: MKMapView, didDeselect view: MKAnnotationView) {
         refreshAllAnnotations(on: mapView)
+    }
+    
+    // MARK: - Badge Helper
+    private func addBadge(
+        to view: MKAnnotationView,
+        count: Int,
+        color: UIColor = .systemBlue,
+        size: CGFloat = 16
+    ) {
+        guard count > 1 else { return }
+
+        let badge = UILabel()
+        badge.text = "\(count)"
+        badge.textColor = .white
+        badge.font = .boldSystemFont(ofSize: 10)
+        badge.textAlignment = .center
+        badge.backgroundColor = color
+        badge.layer.cornerRadius = size / 2
+        badge.layer.masksToBounds = true
+        badge.frame = CGRect(
+            x: view.bounds.maxX - size + 2,
+            y: -2,
+            width: size,
+            height: size
+        )
+        view.addSubview(badge)
     }
     
     private func refreshAllAnnotations(on mapView: MKMapView) {
