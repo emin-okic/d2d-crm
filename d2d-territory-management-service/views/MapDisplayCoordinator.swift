@@ -516,6 +516,27 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         onRegionChange?(mapView.region)
     }
     
+    private func applySelectionRing(to view: MKAnnotationView, size: CGFloat) {
+        // Remove old ring if any
+        view.layer.sublayers?
+            .filter { $0.name == "selectionRing" }
+            .forEach { $0.removeFromSuperlayer() }
+
+        let ringThickness: CGFloat = 3
+
+        // Ring exactly matches the marker bounds
+        let ringLayer = CAShapeLayer()
+        ringLayer.name = "selectionRing"
+        ringLayer.frame = view.bounds
+        ringLayer.path = UIBezierPath(ovalIn: view.bounds).cgPath
+        ringLayer.fillColor = UIColor.clear.cgColor
+        ringLayer.strokeColor = UIColor.white.cgColor
+        ringLayer.lineWidth = ringThickness
+
+        // Insert below the marker image
+        view.layer.insertSublayer(ringLayer, at: 0)
+    }
+    
     private func configure(
         _ view: MKAnnotationView,
         for annotation: IdentifiableAnnotation
@@ -556,8 +577,9 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         }
 
         if isSelected {
-            view.layer.borderWidth = 3
-            view.layer.borderColor = UIColor.white.cgColor
+            
+            applySelectionRing(to: view, size: size)
+            
             view.layer.shadowColor = UIColor.black.cgColor
             view.layer.shadowOpacity = 0.4
             view.layer.shadowRadius = 6
@@ -568,6 +590,12 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             pulse.duration = 0.2
             view.layer.add(pulse, forKey: "selectPulse")
         } else {
+            
+            // Remove ring when not selected
+            view.layer.sublayers?
+                .filter { $0.name == "selectionRing" }
+                .forEach { $0.removeFromSuperlayer() }
+
             view.alpha = selectedPlaceID == nil ? 1.0 : 0.45
         }
     }
