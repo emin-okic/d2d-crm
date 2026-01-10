@@ -95,6 +95,27 @@ struct MapSearchView: View {
     @State private var selectedProspect: Prospect?
     @State private var selectedCustomer: Customer?
     
+    @State private var multiContactState: (address: String, contacts: [UnitContact])?
+    
+    
+    var multiContactSheet: some View {
+        if let state = multiContactState {
+            return AnyView(
+                MultiContactPopupView(
+                    address: state.address,
+                    contacts: state.contacts,
+                    onSelect: { contact in
+                        multiContactState = nil
+                        handleMultiContactSelection(contact)
+                    },
+                    onClose: { multiContactState = nil }
+                )
+                .presentationDetents([.fraction(0.5)])
+            )
+        }
+        return AnyView(EmptyView())
+    }
+    
     init(searchText: Binding<String>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
@@ -121,15 +142,16 @@ struct MapSearchView: View {
                         
                         // 🔹 STEP for Apartment / multi-unit interception
                         let parts = parseAddress(place.address)
-                        let units = unitsForBaseAddress(parts.base)
+                        
+                        let grouped = unitGroupsForBaseAddress(parts.base)
 
-                        if units.count > 1 {
+                        if grouped.count > 1 {
                             
                             // ✅ Center map on the apartment complex itself
                             centerMapForPopup(coordinate: place.location)
                             
                             // Show unit selector instead of prospect popup
-                            selectedUnitGroup = UnitGroup(base: parts.base, units: units)
+                            selectedUnitGroup = UnitGroup(base: parts.base, units: grouped)
                             
                             return
                         }
@@ -236,27 +258,35 @@ struct MapSearchView: View {
                 UnitSelectorPopupView(
                     baseAddress: group.base,
                     units: group.units,
-                    onSelect: { unit in
+                    onSelectUnit: { unitKey, contacts in
                         selectedUnitGroup = nil
 
-                        let place = IdentifiablePlace(
-                            address: unit.address,
-                            location: unit.coordinate ?? controller.region.center,
-                            count: unit.knockCount,
-                            unitCount: 1,
-                            contactCount: 1,
-                            list: unit.list,
-                            isUnqualified: unit.isUnqualified,
-                            isMultiUnit: false,
-                            showsMultiContact: false,
-                            selectedContact: unit     // 👈 CRITICAL
+                        // 1 contact → go straight to prospect popup
+                        if contacts.count == 1 {
+                            let unit = contacts[0]
+                            let place = IdentifiablePlace(
+                                address: unit.address,
+                                location: unit.coordinate ?? controller.region.center,
+                                count: unit.knockCount,
+                                unitCount: 1,
+                                contactCount: 1,
+                                list: unit.list,
+                                isUnqualified: unit.isUnqualified,
+                                isMultiUnit: false,
+                                showsMultiContact: false,
+                                selectedContact: unit
+                            )
+                            showPopup(for: place)
+                            return
+                        }
+
+                        // Multiple contacts → show MultiContactPopupView
+                        multiContactState = (
+                            address: group.base + (unitKey.map { ", Unit \($0)" } ?? ""),
+                            contacts: contacts
                         )
-
-                        showPopup(for: place)
                     },
-                    onClose: {
-                        selectedUnitGroup = nil
-                    }
+                    onClose: { selectedUnitGroup = nil }
                 )
                 .presentationDetents([.fraction(0.5)])
                 .presentationDragIndicator(.visible)
@@ -307,8 +337,13 @@ struct MapSearchView: View {
                 .presentationDetents([.fraction(0.5)])
                 .presentationDragIndicator(.visible)
             }
+            Group {
+                multiContactSheet
+            }
             
             // Other Stuff
+            //
+            //
             // inside body chain where you had the presenter & lifecycle hooks
             .presentRotatingAdsCentered()
             .onAppear {
@@ -658,6 +693,22 @@ struct MapSearchView: View {
         }
     }
     
+    private func handleMultiContactSelection(_ contact: UnitContact) {
+        let place = IdentifiablePlace(
+            address: contact.address,
+            location: contact.coordinate ?? controller.region.center,
+            count: contact.knockCount,
+            unitCount: 1,
+            contactCount: 1,
+            list: contact.list,
+            isUnqualified: contact.isUnqualified,
+            isMultiUnit: false,
+            showsMultiContact: false,
+            selectedContact: contact
+        )
+        showPopup(for: place)
+    }
+    
     private func openDetails(for place: IdentifiablePlace) {
         // Close popup first (important for UX)
         closePopup()
@@ -688,21 +739,18 @@ struct MapSearchView: View {
         }
     }
     
-    private func unitsForBaseAddress(_ base: String) -> [UnitContact] {
-
-        let prospectUnits = prospects
-            .filter {
-                parseAddress($0.address).base.lowercased() == base.lowercased()
-            }
+    private func unitGroupsForBaseAddress(_ base: String) -> [String?: [UnitContact]] {
+        let all = prospects
+            .filter { parseAddress($0.address).base.lowercased() == base.lowercased() }
             .map { UnitContact.prospect($0) }
-
-        let customerUnits = customers
-            .filter {
-                parseAddress($0.address).base.lowercased() == base.lowercased()
-            }
+            +
+            customers
+            .filter { parseAddress($0.address).base.lowercased() == base.lowercased() }
             .map { UnitContact.customer($0) }
 
-        return prospectUnits + customerUnits
+        return Dictionary(grouping: all) {
+            parseAddress($0.address).unit   // String? (nil = main)
+        }
     }
     
     private let bulkGeocoder = CLGeocoder()

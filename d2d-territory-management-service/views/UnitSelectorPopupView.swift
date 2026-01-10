@@ -9,8 +9,8 @@ import SwiftUI
 
 struct UnitSelectorPopupView: View {
     let baseAddress: String
-    let units: [UnitContact]
-    let onSelect: (UnitContact) -> Void
+    let units: [String?: [UnitContact]]
+    let onSelectUnit: (String?, [UnitContact]) -> Void
     let onClose: () -> Void
 
     var body: some View {
@@ -32,31 +32,25 @@ struct UnitSelectorPopupView: View {
 
             ScrollView {
                 VStack(spacing: 8) {
-                    ForEach(units) { unit in
+                    
+                    ForEach(units.keys.sorted { ($0 ?? "") < ($1 ?? "") }, id: \.self) { key in
+                        let contacts = units[key] ?? []
                         Button {
-                            onSelect(unit)
+                            onSelectUnit(key, contacts)
                         } label: {
                             HStack {
-                                Text(unitLabel(for: unit))
+                                Text(key.map { "Unit \($0)" } ?? "Main")
                                     .font(.headline)
 
-                                if unit.isUnqualified {
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color.red)
-                                            .frame(width: 18, height: 18)
-
-                                        Image(systemName: "xmark")
-                                            .font(.system(size: 10, weight: .bold))
-                                            .foregroundStyle(.white)
-                                    }
-                                }
-                                else if unit.isCustomer {
-                                    Image(systemName: "star.fill")
-                                        .foregroundStyle(.yellow)
-                                }
-
                                 Spacer()
+
+                                if contacts.count > 1 {
+                                    Text("\(contacts.count)")
+                                        .font(.caption.bold())
+                                        .padding(6)
+                                        .background(Color.secondary.opacity(0.15))
+                                        .clipShape(Circle())
+                                }
 
                                 Image(systemName: "chevron.right")
                                     .foregroundStyle(.secondary)
@@ -67,7 +61,6 @@ struct UnitSelectorPopupView: View {
                                     .fill(.ultraThinMaterial)
                             )
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
