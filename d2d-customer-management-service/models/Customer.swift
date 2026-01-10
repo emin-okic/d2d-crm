@@ -53,3 +53,22 @@ extension Customer {
         return CLLocationCoordinate2D(latitude: lat, longitude: lon)
     }
 }
+
+extension Customer {
+    func asProspectCopy() -> Prospect {
+        let p = Prospect(
+            fullName: self.fullName,
+            address: self.address,
+            count: self.knockCount,
+            list: "Customers"
+        )
+        p.contactPhone = self.contactPhone
+        p.contactEmail = self.contactEmail
+        p.notes = self.notes
+        p.appointments = self.appointments
+        p.knockHistory = self.knockHistory
+        p.latitude = self.latitude
+        p.longitude = self.longitude
+        return p
+    }
+}
