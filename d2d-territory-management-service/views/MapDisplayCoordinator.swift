@@ -528,12 +528,13 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         
         let isSelected = annotation.place.id == selectedPlaceID
 
-        let baseSize: CGFloat = annotation.place.list == "Customers" ? 46 : 28
-        let selectedSize: CGFloat = annotation.place.list == "Customers" ? 58 : 40
+        let baseSize: CGFloat = annotation.place.list == "Customers" ? 56 : 28
+        let selectedSize: CGFloat = annotation.place.list == "Customers" ? 70 : 40
 
         let size: CGFloat = isSelected ? selectedSize : baseSize
-        
-        view.frame.size = CGSize(width: size, height: size)
+
+        // 🔧 Use bounds, not frame
+        view.bounds = CGRect(x: 0, y: 0, width: size, height: size)
         view.layer.cornerRadius = size / 2
 
         // Reset state (CRITICAL)
