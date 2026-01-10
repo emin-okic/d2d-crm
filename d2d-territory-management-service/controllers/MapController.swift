@@ -136,16 +136,21 @@ class MapController: ObservableObject {
             guard let firstContact = unitsDict.values.first?.first,
                   let coord = firstContact.coordinate else { continue }
             
-            // ---- Step 2: Decide marker type ----
             let contactCount = unitsDict.values.flatMap { $0 }.count
             
             let unitKeys = unitsDict.keys.compactMap { $0 }
-            
             let unitCount = Set(unitKeys).count + (unitsDict.keys.contains(nil) ? 1 : 0)
             
             let isMultiUnit = unitCount > 1
             
-            let showsMultiContact = (!isMultiUnit && contactCount > 1)
+            // Only show multi-contact badge if a single unit has >1 contact
+            let showsMultiContact: Bool = {
+                guard !isMultiUnit else { return false } // multi-unit gets separate badge
+                if let firstUnitContacts = unitsDict[nil], firstUnitContacts.count > 1 {
+                    return true
+                }
+                return false
+            }()
             
             let hasCustomer = unitsDict.values.flatMap { $0 }.contains { $0.isCustomer }
             let hasUnqualified = unitsDict.values.flatMap { $0 }.contains { $0.isUnqualified }
