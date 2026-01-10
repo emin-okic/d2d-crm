@@ -499,24 +499,29 @@ struct MapSearchView: View {
     }
     
     func handleMarkerTapped(_ place: IdentifiablePlace) {
-        guard let group = addressGroups[place.address] else { return }
+        if let group = addressGroups[place.address] {
 
-        // 🏢 CASE A: Multi-unit
-        if group.isMultiUnit {
-            popup = .unitSelector(group: group)
-            return
-        }
+            // 🏢 CASE A: Multi-unit
+            if group.isMultiUnit {
+                popup = .unitSelector(group: group)
+                return
+            }
 
-        // 🏠 CASE B: Single-unit
-        let contacts = group.units[nil] ?? []
+            // 🏠 CASE B: Single-unit
+            let contacts = group.units[nil] ?? []
 
-        if contacts.count == 1 {
-            popup = .prospect(place: place)
+            if contacts.count == 1 {
+                popup = .prospect(place: place)
+            } else {
+                popup = .multiContact(
+                    address: group.baseAddress,
+                    contacts: contacts
+                )
+            }
+
         } else {
-            popup = .multiContact(
-                address: group.baseAddress,
-                contacts: contacts
-            )
+            // fallback for unknown address
+            popup = .prospect(place: place)
         }
     }
     
