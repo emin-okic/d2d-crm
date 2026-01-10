@@ -307,20 +307,6 @@ struct MapSearchView: View {
                 .presentationDetents([.fraction(0.5)])
                 .presentationDragIndicator(.visible)
             }
-            
-            // Other Stuff
-            // inside body chain where you had the presenter & lifecycle hooks
-            .presentRotatingAdsCentered()
-            .onAppear {
-                // 🔹 Show exactly one ad for this app session (centered). Will differ each launch.
-                AdEngine.shared.startSingleShot(inventory: AdDemoInventory.defaultAds)
-            }
-            .onDisappear {
-                // No-op for single-shot, but keep if you want to explicitly clear.
-                AdEngine.shared.stop()
-            }
-            // Stepper overlay — presented ONLY when stepperState is set (Follow-Up Later path)
-            //.overlay(stepperOverlay(geo: geo))
             .sheet(item: $stepperState) { state in
                 VStack {
                     Spacer() // push content to center vertically
@@ -408,6 +394,59 @@ struct MapSearchView: View {
                 }
                 .presentationDetents([.fraction(0.45)])
                 .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $showConversionSheet) {
+                if let prospect = prospectToConvert {
+                    CustomerCreateStepperView(
+                        initialName: prospect.fullName,
+                        initialAddress: prospect.address,
+                        initialPhone: prospect.contactPhone,
+                        initialEmail: prospect.contactEmail
+                    ) { newCustomer in
+                        
+                        // Carry over history, notes, appointments, coordinates
+                        newCustomer.knockHistory = prospect.knockHistory
+                        newCustomer.notes = prospect.notes
+                        newCustomer.appointments = prospect.appointments
+                        if newCustomer.contactPhone.isEmpty { newCustomer.contactPhone = prospect.contactPhone }
+                        if newCustomer.contactEmail.isEmpty { newCustomer.contactEmail = prospect.contactEmail }
+                        newCustomer.latitude = prospect.latitude
+                        newCustomer.longitude = prospect.longitude
+
+                        // Persist new customer and delete old prospect
+                        modelContext.insert(newCustomer)
+                        modelContext.delete(prospect)
+                        try? modelContext.save()
+                        
+                        updateMarkers()
+                        selectedList = "Customers"
+                        
+                        // Celebrate 🎉
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            withAnimation { showConfetti = true }
+                        }
+                        
+                        showConversionSheet = false
+                    } onCancel: {
+                        showConversionSheet = false
+                    }
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+                }
+            }
+            
+            //
+            // Other Stuff
+            //
+            // inside body chain where you had the presenter & lifecycle hooks
+            .presentRotatingAdsCentered()
+            .onAppear {
+                // 🔹 Show exactly one ad for this app session (centered). Will differ each launch.
+                AdEngine.shared.startSingleShot(inventory: AdDemoInventory.defaultAds)
+            }
+            .onDisappear {
+                // No-op for single-shot, but keep if you want to explicitly clear.
+                AdEngine.shared.stop()
             }
             .onChange(of: popupState) { newValue in
                 // Close the search bar when a popup opens
@@ -554,45 +593,6 @@ struct MapSearchView: View {
         }) {
             AddObjectionView()
         }
-        .sheet(isPresented: $showConversionSheet) {
-            if let prospect = prospectToConvert {
-                CustomerCreateStepperView(
-                    initialName: prospect.fullName,
-                    initialAddress: prospect.address,
-                    initialPhone: prospect.contactPhone,
-                    initialEmail: prospect.contactEmail
-                ) { newCustomer in
-                    
-                    // Carry over history, notes, appointments, coordinates
-                    newCustomer.knockHistory = prospect.knockHistory
-                    newCustomer.notes = prospect.notes
-                    newCustomer.appointments = prospect.appointments
-                    if newCustomer.contactPhone.isEmpty { newCustomer.contactPhone = prospect.contactPhone }
-                    if newCustomer.contactEmail.isEmpty { newCustomer.contactEmail = prospect.contactEmail }
-                    newCustomer.latitude = prospect.latitude
-                    newCustomer.longitude = prospect.longitude
-
-                    // Persist new customer and delete old prospect
-                    modelContext.insert(newCustomer)
-                    modelContext.delete(prospect)
-                    try? modelContext.save()
-                    
-                    updateMarkers()
-                    selectedList = "Customers"
-                    
-                    // Celebrate 🎉
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        withAnimation { showConfetti = true }
-                    }
-                    
-                    showConversionSheet = false
-                } onCancel: {
-                    showConversionSheet = false
-                }
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-            }
-        }
         .onReceive(NotificationCenter.default.publisher(for: .didRequestBulkAdd)) { note in
             guard let bulk = note.object as? PendingBulkAdd else { return }
 
@@ -654,6 +654,104 @@ struct MapSearchView: View {
         .sheet(item: $selectedCustomer) { customer in
             NavigationStack {
                 CustomerDetailsView(customer: customer)
+            }
+        }
+    }
+    
+    // For converting to customer
+    @ViewBuilder
+    private func stepperOverlay(geo: GeometryProxy) -> some View {
+        Group {
+            if let s = stepperState {
+                KnockStepperPopupView(
+                    context: s.ctx,
+                    objections: objections,
+                    saveKnock: { outcome in
+                        if s.ctx.isCustomer {
+                            let customerController = CustomerKnockActionController(
+                                modelContext: modelContext,
+                                controller: controller
+                            )
+
+                            let customer = customerController.saveKnockOnly(
+                                address: s.ctx.address,
+                                status: outcome.rawValue,
+                                customers: customers,
+                                onUpdateMarkers: { updateMarkers() }
+                            )
+
+                            // UI continuity only
+                            let p = Prospect(
+                                fullName: customer.fullName,
+                                address: customer.address,
+                                count: customer.knockCount,
+                                list: "Customers"
+                            )
+                            p.latitude = customer.latitude
+                            p.longitude = customer.longitude
+                            return p
+                        } else {
+                            return knockController!.saveKnockOnly(
+                                address: s.ctx.address,
+                                status: outcome.rawValue,
+                                prospects: prospects,
+                                onUpdateMarkers: { updateMarkers() }
+                            )
+                        }
+                    },
+                    incrementObjection: { obj in
+                        obj.timesHeard += 1
+
+                        if recordingFeaturesActive,
+                           let name = pendingRecordingFileName {
+                            let rec = Recording(
+                                fileName: name,
+                                title: obj.text,
+                                date: .now,
+                                objection: obj,
+                                rating: 3
+                            )
+                            modelContext.insert(rec)
+                            pendingRecordingFileName = nil
+                        }
+
+                        try? modelContext.save()
+                    },
+                    saveFollowUp: { prospect, date in
+                        saveFollowUp(for: s.ctx, prospect: prospect, date: date)
+                    },
+                    convertToCustomer: { prospect, done in
+                        prospectToConvert = prospect
+                        showConversionSheet = true
+                        done()
+                    },
+                    addNote: { prospect, text in
+                        prospect.notes.append(Note(content: text))
+                        try? modelContext.save()
+                    },
+                    logTrip: { start, end, date in
+                        guard !end.isEmpty else { return }
+                        let trip = Trip(
+                            startAddress: start,
+                            endAddress: end,
+                            miles: 0,
+                            date: date
+                        )
+                        modelContext.insert(trip)
+                        try? modelContext.save()
+                    },
+                    onClose: {
+                        stepperState = nil
+                        withAnimation { showConfetti = true }
+                    }
+                )
+                .frame(width: 280, height: 280)
+                .position(
+                    x: geo.size.width / 2,
+                    y: geo.size.height * 0.42
+                )
+                .transition(.scale.combined(with: .opacity))
+                .zIndex(1000)
             }
         }
     }
@@ -856,103 +954,6 @@ struct MapSearchView: View {
         )
 
         mapView.setRegion(region, animated: true)
-    }
-    
-    @ViewBuilder
-    private func stepperOverlay(geo: GeometryProxy) -> some View {
-        Group {
-            if let s = stepperState {
-                KnockStepperPopupView(
-                    context: s.ctx,
-                    objections: objections,
-                    saveKnock: { outcome in
-                        if s.ctx.isCustomer {
-                            let customerController = CustomerKnockActionController(
-                                modelContext: modelContext,
-                                controller: controller
-                            )
-
-                            let customer = customerController.saveKnockOnly(
-                                address: s.ctx.address,
-                                status: outcome.rawValue,
-                                customers: customers,
-                                onUpdateMarkers: { updateMarkers() }
-                            )
-
-                            // UI continuity only
-                            let p = Prospect(
-                                fullName: customer.fullName,
-                                address: customer.address,
-                                count: customer.knockCount,
-                                list: "Customers"
-                            )
-                            p.latitude = customer.latitude
-                            p.longitude = customer.longitude
-                            return p
-                        } else {
-                            return knockController!.saveKnockOnly(
-                                address: s.ctx.address,
-                                status: outcome.rawValue,
-                                prospects: prospects,
-                                onUpdateMarkers: { updateMarkers() }
-                            )
-                        }
-                    },
-                    incrementObjection: { obj in
-                        obj.timesHeard += 1
-
-                        if recordingFeaturesActive,
-                           let name = pendingRecordingFileName {
-                            let rec = Recording(
-                                fileName: name,
-                                title: obj.text,
-                                date: .now,
-                                objection: obj,
-                                rating: 3
-                            )
-                            modelContext.insert(rec)
-                            pendingRecordingFileName = nil
-                        }
-
-                        try? modelContext.save()
-                    },
-                    saveFollowUp: { prospect, date in
-                        saveFollowUp(for: s.ctx, prospect: prospect, date: date)
-                    },
-                    convertToCustomer: { prospect, done in
-                        prospectToConvert = prospect
-                        showConversionSheet = true
-                        done()
-                    },
-                    addNote: { prospect, text in
-                        prospect.notes.append(Note(content: text))
-                        try? modelContext.save()
-                    },
-                    logTrip: { start, end, date in
-                        guard !end.isEmpty else { return }
-                        let trip = Trip(
-                            startAddress: start,
-                            endAddress: end,
-                            miles: 0,
-                            date: date
-                        )
-                        modelContext.insert(trip)
-                        try? modelContext.save()
-                    },
-                    onClose: {
-                        stepperState = nil
-                        withAnimation { showConfetti = true }
-                    }
-                )
-                .frame(width: 280, height: 280)
-                .position(
-                    x: geo.size.width / 2,
-                    y: geo.size.height * 0.42
-                )
-                .transition(.scale.combined(with: .opacity))
-                .zIndex(1000)
-            }
-        }
     }
     
     private func saveFollowUp(
