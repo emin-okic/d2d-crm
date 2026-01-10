@@ -138,9 +138,13 @@ class MapController: ObservableObject {
             
             // ---- Step 2: Decide marker type ----
             let contactCount = unitsDict.values.reduce(0) { $0 + $1.count }
+            
             let unitKeys = unitsDict.keys.compactMap { $0 }
+            
             let unitCount = Set(unitKeys).count
+            
             let isMultiUnit = unitCount > 1
+            
             let showsMultiContact = !isMultiUnit && contactCount > 1
             
             let hasCustomer = unitsDict.values.flatMap { $0 }.contains { $0.isCustomer }
@@ -159,6 +163,7 @@ class MapController: ObservableObject {
                     location: coord,
                     count: totalKnocks,
                     unitCount: unitCount,
+                    contactCount: contactCount,
                     list: list,
                     isUnqualified: isUnqualified,
                     isMultiUnit: isMultiUnit,

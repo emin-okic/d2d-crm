@@ -420,11 +420,14 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         configure(view, for: annotation)
 
         // 🔢 Show badge if multiple contacts at same address (normal marker)
-        if !annotation.place.isMultiUnit && annotation.place.unitCount > 1 {
+        if annotation.place.showsMultiContact {
+
             let badgeSize: CGFloat = 16
 
             let badge = UILabel()
-            badge.text = "\(annotation.place.unitCount)"
+            
+            badge.text = "\(annotation.place.contactCount)"
+            
             badge.textColor = .white
             badge.font = .boldSystemFont(ofSize: 10)
             badge.textAlignment = .center

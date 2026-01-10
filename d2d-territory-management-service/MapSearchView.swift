@@ -243,8 +243,13 @@ struct MapSearchView: View {
                             address: unit.address,
                             location: unit.coordinate ?? controller.region.center,
                             count: unit.knockCount,
+                            unitCount: 1,
+                            contactCount: 1,
                             list: unit.list,
-                            isUnqualified: unit.isUnqualified
+                            isUnqualified: unit.isUnqualified,
+                            isMultiUnit: false,
+                            showsMultiContact: false,
+                            selectedContact: unit     // 👈 CRITICAL
                         )
 
                         showPopup(for: place)

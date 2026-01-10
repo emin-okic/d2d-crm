@@ -62,6 +62,10 @@ struct IdentifiablePlace: Identifiable {
     let isMultiUnit: Bool
     
     let showsMultiContact: Bool
+    
+    var contactCount: Int
+    
+    let selectedContact: UnitContact?
 
     /// Initializes a new `IdentifiablePlace`.
     ///
@@ -75,18 +79,22 @@ struct IdentifiablePlace: Identifiable {
         location: CLLocationCoordinate2D,
         count: Int = 1,
         unitCount: Int = 1,
+        contactCount: Int = 1,   // 👈 add
         list: String = "Prospects",
         isUnqualified: Bool = false,
         isMultiUnit: Bool = false,
-        showsMultiContact: Bool = false   // 👈 add
+        showsMultiContact: Bool = false,
+        selectedContact: UnitContact? = nil
     ) {
         self.address = address
         self.location = location
         self.count = count
         self.unitCount = unitCount
+        self.contactCount = contactCount
         self.list = list
         self.isUnqualified = isUnqualified
         self.isMultiUnit = isMultiUnit
         self.showsMultiContact = showsMultiContact
+        self.selectedContact = selectedContact
     }
 }

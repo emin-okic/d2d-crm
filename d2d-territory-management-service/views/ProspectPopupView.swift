@@ -70,7 +70,7 @@ struct ProspectPopupView: View {
                 onViewDetails()
             }) {
                 HStack(spacing: 4) {
-                    Text(findProspectName(for: place.address))
+                    Text(findProspectName())
                     Image(systemName: "chevron.right")
                         .font(.caption)
                 }
@@ -305,16 +305,19 @@ struct ProspectPopupView: View {
         }
     }
 
-    private func findProspectName(for address: String) -> String {
-        if isCustomer {
-            if let customer = customers.first(where: { $0.address == address }) {
-                return customer.fullName
-            }
-        } else {
-            if let prospect = prospects.first(where: { $0.address == address }) {
-                return prospect.fullName
+    private func findProspectName() -> String {
+        if let contact = place.selectedContact {
+            switch contact {
+            case .prospect(let p): return p.fullName
+            case .customer(let c): return c.fullName
             }
         }
-        return "Prospect"
+
+        // fallback (single-contact markers)
+        if isCustomer {
+            return customers.first(where: { $0.address == place.address })?.fullName ?? "Customer"
+        } else {
+            return prospects.first(where: { $0.address == place.address })?.fullName ?? "Prospect"
+        }
     }
 }
