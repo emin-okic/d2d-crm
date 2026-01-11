@@ -410,17 +410,19 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     }
 
     private func standardMarkerView(for annotation: IdentifiableAnnotation) -> MKAnnotationView {
-
         let id = "customMarker"
-
-        let view =
-            mapView?.dequeueReusableAnnotationView(withIdentifier: id)
+        let view = mapView?.dequeueReusableAnnotationView(withIdentifier: id)
             ?? MKAnnotationView(annotation: annotation, reuseIdentifier: id)
-
         view.annotation = annotation
         view.canShowCallout = false
+        view.subviews.forEach { $0.removeFromSuperview() } // reset reuse
 
         configure(view, for: annotation)
+
+        // Only show multi-contact badge if not multi-unit
+        if !annotation.place.isMultiUnit && annotation.place.showsMultiContact {
+            addBadge(to: view, count: annotation.place.contactCount)
+        }
 
         return view
     }
@@ -473,6 +475,32 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         refreshAllAnnotations(on: mapView)
     }
     
+    // MARK: - Badge Helper
+    private func addBadge(
+        to view: MKAnnotationView,
+        count: Int,
+        color: UIColor = .systemBlue,
+        size: CGFloat = 16
+    ) {
+        guard count > 1 else { return }
+
+        let badge = UILabel()
+        badge.text = "\(count)"
+        badge.textColor = .white
+        badge.font = .boldSystemFont(ofSize: 10)
+        badge.textAlignment = .center
+        badge.backgroundColor = color
+        badge.layer.cornerRadius = size / 2
+        badge.layer.masksToBounds = true
+        badge.frame = CGRect(
+            x: view.bounds.maxX - size + 2,
+            y: -2,
+            width: size,
+            height: size
+        )
+        view.addSubview(badge)
+    }
+    
     private func refreshAllAnnotations(on mapView: MKMapView) {
         for annotation in mapView.annotations {
             guard
@@ -488,6 +516,27 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         onRegionChange?(mapView.region)
     }
     
+    private func applySelectionRing(to view: MKAnnotationView, size: CGFloat) {
+        // Remove old ring if any
+        view.layer.sublayers?
+            .filter { $0.name == "selectionRing" }
+            .forEach { $0.removeFromSuperlayer() }
+
+        let ringThickness: CGFloat = 3
+
+        // Ring exactly matches the marker bounds
+        let ringLayer = CAShapeLayer()
+        ringLayer.name = "selectionRing"
+        ringLayer.frame = view.bounds
+        ringLayer.path = UIBezierPath(ovalIn: view.bounds).cgPath
+        ringLayer.fillColor = UIColor.clear.cgColor
+        ringLayer.strokeColor = UIColor.white.cgColor
+        ringLayer.lineWidth = ringThickness
+
+        // Insert below the marker image
+        view.layer.insertSublayer(ringLayer, at: 0)
+    }
+    
     private func configure(
         _ view: MKAnnotationView,
         for annotation: IdentifiableAnnotation
@@ -500,12 +549,13 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         
         let isSelected = annotation.place.id == selectedPlaceID
 
-        let baseSize: CGFloat = annotation.place.list == "Customers" ? 46 : 28
-        let selectedSize: CGFloat = annotation.place.list == "Customers" ? 58 : 40
+        let baseSize: CGFloat = annotation.place.list == "Customers" ? 56 : 28
+        let selectedSize: CGFloat = annotation.place.list == "Customers" ? 70 : 40
 
         let size: CGFloat = isSelected ? selectedSize : baseSize
-        
-        view.frame.size = CGSize(width: size, height: size)
+
+        // 🔧 Use bounds, not frame
+        view.bounds = CGRect(x: 0, y: 0, width: size, height: size)
         view.layer.cornerRadius = size / 2
 
         // Reset state (CRITICAL)
@@ -515,8 +565,11 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         view.layer.removeAllAnimations()
 
         if annotation.place.list == "Customers" {
-            view.image = UIImage(systemName: "star.circle.fill")?
+            
+            let config = UIImage.SymbolConfiguration(pointSize: size * 0.5, weight: .regular)
+            view.image = UIImage(systemName: "star.circle.fill", withConfiguration: config)?
                 .withTintColor(.systemBlue, renderingMode: .alwaysOriginal)
+            
             view.backgroundColor = .clear
         } else {
             view.image = nil
@@ -524,8 +577,9 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         }
 
         if isSelected {
-            view.layer.borderWidth = 3
-            view.layer.borderColor = UIColor.white.cgColor
+            
+            applySelectionRing(to: view, size: size)
+            
             view.layer.shadowColor = UIColor.black.cgColor
             view.layer.shadowOpacity = 0.4
             view.layer.shadowRadius = 6
@@ -536,6 +590,12 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             pulse.duration = 0.2
             view.layer.add(pulse, forKey: "selectPulse")
         } else {
+            
+            // Remove ring when not selected
+            view.layer.sublayers?
+                .filter { $0.name == "selectionRing" }
+                .forEach { $0.removeFromSuperlayer() }
+
             view.alpha = selectedPlaceID == nil ? 1.0 : 0.45
         }
     }
