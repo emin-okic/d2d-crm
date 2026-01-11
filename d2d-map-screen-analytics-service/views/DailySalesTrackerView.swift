@@ -25,7 +25,15 @@ struct DailySalesTrackerView: View {
 
     var body: some View {
         Button {
+            
+            // ✅ Haptics
+            MapScreenHapticsController.shared.lightTap()
+            
+            // ✅ Sound
+            MapScreenSoundController.shared.playPropertyOpen()
+            
             showSheet = true
+            
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: "checkmark.seal.fill")
