@@ -15,6 +15,13 @@ struct QRCodeCardView: View {
     var body: some View {
         VStack {
             Button(action: {
+                
+                // ✅ Haptics
+                MapScreenHapticsController.shared.lightTap()
+                
+                // ✅ Sound
+                MapScreenSoundController.shared.playPropertyOpen()
+                
                 showQRCodeSheet = true
             }) {
                 VStack {
