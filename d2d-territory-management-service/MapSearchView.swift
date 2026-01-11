@@ -647,6 +647,11 @@ struct MapSearchView: View {
             )
             .presentationDetents([.fraction(0.5)])
             .presentationDragIndicator(.visible)
+            .onAppear {
+                // ✨ Entry feedback
+                MapScreenHapticsController.shared.mapTap()
+                MapScreenSoundController.shared.playPropertyOpen()
+            }
         }
         .sheet(item: $selectedProspect) { prospect in
             NavigationStack {
