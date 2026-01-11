@@ -166,6 +166,7 @@ struct CustomerDetailsView: View {
         .toolbar {
             // Back Button
             ToolbarItem(placement: .navigationBarLeading) {
+                
                 Button {
                     
                     // ✅ Play haptic + sound when closing the details screen
@@ -176,8 +177,17 @@ struct CustomerDetailsView: View {
                     presentationMode.wrappedValue.dismiss()
                     
                 } label: {
-                    Label("Back", systemImage: "chevron.left")
+                    ZStack {
+                        Circle()
+                            .fill(Color.red)
+
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+
                 }
+                .buttonStyle(.plain)
             }
             
             if !hasUnsavedEdits {

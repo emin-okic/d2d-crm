@@ -153,8 +153,17 @@ struct ProspectDetailsView: View {
                     presentationMode.wrappedValue.dismiss()
                     
                 } label: {
-                    Label("Back", systemImage: "chevron.left")
+                    ZStack {
+                        Circle()
+                            .fill(Color.red)
+
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+
                 }
+                .buttonStyle(.plain)
             }
             
             // Export + Share (hidden while editing)
