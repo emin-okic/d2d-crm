@@ -13,9 +13,27 @@ Whether you’re knocking on doors, canvassing neighborhoods, or closing face-to
 
 ---
 
+## Table of Contents
+1. [Why D2D CRM?](#why-d2d-crm)
+2. [Who It’s For](#who-its-for)
+3. [Core Features](#core-features)
+   - [Map-Driven Knock Logging](#map-driven-knock-logging)
+   - [Prospect Management](#prospect-management)
+   - [Recording Studio](#recording-studio)
+   - [Performance Scorecards](#performance-scorecards)
+   - [GPS Territory Mapping](#gps-territory-mapping)
+4. [Design Documentation](#design-documentation)
+5. [Contributor's Guide](#contributors-guide)
+   - [Requirements](#requirements)
+   - [Clone the Repository](#clone-the-repository)
+   - [Run UI Test for Screenshots](#run-ui-test-for-screenshots)
+   - [How To Commit To The D2D CRM](#how-to-commit-to-the-d2d-crm)
+
+---
+
 ## Why D2D CRM?
 
-Forget spreadsheets. Forget notebooks. Forget losing track of who to follow up with.
+Forget spreadsheets. Forget notebooks. Forget losing track of who to follow up with.  
 D2D CRM is built for speed, clarity, and action:
 
 - Tap a house on the map, log your outcome, and move on.
@@ -38,9 +56,7 @@ No more bloated dashboards. No endless menus. Just the essentials, designed for 
 
 ## Core Features
 
-A service is about helping someone — and in this case, helping sales reps do their job better.
-
-What does that mean for a door-to-door rep?
+A service is about helping someone — in this case, helping sales reps do their job better.
 
 ### Map-Driven Knock Logging
 Tap a property, choose Wasn’t Home, Follow Up Later, or Converted to Sale, and the CRM handles the workflow.
@@ -65,32 +81,31 @@ Visualize every door you’ve knocked, every lead you’ve spoken to, and every 
 
 ---
 
+## Design Documentation
+
+For a deep dive into the architecture and UI/UX principles behind D2D CRM, check out the first design doc:
+
+📄 [D2D CRM Design Doc #1](docs/design-doc-1.md)
+
+This document walks you through:  
+
+- User journey mapping for sales reps  
+- Screen-by-screen layout decisions  
+- Workflow optimizations for door-to-door operations  
+- UI/UX patterns tested for real-world field usage  
+
+---
+
 ## Contributor's Guide
 
 ### Requirements
 
-- iOS 18 or later
-- Xcode 16 or later
-- SwiftData
-- MapKit
+- iOS 18 or later  
+- Xcode 16 or later  
+- SwiftData  
+- MapKit  
 
 ### Clone the Repository
 
-`git clone https://github.com/yourusername/d2d-crm-ios.git`
-
-### Run UI Test for Screenshots
-
-Before pushing to main, make sure the login screen screenshot is up to date.
-
-    1.    Open the Xcode project (.xcodeproj or .xcworkspace).
-    2.    Select the scheme: d2d-map-serviceUITests.
-    3.    Choose a compatible iOS 18.4+ simulator (e.g., iPhone 16 Pro).
-    4.    Run the UI test named testLoginScreenScreenshot in d2d_map_serviceUITests.swift.
-    5.    After the test completes, check that the following file was updated: media/login-screen-screenshot.png
-    6.    Commit the screenshot 
-    
-## How To Commit To The D2D CRM
-
-`git add media/login-screen-screenshot.png`
-`git commit -m "📸 Update login screen screenshot"`
-`git push origin your-branch`
+```bash
+git clone https://github.com/yourusername/d2d-crm-ios.git
