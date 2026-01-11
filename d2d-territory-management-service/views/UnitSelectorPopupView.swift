@@ -17,11 +17,36 @@ struct UnitSelectorPopupView: View {
         VStack(spacing: 12) {
             HStack {
                 Spacer()
-                Button(action: onClose) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.gray)
-                        .imageScale(.large)
+
+                Button(action: {
+                    // ✅ Play haptic + sound when closing
+                    MapScreenHapticsController.shared.propertyAdded()
+                    MapScreenSoundController.shared.playPropertyAdded()
+
+                    // Close action
+                    onClose()
+                }) {
+                    ZStack {
+                        // Red base
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 18, height: 18)
+                            .shadow(color: .black.opacity(0.25), radius: 2, x: 0, y: 1)
+
+                        // Subtle top highlight for depth
+                        Circle()
+                            .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                            .frame(width: 18, height: 18)
+
+                        // Black X in the center
+                        Image(systemName: "xmark")
+                            .font(.system(size: 7, weight: .bold))
+                            .foregroundColor(.black)
+                    }
                 }
+                .buttonStyle(.plain)
+                .contentShape(Circle()) // ensures tap area matches circle
+                
             }
 
             Text(baseAddress)
