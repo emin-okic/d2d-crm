@@ -61,6 +61,13 @@ struct ExpandableSearchView: View {
                     .transition(.move(edge: .trailing).combined(with: .opacity))
                 } else {
                     Button {
+                        
+                        // ✅ Haptics
+                        MapScreenHapticsController.shared.lightTap()
+                        
+                        // ✅ Sound
+                        MapScreenSoundController.shared.playPropertyOpen()
+                        
                         withAnimation(.easeInOut(duration: 0.25)) {
                             isExpanded = true
                             isFocused = true

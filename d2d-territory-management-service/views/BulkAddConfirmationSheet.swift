@@ -66,7 +66,13 @@ struct BulkAddConfirmationSheet: View {
             .frame(maxHeight: 300)
 
             HStack {
-                Button("Cancel", role: .cancel) { onCancel() }
+                Button("Cancel", role: .cancel) {
+                    
+                    MapScreenHapticsController.shared.lightTap()
+                    MapScreenSoundController.shared.playPropertyOpen()
+                    
+                    onCancel()
+                }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
                     .background(
@@ -77,7 +83,13 @@ struct BulkAddConfirmationSheet: View {
                 Spacer()
 
                 Button("Add Selected (\(selectedProperties.count))") {
+                    
                     let selected = bulk.properties.filter { selectedProperties.contains($0.id) }
+                    
+                    // 🏆 Strong reward feedback
+                    MapScreenHapticsController.shared.propertyAdded()
+                    MapScreenSoundController.shared.playPropertyAdded()
+                    
                     onConfirm(selected)
                 }
                 .buttonStyle(.borderedProminent)
@@ -95,9 +107,21 @@ struct BulkAddConfirmationSheet: View {
 
     private func toggleSelection(_ prop: PendingAddProperty) {
         if selectedProperties.contains(prop.id) {
+            
             selectedProperties.remove(prop.id)
+            
+            // 🔹 Soft deselect feedback
+            MapScreenHapticsController.shared.lightTap()
+            MapScreenSoundController.shared.playPropertyOpen()
+            
         } else {
+            
             selectedProperties.insert(prop.id)
+            
+            // 🔹 Soft deselect feedback
+            MapScreenHapticsController.shared.lightTap()
+            MapScreenSoundController.shared.playPropertyOpen()
+            
         }
     }
 }

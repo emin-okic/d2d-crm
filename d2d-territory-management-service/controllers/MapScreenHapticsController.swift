@@ -30,6 +30,10 @@ final class MapScreenHapticsController {
     func mapTap() {
         lightImpact.impactOccurred()
     }
+    
+    func lightTap() {
+        lightImpact.impactOccurred()
+    }
 
     /// Rewarding confirmation when a property is added
     func propertyAdded() {
