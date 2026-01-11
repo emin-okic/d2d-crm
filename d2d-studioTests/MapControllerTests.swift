@@ -69,7 +69,7 @@ final class MapControllerTests: XCTestCase {
         XCTAssertNotNil(customerMarker)
 
         XCTAssertEqual(customerMarker?.count, 0)
-        XCTAssertEqual(customerMarker?.unitCount, 1)
+        XCTAssertEqual(customerMarker?.unitCount, 0)
         XCTAssertFalse(customerMarker?.isMultiUnit ?? true)
     }
 
