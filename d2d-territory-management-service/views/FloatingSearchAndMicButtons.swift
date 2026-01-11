@@ -35,6 +35,13 @@ struct FloatingSearchAndMicButtons: View {
 
                         if !isExpanded {
                             Button {
+                                
+                                // ✅ Haptics
+                                MapScreenHapticsController.shared.lightTap()
+                                
+                                // ✅ Sound
+                                MapScreenSoundController.shared.playPropertyOpen()
+                                
                                 if let loc = userLocationManager.location {
                                     mapController.region.center = loc.coordinate
                                 }
