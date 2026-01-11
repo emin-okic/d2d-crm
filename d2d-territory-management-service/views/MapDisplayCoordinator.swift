@@ -163,6 +163,10 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             activeRadiusOverlay = circle
             mapView.addOverlay(circle)
             
+            // 🏆 Strong reward feedback
+            MapScreenHapticsController.shared.propertyAdded()
+            MapScreenSoundController.shared.playPropertyAdded()
+            
             // 🔍 Zoom in right away so user sees placement context
             zoomToBulkAddArea(center: coord, radius: bulkAddRadius)
             hasZoomedForActiveRadius = true
@@ -176,6 +180,7 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             let circle = MKCircle(center: coord, radius: bulkAddRadius)
             activeRadiusOverlay = circle
             mapView.addOverlay(circle)
+            
 
         case .ended:
             
@@ -200,6 +205,10 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
                 // Trigger bulk add
                 self.notifyBulkAdd(center: center, radius: radius)
             }
+            
+            // 🏆 Strong reward feedback
+            MapScreenHapticsController.shared.propertyAdded()
+            MapScreenSoundController.shared.playPropertyAdded()
 
         default:
             break
