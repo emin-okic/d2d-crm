@@ -46,10 +46,25 @@ struct ProspectPopupView: View {
                     // Then perform the original close action
                     onClose()
                 }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.gray)
-                        .imageScale(.large)
+                    ZStack {
+                        // Red base
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 18, height: 18)
+                            .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
+
+                        // Subtle top highlight for depth
+                        Circle()
+                            .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                            .frame(width: 18, height: 18)
+
+                        // Black X
+                        Image(systemName: "xmark")
+                            .font(.system(size: 7, weight: .bold))
+                            .foregroundColor(.black)
+                    }
                 }
+                .buttonStyle(.plain)
             }
 
             VStack(alignment: .leading, spacing: 2) {
