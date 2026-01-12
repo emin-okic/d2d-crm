@@ -92,9 +92,20 @@ struct ProspectKnockingHistoryView: View {
             isPresented: $showDeleteConfirm
         ) {
             Button("Delete", role: .destructive) {
+                
+                ContactDetailsHapticsController.shared.bulkAddConfirmed()
+                ContactScreenSoundController.shared.playPropertyAdded()
+                
                 deleteSelectedKnocks()
+                
             }
-            Button("Cancel", role: .cancel) { }
+            Button("Cancel", role: .cancel) {
+                
+                ContactDetailsHapticsController.shared.mapTap()
+                
+                ContactScreenSoundController.shared.playPropertyOpen()
+                
+            }
         } message: {
             Text("This action cannot be undone.")
         }
@@ -120,39 +131,76 @@ struct ProspectKnockingHistoryView: View {
 
     // MARK: - Actions
     private func toggleSelection(_ knock: Knock) {
+        
         if selectedKnocks.contains(knock) {
+            
             selectedKnocks.remove(knock)
+            
+            ContactDetailsHapticsController.shared.mapTap()
+            ContactScreenSoundController.shared.playPropertyOpen()
+            
         } else {
+            
             selectedKnocks.insert(knock)
+            
+            ContactDetailsHapticsController.shared.mapTap()
+            ContactScreenSoundController.shared.playPropertyOpen()
+            
         }
     }
 
     private func handleTrashTap() {
+        
         if isDeleting {
+            
             if selectedKnocks.isEmpty {
+                
+                ContactDetailsHapticsController.shared.mapTap()
+                ContactScreenSoundController.shared.playPropertyOpen()
+                
                 // exit delete mode
                 withAnimation {
                     isDeleting = false
                 }
+                
             } else {
+                
+                ContactDetailsHapticsController.shared.bulkAddConfirmed()
+                ContactScreenSoundController.shared.playPropertyOpen()
+                
                 showDeleteConfirm = true
+                
             }
+            
         } else {
+            
+            ContactDetailsHapticsController.shared.mapTap()
+            ContactScreenSoundController.shared.playPropertyOpen()
+            
             withAnimation {
                 isDeleting = true
             }
+            
         }
     }
 
     private func deleteSelectedKnocks() {
+        
         for knock in selectedKnocks {
+            
             prospect.knockHistory.removeAll { $0.id == knock.id }
+            
             modelContext.delete(knock)
+            
         }
 
         try? modelContext.save()
+        
+        ContactDetailsHapticsController.shared.propertyAdded()
+        ContactScreenSoundController.shared.playPropertyAdded()
 
         selectedKnocks.removeAll()
+        
         withAnimation {
             isDeleting = false
         }
