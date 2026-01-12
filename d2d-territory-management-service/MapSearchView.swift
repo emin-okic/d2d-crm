@@ -236,6 +236,7 @@ struct MapSearchView: View {
             
             // This is for the prospect updating marker stuff
             .onChange(of: prospects) { _ in updateMarkers() }
+            .onChange(of: customers) { _ in updateMarkers() }
             .onChange(of: selectedList) { _ in updateMarkers() }
             
             // Prospect Popup Stuff
