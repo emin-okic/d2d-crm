@@ -10,52 +10,203 @@ import SwiftUI
 import SwiftData
 
 struct ProspectKnockingHistoryView: View {
-    
+
     @Bindable var prospect: Prospect
-    
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var isDeleting = false
+    @State private var selectedKnocks: Set<Knock> = []
+    @State private var showDeleteConfirm = false
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if prospect.knockHistory.isEmpty {
-                Text("No knocks recorded yet.")
-                    .foregroundColor(.secondary)
-                    .font(.callout)
-                    .padding(.top, 8)
-            } else {
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 10) {
-                        ForEach(prospect.sortedKnocks) { knock in
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack {
-                                    Label(knock.status, systemImage: icon(for: knock.status))
-                                        .font(.subheadline)
-                                        .labelStyle(.titleAndIcon)
-                                    Spacer()
-                                    Text(knock.date.formatted(date: .abbreviated, time: .shortened))
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
+        ZStack {
+            VStack(spacing: 12) {
+
+                if prospect.knockHistory.isEmpty {
+                    Text("No knocks recorded yet.")
+                        .foregroundColor(.secondary)
+                        .font(.callout)
+                        .padding(.top, 20)
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 10) {
+                            ForEach(prospect.sortedKnocks) { knock in
+                                HStack(spacing: 10) {
+
+                                    if isDeleting {
+                                        Image(systemName:
+                                                selectedKnocks.contains(knock)
+                                                ? "checkmark.circle.fill"
+                                                : "circle"
+                                        )
+                                        .foregroundColor(.red)
+                                    }
+
+                                    knockRow(knock)
                                 }
-                                
-                                // Display coordinates directly since they are non-optional
-                                Text("📍 \(knock.latitude, specifier: "%.5f"), \(knock.longitude, specifier: "%.5f")")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                                
+                                .padding(10)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(isDeleting && selectedKnocks.contains(knock)
+                                              ? Color.red.opacity(0.06)
+                                              : Color(.secondarySystemBackground))
+                                )
+                                .onTapGesture {
+                                    if isDeleting {
+                                        toggleSelection(knock)
+                                    }
+                                }
                             }
-                            .padding(.vertical, 6)
-                            .padding(.horizontal, 10)
-                            .background(Color(.secondarySystemBackground))
-                            .cornerRadius(10)
                         }
+                        .padding(.horizontal, 10)
+                        .padding(.top, 10)
                     }
-                    .padding(.horizontal, 4)
-                    .padding(.top, 6)
+                }
+            }
+
+            // Floating delete button (bottom-left)
+            VStack {
+                Spacer()
+                HStack {
+                    Button {
+                        handleTrashTap()
+                    } label: {
+                        Image(systemName: "trash.fill")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(
+                                Circle().fill(isDeleting ? Color.red : Color.blue)
+                            )
+                            .shadow(radius: 5)
+                    }
+                    .padding(.leading, 16)
+                    .padding(.bottom, 16)
+
+                    Spacer()
                 }
             }
         }
-        //.navigationTitle("Knocking History")
+        .alert(
+            "Delete \(selectedKnocks.count) Knock\(selectedKnocks.count == 1 ? "" : "s")?",
+            isPresented: $showDeleteConfirm
+        ) {
+            Button("Delete", role: .destructive) {
+                
+                ContactDetailsHapticsController.shared.bulkAddConfirmed()
+                ContactScreenSoundController.shared.playPropertyAdded()
+                
+                deleteSelectedKnocks()
+                
+            }
+            Button("Cancel", role: .cancel) {
+                
+                ContactDetailsHapticsController.shared.mapTap()
+                
+                ContactScreenSoundController.shared.playPropertyOpen()
+                
+            }
+        } message: {
+            Text("This action cannot be undone.")
+        }
     }
-    
-    /// Maps knock status to a system icon.
+
+    // MARK: - Row UI
+    private func knockRow(_ knock: Knock) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Label(knock.status, systemImage: icon(for: knock.status))
+                    .font(.subheadline)
+                Spacer()
+                Text(knock.date.formatted(date: .abbreviated, time: .shortened))
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+
+            Text("📍 \(knock.latitude, specifier: "%.5f"), \(knock.longitude, specifier: "%.5f")")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    // MARK: - Actions
+    private func toggleSelection(_ knock: Knock) {
+        
+        if selectedKnocks.contains(knock) {
+            
+            selectedKnocks.remove(knock)
+            
+            ContactDetailsHapticsController.shared.mapTap()
+            ContactScreenSoundController.shared.playPropertyOpen()
+            
+        } else {
+            
+            selectedKnocks.insert(knock)
+            
+            ContactDetailsHapticsController.shared.mapTap()
+            ContactScreenSoundController.shared.playPropertyOpen()
+            
+        }
+    }
+
+    private func handleTrashTap() {
+        
+        if isDeleting {
+            
+            if selectedKnocks.isEmpty {
+                
+                ContactDetailsHapticsController.shared.mapTap()
+                ContactScreenSoundController.shared.playPropertyOpen()
+                
+                // exit delete mode
+                withAnimation {
+                    isDeleting = false
+                }
+                
+            } else {
+                
+                ContactDetailsHapticsController.shared.bulkAddConfirmed()
+                ContactScreenSoundController.shared.playPropertyOpen()
+                
+                showDeleteConfirm = true
+                
+            }
+            
+        } else {
+            
+            ContactDetailsHapticsController.shared.mapTap()
+            ContactScreenSoundController.shared.playPropertyOpen()
+            
+            withAnimation {
+                isDeleting = true
+            }
+            
+        }
+    }
+
+    private func deleteSelectedKnocks() {
+        
+        for knock in selectedKnocks {
+            
+            prospect.knockHistory.removeAll { $0.id == knock.id }
+            
+            modelContext.delete(knock)
+            
+        }
+
+        try? modelContext.save()
+        
+        ContactDetailsHapticsController.shared.propertyAdded()
+        ContactScreenSoundController.shared.playPropertyAdded()
+
+        selectedKnocks.removeAll()
+        
+        withAnimation {
+            isDeleting = false
+        }
+    }
+
+    // MARK: - Icon helper
     private func icon(for status: String) -> String {
         let lower = status.lowercased()
         if lower.contains("converted") || lower.contains("sale") {

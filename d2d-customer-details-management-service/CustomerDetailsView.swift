@@ -84,7 +84,13 @@ struct CustomerDetailsView: View {
                             icon: "calendar.badge.clock",
                             color: .blue
                         ) {
+                            
+                            // ✅ Play haptic + sound when opening knocking history
+                            ContactDetailsHapticsController.shared.mapTap()
+                            ContactScreenSoundController.shared.playPropertyOpen()
+                            
                             showAppointmentsSheet = true
+                            
                         }
 
                         CustomerDetailsScorecard(
@@ -93,6 +99,11 @@ struct CustomerDetailsView: View {
                             icon: "hand.tap.fill",
                             color: .orange
                         ) {
+                            
+                            // ✅ Play haptic + sound when opening knocking history
+                            ContactDetailsHapticsController.shared.mapTap()
+                            ContactScreenSoundController.shared.playPropertyOpen()
+                            
                             showKnocksSheet = true
                         }
                     }
