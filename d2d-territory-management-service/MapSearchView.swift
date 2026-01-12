@@ -233,6 +233,12 @@ struct MapSearchView: View {
                 }
                 
             }
+            
+            // This is for the prospect updating marker stuff
+            .onChange(of: prospects) { _ in updateMarkers() }
+            .onChange(of: customers) { _ in updateMarkers() }
+            .onChange(of: selectedList) { _ in updateMarkers() }
+            
             // Prospect Popup Stuff
             .sheet(item: $selectedUnitGroup) { group in
                 UnitSelectorPopupView(
@@ -498,8 +504,6 @@ struct MapSearchView: View {
                 }
             
         }
-        .onChange(of: prospects) { _ in updateMarkers() }
-        .onChange(of: selectedList) { _ in updateMarkers() }
         .onChange(of: addressToCenter) { handleMapCenterChange(newAddress: $0) }
         .onTapGesture {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to:nil,from:nil,for:nil)
@@ -664,6 +668,11 @@ struct MapSearchView: View {
                 CustomerDetailsView(customer: customer)
             }
         }
+    }
+    
+    // For updating the markers
+    private func updateMarkers() {
+        controller.setMarkers(prospects: prospects, customers: customers)
     }
     
     private func resolveProspectForSale(address: String) -> Prospect? {
@@ -1436,10 +1445,6 @@ struct MapSearchView: View {
                 coordinate: item.placemark.coordinate
             )
         }
-    }
-
-    private func updateMarkers() {
-        controller.setMarkers(prospects: prospects, customers: customers)
     }
 }
 
