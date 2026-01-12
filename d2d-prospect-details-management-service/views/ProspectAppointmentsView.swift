@@ -34,7 +34,13 @@ struct ProspectAppointmentsView: View {
                     } else {
                         ForEach(upcoming) { appt in
                             Button {
+                                
+                                // ✅ Haptics + sound for selecting an appointment
+                                ContactDetailsHapticsController.shared.mapTap()
+                                ContactScreenSoundController.shared.playPropertyOpen()
+                                
                                 controller.selectedAppointmentDetails = appt
+                                
                             } label: {
                                 appointmentRow(appt)
                             }
@@ -54,7 +60,13 @@ struct ProspectAppointmentsView: View {
             HStack {
                 Spacer()
                 Button {
+                    
+                    // ✅ Haptics + sound for opening Add Appointment sheet
+                    ContactDetailsHapticsController.shared.mapTap()
+                    ContactScreenSoundController.shared.playPropertyOpen()
+                    
                     controller.showAppointmentSheet = true
+                    
                 } label: {
                     Label("Add Appointment", systemImage: "calendar.badge.plus")
                         .font(.subheadline.bold())
