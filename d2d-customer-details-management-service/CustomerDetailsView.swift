@@ -188,15 +188,7 @@ struct CustomerDetailsView: View {
                     presentationMode.wrappedValue.dismiss()
                     
                 } label: {
-                    ZStack {
-                        Circle()
-                            .fill(Color.red)
-
-                        Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                    }
-
+                    Label("Back", systemImage: "chevron.left")
                 }
                 .buttonStyle(.plain)
             }
