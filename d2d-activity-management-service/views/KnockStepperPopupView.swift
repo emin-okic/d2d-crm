@@ -294,23 +294,33 @@ struct KnockStepperPopupView: View {
 
     private var followUpStep: some View {
       VStack(alignment: .leading, spacing: 6) {
-        Text("Schedule Follow-Up").font(.footnote).foregroundColor(.secondary)
-              .padding(5)
-        Text("Choose when to return. **Next** will create the appointment.")
-          .font(.caption2).foregroundColor(.secondary)
-          .padding(5)
+          
+          Text("Schedule Follow-Up")
+              .font(.footnote.weight(.semibold))
 
-        HStack(spacing: 6) {
-          quickDateChip("+1d", days: 1)
-          quickDateChip("+7d", days: 7)
-          quickDateChip("+30d", days: 30)
-        }
-        .padding(5)
+          Text("Pick a return date. Next will book it.")
+              .font(.caption2)
+              .foregroundColor(.secondary)
 
-        HStack(spacing: 6) {
-          Image(systemName: "calendar").foregroundColor(.blue)
-          DatePicker("", selection: $followUpDate, displayedComponents: [.date, .hourAndMinute])
-            .labelsHidden()
+          // Quick date row
+          HStack(spacing: 6) {
+              quickDateChip("Tomorrow", days: 1)
+              quickDateChip("Next Week", days: 7)
+              quickDateChip("30 Days", days: 30)
+          }
+          
+          Divider()
+
+          HStack(spacing: 6) {
+              
+              Image(systemName: "calendar").foregroundColor(.blue)
+              
+              DatePicker("", selection: $followUpDate, displayedComponents: [.date, .hourAndMinute])
+                  .labelsHidden()
+                  .onChange(of: followUpDate) { _, _ in
+                      KnockingFormHapticsController.shared.lightTap()
+                      KnockingFormSoundController.shared.playConfirmationSound()
+                  }
         }
         .padding(5)
       }
@@ -318,10 +328,15 @@ struct KnockStepperPopupView: View {
     
     @ViewBuilder
     private func quickDateChip(_ title: String, days: Int) -> some View {
-        Button(title) {
+        Button {
+            
+            KnockingFormHapticsController.shared.lightTap()
+            KnockingFormSoundController.shared.playConfirmationSound()
+            
             if let target = Calendar.current.date(byAdding: .day, value: days, to: Date()) {
-                // Keep existing time-of-day from current followUpDate
+                
                 let comps = Calendar.current.dateComponents([.hour, .minute], from: followUpDate)
+                
                 followUpDate = Calendar.current.date(
                     bySettingHour: comps.hour ?? 9,
                     minute: comps.minute ?? 0,
@@ -329,9 +344,17 @@ struct KnockStepperPopupView: View {
                     of: target
                 ) ?? target
             }
+        } label: {
+            Text(title)
+                .font(.caption2.weight(.medium))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color(.secondarySystemBackground))
+                )
         }
-        .buttonStyle(.bordered)
-        .controlSize(.small)
+        .buttonStyle(.plain)
     }
 
     private var convertStep: some View {
