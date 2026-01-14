@@ -87,7 +87,14 @@ struct KnockStepperPopupView: View {
           // Nav buttons
           HStack {
             let canShowSkip = currentStep.map(canSkip) ?? false
-            Button("Skip") { goSkip() }
+              Button("Skip") {
+                  
+                  KnockingFormHapticsController.shared.mediumTap()
+                  KnockingFormSoundController.shared.playConfirmationSound()
+                  
+                  goSkip()
+                  
+              }
               .buttonStyle(.bordered)
               .opacity(canShowSkip ? 1 : 0)
 
@@ -95,7 +102,15 @@ struct KnockStepperPopupView: View {
 
             if currentStep != .done {
               if isCurrentStepSatisfied(currentStep) {
-                Button("Next") { goNext() }.buttonStyle(.borderedProminent)
+                  Button("Next") {
+                      
+                      KnockingFormHapticsController.shared.mediumTap()
+                      KnockingFormSoundController.shared.playConfirmationSound()
+                      
+                      goNext()
+                      
+                  }
+                  .buttonStyle(.borderedProminent)
               } else {
                 Button("Next") {}.buttonStyle(.borderedProminent).disabled(true)
               }
@@ -210,7 +225,12 @@ struct KnockStepperPopupView: View {
               .font(.caption)
 
             Button {
-              showAddObjection = true
+                
+                KnockingFormHapticsController.shared.lightTap()
+                KnockingFormSoundController.shared.playConfirmationSound()
+                
+                showAddObjection = true
+                
             } label: {
               Label("Add Objection", systemImage: "plus")
             }
@@ -223,8 +243,13 @@ struct KnockStepperPopupView: View {
             LazyVStack(alignment: .leading, spacing: 6) {
               ForEach(objectionOptions) { obj in
                 Button {
-                  selectedObjection = obj
-                  incrementObjection(obj)
+                    
+                    KnockingFormHapticsController.shared.lightTap()
+                    KnockingFormSoundController.shared.playConfirmationSound()
+                    
+                    selectedObjection = obj
+                    incrementObjection(obj)
+                    
                 } label: {
                   HStack(spacing: 6) {
                     Image(systemName: selectedObjection == obj ? "checkmark.circle.fill" : "circle")
@@ -242,7 +267,12 @@ struct KnockStepperPopupView: View {
           .padding(.bottom, 5)
             
             Button {
-              showAddObjection = true
+                
+                KnockingFormHapticsController.shared.lightTap()
+                KnockingFormSoundController.shared.playConfirmationSound()
+                
+                showAddObjection = true
+                
             } label: {
               Label("Add new objection", systemImage: "plus")
                 .font(.caption2)
