@@ -66,12 +66,12 @@ struct ProspectAppointmentsView: View {
                 }
                 .padding(.horizontal, 12)
                 
-                // Container like Follow Up Assistant
+                // Appointments container – fills remaining space
                 ZStack {
                     RoundedRectangle(cornerRadius: 16)
                         .fill(Color(.systemGray6))
                         .shadow(color: .black.opacity(0.05), radius: 4)
-                    
+
                     ScrollView {
                         LazyVStack(spacing: 12) {
                             if filteredAppointments.isEmpty {
@@ -95,10 +95,13 @@ struct ProspectAppointmentsView: View {
                         .padding()
                     }
                 }
-                .frame(maxHeight: 320)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(.horizontal, 12)
-                
-                // Floating add button
+
+                // Push button to bottom when there's space (large detent)
+                Spacer(minLength: 0)
+
+                // Bottom add button
                 HStack {
                     Spacer()
                     Button {
@@ -117,6 +120,7 @@ struct ProspectAppointmentsView: View {
                     .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 12)
+                .padding(.bottom, 12)
             }
         }
         .sheet(isPresented: $controller.showAppointmentSheet) {
