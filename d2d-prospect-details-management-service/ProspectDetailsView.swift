@@ -235,8 +235,8 @@ struct ProspectDetailsView: View {
                     prospect: prospect,
                     controller: controller
                 )
-                .navigationTitle("Upcoming Meetings")
-                .presentationDetents([.medium])
+                // .navigationTitle("Upcoming Meetings")
+                .presentationDetents([.medium, .large])
             }
         }
         .sheet(isPresented: $showKnocksSheet) {
