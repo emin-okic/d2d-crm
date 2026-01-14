@@ -54,6 +54,8 @@ struct ObjectionsSectionView: View {
         }
         .sheet(isPresented: $showingAddObjection) {
             AddObjectionView()
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
         }
         .alert("Delete selected objections?", isPresented: $showDeleteConfirm) {
             Button("Delete", role: .destructive) { deleteSelected() }
