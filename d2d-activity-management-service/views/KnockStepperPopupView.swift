@@ -196,19 +196,26 @@ struct KnockStepperPopupView: View {
 
     private var objectionStep: some View {
       VStack(alignment: .leading, spacing: 6) {
-        Text("Add an Objection")
-          .font(.footnote).foregroundColor(.secondary)
-        Text("Pick what they said. Add a new one if it’s not listed.")
-          .font(.caption2).foregroundColor(.secondary)
+
+        Text("Why didn’t they buy?")
+          .font(.footnote.weight(.semibold))
+
+        Text("Pick the closest match. Add one if it’s new.")
+          .font(.caption2)
+          .foregroundColor(.secondary)
 
         if objectionOptions.isEmpty {
           VStack(spacing: 6) {
-            Text("No objections yet").font(.subheadline)
-            Text("Tap **Add New Objection**, then select it to continue.")
-              .font(.caption2).foregroundColor(.secondary).multilineTextAlignment(.center)
-            Button { showAddObjection = true } label: { Label("Add New Objection", systemImage: "plus") }
-              .buttonStyle(.bordered)
-              .controlSize(.small)
+            Text("No objections yet")
+              .font(.caption)
+
+            Button {
+              showAddObjection = true
+            } label: {
+              Label("Add Objection", systemImage: "plus")
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
           }
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         } else {
@@ -220,24 +227,29 @@ struct KnockStepperPopupView: View {
                   incrementObjection(obj)
                 } label: {
                   HStack(spacing: 6) {
-                    Image(systemName: selectedObjection == obj ? "largecircle.fill.circle" : "circle")
-                    Text(obj.text).font(.caption).lineLimit(2)
+                    Image(systemName: selectedObjection == obj ? "checkmark.circle.fill" : "circle")
+                      .foregroundColor(selectedObjection == obj ? .blue : .secondary)
+                    Text(obj.text)
+                      .font(.caption)
+                      .lineLimit(1)
                     Spacer()
                   }
-                  .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
               }
-
-              Button {
-                showAddObjection = true
-              } label: {
-                Label("Add New Objection", systemImage: "plus").font(.caption2)
-              }
-              .buttonStyle(.bordered)
-              .controlSize(.small)
             }
-          } // ← no .frame(maxHeight: .infinity)
+          }
+          .padding(.bottom, 5)
+            
+            Button {
+              showAddObjection = true
+            } label: {
+              Label("Add new objection", systemImage: "plus")
+                .font(.caption2)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            
         }
       }
     }
