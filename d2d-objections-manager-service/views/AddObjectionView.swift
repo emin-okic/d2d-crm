@@ -17,12 +17,42 @@ struct AddObjectionView: View {
 
     var body: some View {
         NavigationView {
-            Form {
-                Section(header: Text("Objection")) {
-                    TextField("e.g. 'Not interested'", text: $text)
+            ScrollView {
+                VStack(spacing: 20) {
 
-                    if !suggestions.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
+                    // MARK: - Header
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Add a Sales Objection")
+                            .font(.title2.bold())
+
+                        Text("Enter what prospects say when they don’t buy. Tracking objections helps you spot patterns, sharpen your pitch, and learn how to overcome them.")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(.secondarySystemBackground))
+                    )
+                    .padding(.horizontal)
+
+                    // MARK: - Objection Input
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("What did they say?")
+                            .font(.headline)
+
+                        TextField("e.g. Not interested, Too expensive…", text: $text)
+                            .padding(12)
+                            .background(Color(.systemBackground))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color(.separator), lineWidth: 1)
+                            )
+                            .cornerRadius(10)
+
+                        // MARK: - Suggested Objections
+                        if !suggestions.isEmpty {
                             Text("Suggested Objections")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
@@ -31,28 +61,41 @@ struct AddObjectionView: View {
                                 HStack(spacing: 8) {
                                     ForEach(suggestions, id: \.self) { item in
                                         Button {
-                                            text = item   // auto-fill
+                                            text = item
                                         } label: {
                                             Text(item)
-                                                .font(.caption)
-                                                .padding(.vertical, 6)
-                                                .padding(.horizontal, 10)
-                                                .background(Color(.secondarySystemBackground))
-                                                .cornerRadius(10)
+                                                .font(.caption.bold())
+                                                .padding(.vertical, 8)
+                                                .padding(.horizontal, 12)
+                                                .background(
+                                                    Capsule()
+                                                        .fill(Color.blue.opacity(0.1))
+                                                )
+                                                .overlay(
+                                                    Capsule()
+                                                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                                                )
                                         }
                                         .buttonStyle(.plain)
                                     }
                                 }
                             }
                         }
-                        .padding(.top, 6)
                     }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(.secondarySystemBackground))
+                    )
+                    .padding(.horizontal)
+
+                    Spacer(minLength: 30)
                 }
+                .padding(.top)
             }
-            .navigationTitle("New Objection")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button {
                         let new = Objection(text: text)
                         context.insert(new)
 
@@ -62,11 +105,23 @@ struct AddObjectionView: View {
                         }
 
                         dismiss()
+                        
+                    } label: {
+                        Label("Save", systemImage: "checkmark")
                     }
+                    .buttonStyle(.plain)
+                    .foregroundColor(.blue)
+                    .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .opacity(text.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1)
                 }
 
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button() {
+                        dismiss()
+                    } label: {
+                        Label("Back", systemImage: "chevron.left")
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .onAppear {
