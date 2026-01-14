@@ -69,10 +69,18 @@ struct KnockStepperPopupView: View {
           Text(shortAddress(context.address))
             .font(.subheadline)               // slightly smaller than .headline
             .lineLimit(1)
-          Spacer()
-          Button(action: onClose) {
-            Image(systemName: "xmark.circle.fill").foregroundColor(.secondary)
-          }
+            
+            Spacer()
+
+            Button {
+              KnockingFormHapticsController.shared.lightTap()
+              KnockingFormSoundController.shared.playConfirmationSound()
+              onClose()
+            } label: {
+              Image(systemName: "xmark.circle.fill")
+                .foregroundColor(.secondary)
+            }
+            
         }
 
         // Step indicator
