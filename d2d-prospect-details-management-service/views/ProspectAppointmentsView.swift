@@ -12,107 +12,158 @@ struct ProspectAppointmentsView: View {
     
     @Bindable var prospect: Prospect
     @ObservedObject var controller: ProspectDetailsController
-
-    // ~3 rows worth of height (tweak if needed)
-    private let maxListHeight: CGFloat = 220
+    
+    @State private var filter: AppointmentFilter = .upcoming
+    
+    private var filteredAppointments: [Appointment] {
+        let cal = Calendar.current
+        let now = Date()
+        
+        switch filter {
+        case .upcoming:
+            // Includes today
+            return prospect.appointments
+                .filter { $0.date >= cal.startOfDay(for: now) }
+                .sorted { $0.date < $1.date }
+        case .past:
+            return prospect.appointments
+                .filter { $0.date < cal.startOfDay(for: now) }
+                .sorted { $0.date > $1.date }
+        default:
+            return []
+        }
+    }
 
     var body: some View {
-        VStack(spacing: 12) {
-
-            ScrollView {
-                LazyVStack(spacing: 12) {
-                    let upcoming = prospect.appointments
-                        .filter { $0.date >= Date() }
-                        .sorted { $0.date < $1.date }
-
-                    if upcoming.isEmpty {
-                        Text("No upcoming follow-ups.")
-                            .foregroundColor(.gray)
-                            .font(.callout)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 24)
-                    } else {
-                        ForEach(upcoming) { appt in
-                            Button {
-                                
-                                // ✅ Haptics + sound for selecting an appointment
-                                ContactDetailsHapticsController.shared.mapTap()
-                                ContactScreenSoundController.shared.playPropertyOpen()
-                                
-                                controller.selectedAppointmentDetails = appt
-                                
-                            } label: {
-                                appointmentRow(appt)
+        
+        GeometryReader { geo in
+            
+            let topPad: CGFloat = geo.size.height < 500 ? 20 : 40
+            
+            VStack(spacing: 16) {
+                
+                // Header pill like Follow Up Assistant
+                VStack(spacing: 4) {
+                    Text("Appointments")
+                        .font(.title2).bold()
+                    
+                    Text("\(filteredAppointments.count) \(filter.rawValue) for \(prospect.fullName)")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Color.white)
+                .cornerRadius(16)
+                .shadow(color: .black.opacity(0.05), radius: 2)
+                .padding(.horizontal, 12)
+                .padding(.top, topPad)
+                
+                // Filter chips
+                HStack(spacing: 8) {
+                    chip("Upcoming", isOn: filter == .upcoming) { filter = .upcoming }
+                    chip("Past", isOn: filter == .past) { filter = .past }
+                }
+                .padding(.horizontal, 12)
+                
+                // Container like Follow Up Assistant
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color(.systemGray6))
+                        .shadow(color: .black.opacity(0.05), radius: 4)
+                    
+                    ScrollView {
+                        LazyVStack(spacing: 12) {
+                            if filteredAppointments.isEmpty {
+                                Text("No \(filter.rawValue) Appointments")
+                                    .font(.title3.weight(.semibold))
+                                    .foregroundColor(.secondary)
+                                    .padding(.top, 24)
+                            } else {
+                                ForEach(filteredAppointments) { appt in
+                                    Button {
+                                        ContactDetailsHapticsController.shared.mapTap()
+                                        ContactScreenSoundController.shared.playPropertyOpen()
+                                        controller.selectedAppointmentDetails = appt
+                                    } label: {
+                                        appointmentRow(appt)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
                             }
-                            .buttonStyle(.plain)
                         }
+                        .padding()
                     }
                 }
-                .padding(.horizontal, 4)
-                .padding(.vertical, 8)
-            }
-            .frame(maxHeight: maxListHeight) // ✅ THIS is the magic
-            .background(Color(.systemBackground))
-            .cornerRadius(14)
-            .shadow(color: .black.opacity(0.03), radius: 4)
-
-            // Fixed bottom action
-            HStack {
-                Spacer()
-                Button {
-                    
-                    // ✅ Haptics + sound for opening Add Appointment sheet
-                    ContactDetailsHapticsController.shared.mapTap()
-                    ContactScreenSoundController.shared.playPropertyOpen()
-                    
-                    controller.showAppointmentSheet = true
-                    
-                } label: {
-                    Image(systemName: "calendar.badge.plus")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(12)
-                        .background(Color.blue)
-                        .clipShape(Circle())
-                        .shadow(radius: 4)
-                }
-                .buttonStyle(.plain)
+                .frame(maxHeight: 320)
+                .padding(.horizontal, 12)
                 
+                // Floating add button
+                HStack {
+                    Spacer()
+                    Button {
+                        ContactDetailsHapticsController.shared.mapTap()
+                        ContactScreenSoundController.shared.playPropertyOpen()
+                        controller.showAppointmentSheet = true
+                    } label: {
+                        Image(systemName: "calendar.badge.plus")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(12)
+                            .background(Color.blue)
+                            .clipShape(Circle())
+                            .shadow(radius: 4)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 12)
             }
-            .padding(.horizontal, 8)
         }
-        .padding(.horizontal, 12)
         .sheet(isPresented: $controller.showAppointmentSheet) {
             NavigationStack {
                 ScheduleAppointmentView(prospect: prospect)
             }
         }
-        .sheet(item: $controller.selectedAppointmentDetails) { appointment in
-            AppointmentDetailsView(appointment: appointment)
+        .sheet(item: $controller.selectedAppointmentDetails) { appt in
+            AppointmentDetailsView(appointment: appt)
         }
     }
 
-    // MARK: - Row View (kept clean)
-    @ViewBuilder
+    // MARK: - Chips
+    private func chip(_ title: String, isOn: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .padding(.vertical, 6)
+                .padding(.horizontal, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(isOn ? Color.blue : Color(.secondarySystemBackground))
+                )
+                .foregroundColor(isOn ? .white : .primary)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(isOn ? Color.blue.opacity(0.9) : Color.gray.opacity(0.25))
+                )
+        }
+        .buttonStyle(.plain)
+        .animation(.easeInOut(duration: 0.15), value: isOn)
+    }
+
+    // MARK: - Row
     private func appointmentRow(_ appt: Appointment) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Follow Up With \(prospect.fullName)")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                    .font(.subheadline).fontWeight(.medium)
 
                 Text(prospect.address)
                     .font(.caption)
                     .foregroundColor(.gray)
 
-                Text(
-                    appt.date.formatted(
-                        date: .abbreviated,
-                        time: .shortened
-                    )
-                )
-                .font(.caption2)
-                .foregroundColor(.secondary)
+                Text(appt.date.formatted(date: .abbreviated, time: .shortened))
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
             }
 
             Spacer()
@@ -124,7 +175,7 @@ struct ProspectAppointmentsView: View {
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(.secondarySystemBackground))
-                .shadow(color: Color.black.opacity(0.05), radius: 4)
+                .shadow(color: .black.opacity(0.05), radius: 4)
         )
     }
 }
