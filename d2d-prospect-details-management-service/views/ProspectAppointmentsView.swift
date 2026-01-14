@@ -68,15 +68,16 @@ struct ProspectAppointmentsView: View {
                     controller.showAppointmentSheet = true
                     
                 } label: {
-                    Label("Add Appointment", systemImage: "calendar.badge.plus")
-                        .font(.subheadline.bold())
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(Color.blue)
+                    Image(systemName: "calendar.badge.plus")
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
-                        .cornerRadius(10)
+                        .padding(12)
+                        .background(Color.blue)
+                        .clipShape(Circle())
                         .shadow(radius: 4)
                 }
+                .buttonStyle(.plain)
+                
             }
             .padding(.horizontal, 8)
         }
