@@ -61,7 +61,12 @@ struct AddObjectionView: View {
                                 HStack(spacing: 8) {
                                     ForEach(suggestions, id: \.self) { item in
                                         Button {
+                                            
+                                            ObjectionManagerHapticsController.shared.screenTap()
+                                            ObjectionManagerSoundController.shared.playActionSound()
+                                            
                                             text = item
+                                            
                                         } label: {
                                             Text(item)
                                                 .font(.caption.bold())
@@ -96,6 +101,10 @@ struct AddObjectionView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
+                        
+                        ObjectionManagerHapticsController.shared.successAction()
+                        ObjectionManagerSoundController.shared.playActionSound()
+                        
                         let new = Objection(text: text)
                         context.insert(new)
 
@@ -117,7 +126,12 @@ struct AddObjectionView: View {
 
                 ToolbarItem(placement: .cancellationAction) {
                     Button() {
+                        
+                        ObjectionManagerHapticsController.shared.screenTap()
+                        ObjectionManagerSoundController.shared.playActionSound()
+                        
                         dismiss()
+                        
                     } label: {
                         Label("Back", systemImage: "chevron.left")
                     }
