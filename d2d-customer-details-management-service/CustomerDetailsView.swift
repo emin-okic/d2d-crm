@@ -152,8 +152,8 @@ struct CustomerDetailsView: View {
                     CustomerAppointmentsView(
                         customer: customer
                     )
-                    .navigationTitle("Upcoming Meetings")
-                    .presentationDetents([.medium])
+                    // .navigationTitle("Upcoming Meetings")
+                    .presentationDetents([.medium, .large])
                 }
             }
             .sheet(isPresented: $showKnocksSheet) {
