@@ -135,14 +135,18 @@ struct ProspectActionsToolbar: View {
             titleVisibility: .visible
         ) {
             Button("Compose Email") {
+                logEmailNote()   // ✅ log it first
+
                 if let url = URL(string: "mailto:\(prospect.contactEmail)") {
                     UIApplication.shared.open(url)
                 }
             }
+
             Button("Edit Email") {
-                newEmail = prospect.contactEmail // Pre-fill current value
+                newEmail = prospect.contactEmail
                 showAddEmailSheet = true
             }
+
             Button("Cancel", role: .cancel) { }
         }
 
@@ -280,6 +284,14 @@ struct ProspectActionsToolbar: View {
         let note = Note(content: content, date: Date(), prospect: prospect)
         prospect.notes.append(note)
 
+        try? modelContext.save()
+    }
+    
+    /// Logs when an email is composed
+    private func logEmailNote() {
+        let content = "Composed email to \(prospect.contactEmail) on \(Date().formatted(date: .abbreviated, time: .shortened))."
+        let note = Note(content: content, date: Date(), prospect: prospect)
+        prospect.notes.append(note)
         try? modelContext.save()
     }
     
