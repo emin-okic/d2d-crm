@@ -175,10 +175,18 @@ struct ProspectsSectionView: View {
     }
     
     private func toggleSelection(_ prospect: Prospect) {
+        
+        ContactDetailsHapticsController.shared.lightTap()
+        ContactScreenSoundController.shared.playSound1()
+        
         if selectedProspects.contains(prospect) {
+            
             selectedProspects.remove(prospect)
+            
         } else {
+            
             selectedProspects.insert(prospect)
+            
         }
     }
     

@@ -154,10 +154,20 @@ struct ContactManagementView: View {
                    isPresented: $showDeleteContactsConfirm) {
 
                 Button("Delete", role: .destructive) {
+                    
+                    ContactDetailsHapticsController.shared.mediumTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    
                     deleteSelectedContacts()
+                    
                 }
 
-                Button("Cancel", role: .cancel) {}
+                Button("Cancel", role: .cancel) {
+                    
+                    ContactDetailsHapticsController.shared.mediumTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    
+                }
             }
             .onChange(of: selectedList) { newValue in
                 if newValue == "Prospects" {
@@ -213,7 +223,11 @@ struct ContactManagementView: View {
     }
     
     private func deleteSelectedContacts() {
+        
         withAnimation {
+            
+            ContactDetailsHapticsController.shared.successConfirmationTap()
+            ContactScreenSoundController.shared.playSound1()
 
             if selectedList == "Prospects" {
                 for p in selectedProspects {
