@@ -8,9 +8,9 @@
 import UIKit
 
 @MainActor
-final class ContactDetailsHapticsController {
+final class ContactScreenHapticsController {
 
-    static let shared = ContactDetailsHapticsController()
+    static let shared = ContactScreenHapticsController()
 
     private let lightImpact = UIImpactFeedbackGenerator(style: .light)
     private let mediumImpact = UIImpactFeedbackGenerator(style: .medium)

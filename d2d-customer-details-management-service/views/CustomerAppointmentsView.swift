@@ -81,7 +81,7 @@ struct CustomerAppointmentsView: View {
                                 } else {
                                     ForEach(filteredAppointments) { appt in
                                         Button {
-                                            ContactDetailsHapticsController.shared.lightTap()
+                                            ContactScreenHapticsController.shared.lightTap()
                                             ContactScreenSoundController.shared.playSound1()
                                             controller.selectedAppointment = appt
                                         } label: {
@@ -105,7 +105,7 @@ struct CustomerAppointmentsView: View {
 
                 // Floating Add Button
                 Button {
-                    ContactDetailsHapticsController.shared.lightTap()
+                    ContactScreenHapticsController.shared.lightTap()
                     ContactScreenSoundController.shared.playSound1()
                     controller.showAppointmentSheet = true
                 } label: {

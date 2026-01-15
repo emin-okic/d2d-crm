@@ -80,7 +80,7 @@ struct CustomersSectionView: View {
                             } else {
                                 
                                 // ✅ Haptics & Sound when opening a prospect/customer
-                                ContactDetailsHapticsController.shared.lightTap()
+                                ContactScreenHapticsController.shared.lightTap()
                                 ContactScreenSoundController.shared.playSound1()
                                 
                                 selectedCustomer = c
@@ -116,7 +116,7 @@ struct CustomersSectionView: View {
                                 Button(role: .destructive) {
                                     
                                     // ✅ Haptics & Sound when initiating delete
-                                    ContactDetailsHapticsController.shared.lightTap()
+                                    ContactScreenHapticsController.shared.lightTap()
                                     ContactScreenSoundController.shared.playSound1()
                                     
                                     customerToDelete = c
@@ -151,7 +151,7 @@ struct CustomersSectionView: View {
             Button("Delete", role: .destructive) {
                 
                 // ✅ Haptics & Sound when initiating delete
-                ContactDetailsHapticsController.shared.lightTap()
+                ContactScreenHapticsController.shared.lightTap()
                 ContactScreenSoundController.shared.playSound1()
                 
                 deleteCustomer(customer)
@@ -159,7 +159,7 @@ struct CustomersSectionView: View {
             Button("Cancel", role: .cancel) {
                 
                 // ✅ Haptics & Sound when initiating delete
-                ContactDetailsHapticsController.shared.lightTap()
+                ContactScreenHapticsController.shared.lightTap()
                 ContactScreenSoundController.shared.playSound1()
                 
             }
@@ -173,7 +173,7 @@ struct CustomersSectionView: View {
     
     private func toggleSelection(_ customer: Customer) {
         
-        ContactDetailsHapticsController.shared.lightTap()
+        ContactScreenHapticsController.shared.lightTap()
         ContactScreenSoundController.shared.playSound1()
         
         if selectedCustomers.contains(customer) {

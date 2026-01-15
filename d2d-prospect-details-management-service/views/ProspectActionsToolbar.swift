@@ -50,7 +50,7 @@ struct ProspectActionsToolbar: View {
                 ) {
                     
                     // ✅ Haptic + sound
-                    ContactDetailsHapticsController.shared.successConfirmationTap()
+                    ContactScreenHapticsController.shared.successConfirmationTap()
                     ContactScreenSoundController.shared.playSound1()
                     
                     if prospect.contactPhone.isEmpty {
@@ -70,7 +70,7 @@ struct ProspectActionsToolbar: View {
                 ) {
                     
                     // ✅ Haptic + sound
-                    ContactDetailsHapticsController.shared.successConfirmationTap()
+                    ContactScreenHapticsController.shared.successConfirmationTap()
                     ContactScreenSoundController.shared.playSound1()
                     
                     if prospect.contactEmail.nilIfEmpty == nil {
@@ -88,7 +88,7 @@ struct ProspectActionsToolbar: View {
                     ) {
                         
                         // ✅ Haptic + sound
-                        ContactDetailsHapticsController.shared.successConfirmationTap()
+                        ContactScreenHapticsController.shared.successConfirmationTap()
                         ContactScreenSoundController.shared.playSound1()
                         
                         showCreateSaleSheet = true

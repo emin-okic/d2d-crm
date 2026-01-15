@@ -20,7 +20,7 @@ struct DeleteContactButton: View {
             if isDeleting {
                 if selectedCount == 0 {
                     
-                    ContactDetailsHapticsController.shared.lightTap()
+                    ContactScreenHapticsController.shared.lightTap()
                     ContactScreenSoundController.shared.playSound1()
                     
                     withAnimation {
@@ -29,14 +29,14 @@ struct DeleteContactButton: View {
                     }
                 } else {
                     
-                    ContactDetailsHapticsController.shared.lightTap()
+                    ContactScreenHapticsController.shared.lightTap()
                     ContactScreenSoundController.shared.playSound1()
                     
                     onDeleteConfirmed()
                 }
             } else {
                 
-                ContactDetailsHapticsController.shared.lightTap()
+                ContactScreenHapticsController.shared.lightTap()
                 ContactScreenSoundController.shared.playSound1()
                 
                 withAnimation {

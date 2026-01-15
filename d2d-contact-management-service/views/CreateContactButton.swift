@@ -15,7 +15,7 @@ struct CreateContactButton: View {
         Button {
             
             // Haptics + sound
-            ContactDetailsHapticsController.shared.lightTap()
+            ContactScreenHapticsController.shared.lightTap()
             ContactScreenSoundController.shared.playSound1()
             
             action()

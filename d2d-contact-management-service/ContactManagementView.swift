@@ -87,14 +87,14 @@ struct ContactManagementView: View {
                         
                         if emailGate.isUnlocked {
                             
-                            ContactDetailsHapticsController.shared.successConfirmationTap()
+                            ContactScreenHapticsController.shared.successConfirmationTap()
                             ContactScreenSoundController.shared.playSound1()
                             
                             performExport()
                             
                         } else {
                             
-                            ContactDetailsHapticsController.shared.successConfirmationTap()
+                            ContactScreenHapticsController.shared.successConfirmationTap()
                             ContactScreenSoundController.shared.playSound1()
                             
                             showEmailGate = true
@@ -166,7 +166,7 @@ struct ContactManagementView: View {
 
                 Button("Delete", role: .destructive) {
                     
-                    ContactDetailsHapticsController.shared.mediumTap()
+                    ContactScreenHapticsController.shared.mediumTap()
                     ContactScreenSoundController.shared.playSound1()
                     
                     deleteSelectedContacts()
@@ -175,7 +175,7 @@ struct ContactManagementView: View {
 
                 Button("Cancel", role: .cancel) {
                     
-                    ContactDetailsHapticsController.shared.mediumTap()
+                    ContactScreenHapticsController.shared.mediumTap()
                     ContactScreenSoundController.shared.playSound1()
                     
                 }
@@ -237,7 +237,7 @@ struct ContactManagementView: View {
         
         withAnimation {
             
-            ContactDetailsHapticsController.shared.successConfirmationTap()
+            ContactScreenHapticsController.shared.successConfirmationTap()
             ContactScreenSoundController.shared.playSound1()
 
             if selectedList == "Prospects" {

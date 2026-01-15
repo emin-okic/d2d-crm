@@ -86,7 +86,7 @@ struct CustomerDetailsView: View {
                         ) {
                             
                             // ✅ Play haptic + sound when opening knocking history
-                            ContactDetailsHapticsController.shared.lightTap()
+                            ContactScreenHapticsController.shared.lightTap()
                             ContactScreenSoundController.shared.playSound1()
                             
                             showAppointmentsSheet = true
@@ -101,7 +101,7 @@ struct CustomerDetailsView: View {
                         ) {
                             
                             // ✅ Play haptic + sound when opening knocking history
-                            ContactDetailsHapticsController.shared.lightTap()
+                            ContactScreenHapticsController.shared.lightTap()
                             ContactScreenSoundController.shared.playSound1()
                             
                             showKnocksSheet = true
@@ -181,7 +181,7 @@ struct CustomerDetailsView: View {
                 Button {
                     
                     // ✅ Play haptic + sound when closing the details screen
-                    ContactDetailsHapticsController.shared.successConfirmationTap()
+                    ContactScreenHapticsController.shared.successConfirmationTap()
                     ContactScreenSoundController.shared.playSound1()
                     
                     // Then dismiss the screen
@@ -243,7 +243,7 @@ struct CustomerDetailsView: View {
             Button("Yes") {
                 
                 // ⚡ Haptic + Sound when confirming export
-                ContactDetailsHapticsController.shared.successConfirmationTap()
+                ContactScreenHapticsController.shared.successConfirmationTap()
                 ContactScreenSoundController.shared.playSound1()
                 
                 exportToContacts()
@@ -251,7 +251,7 @@ struct CustomerDetailsView: View {
             Button("Cancel", role: .cancel) {
                 
                 // ⚡ Haptic + Sound when confirming export
-                ContactDetailsHapticsController.shared.successConfirmationTap()
+                ContactScreenHapticsController.shared.successConfirmationTap()
                 ContactScreenSoundController.shared.playSound1()
                 
             }
@@ -262,7 +262,7 @@ struct CustomerDetailsView: View {
             Button("Revert Changes", role: .destructive) {
                 
                 // ⚡ Haptic + Sound when confirming export
-                ContactDetailsHapticsController.shared.successConfirmationTap()
+                ContactScreenHapticsController.shared.successConfirmationTap()
                 ContactScreenSoundController.shared.playSound1()
                 
                 revertEdits()
@@ -270,7 +270,7 @@ struct CustomerDetailsView: View {
             Button("Cancel", role: .cancel) {
                 
                 // ⚡ Haptic + Sound when confirming export
-                ContactDetailsHapticsController.shared.successConfirmationTap()
+                ContactScreenHapticsController.shared.successConfirmationTap()
                 ContactScreenSoundController.shared.playSound1()
                 
             }

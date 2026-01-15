@@ -122,7 +122,7 @@ struct ImportOverlayView: View {
                 Button("Cancel") {
                     
                     // Haptics + sound on option tap
-                    ContactDetailsHapticsController.shared.lightTap()
+                    ContactScreenHapticsController.shared.lightTap()
                     ContactScreenSoundController.shared.playSound1()
                     
                     showingImportFromContacts = false
@@ -232,7 +232,7 @@ struct ImportOverlayView: View {
     ) -> some View {
         Button {
             // Haptics + sound on option tap
-            ContactDetailsHapticsController.shared.lightTap()
+            ContactScreenHapticsController.shared.lightTap()
             ContactScreenSoundController.shared.playSound1()
             
             action()

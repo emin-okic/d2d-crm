@@ -23,7 +23,7 @@ struct ToggleChipsView: View {
         Button {
             
             // ✅ Haptics & Sound when selecting a pill
-            ContactDetailsHapticsController.shared.lightTap()
+            ContactScreenHapticsController.shared.lightTap()
             ContactScreenSoundController.shared.playSound1()
             
             selectedList = title

@@ -93,7 +93,7 @@ struct ExportEmailGateView: View {
             showError = true
             
             // Error feedback
-            ContactDetailsHapticsController.shared.lightTap()
+            ContactScreenHapticsController.shared.lightTap()
             ContactScreenSoundController.shared.playSound1()
             
             // Optional: store error.rawValue to display a specific message
@@ -112,7 +112,7 @@ struct ExportEmailGateView: View {
         )
         
         // Success feedback
-        ContactDetailsHapticsController.shared.successConfirmationTap()
+        ContactScreenHapticsController.shared.successConfirmationTap()
         ContactScreenSoundController.shared.playSound1()
 
         onSuccess()
