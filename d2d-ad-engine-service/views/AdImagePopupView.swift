@@ -42,7 +42,13 @@ public struct AdImagePopupView: View {
             }
 
             // ✅ White X with depth (inner stroke + shadow) for light/white backgrounds
-            Button(action: onDismiss) {
+            Button(action: {
+                // Haptics + sound on close
+                AdManagerHapticsController.shared.lightTap()
+                AdManagerSoundController.shared.playSubtleSuccessSound()
+                
+                onDismiss()
+            }) {
                 ZStack {
                     Circle()
                         .fill(Color.white)
@@ -58,6 +64,7 @@ public struct AdImagePopupView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(Text("Close"))
+            
         }
         .onAppear { AdEngine.shared.notify(.impression, ad: ad) }
         .frame(maxWidth: 360)
