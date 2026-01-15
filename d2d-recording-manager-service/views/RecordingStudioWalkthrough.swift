@@ -64,8 +64,15 @@ struct RecordingStudioWalkthrough: View {
                         .padding(.top, 4)
                         .frame(maxWidth: 520, alignment: .center)
 
-                        // CTA
-                        Button(action: onDone) {
+                        // CTA with haptics + sound
+                        Button {
+                            // ✅ Haptic + Sound feedback
+                            FollowUpScreenHapticsController.shared.lightTap()
+                            FollowUpScreenSoundController.shared.playSound1()
+                            
+                            // Original action
+                            onDone()
+                        } label: {
                             Text("Got it")
                                 .fontWeight(.semibold)
                                 .frame(maxWidth: .infinity)
@@ -75,6 +82,7 @@ struct RecordingStudioWalkthrough: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                                 .shadow(color: brandBlue.opacity(0.25), radius: 8, y: 4)
                         }
+                        .padding(.top, 6)
                         .padding(.top, 6)
                     }
                     .padding(.horizontal, 20)
