@@ -204,16 +204,19 @@ struct ProspectDetailsView: View {
             // Save Button (only appears if name/address changed)
             if hasUnsavedEdits {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
-                    Button("Revert") {
-                        
+                    
+                    // Revert button
+                    Button {
                         // ⚡ Haptics & Sound
                         KnockingFormHapticsController.shared.lightTap()
                         KnockingFormSoundController.shared.playConfirmationSound()
                         
                         showRevertConfirmation = true
-                        
+                    } label: {
+                        Image(systemName: "arrow.uturn.backward") // ⬅ curved backward arrow
+                            .foregroundColor(.red)
+                            .imageScale(.large)
                     }
-                    .foregroundColor(.red)
 
                     Button("Save") {
                         

@@ -212,15 +212,19 @@ struct CustomerDetailsView: View {
             // Revert + Save (only when editing)
             if hasUnsavedEdits {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
-                    Button("Revert") {
-                        
-                        // ⚡ Haptic + Sound when tapping export
+                    
+                    // Revert button
+                    Button {
+                        // ⚡ Haptics & Sound
                         KnockingFormHapticsController.shared.lightTap()
                         KnockingFormSoundController.shared.playConfirmationSound()
                         
                         showRevertConfirmation = true
+                    } label: {
+                        Image(systemName: "arrow.uturn.backward") // ⬅ curved backward arrow
+                            .foregroundColor(.red)
+                            .imageScale(.large)
                     }
-                    .foregroundColor(.red)
 
                     Button("Save") {
                         
