@@ -8,7 +8,7 @@ import SwiftUI
 import SwiftData
 import UIKit
 
-struct NotesThreadFullView: View {
+struct ProspectNotesScreen: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Bindable var prospect: Prospect

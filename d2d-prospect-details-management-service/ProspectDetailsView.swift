@@ -147,7 +147,7 @@ struct ProspectDetailsView: View {
             }
 
             .sheet(isPresented: $controller.showNotesSheet) {
-                NotesThreadFullView(prospect: prospect)
+                ProspectNotesScreen(prospect: prospect)
             }
         }
         // .navigationTitle("Edit Contact")
