@@ -27,17 +27,17 @@ final class ContactDetailsHapticsController {
     }
 
     /// Subtle feedback when user taps the map (feels responsive, not noisy)
-    func mapTap() {
+    func lightTap() {
         lightImpact.impactOccurred()
     }
 
     /// Rewarding confirmation when a property is added
-    func propertyAdded() {
+    func successConfirmationTap() {
         successFeedback.notificationOccurred(.success)
     }
 
     /// Optional: stronger feedback for bulk adds or milestones
-    func bulkAddConfirmed() {
+    func mediumTap() {
         mediumImpact.impactOccurred()
     }
 }

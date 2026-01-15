@@ -16,12 +16,8 @@ final class ContactScreenSoundController {
     private init() {}
 
     /// Plays when the Add Property sheet appears
-    func playPropertyOpen() {
+    func playSound1() {
         AudioServicesPlaySystemSound(1104) // subtle UI tick
     }
 
-    /// Plays when a property is successfully added
-    func playPropertyAdded() {
-        AudioServicesPlaySystemSound(1104) // rewarding success tap
-    }
 }

@@ -50,8 +50,8 @@ struct ProspectActionsToolbar: View {
                 ) {
                     
                     // ✅ Haptic + sound
-                    ContactDetailsHapticsController.shared.propertyAdded()
-                    ContactScreenSoundController.shared.playPropertyAdded()
+                    ContactDetailsHapticsController.shared.successConfirmationTap()
+                    ContactScreenSoundController.shared.playSound1()
                     
                     if prospect.contactPhone.isEmpty {
                         // Set the original phone number to nil for note taking purposes
@@ -70,8 +70,8 @@ struct ProspectActionsToolbar: View {
                 ) {
                     
                     // ✅ Haptic + sound
-                    ContactDetailsHapticsController.shared.propertyAdded()
-                    ContactScreenSoundController.shared.playPropertyAdded()
+                    ContactDetailsHapticsController.shared.successConfirmationTap()
+                    ContactScreenSoundController.shared.playSound1()
                     
                     if prospect.contactEmail.nilIfEmpty == nil {
                         showAddEmailSheet = true
@@ -88,8 +88,8 @@ struct ProspectActionsToolbar: View {
                     ) {
                         
                         // ✅ Haptic + sound
-                        ContactDetailsHapticsController.shared.propertyAdded()
-                        ContactScreenSoundController.shared.playPropertyAdded()
+                        ContactDetailsHapticsController.shared.successConfirmationTap()
+                        ContactScreenSoundController.shared.playSound1()
                         
                         showCreateSaleSheet = true
                     }

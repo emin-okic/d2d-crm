@@ -88,8 +88,8 @@ struct ProspectsSectionView: View {
                             } else {
                                 
                                 // ✅ Haptics & Sound when opening a prospect/customer
-                                ContactDetailsHapticsController.shared.mapTap()
-                                ContactScreenSoundController.shared.playPropertyOpen()
+                                ContactDetailsHapticsController.shared.lightTap()
+                                ContactScreenSoundController.shared.playSound1()
                                 
                                 selectedProspect = p
                             }
@@ -115,8 +115,8 @@ struct ProspectsSectionView: View {
                                 Button(role: .destructive) {
                                     
                                     // ✅ Haptics & Sound when initiating delete
-                                    ContactDetailsHapticsController.shared.mapTap()
-                                    ContactScreenSoundController.shared.playPropertyOpen()
+                                    ContactDetailsHapticsController.shared.lightTap()
+                                    ContactScreenSoundController.shared.playSound1()
                                     
                                     prospectToDelete = p
                                     showDeleteConfirmation = true
@@ -154,16 +154,16 @@ struct ProspectsSectionView: View {
             Button("Delete", role: .destructive) {
                 
                 // ✅ Haptics & Sound on confirmation
-                ContactDetailsHapticsController.shared.bulkAddConfirmed()
-                ContactScreenSoundController.shared.playPropertyAdded()
+                ContactDetailsHapticsController.shared.mediumTap()
+                ContactScreenSoundController.shared.playSound1()
                 
                 deleteProspect(prospect)
             }
             Button("Cancel", role: .cancel) {
                 
                 // ✅ Haptics & Sound on confirmation
-                ContactDetailsHapticsController.shared.bulkAddConfirmed()
-                ContactScreenSoundController.shared.playPropertyAdded()
+                ContactDetailsHapticsController.shared.mediumTap()
+                ContactScreenSoundController.shared.playSound1()
                 
             }
         } message: { prospect in

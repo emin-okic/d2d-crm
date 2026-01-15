@@ -81,8 +81,8 @@ struct CustomerAppointmentsView: View {
                                 } else {
                                     ForEach(filteredAppointments) { appt in
                                         Button {
-                                            ContactDetailsHapticsController.shared.mapTap()
-                                            ContactScreenSoundController.shared.playPropertyOpen()
+                                            ContactDetailsHapticsController.shared.lightTap()
+                                            ContactScreenSoundController.shared.playSound1()
                                             controller.selectedAppointment = appt
                                         } label: {
                                             appointmentRow(appt)
@@ -105,8 +105,8 @@ struct CustomerAppointmentsView: View {
 
                 // Floating Add Button
                 Button {
-                    ContactDetailsHapticsController.shared.mapTap()
-                    ContactScreenSoundController.shared.playPropertyOpen()
+                    ContactDetailsHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
                     controller.showAppointmentSheet = true
                 } label: {
                     Image(systemName: "calendar.badge.plus")
