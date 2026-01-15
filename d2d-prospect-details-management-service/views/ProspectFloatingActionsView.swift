@@ -25,8 +25,8 @@ struct ProspectFloatingActionsView: View {
                         Button(action: {
                             
                             // ✅ Haptic + sound feedback
-                            ContactDetailsHapticsController.shared.propertyAdded()
-                            ContactScreenSoundController.shared.playPropertyAdded()
+                            ContactScreenHapticsController.shared.successConfirmationTap()
+                            ContactScreenSoundController.shared.playSound1()
                             
                             // Original action
                             onNotesTapped()
@@ -43,8 +43,8 @@ struct ProspectFloatingActionsView: View {
                         Button(action: {
                             
                             // ✅ Haptic + sound feedback
-                            ContactDetailsHapticsController.shared.propertyAdded()
-                            ContactScreenSoundController.shared.playPropertyAdded()
+                            ContactScreenHapticsController.shared.successConfirmationTap()
+                            ContactScreenSoundController.shared.playSound1()
                             
                             // Original action
                             onDeleteTapped()

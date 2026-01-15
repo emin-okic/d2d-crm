@@ -55,6 +55,11 @@ struct ExportCSVButton: View {
     // MARK: - Interaction
 
     private func handleTap() {
+        
+        // Tap feedback always
+        ContactScreenHapticsController.shared.lightTap()
+        ContactScreenSoundController.shared.playSound1()
+        
         withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
             isPressed = true
         }

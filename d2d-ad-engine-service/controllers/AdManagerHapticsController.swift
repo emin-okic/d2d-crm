@@ -1,16 +1,16 @@
 //
-//  ProspectDetailsHapticsController.swift
+//  AdManagerHapticsController.swift
 //  d2d-studio
 //
-//  Created by Emin Okic on 1/8/26.
+//  Created by Emin Okic on 1/15/26.
 //
 
 import UIKit
 
 @MainActor
-final class ContactDetailsHapticsController {
+final class AdManagerHapticsController {
 
-    static let shared = ContactDetailsHapticsController()
+    static let shared = AdManagerHapticsController()
 
     private let lightImpact = UIImpactFeedbackGenerator(style: .light)
     private let mediumImpact = UIImpactFeedbackGenerator(style: .medium)
@@ -27,17 +27,17 @@ final class ContactDetailsHapticsController {
     }
 
     /// Subtle feedback when user taps the map (feels responsive, not noisy)
-    func mapTap() {
+    func lightTap() {
         lightImpact.impactOccurred()
     }
 
     /// Rewarding confirmation when a property is added
-    func propertyAdded() {
+    func successConfirmationFeedback() {
         successFeedback.notificationOccurred(.success)
     }
 
     /// Optional: stronger feedback for bulk adds or milestones
-    func bulkAddConfirmed() {
+    func mediumTap() {
         mediumImpact.impactOccurred()
     }
 }

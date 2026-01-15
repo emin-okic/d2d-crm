@@ -19,14 +19,26 @@ struct DeleteContactButton: View {
         Button {
             if isDeleting {
                 if selectedCount == 0 {
+                    
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    
                     withAnimation {
                         isDeleting = false
                         trashPulse = false
                     }
                 } else {
+                    
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    
                     onDeleteConfirmed()
                 }
             } else {
+                
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
+                
                 withAnimation {
                     isDeleting = true
                     trashPulse = true

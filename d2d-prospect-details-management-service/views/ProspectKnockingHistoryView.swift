@@ -93,17 +93,17 @@ struct ProspectKnockingHistoryView: View {
         ) {
             Button("Delete", role: .destructive) {
                 
-                ContactDetailsHapticsController.shared.bulkAddConfirmed()
-                ContactScreenSoundController.shared.playPropertyAdded()
+                ContactScreenHapticsController.shared.mediumTap()
+                ContactScreenSoundController.shared.playSound1()
                 
                 deleteSelectedKnocks()
                 
             }
             Button("Cancel", role: .cancel) {
                 
-                ContactDetailsHapticsController.shared.mapTap()
+                ContactScreenHapticsController.shared.lightTap()
                 
-                ContactScreenSoundController.shared.playPropertyOpen()
+                ContactScreenSoundController.shared.playSound1()
                 
             }
         } message: {
@@ -136,15 +136,15 @@ struct ProspectKnockingHistoryView: View {
             
             selectedKnocks.remove(knock)
             
-            ContactDetailsHapticsController.shared.mapTap()
-            ContactScreenSoundController.shared.playPropertyOpen()
+            ContactScreenHapticsController.shared.lightTap()
+            ContactScreenSoundController.shared.playSound1()
             
         } else {
             
             selectedKnocks.insert(knock)
             
-            ContactDetailsHapticsController.shared.mapTap()
-            ContactScreenSoundController.shared.playPropertyOpen()
+            ContactScreenHapticsController.shared.lightTap()
+            ContactScreenSoundController.shared.playSound1()
             
         }
     }
@@ -155,8 +155,8 @@ struct ProspectKnockingHistoryView: View {
             
             if selectedKnocks.isEmpty {
                 
-                ContactDetailsHapticsController.shared.mapTap()
-                ContactScreenSoundController.shared.playPropertyOpen()
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
                 
                 // exit delete mode
                 withAnimation {
@@ -165,8 +165,8 @@ struct ProspectKnockingHistoryView: View {
                 
             } else {
                 
-                ContactDetailsHapticsController.shared.bulkAddConfirmed()
-                ContactScreenSoundController.shared.playPropertyOpen()
+                ContactScreenHapticsController.shared.mediumTap()
+                ContactScreenSoundController.shared.playSound1()
                 
                 showDeleteConfirm = true
                 
@@ -174,8 +174,8 @@ struct ProspectKnockingHistoryView: View {
             
         } else {
             
-            ContactDetailsHapticsController.shared.mapTap()
-            ContactScreenSoundController.shared.playPropertyOpen()
+            ContactScreenHapticsController.shared.lightTap()
+            ContactScreenSoundController.shared.playSound1()
             
             withAnimation {
                 isDeleting = true
@@ -196,8 +196,8 @@ struct ProspectKnockingHistoryView: View {
 
         try? modelContext.save()
         
-        ContactDetailsHapticsController.shared.propertyAdded()
-        ContactScreenSoundController.shared.playPropertyAdded()
+        ContactScreenHapticsController.shared.successConfirmationTap()
+        ContactScreenSoundController.shared.playSound1()
 
         selectedKnocks.removeAll()
         

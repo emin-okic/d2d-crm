@@ -84,10 +84,21 @@ struct ContactManagementView: View {
             .overlay(
                 GeometryReader { geo in
                     ExportCSVButton(isUnlocked: emailGate.isUnlocked) {
+                        
                         if emailGate.isUnlocked {
+                            
+                            ContactScreenHapticsController.shared.successConfirmationTap()
+                            ContactScreenSoundController.shared.playSound1()
+                            
                             performExport()
+                            
                         } else {
+                            
+                            ContactScreenHapticsController.shared.successConfirmationTap()
+                            ContactScreenSoundController.shared.playSound1()
+                            
                             showEmailGate = true
+                            
                         }
                     }
                     .position(
@@ -154,10 +165,20 @@ struct ContactManagementView: View {
                    isPresented: $showDeleteContactsConfirm) {
 
                 Button("Delete", role: .destructive) {
+                    
+                    ContactScreenHapticsController.shared.mediumTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    
                     deleteSelectedContacts()
+                    
                 }
 
-                Button("Cancel", role: .cancel) {}
+                Button("Cancel", role: .cancel) {
+                    
+                    ContactScreenHapticsController.shared.mediumTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    
+                }
             }
             .onChange(of: selectedList) { newValue in
                 if newValue == "Prospects" {
@@ -213,7 +234,11 @@ struct ContactManagementView: View {
     }
     
     private func deleteSelectedContacts() {
+        
         withAnimation {
+            
+            ContactScreenHapticsController.shared.successConfirmationTap()
+            ContactScreenSoundController.shared.playSound1()
 
             if selectedList == "Prospects" {
                 for p in selectedProspects {

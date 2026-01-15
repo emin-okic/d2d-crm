@@ -30,8 +30,8 @@ struct CustomerActionsToolbar: View {
                 ContactDetailsActionButton(icon: "phone.fill", title: "Call", color: .blue) {
                     
                     // ✅ Haptic + sound
-                    ContactDetailsHapticsController.shared.propertyAdded()
-                    ContactScreenSoundController.shared.playPropertyAdded()
+                    ContactScreenHapticsController.shared.successConfirmationTap()
+                    ContactScreenSoundController.shared.playSound1()
                     
                     controller.callTapped()
                 }
@@ -39,8 +39,8 @@ struct CustomerActionsToolbar: View {
                 ContactDetailsActionButton(icon: "envelope.fill", title: "Email", color: .purple) {
                     
                     // ✅ Haptic + sound
-                    ContactDetailsHapticsController.shared.propertyAdded()
-                    ContactScreenSoundController.shared.playPropertyAdded()
+                    ContactScreenHapticsController.shared.successConfirmationTap()
+                    ContactScreenSoundController.shared.playSound1()
                     
                     controller.emailTapped()
                 }
@@ -48,8 +48,8 @@ struct CustomerActionsToolbar: View {
                 ContactDetailsActionButton(icon: "person.crop.circle.badge.xmark", title: "Sale Lost", color: .red) {
                     
                     // ✅ Haptic + sound
-                    ContactDetailsHapticsController.shared.propertyAdded()
-                    ContactScreenSoundController.shared.playPropertyAdded()
+                    ContactScreenHapticsController.shared.successConfirmationTap()
+                    ContactScreenSoundController.shared.playSound1()
                     
                     controller.confirmCustomerLost()
                 }

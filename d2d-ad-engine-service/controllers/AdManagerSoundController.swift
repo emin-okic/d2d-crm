@@ -1,22 +1,22 @@
 //
-//  ContactScreenSoundController.swift
+//  AdManagerSoundController.swift
 //  d2d-studio
 //
-//  Created by Emin Okic on 1/8/26.
+//  Created by Emin Okic on 1/15/26.
 //
 
 import AudioToolbox
 import UIKit
 
 @MainActor
-final class ContactScreenSoundController {
+final class AdManagerSoundController {
 
-    static let shared = ContactScreenSoundController()
+    static let shared = AdManagerSoundController()
 
     private init() {}
 
     /// Plays when the Add Property sheet appears
-    func playSound1() {
+    func playSubtleSuccessSound() {
         AudioServicesPlaySystemSound(1104) // subtle UI tick
     }
 

@@ -77,8 +77,8 @@ struct ProspectDetailsView: View {
                         ) {
                             
                             // ✅ Play haptic + sound when opening knocking history
-                            ContactDetailsHapticsController.shared.mapTap()
-                            ContactScreenSoundController.shared.playPropertyOpen()
+                            ContactScreenHapticsController.shared.lightTap()
+                            ContactScreenSoundController.shared.playSound1()
                             
                             showAppointmentsSheet = true
                             
@@ -92,8 +92,8 @@ struct ProspectDetailsView: View {
                         ) {
                             
                             // ✅ Play haptic + sound when opening knocking history
-                            ContactDetailsHapticsController.shared.mapTap()
-                            ContactScreenSoundController.shared.playPropertyOpen()
+                            ContactScreenHapticsController.shared.lightTap()
+                            ContactScreenSoundController.shared.playSound1()
                             
                             showKnocksSheet = true
                         }
@@ -157,8 +157,8 @@ struct ProspectDetailsView: View {
                 Button {
                     
                     // ✅ Play haptic + sound when closing the details screen
-                    ContactDetailsHapticsController.shared.propertyAdded()
-                    ContactScreenSoundController.shared.playPropertyAdded()
+                    ContactScreenHapticsController.shared.successConfirmationTap()
+                    ContactScreenSoundController.shared.playSound1()
                     
                     // Then dismiss the screen
                     presentationMode.wrappedValue.dismiss()
@@ -237,8 +237,8 @@ struct ProspectDetailsView: View {
             Button("Yes") {
                 
                 // ⚡ Haptics & Sound when confirming export
-                ContactDetailsHapticsController.shared.propertyAdded()
-                ContactScreenSoundController.shared.playPropertyAdded()
+                ContactScreenHapticsController.shared.successConfirmationTap()
+                ContactScreenSoundController.shared.playSound1()
                 
                 exportToContacts()
                 
@@ -246,8 +246,8 @@ struct ProspectDetailsView: View {
             Button("Cancel", role: .cancel) {
                 
                 // ⚡ Optional subtle feedback on cancel
-                ContactDetailsHapticsController.shared.mapTap()
-                ContactScreenSoundController.shared.playPropertyOpen()
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
                 
             }
             
@@ -258,16 +258,16 @@ struct ProspectDetailsView: View {
             Button("Revert Changes", role: .destructive) {
                 
                 // ⚡ Subtle feedback on cancel
-                ContactDetailsHapticsController.shared.mapTap()
-                ContactScreenSoundController.shared.playPropertyOpen()
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
                 
                 revertEdits()
             }
             Button("Cancel", role: .cancel) {
                 
                 // ⚡ Subtle feedback on cancel
-                ContactDetailsHapticsController.shared.mapTap()
-                ContactScreenSoundController.shared.playPropertyOpen()
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
                 
             }
         } message: {

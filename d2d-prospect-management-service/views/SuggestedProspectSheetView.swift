@@ -38,8 +38,8 @@ struct SuggestedProspectSheetView: View {
                 
                 Button(action: {
                     // ✅ Haptics & Sound for adding a suggested prospect
-                    ContactDetailsHapticsController.shared.propertyAdded()
-                    ContactScreenSoundController.shared.playPropertyAdded()
+                    ContactScreenHapticsController.shared.successConfirmationTap()
+                    ContactScreenSoundController.shared.playSound1()
                     
                     onAdd()
                 }) {
@@ -57,8 +57,8 @@ struct SuggestedProspectSheetView: View {
 
                 Button(action: {
                     // ✅ Subtle haptics & sound for dismiss
-                    ContactDetailsHapticsController.shared.mapTap()
-                    ContactScreenSoundController.shared.playPropertyOpen()
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
                     
                     onDismiss()
                 }) {

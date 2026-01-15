@@ -89,7 +89,13 @@ struct ExportEmailGateView: View {
         let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
         
         if let error = EmailValidator.validate(trimmed) {
+            
             showError = true
+            
+            // Error feedback
+            ContactScreenHapticsController.shared.lightTap()
+            ContactScreenSoundController.shared.playSound1()
+            
             // Optional: store error.rawValue to display a specific message
             return
         }
@@ -104,6 +110,10 @@ struct ExportEmailGateView: View {
                 source: "csv_export_gate"
             )
         )
+        
+        // Success feedback
+        ContactScreenHapticsController.shared.successConfirmationTap()
+        ContactScreenSoundController.shared.playSound1()
 
         onSuccess()
         dismiss()

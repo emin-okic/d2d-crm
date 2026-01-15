@@ -80,8 +80,8 @@ struct CustomersSectionView: View {
                             } else {
                                 
                                 // ✅ Haptics & Sound when opening a prospect/customer
-                                ContactDetailsHapticsController.shared.mapTap()
-                                ContactScreenSoundController.shared.playPropertyOpen()
+                                ContactScreenHapticsController.shared.lightTap()
+                                ContactScreenSoundController.shared.playSound1()
                                 
                                 selectedCustomer = c
                             }
@@ -116,8 +116,8 @@ struct CustomersSectionView: View {
                                 Button(role: .destructive) {
                                     
                                     // ✅ Haptics & Sound when initiating delete
-                                    ContactDetailsHapticsController.shared.mapTap()
-                                    ContactScreenSoundController.shared.playPropertyOpen()
+                                    ContactScreenHapticsController.shared.lightTap()
+                                    ContactScreenSoundController.shared.playSound1()
                                     
                                     customerToDelete = c
                                     showDeleteConfirmation = true
@@ -151,16 +151,16 @@ struct CustomersSectionView: View {
             Button("Delete", role: .destructive) {
                 
                 // ✅ Haptics & Sound when initiating delete
-                ContactDetailsHapticsController.shared.mapTap()
-                ContactScreenSoundController.shared.playPropertyOpen()
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
                 
                 deleteCustomer(customer)
             }
             Button("Cancel", role: .cancel) {
                 
                 // ✅ Haptics & Sound when initiating delete
-                ContactDetailsHapticsController.shared.mapTap()
-                ContactScreenSoundController.shared.playPropertyOpen()
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
                 
             }
         } message: { customer in
@@ -172,10 +172,18 @@ struct CustomersSectionView: View {
     }
     
     private func toggleSelection(_ customer: Customer) {
+        
+        ContactScreenHapticsController.shared.lightTap()
+        ContactScreenSoundController.shared.playSound1()
+        
         if selectedCustomers.contains(customer) {
+            
             selectedCustomers.remove(customer)
+            
         } else {
+            
             selectedCustomers.insert(customer)
+            
         }
     }
     

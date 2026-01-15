@@ -120,7 +120,13 @@ struct ImportOverlayView: View {
                 }
                 
                 Button("Cancel") {
+                    
+                    // Haptics + sound on option tap
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    
                     showingImportFromContacts = false
+                    
                 }
                 .foregroundStyle(.secondary)
 
@@ -224,7 +230,13 @@ struct ImportOverlayView: View {
         systemImage: String,
         action: @escaping () -> Void
     ) -> some View {
-        Button(action: action) {
+        Button {
+            // Haptics + sound on option tap
+            ContactScreenHapticsController.shared.lightTap()
+            ContactScreenSoundController.shared.playSound1()
+            
+            action()
+        } label: {
             HStack(spacing: 14) {
                 Image(systemName: systemImage)
                     .font(.title2)
@@ -246,4 +258,5 @@ struct ImportOverlayView: View {
         }
         .buttonStyle(.plain)
     }
+    
 }
