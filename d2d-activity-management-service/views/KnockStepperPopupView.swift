@@ -376,39 +376,54 @@ struct KnockStepperPopupView: View {
     }
     
     private var tripStep: some View {
-      VStack(alignment: .leading, spacing: 6) {
-        Text("Log Your Trip (optional)").font(.footnote).foregroundColor(.secondary)
-        Text("**Next** saves this trip. **Skip** won’t save it.")
-          .font(.caption2).foregroundColor(.secondary)
-
-          // Start address
-          TripAddressFieldView(
-              iconName: "circle",
-              placeholder: "Start address (optional)",
-              iconColor: .blue,
-              addressText: $startAddress,
-              focusedField: $tripFocusedField,
-              fieldType: .start,
-              searchVM: tripSearchVM
-          )
-
-          // End address (pre-filled to the tapped address)
-          TripAddressFieldView(
-              iconName: "mappin.circle.fill",
-              placeholder: "End address (defaults to this home)",
-              iconColor: .red,
-              addressText: $endAddress,
-              focusedField: $tripFocusedField,
-              fieldType: .end,
-              searchVM: tripSearchVM
-          )
-
-        HStack(spacing: 6) {
-          Image(systemName: "calendar").foregroundColor(.blue)
-          DatePicker("", selection: $tripDate, displayedComponents: [.date, .hourAndMinute])
-            .labelsHidden()
+        VStack(alignment: .leading, spacing: 6) {
+            
+            // Header
+            Text("Log Your Trip (optional)")
+                .font(.footnote.weight(.semibold))
+                .foregroundColor(.secondary)
+            
+            Text("Next saves this trip. Skip won’t save it.")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+            
+            Divider()
+            
+            // Start address
+            TripAddressFieldView(
+                iconName: "circle",
+                placeholder: "Start Address",
+                iconColor: .blue,
+                addressText: $startAddress,
+                focusedField: $tripFocusedField,
+                fieldType: .start,
+                searchVM: tripSearchVM
+            )
+            
+            // End address (pre-filled to the tapped address)
+            TripAddressFieldView(
+                iconName: "mappin.circle.fill",
+                placeholder: "End Address",
+                iconColor: .red,
+                addressText: $endAddress,
+                focusedField: $tripFocusedField,
+                fieldType: .end,
+                searchVM: tripSearchVM
+            )
+            
+            HStack(spacing: 6) {
+                
+                Image(systemName: "calendar").foregroundColor(.blue)
+                
+                DatePicker("Select Trip Date & Time", selection: $tripDate, displayedComponents: [.date, .hourAndMinute])
+                    .labelsHidden()
+                    .onChange(of: tripDate) { _, _ in
+                        KnockingFormHapticsController.shared.lightTap()
+                        KnockingFormSoundController.shared.playConfirmationSound()
+                        
+                    }
+            }
         }
-      }
     }
 
     private var doneStep: some View {
