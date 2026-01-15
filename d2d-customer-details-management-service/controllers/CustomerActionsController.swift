@@ -100,6 +100,12 @@ final class CustomerActionsController: ObservableObject {
 
         showAddEmailSheet = false
     }
+    
+    func logCustomerEmailNote() {
+        let content = "Composed email to \(customer.contactEmail) on \(Date().formatted(date: .abbreviated, time: .shortened))."
+        customer.notes.append(Note(content: content, date: Date()))
+        try? modelContext.save()
+    }
 
     // MARK: - Customer Lost
 
