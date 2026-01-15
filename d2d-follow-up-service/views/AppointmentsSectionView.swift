@@ -188,7 +188,14 @@ struct AppointmentsSectionView: View {
 
     @ViewBuilder
     private func toggleChip(_ title: String, isOn: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button {
+            // ✅ Play haptics + sound on tap
+            FollowUpScreenHapticsController.shared.lightTap()
+            FollowUpScreenSoundController.shared.playSound1()
+            
+            // Execute the actual filter change
+            action()
+        } label: {
             Text(title)
                 .font(.caption)
                 .fontWeight(.semibold)
@@ -208,4 +215,5 @@ struct AppointmentsSectionView: View {
         .buttonStyle(.plain)
         .animation(.easeInOut(duration: 0.15), value: isOn)
     }
+    
 }
