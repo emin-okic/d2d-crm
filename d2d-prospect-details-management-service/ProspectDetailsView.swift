@@ -144,10 +144,15 @@ struct ProspectDetailsView: View {
                 )
                 .presentationDetents([.fraction(0.25)])
                 .presentationDragIndicator(.visible)
+                .onAppear {
+                    // Haptic + Sound on sheet appear
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                }
             }
 
             .sheet(isPresented: $controller.showNotesSheet) {
-                NotesThreadFullView(prospect: prospect)
+                ProspectNotesScreen(prospect: prospect)
             }
         }
         // .navigationTitle("Edit Contact")

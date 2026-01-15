@@ -81,6 +81,10 @@ struct RecordingStudioPromo: View {
 
                     // Single CTA — primary, high-contrast, wide
                     Button {
+                        // ✅ Haptic + sound feedback
+                        FollowUpScreenHapticsController.shared.lightTap()
+                        FollowUpScreenSoundController.shared.playSound1()
+                        
                         openedReviewAt = Date()
                         pendingUnlockFromReview = true
                         AppStoreReviewHelper.requestReviewOrOpenStore(appId: appId)

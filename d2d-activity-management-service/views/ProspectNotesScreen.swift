@@ -8,7 +8,7 @@ import SwiftUI
 import SwiftData
 import UIKit
 
-struct NotesThreadFullView: View {
+struct ProspectNotesScreen: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Bindable var prospect: Prospect
@@ -74,7 +74,14 @@ struct NotesThreadFullView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    Button("Done") {
+                        
+                        // ✅ Haptic & Sound
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+                        
+                        dismiss()
+                    }
                 }
             }
         }
@@ -84,12 +91,20 @@ struct NotesThreadFullView: View {
     }
 
     private func submitNote() {
+        
         let trimmed = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
+        
         let note = Note(content: trimmed, prospect: prospect)
         prospect.notes.append(note)
         draft = ""
+        
         try? context.save()
+        
+        // ✅ Haptic & Sound
+        ContactScreenHapticsController.shared.successConfirmationTap()
+        ContactScreenSoundController.shared.playSound1()
+        
     }
 
     private func delete(_ note: Note) {

@@ -136,16 +136,35 @@ struct CustomerDetailsView: View {
             
             CustomerFloatingActionsView(
                 onDeleteTapped: {
+                    
+                    // Haptic + Sound for Trash button
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    
                     showDeleteConfirmation = true
+                    
                 },
                 onNotesTapped: {
+                    
+                    // Haptic + Sound for Trash button
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    
                     showNotesSheet = true
+                    
                 }
             )
             
             .ignoresSafeArea(.keyboard, edges: .bottom)
             .sheet(isPresented: $showNotesSheet) {
+                
                 CustomerNotesThreadFullView(customer: customer)
+                    .onAppear {
+                        // Haptic + Sound on sheet appear
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+                    }
+                
             }
             .sheet(isPresented: $showAppointmentsSheet) {
                 NavigationStack {
@@ -165,12 +184,18 @@ struct CustomerDetailsView: View {
                 }
             }
             .sheet(isPresented: $showDeleteConfirmation) {
+                
                 DeleteCustomerSheet(
                     customerName: customer.fullName,
                     onDelete: deleteCustomer
                 )
                 .presentationDetents([.fraction(0.35)])
                 .presentationDragIndicator(.visible)
+                .onAppear {
+                    // Haptic + Sound on sheet appear
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                }
             }
             
         }

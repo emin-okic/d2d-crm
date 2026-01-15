@@ -80,6 +80,8 @@ struct CustomerActionsToolbar: View {
                             isPresented: $controller.showEmailConfirmation,
                             titleVisibility: .visible) {
             Button("Compose Email") {
+                controller.logCustomerEmailNote()   // ✅ log it
+
                 if let url = URL(string: "mailto:\(controller.customer.contactEmail)") {
                     UIApplication.shared.open(url)
                 }

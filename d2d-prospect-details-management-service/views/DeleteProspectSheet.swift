@@ -23,12 +23,22 @@ struct DeleteProspectSheet: View {
             
             HStack(spacing: 16) {
                 Button("Cancel") {
+                    
+                    // Haptic + Sound on sheet appear
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    
                     dismiss()
                 }
                 .buttonStyle(.bordered)
                 .tint(.gray)
                 
                 Button("Delete") {
+                    
+                    // Haptic + Sound on sheet appear
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    
                     onDelete()
                     dismiss()
                 }

@@ -10,34 +10,45 @@ import SwiftUI
 struct TripManagerScorecardView: View {
     let title: String
     let count: Int
+    let action: () -> Void  // ✅ Add action closure
 
     var body: some View {
-        HStack(spacing: 12) {
+        Button {
+            // ✅ Play haptics + sound when tapped
+            FollowUpScreenHapticsController.shared.lightTap()
+            FollowUpScreenSoundController.shared.playSound1()
             
-            Image(systemName: "map.fill")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.orange)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
+            // Execute the provided action
+            action()
+        } label: {
+            HStack(spacing: 12) {
                 
-                Text("\(count)")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
-            }
+                Image(systemName: "map.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.orange)
 
-            Spacer()
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                    
+                    Text("\(count)")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, maxHeight: 72)
+            .background(.ultraThinMaterial)
+            .cornerRadius(16)
+            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .frame(maxWidth: .infinity, maxHeight: 72)
-        .background(.ultraThinMaterial)
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+        .buttonStyle(.plain) // Keep original styling
     }
 }
