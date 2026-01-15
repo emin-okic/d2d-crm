@@ -69,12 +69,19 @@ struct ProspectCreateStepperView: View {
 
             Spacer()
 
-            Button(action: onCancel) {
+            Button(action: {
+                
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
+                
+                onCancel()
+            }) {
                 Image(systemName: "xmark")
                     .font(.system(size: 14, weight: .semibold))
                     .padding(8)
                     .background(Circle().fill(Color.secondary.opacity(0.15)))
             }
+            
         }
     }
 
@@ -188,19 +195,39 @@ struct ProspectCreateStepperView: View {
     private var footerActions: some View {
         HStack {
             if stepIndex > 0 {
-                Button("Back") { stepIndex = 0 }
+                Button("Back") {
+                    
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    
+                    stepIndex = 0
+                }
             }
 
             Spacer()
 
             if stepIndex == 0 {
-                Button("Next") { stepIndex = 1 }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!canProceedStepOne)
+                
+                Button("Next") {
+                    
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    
+                    stepIndex = 1
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!canProceedStepOne)
+                
             } else {
                 Button("Finish") {
+                    
                     guard validatePhoneNumber() else { return }
+                    
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    
                     createProspect()
+                    
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(!canProceedStepTwo)
