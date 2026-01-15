@@ -13,7 +13,13 @@ struct RecordingsScorecardView: View {
     let action: () -> Void   // ✅ Add action parameter
 
     var body: some View {
-        Button(action: action) { // ✅ Use action here
+        Button {
+            // ✅ Play haptic + sound before calling the action
+            FollowUpScreenHapticsController.shared.lightTap()
+            FollowUpScreenSoundController.shared.playSound1()
+            
+            action()
+        } label: {
             HStack(spacing: 12) {
                 
                 Image(systemName: unlocked ? "mic.fill" : "lock.fill")
