@@ -175,14 +175,26 @@ struct ProspectDetailsView: View {
 
                     // ✅ Export to Contacts
                     Button {
+                        
+                        // ⚡ Haptics & Sound
+                        KnockingFormHapticsController.shared.lightTap()
+                        KnockingFormSoundController.shared.playConfirmationSound()
+                        
                         showExportPrompt = true
+                        
                     } label: {
                         Image(systemName: "person.crop.circle.badge.plus")
                     }
 
                     // Share
                     Button {
+                        
+                        // ⚡ Haptics & Sound
+                        KnockingFormHapticsController.shared.lightTap()
+                        KnockingFormSoundController.shared.playConfirmationSound()
+                        
                         controller.shareProspect(prospect)
+                        
                     } label: {
                         Image(systemName: "square.and.arrow.up")
                     }
@@ -193,11 +205,22 @@ struct ProspectDetailsView: View {
             if hasUnsavedEdits {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button("Revert") {
+                        
+                        // ⚡ Haptics & Sound
+                        KnockingFormHapticsController.shared.lightTap()
+                        KnockingFormSoundController.shared.playConfirmationSound()
+                        
                         showRevertConfirmation = true
+                        
                     }
                     .foregroundColor(.red)
 
                     Button("Save") {
+                        
+                        // ⚡ Haptics & Sound
+                        KnockingFormHapticsController.shared.successFeedbackConfirmation()
+                        KnockingFormSoundController.shared.playConfirmationSound()
+                        
                         withAnimation(.easeInOut(duration: 0.25)) {
                             commitEdits()
                         }
@@ -209,17 +232,41 @@ struct ProspectDetailsView: View {
         }
         .alert("Export to Contacts", isPresented: $showExportPrompt) {
             Button("Yes") {
+                
+                // ⚡ Haptics & Sound when confirming export
+                ContactDetailsHapticsController.shared.propertyAdded()
+                ContactScreenSoundController.shared.playPropertyAdded()
+                
                 exportToContacts()
+                
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel", role: .cancel) {
+                
+                // ⚡ Optional subtle feedback on cancel
+                ContactDetailsHapticsController.shared.mapTap()
+                ContactScreenSoundController.shared.playPropertyOpen()
+                
+            }
+            
         } message: {
             Text("Would you like to save this contact to your iOS Contacts app?")
         }
         .alert("Revert Changes?", isPresented: $showRevertConfirmation) {
             Button("Revert Changes", role: .destructive) {
+                
+                // ⚡ Subtle feedback on cancel
+                ContactDetailsHapticsController.shared.mapTap()
+                ContactScreenSoundController.shared.playPropertyOpen()
+                
                 revertEdits()
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel", role: .cancel) {
+                
+                // ⚡ Subtle feedback on cancel
+                ContactDetailsHapticsController.shared.mapTap()
+                ContactScreenSoundController.shared.playPropertyOpen()
+                
+            }
         } message: {
             Text("This will discard all unsaved changes and restore the original prospect details.")
         }
