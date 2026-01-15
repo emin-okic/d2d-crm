@@ -78,6 +78,11 @@ struct CustomersSectionView: View {
                             if isDeleting {
                                 toggleSelection(c)
                             } else {
+                                
+                                // ✅ Haptics & Sound when opening a prospect/customer
+                                ContactDetailsHapticsController.shared.mapTap()
+                                ContactScreenSoundController.shared.playPropertyOpen()
+                                
                                 selectedCustomer = c
                             }
                         }
@@ -109,6 +114,11 @@ struct CustomersSectionView: View {
                             })
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) {
+                                    
+                                    // ✅ Haptics & Sound when initiating delete
+                                    ContactDetailsHapticsController.shared.mapTap()
+                                    ContactScreenSoundController.shared.playPropertyOpen()
+                                    
                                     customerToDelete = c
                                     showDeleteConfirmation = true
                                 } label: {
@@ -139,9 +149,20 @@ struct CustomersSectionView: View {
         }
         .alert("Delete Customer?", isPresented: $showDeleteConfirmation, presenting: customerToDelete) { customer in
             Button("Delete", role: .destructive) {
+                
+                // ✅ Haptics & Sound when initiating delete
+                ContactDetailsHapticsController.shared.mapTap()
+                ContactScreenSoundController.shared.playPropertyOpen()
+                
                 deleteCustomer(customer)
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel", role: .cancel) {
+                
+                // ✅ Haptics & Sound when initiating delete
+                ContactDetailsHapticsController.shared.mapTap()
+                ContactScreenSoundController.shared.playPropertyOpen()
+                
+            }
         } message: { customer in
             Text("Are you sure you want to delete \(customer.fullName)? This action cannot be undone.")
         }
