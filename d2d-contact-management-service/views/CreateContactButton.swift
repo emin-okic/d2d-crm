@@ -12,14 +12,25 @@ struct CreateContactButton: View {
     var action: () -> Void
     
     var body: some View {
-        Button(action: action) {
+        Button {
+            
+            // Haptics + sound
+            ContactDetailsHapticsController.shared.lightTap()
+            ContactScreenSoundController.shared.playSound1()
+            
+            action()
+            
+        } label: {
+            
             Image(systemName: "plus")
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.white)
                 .frame(width: 50, height: 50)
                 .background(Circle().fill(Color.blue))
                 .shadow(radius: 4)
+
         }
+        
     }
 }
 
