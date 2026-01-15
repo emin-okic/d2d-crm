@@ -84,10 +84,21 @@ struct ContactManagementView: View {
             .overlay(
                 GeometryReader { geo in
                     ExportCSVButton(isUnlocked: emailGate.isUnlocked) {
+                        
                         if emailGate.isUnlocked {
+                            
+                            ContactDetailsHapticsController.shared.successConfirmationTap()
+                            ContactScreenSoundController.shared.playSound1()
+                            
                             performExport()
+                            
                         } else {
+                            
+                            ContactDetailsHapticsController.shared.successConfirmationTap()
+                            ContactScreenSoundController.shared.playSound1()
+                            
                             showEmailGate = true
+                            
                         }
                     }
                     .position(
