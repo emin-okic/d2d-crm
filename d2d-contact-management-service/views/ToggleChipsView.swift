@@ -19,7 +19,13 @@ struct ToggleChipsView: View {
     }
 
     private func chip(_ title: String) -> some View {
+        
         Button {
+            
+            // ✅ Haptics & Sound when selecting a pill
+            ContactDetailsHapticsController.shared.mapTap()
+            ContactScreenSoundController.shared.playPropertyOpen()
+            
             selectedList = title
         } label: {
             Text(title)

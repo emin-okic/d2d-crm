@@ -35,7 +35,14 @@ struct SuggestedProspectSheetView: View {
             
             // 🔹 Buttons
             HStack(spacing: 20) {
-                Button(action: onAdd) {
+                
+                Button(action: {
+                    // ✅ Haptics & Sound for adding a suggested prospect
+                    ContactDetailsHapticsController.shared.propertyAdded()
+                    ContactScreenSoundController.shared.playPropertyAdded()
+                    
+                    onAdd()
+                }) {
                     HStack {
                         Image(systemName: "plus.circle.fill")
                         Text("Add")
@@ -48,7 +55,13 @@ struct SuggestedProspectSheetView: View {
                     .cornerRadius(12)
                 }
 
-                Button(action: onDismiss) {
+                Button(action: {
+                    // ✅ Subtle haptics & sound for dismiss
+                    ContactDetailsHapticsController.shared.mapTap()
+                    ContactScreenSoundController.shared.playPropertyOpen()
+                    
+                    onDismiss()
+                }) {
                     HStack {
                         Image(systemName: "xmark.circle.fill")
                         Text("Dismiss")
