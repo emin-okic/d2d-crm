@@ -197,6 +197,11 @@ struct CustomerDetailsView: View {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
 
                     Button {
+                        
+                        // ⚡ Haptic + Sound when tapping export
+                        KnockingFormHapticsController.shared.lightTap()
+                        KnockingFormSoundController.shared.playConfirmationSound()
+                        
                         showExportPrompt = true
                     } label: {
                         Image(systemName: "person.crop.circle.badge.plus")
@@ -208,11 +213,21 @@ struct CustomerDetailsView: View {
             if hasUnsavedEdits {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button("Revert") {
+                        
+                        // ⚡ Haptic + Sound when tapping export
+                        KnockingFormHapticsController.shared.lightTap()
+                        KnockingFormSoundController.shared.playConfirmationSound()
+                        
                         showRevertConfirmation = true
                     }
                     .foregroundColor(.red)
 
                     Button("Save") {
+                        
+                        // ⚡ Haptic + Sound when tapping export
+                        KnockingFormHapticsController.shared.lightTap()
+                        KnockingFormSoundController.shared.playConfirmationSound()
+                        
                         commitEdits()
                     }
                     .buttonStyle(.borderedProminent)
@@ -222,17 +237,39 @@ struct CustomerDetailsView: View {
         }
         .alert("Export to Contacts", isPresented: $showExportPrompt) {
             Button("Yes") {
+                
+                // ⚡ Haptic + Sound when confirming export
+                ContactDetailsHapticsController.shared.propertyAdded()
+                ContactScreenSoundController.shared.playPropertyAdded()
+                
                 exportToContacts()
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel", role: .cancel) {
+                
+                // ⚡ Haptic + Sound when confirming export
+                ContactDetailsHapticsController.shared.propertyAdded()
+                ContactScreenSoundController.shared.playPropertyAdded()
+                
+            }
         } message: {
             Text("Would you like to save this contact to your iOS Contacts app?")
         }
         .alert("Revert Changes?", isPresented: $showRevertConfirmation) {
             Button("Revert Changes", role: .destructive) {
+                
+                // ⚡ Haptic + Sound when confirming export
+                ContactDetailsHapticsController.shared.propertyAdded()
+                ContactScreenSoundController.shared.playPropertyAdded()
+                
                 revertEdits()
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel", role: .cancel) {
+                
+                // ⚡ Haptic + Sound when confirming export
+                ContactDetailsHapticsController.shared.propertyAdded()
+                ContactScreenSoundController.shared.playPropertyAdded()
+                
+            }
         } message: {
             Text("This will discard all unsaved changes and restore the original customer details.")
         }
