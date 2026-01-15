@@ -113,7 +113,11 @@ struct FollowUpAssistantView: View {
                                     TripManagerScorecardView(
                                         title: "Trips Today",
                                         count: dailyTrips
-                                    )
+                                    ) {
+                                        // ✅ Haptics + sound already handled inside the scorecard
+                                        showTripsSheet = true
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                                 .buttonStyle(.plain)
                             }
