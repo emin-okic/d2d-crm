@@ -86,6 +86,11 @@ struct ProspectsSectionView: View {
                             if isDeleting {
                                 toggleSelection(p)
                             } else {
+                                
+                                // ✅ Haptics & Sound when opening a prospect/customer
+                                ContactDetailsHapticsController.shared.mapTap()
+                                ContactScreenSoundController.shared.playPropertyOpen()
+                                
                                 selectedProspect = p
                             }
                         }
@@ -108,8 +113,14 @@ struct ProspectsSectionView: View {
                             })
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) {
+                                    
+                                    // ✅ Haptics & Sound when initiating delete
+                                    ContactDetailsHapticsController.shared.mapTap()
+                                    ContactScreenSoundController.shared.playPropertyOpen()
+                                    
                                     prospectToDelete = p
                                     showDeleteConfirmation = true
+                                    
                                 } label: {
                                     Label("Delete", systemImage: "trash.fill")
                                 }
@@ -141,9 +152,20 @@ struct ProspectsSectionView: View {
         }
         .alert("Delete Prospect?", isPresented: $showDeleteConfirmation, presenting: prospectToDelete) { prospect in
             Button("Delete", role: .destructive) {
+                
+                // ✅ Haptics & Sound on confirmation
+                ContactDetailsHapticsController.shared.bulkAddConfirmed()
+                ContactScreenSoundController.shared.playPropertyAdded()
+                
                 deleteProspect(prospect)
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel", role: .cancel) {
+                
+                // ✅ Haptics & Sound on confirmation
+                ContactDetailsHapticsController.shared.bulkAddConfirmed()
+                ContactScreenSoundController.shared.playPropertyAdded()
+                
+            }
         } message: { prospect in
             Text("Are you sure you want to delete \(prospect.fullName)? This action cannot be undone.")
         }
