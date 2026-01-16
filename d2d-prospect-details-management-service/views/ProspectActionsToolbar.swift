@@ -135,6 +135,11 @@ struct ProspectActionsToolbar: View {
             titleVisibility: .visible
         ) {
             Button("Compose Email") {
+                
+                // Haptic + sound
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
+                
                 logEmailNote()   // ✅ log it first
 
                 if let url = URL(string: "mailto:\(prospect.contactEmail)") {
@@ -143,6 +148,11 @@ struct ProspectActionsToolbar: View {
             }
 
             Button("Edit Email") {
+                
+                // Haptic + sound
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
+                
                 newEmail = prospect.contactEmail
                 showAddEmailSheet = true
             }
@@ -202,45 +212,77 @@ struct ProspectActionsToolbar: View {
             .presentationDragIndicator(.visible)
         }
 
-        // Add email sheet
+        // Add email sheet (modern CRM style)
         .sheet(isPresented: $showAddEmailSheet) {
-            NavigationView {
-                VStack(spacing: 16) {
-                    Text("Add Email Address")
+            VStack(spacing: 16) {
+
+                // Drag indicator
+                Capsule()
+                    .fill(Color.secondary.opacity(0.4))
+                    .frame(width: 36, height: 5)
+                    .padding(.top, 8)
+
+                // Header
+                HStack(spacing: 10) {
+                    Image(systemName: "envelope.fill")
+                        .foregroundColor(.purple)
+                        .font(.title3)
+
+                    Text("Email Address")
                         .font(.headline)
+                }
 
-                    TextField("Enter email", text: $newEmail)
-                        .keyboardType(.emailAddress)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(12)
+                Text("Update or add the prospect’s email.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
 
-                    Button("Save Email") {
+                // Input
+                TextField("name@example.com", text: $newEmail)
+                    .keyboardType(.emailAddress)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(14)
+
+                // Actions
+                HStack(spacing: 12) {
+                    Button("Cancel") {
+                        
+                        // Haptic + sound
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+                        
+                        showAddEmailSheet = false
+                    }
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(.bordered)
+
+                    Button("Save") {
+                        
+                        // Haptic + sound
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
                         
                         prospect.contactEmail = newEmail
                         
                         try? modelContext.save()
-
+                        
                         showAddEmailSheet = false
+                        
                     }
+                    .frame(maxWidth: .infinity)
                     .buttonStyle(.borderedProminent)
                     .disabled(newEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
 
-                    Spacer()
-                }
-                .padding()
-                .navigationTitle("Email Address")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            showAddEmailSheet = false
-                        }
-                    }
-                }
+                Spacer()
             }
+            .padding()
+            .presentationDetents([.fraction(0.25)])
+            .presentationDragIndicator(.visible)
         }
+        
     }
     
     private func transferProspectData(to customer: Customer) {
