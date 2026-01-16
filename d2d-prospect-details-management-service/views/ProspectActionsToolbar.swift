@@ -33,6 +33,8 @@ struct ProspectActionsToolbar: View {
     
     private let customerController: CustomerController
     
+    @State private var originalEmail: String?
+    
     init(prospect: Prospect, modelContext: ModelContext) {
         self._prospect = Bindable(prospect)
         self.customerController = CustomerController(modelContext: modelContext)
@@ -74,7 +76,11 @@ struct ProspectActionsToolbar: View {
                     ContactScreenSoundController.shared.playSound1()
                     
                     if prospect.contactEmail.nilIfEmpty == nil {
+                        
+                        originalEmail = nil
+                        
                         showAddEmailSheet = true
+                        
                     } else {
                         showEmailConfirmation = true
                     }
@@ -153,7 +159,9 @@ struct ProspectActionsToolbar: View {
                 ContactScreenHapticsController.shared.lightTap()
                 ContactScreenSoundController.shared.playSound1()
                 
+                originalEmail = prospect.contactEmail
                 newEmail = prospect.contactEmail
+                
                 showAddEmailSheet = true
             }
 
@@ -264,9 +272,14 @@ struct ProspectActionsToolbar: View {
                         ContactScreenHapticsController.shared.lightTap()
                         ContactScreenSoundController.shared.playSound1()
                         
+                        let previous = originalEmail
+                        
                         prospect.contactEmail = newEmail
                         
                         try? modelContext.save()
+                        
+                        
+                        logEmailChangeNote(old: previous, new: newEmail)
                         
                         showAddEmailSheet = false
                         
@@ -283,6 +296,28 @@ struct ProspectActionsToolbar: View {
             .presentationDragIndicator(.visible)
         }
         
+    }
+    
+    /// Logs when an email is added or changed
+    private func logEmailChangeNote(old: String?, new: String) {
+        let oldNormalized = old?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ?? ""
+        let newNormalized = new.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+        // 🚫 Prevent logging if nothing changed
+        guard oldNormalized != newNormalized else {
+            return
+        }
+
+        let content: String
+        if !oldNormalized.isEmpty {
+            content = "Updated email from \(oldNormalized) to \(newNormalized)."
+        } else {
+            content = "Added email address \(newNormalized)."
+        }
+
+        let note = Note(content: content, date: Date(), prospect: prospect)
+        prospect.notes.append(note)
+        try? modelContext.save()
     }
     
     private func transferProspectData(to customer: Customer) {
