@@ -86,7 +86,13 @@ struct AppointmentDetailsView: View {
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button {
+                            
+                            // ✅ Add haptics and sound
+                            FollowUpScreenHapticsController.shared.lightTap()
+                            FollowUpScreenSoundController.shared.playSound1()
+                            
                             dismiss()
+                            
                         } label: {
                             Image(systemName: "chevron.backward")
                                 .font(.headline)
