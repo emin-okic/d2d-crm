@@ -30,94 +30,108 @@ struct ScheduleAppointmentView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 16) {
 
-                // Prospect Card
-                card {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Prospect")
-                            .font(.caption.weight(.semibold))
-                            .foregroundColor(.secondary)
-
-                        Text(clientName)
-                            .font(.title3.weight(.semibold))
-
-                        Text(location)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                }
-
-                // Appointment Details
-                card {
-                    VStack(alignment: .leading, spacing: 14) {
-
-                        labeledField("Type") {
-                            Text(type)
-                                .foregroundColor(.secondary)
-                        }
-
-                        labeledField("Date & Time") {
-                            DatePicker("", selection: $date, displayedComponents: [.date, .hourAndMinute])
-                                .labelsHidden()
-                        }
-                    }
-                }
-
-                // Notes Preview
-                if !prospect.notes.isEmpty {
+                    // Prospect Card
                     card {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Notes from Knocks")
+                            Text("Prospect")
                                 .font(.caption.weight(.semibold))
                                 .foregroundColor(.secondary)
 
-                            ForEach(prospect.notes.prefix(3), id: \.id) { note in
-                                Text("• \(note.content)")
-                                    .font(.footnote)
+                            Text(clientName)
+                                .font(.title3.weight(.semibold))
+
+                            Text(location)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+
+                    // Appointment Details
+                    card {
+                        VStack(alignment: .leading, spacing: 14) {
+
+                            labeledField("Type") {
+                                Text(type)
                                     .foregroundColor(.secondary)
+                            }
+
+                            labeledField("Date & Time") {
+                                DatePicker("", selection: $date, displayedComponents: [.date, .hourAndMinute])
+                                    .labelsHidden()
                             }
                         }
                     }
-                }
 
-                // Save Button
-                Button {
-                    FollowUpScreenHapticsController.shared.successConfirmationTap()
-                    FollowUpScreenSoundController.shared.playSound1()
+                    // Notes Preview
+                    if !prospect.notes.isEmpty {
+                        card {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Notes from Knocks")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundColor(.secondary)
 
-                    let appointment = Appointment(
-                        title: title,
-                        location: location,
-                        clientName: clientName,
-                        date: date,
-                        type: type,
-                        notes: prospect.notes.map { $0.content },
-                        prospect: prospect
-                    )
-                    context.insert(appointment)
-                    dismiss()
-                } label: {
-                    Text("Save Appointment")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(title.isEmpty || clientName.isEmpty ? Color.gray.opacity(0.3) : Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(14)
+                                ForEach(prospect.notes.prefix(3), id: \.id) { note in
+                                    Text("• \(note.content)")
+                                        .font(.footnote)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                    }
+
+                    // Save Button
+                    Button {
+                        FollowUpScreenHapticsController.shared.successConfirmationTap()
+                        FollowUpScreenSoundController.shared.playSound1()
+
+                        let appointment = Appointment(
+                            title: title,
+                            location: location,
+                            clientName: clientName,
+                            date: date,
+                            type: type,
+                            notes: prospect.notes.map { $0.content },
+                            prospect: prospect
+                        )
+                        context.insert(appointment)
+                        dismiss()
+                    } label: {
+                        Text("Schedule Appointment")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(title.isEmpty || clientName.isEmpty ? Color.gray.opacity(0.3) : Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(14)
+                    }
+                    .disabled(title.isEmpty || clientName.isEmpty)
+                    .padding(.top, 8)
                 }
-                .disabled(title.isEmpty || clientName.isEmpty)
-                .padding(.top, 8)
+                .padding()
             }
-            .padding()
-        }
-        .background(Color(.systemGroupedBackground))
-        .navigationTitle("Schedule Appointment")
-        .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            clientName = prospect.fullName
-            location = prospect.address
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Schedule Appointment")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        FollowUpScreenHapticsController.shared.lightTap()
+                        FollowUpScreenSoundController.shared.playSound1()
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.headline)
+                    }
+                }
+            }
+            .onAppear {
+                clientName = prospect.fullName
+                location = prospect.address
+            }
         }
     }
 
