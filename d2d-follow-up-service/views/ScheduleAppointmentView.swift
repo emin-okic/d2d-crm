@@ -52,6 +52,11 @@ struct ScheduleAppointmentView: View {
             DatePicker("Date", selection: $date, displayedComponents: [.date, .hourAndMinute])
 
             Button("Save Appointment") {
+                
+                // ✅ Success feedback
+                FollowUpScreenHapticsController.shared.successConfirmationTap()
+                FollowUpScreenSoundController.shared.playSound1()
+                
                 let appointment = Appointment(
                     title: title,
                     location: location,

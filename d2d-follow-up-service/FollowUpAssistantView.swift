@@ -176,9 +176,21 @@ struct FollowUpAssistantView: View {
             }
             .alert("Delete selected appointments?", isPresented: $showDeleteAppointmentsConfirm) {
                 Button("Delete", role: .destructive) {
+                    
+                    // ✅ Haptic + sound on selection
+                    FollowUpScreenHapticsController.shared.lightTap()
+                    FollowUpScreenSoundController.shared.playSound1()
+                    
                     deleteSelectedAppointments()
+                    
                 }
-                Button("Cancel", role: .cancel) {}
+                Button("Cancel", role: .cancel) {
+                    
+                    // ✅ Haptic + sound on selection
+                    FollowUpScreenHapticsController.shared.lightTap()
+                    FollowUpScreenSoundController.shared.playSound1()
+                    
+                }
             } message: {
                 Text("This action can’t be undone.")
             }

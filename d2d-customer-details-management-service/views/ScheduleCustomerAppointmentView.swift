@@ -43,6 +43,11 @@ struct ScheduleCustomerAppointmentView: View {
             DatePicker("Date", selection: $date, displayedComponents: [.date, .hourAndMinute])
 
             Button("Save Appointment") {
+                
+                // ✅ Success feedback
+                FollowUpScreenHapticsController.shared.successConfirmationTap()
+                FollowUpScreenSoundController.shared.playSound1()
+                
                 // ✅ Create appointment directly linked to customer
                 let appointment = Appointment(
                     title: title,
