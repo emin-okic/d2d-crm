@@ -30,6 +30,8 @@ final class CustomerActionsController: ObservableObject {
     @Published var phoneError: String?
 
     @Published var originalPhone: String?
+    
+    @Published var originalEmail: String?
 
     // MARK: - Init
     init(
@@ -55,6 +57,7 @@ final class CustomerActionsController: ObservableObject {
 
     func emailTapped() {
         if customer.contactEmail.nilIfEmpty == nil {
+            originalEmail = nil
             showAddEmailSheet = true
         } else {
             showEmailConfirmation = true
@@ -91,14 +94,34 @@ final class CustomerActionsController: ObservableObject {
     // MARK: - Email Flow
 
     func saveEmail() {
+        
+        let previous = originalEmail
+        
         customer.contactEmail = newEmail
+        
         try? modelContext.save()
-
-        if let url = URL(string: "mailto:\(newEmail)") {
-            UIApplication.shared.open(url)
-        }
+        
+        logCustomerEmailChangeNote(old: previous, new: newEmail)
 
         showAddEmailSheet = false
+    }
+    
+    func logCustomerEmailChangeNote(old: String?, new: String) {
+        let oldNormalized = old?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ?? ""
+        let newNormalized = new.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+        // 🚫 Skip if no change
+        guard oldNormalized != newNormalized else { return }
+
+        let content: String
+        if !oldNormalized.isEmpty {
+            content = "Updated email from \(oldNormalized) to \(newNormalized)."
+        } else {
+            content = "Added email address \(newNormalized)."
+        }
+
+        customer.notes.append(Note(content: content, date: Date()))
+        try? modelContext.save()
     }
     
     func logCustomerEmailNote() {

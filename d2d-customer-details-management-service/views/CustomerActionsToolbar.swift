@@ -80,6 +80,10 @@ struct CustomerActionsToolbar: View {
                             isPresented: $controller.showEmailConfirmation,
                             titleVisibility: .visible) {
             Button("Compose Email") {
+                
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
+                
                 controller.logCustomerEmailNote()   // ✅ log it
 
                 if let url = URL(string: "mailto:\(controller.customer.contactEmail)") {
@@ -87,7 +91,15 @@ struct CustomerActionsToolbar: View {
                 }
             }
             Button("Edit Email") {
+                
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
+                
+                
+                controller.originalEmail = controller.customer.contactEmail
+                
                 controller.newEmail = controller.customer.contactEmail
+                
                 controller.showAddEmailSheet = true
             }
             Button("Cancel", role: .cancel) { }
@@ -158,35 +170,66 @@ struct CustomerActionsToolbar: View {
         }
 
         .sheet(isPresented: $controller.showAddEmailSheet) {
-            NavigationView {
-                VStack(spacing: 16) {
-                    Text("Add Email Address")
+            VStack(spacing: 16) {
+
+                // Drag indicator
+                Capsule()
+                    .fill(Color.secondary.opacity(0.4))
+                    .frame(width: 36, height: 5)
+                    .padding(.top, 8)
+
+                // Header
+                HStack(spacing: 10) {
+                    Image(systemName: "envelope.fill")
+                        .foregroundColor(.purple)
+                        .font(.title3)
+
+                    Text("Email Address")
                         .font(.headline)
+                }
 
-                    TextField("Enter email", text: $controller.newEmail)
-                        .keyboardType(.emailAddress)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(12)
+                Text("Update or add the customer’s email.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
 
-                    Button("Save Email") {
+                // Input
+                TextField("name@example.com", text: $controller.newEmail)
+                    .keyboardType(.emailAddress)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(14)
+
+                // Actions
+                HStack(spacing: 12) {
+                    Button("Cancel") {
+
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+
+                        controller.showAddEmailSheet = false
+                    }
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(.bordered)
+
+                    Button("Save") {
+
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+
                         controller.saveEmail()
                     }
+                    .frame(maxWidth: .infinity)
                     .buttonStyle(.borderedProminent)
                     .disabled(controller.newEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
 
-                    Spacer()
-                }
-                .padding()
-                .navigationTitle("Email Address")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { controller.showAddEmailSheet = false }
-                    }
-                }
+                Spacer()
             }
+            .padding()
+            .presentationDetents([.fraction(0.25)])
+            .presentationDragIndicator(.visible)
         }
     }
     
