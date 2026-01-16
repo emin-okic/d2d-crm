@@ -91,12 +91,10 @@ final class CustomerActionsController: ObservableObject {
     // MARK: - Email Flow
 
     func saveEmail() {
+        
         customer.contactEmail = newEmail
+        
         try? modelContext.save()
-
-        if let url = URL(string: "mailto:\(newEmail)") {
-            UIApplication.shared.open(url)
-        }
 
         showAddEmailSheet = false
     }

@@ -218,12 +218,10 @@ struct ProspectActionsToolbar: View {
                         .cornerRadius(12)
 
                     Button("Save Email") {
+                        
                         prospect.contactEmail = newEmail
+                        
                         try? modelContext.save()
-
-                        if let url = URL(string: "mailto:\(newEmail)") {
-                            UIApplication.shared.open(url)
-                        }
 
                         showAddEmailSheet = false
                     }
