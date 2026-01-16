@@ -29,6 +29,11 @@ struct AppointmentsToolbar: View {
                     icon: "plus",
                     color: .blue
                 ) {
+                    
+                    // ✅ Haptic + sound on add
+                    FollowUpScreenHapticsController.shared.successConfirmationTap()
+                    FollowUpScreenSoundController.shared.playSound1()
+                    
                     showProspectPicker = true
                 }
 
@@ -37,6 +42,11 @@ struct AppointmentsToolbar: View {
                     icon: "trash.fill",
                     color: isEditing ? .red : .blue
                 ) {
+                    
+                    // ✅ Haptic + sound on add
+                    FollowUpScreenHapticsController.shared.successConfirmationTap()
+                    FollowUpScreenSoundController.shared.playSound1()
+                    
                     if isEditing {
                         selectedAppointments.isEmpty
                         ? exitEditMode()

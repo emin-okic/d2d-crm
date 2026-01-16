@@ -44,6 +44,11 @@ struct ContactPickerView: View {
                     LazyVStack(spacing: 12) {
                         ForEach(filteredContacts, id: \.fullName) { contact in
                             Button {
+                                
+                                // ✅ Haptic + sound on selection
+                                FollowUpScreenHapticsController.shared.lightTap()
+                                FollowUpScreenSoundController.shared.playSound1()
+                                
                                 if let prospect = contact as? Prospect {
                                     selectedProspect = prospect
                                 } else if let customer = contact as? Customer {

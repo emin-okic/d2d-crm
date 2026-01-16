@@ -16,34 +16,28 @@ struct AppointmentDetailsView: View {
 
     // State for reschedule and cancel prompts
     @State private var showRescheduleSheet = false
-    @State private var showRescheduleConfirmation = false
-    @State private var showCancelConfirmation = false
     @State private var newDate: Date = Date()
-    
-    // Set state variables for setting appt
-    @State private var calendarPermissionGranted = false
-    @State private var calendarError: String?
-    
-    @State private var showAddToCalendarPrompt = false
     @State private var showSuccessBanner = false
     @State private var successMessage = ""
-    
-    @State private var showOpenInMapsPrompt = false
 
     var body: some View {
-        ZStack {
-            NavigationView {
-                VStack(spacing: 24) {
-                    // MARK: Header
-                    VStack(spacing: 8) {
-                        Text("Follow-Up Appointment")
-                            .font(.headline)
-                        Text(appointment.date.formatted(date: .long, time: .shortened))
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.top)
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 16) {
 
+                    // MARK: Header Card
+                    card {
+                        VStack(spacing: 8) {
+                            Text("Follow-Up Appointment")
+                                .font(.headline)
+                            Text(appointment.date.formatted(date: .long, time: .shortened))
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+
+                    // MARK: Actions Toolbar Card
                     AppointmentActionsToolbar(
                         appointment: appointment,
                         onDelete: {
@@ -54,72 +48,84 @@ struct AppointmentDetailsView: View {
                             showRescheduleSheet = true
                         }
                     )
+                    .padding(.horizontal)
 
-                    // MARK: Who & Where
-                    VStack(alignment: .leading, spacing: 6) {
-                        Label(appointment.clientName, systemImage: "person.crop.circle")
-                            .font(.title3)
-                        Label(appointment.location, systemImage: "mappin.and.ellipse")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                    // MARK: Notes
-                    if !appointment.notes.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Notes")
-                                .font(.title)
-                            ForEach(appointment.notes, id: \.self) { note in
-                                Text("• \(note)")
-                                    .font(.body)
-                                    .fixedSize(horizontal: false, vertical: true)
+                    // MARK: Who & Where Card
+                    card {
+                        VStack(alignment: .leading, spacing: 6) {
+                            labeledField("Client") {
+                                Text(appointment.clientName)
+                                    .font(.subheadline)
+                            }
+                            labeledField("Location") {
+                                Text(appointment.location)
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
                             }
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+
+                    // MARK: Notes Card
+                    if !appointment.notes.isEmpty {
+                        card {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Notes")
+                                    .font(.headline)
+                                ForEach(appointment.notes, id: \.self) { note in
+                                    Text("• \(note)")
+                                        .font(.body)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
                     }
 
                     Spacer()
                 }
                 .padding()
-                .navigationTitle("Appointment Details")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button {
-                            dismiss()
-                        } label: {
-                            Image(systemName: "chevron.backward")
-                                .font(.headline)
-                        }
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Appointment Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button {
+                        FollowUpScreenHapticsController.shared.lightTap()
+                        FollowUpScreenSoundController.shared.playSound1()
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.backward")
+                            .font(.headline)
                     }
                 }
-                .sheet(isPresented: $showRescheduleSheet) {
-                    RescheduleAppointmentView(
-                        original: appointment,
-                        newDate: $newDate
-                    ) {
-                        context.delete(appointment)
-                        let recreated = Appointment(
-                            title: appointment.title,
-                            location: appointment.location,
-                            clientName: appointment.clientName,
-                            date: newDate,
-                            type: appointment.type,
-                            notes: appointment.notes,
-                            prospect: appointment.prospect!
-                        )
-                        context.insert(recreated)
-                        try? context.save()
-                        showRescheduleSheet = false
-                        dismiss()
-                    }
+            }
+            .sheet(isPresented: $showRescheduleSheet) {
+                RescheduleAppointmentView(
+                    original: appointment,
+                    newDate: $newDate
+                ) {
+                    context.delete(appointment)
+                    let recreated = Appointment(
+                        title: appointment.title,
+                        location: appointment.location,
+                        clientName: appointment.clientName,
+                        date: newDate,
+                        type: appointment.type,
+                        notes: appointment.notes,
+                        prospect: appointment.prospect!
+                    )
+                    context.insert(recreated)
+                    try? context.save()
+                    showRescheduleSheet = false
+                    dismiss()
                 }
             }
 
             // ✅ Success Banner floating over everything
             if showSuccessBanner {
                 VStack {
-                    Spacer().frame(height: 60) // Optional: space from top
+                    Spacer().frame(height: 60)
                     Text(successMessage)
                         .font(.subheadline)
                         .padding(.horizontal, 16)
@@ -134,6 +140,26 @@ struct AppointmentDetailsView: View {
                 .frame(maxWidth: .infinity)
                 .zIndex(999)
             }
+        }
+    }
+    
+    private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.systemBackground))
+                    .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 3)
+            )
+    }
+
+    private func labeledField<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundColor(.secondary)
+            content()
         }
     }
     

@@ -113,14 +113,29 @@ struct AppointmentsSectionView: View {
                                 )
                                 .listRowBackground(Color.clear)
                                 .onTapGesture {
+                                    
+                                    // ✅ Haptic + sound on row tap
+                                    FollowUpScreenHapticsController.shared.lightTap()
+                                    FollowUpScreenSoundController.shared.playSound1()
+                                    
                                     if isEditing {
+                                        
                                         toggleSelection(for: appt)
+                                        
                                     } else {
+                                        
                                         selectedAppointment = appt
+                                        
                                     }
                                 }
                                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    
                                     Button(role: .destructive) {
+                                        
+                                        // ✅ Haptic + sound
+                                        FollowUpScreenHapticsController.shared.mediumTap()
+                                        FollowUpScreenSoundController.shared.playSound1()
+                                        
                                         appointmentToDelete = appt
                                         showDeleteConfirmation = true
                                     } label: {
@@ -140,9 +155,20 @@ struct AppointmentsSectionView: View {
         }
         .alert("Delete Appointment?", isPresented: $showDeleteConfirmation, presenting: appointmentToDelete) { appt in
             Button("Delete", role: .destructive) {
+                
+                // ✅ Stronger feedback on destructive action
+                FollowUpScreenHapticsController.shared.mediumTap()
+                FollowUpScreenSoundController.shared.playSound1()
+                
                 deleteAppointment(appt)
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel", role: .cancel) {
+                
+                // ✅ Subtle cancel feedback
+                FollowUpScreenHapticsController.shared.lightTap()
+                FollowUpScreenSoundController.shared.playSound1()
+                
+            }
         } message: { appt in
             Text("Are you sure you want to delete this appointment? This action cannot be undone.")
         }
