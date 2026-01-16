@@ -77,13 +77,19 @@ struct RootView: View {
             }
         }
         .onChange(of: selectedTab) { newValue in
-                    if newValue == 0 {
-                        NotificationCenter.default.post(
-                            name: .mapShouldRecenterAllMarkers,
-                            object: nil
-                        )
-                    }
-                }
+            
+            // ✅ Haptics + sound for tab switching
+            RootViewHapticsController.shared.lightTap()
+            RootViewSoundController.shared.playSound1()
+            
+            if newValue == 0 {
+                NotificationCenter.default.post(
+                    name: .mapShouldRecenterAllMarkers,
+                    object: nil
+                )
+            }
+            
+        }
         
     }
 }
