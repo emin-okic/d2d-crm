@@ -95,7 +95,11 @@ struct CustomerActionsToolbar: View {
                 ContactScreenHapticsController.shared.lightTap()
                 ContactScreenSoundController.shared.playSound1()
                 
+                
+                controller.originalEmail = controller.customer.contactEmail
+                
                 controller.newEmail = controller.customer.contactEmail
+                
                 controller.showAddEmailSheet = true
             }
             Button("Cancel", role: .cancel) { }
