@@ -85,6 +85,14 @@ struct AppointmentActionsToolbar: View {
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
         .overlay(confirmationDialogs)
+        .sheet(isPresented: $showAddToCalendarConfirm) {
+            ExportToCalendarSheet(
+                appointment: appointment,
+                calendarHelper: calendarHelper
+            )
+            .presentationDetents([.fraction(0.40)])
+            .presentationDragIndicator(.visible)
+        }
     }
 
     // MARK: - Confirmation dialogs
@@ -106,35 +114,6 @@ struct AppointmentActionsToolbar: View {
                     
                 }
             }
-
-                   .alert("Add to Calendar?",
-                          isPresented: $showAddToCalendarConfirm) {
-                       Button("Apple Calendar") {
-                           
-                           FollowUpScreenHapticsController.shared.successConfirmationTap()
-                           FollowUpScreenSoundController.shared.playSound1()
-                           
-                           calendarHelper.addToAppleCalendar(appointment: appointment) { result in
-                               switch result {
-                               case .success: print("Added to Apple Calendar")
-                               case .failure(let error): print("Error: \(error)")
-                               }
-                           }
-                       }
-                       Button("Google Calendar") {
-                           
-                           FollowUpScreenHapticsController.shared.successConfirmationTap()
-                           FollowUpScreenSoundController.shared.playSound1()
-                           
-                           calendarHelper.addToGoogleCalendar(appointment: appointment)
-                       }
-                       Button("Cancel", role: .cancel) {
-                           
-                           FollowUpScreenHapticsController.shared.successConfirmationTap()
-                           FollowUpScreenSoundController.shared.playSound1()
-                           
-                       }
-                   }
 
             .alert("Open in Apple Maps?",
                    isPresented: $showOpenInMapsConfirm) {
