@@ -14,7 +14,7 @@ struct ScheduleCustomerAppointmentView: View {
 
     let customer: Customer
 
-    @State private var title = "Follow-Up"
+    @State private var title = "Follow-Up "
     @State private var location = ""
     @State private var clientName = ""
     @State private var date = Date()
@@ -80,7 +80,7 @@ struct ScheduleCustomerAppointmentView: View {
                         FollowUpScreenSoundController.shared.playSound1()
 
                         let appointment = Appointment(
-                            title: title,
+                            title: "\(customer.fullName)",
                             location: location,
                             clientName: clientName,
                             date: date,
