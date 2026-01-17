@@ -68,7 +68,14 @@ struct RecordingRowView: View {
             Spacer()
 
             // MARK: - Play Button
-            Button(action: onPlayToggle) {
+            Button(action: {
+                // Haptics & sound
+                RecordingScreenHapticsController.shared.lightTap()
+                RecordingScreenSoundController.shared.playSound1()
+                
+                // Toggle playback
+                onPlayToggle()
+            }) {
                 Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.white)
@@ -79,6 +86,7 @@ struct RecordingRowView: View {
                     )
             }
             .buttonStyle(.plain)
+            
         }
         .padding(14)
         .background(
