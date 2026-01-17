@@ -118,20 +118,38 @@ struct AppointmentActionsToolbar: View {
             .alert("Open in Apple Maps?",
                    isPresented: $showOpenInMapsConfirm) {
                 Button("Open Maps") {
+                    
+                    FollowUpScreenHapticsController.shared.successConfirmationTap()
+                    FollowUpScreenSoundController.shared.playSound1()
+                    
                     openInMaps(destination: appointment.location)
                 }
-                Button("Cancel", role: .cancel) {}
+                Button("Cancel", role: .cancel) {
+                    
+                    FollowUpScreenHapticsController.shared.successConfirmationTap()
+                    FollowUpScreenSoundController.shared.playSound1()
+                    
+                }
             }
 
             .alert("Cancel Appointment?",
                    isPresented: $showCancelConfirm) {
                 Button("Delete", role: .destructive) {
+                    
+                    FollowUpScreenHapticsController.shared.successConfirmationTap()
+                    FollowUpScreenSoundController.shared.playSound1()
+                    
                     context.delete(appointment)
                     try? context.save()
                     dismiss()
                     onDelete?()
                 }
-                Button("Keep", role: .cancel) {}
+                Button("Keep", role: .cancel) {
+                    
+                    FollowUpScreenHapticsController.shared.successConfirmationTap()
+                    FollowUpScreenSoundController.shared.playSound1()
+                    
+                }
             } message: {
                 Text("This will permanently delete this appointment.")
             }
