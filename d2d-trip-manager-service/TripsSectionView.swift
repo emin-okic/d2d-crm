@@ -190,7 +190,13 @@ struct TripsSectionView: View {
             // Back button on the left
             ToolbarItem(placement: .navigationBarLeading) {
                 Button {
+                    
+                    // Haptics + sound for back navigation
+                    TripManagerHapticsController.shared.lightTap()
+                    TripManagerSoundController.shared.playSound1()
+                    
                     dismiss()
+                    
                 } label: {
                     HStack {
                         Image(systemName: "chevron.left")
