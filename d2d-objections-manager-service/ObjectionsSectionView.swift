@@ -38,8 +38,18 @@ struct ObjectionsSectionView: View {
                         selected: selectedObjections
                     ) { objection in
                         if isEditing {
+                            
+                            // DELETE / MULTI-SELECT MODE
+                            RecordingScreenHapticsController.shared.mediumTap()
+                            RecordingScreenSoundController.shared.playSound1()
+                            
                             toggleSelection(objection)
                         } else {
+                            
+                            // NORMAL MODE: open objection details
+                            RecordingScreenHapticsController.shared.lightTap()
+                            RecordingScreenSoundController.shared.playSound1()
+                            
                             selectedObjection = objection
                         }
                     }
@@ -47,7 +57,14 @@ struct ObjectionsSectionView: View {
                 .padding(.top)
             }
 
-            floatingActions
+            ObjectionScreenToolbar(
+                onAddTapped: { showingAddObjection = true },
+                isDeleting: $isEditing,
+                selectedCount: selectedObjections.count,
+                onDeleteConfirmed: {
+                    showDeleteConfirm = true
+                }
+            )
         }
         .sheet(item: $selectedObjection) {
             ObjectionDetailsView(objection: $0)
@@ -58,41 +75,25 @@ struct ObjectionsSectionView: View {
                 .presentationDragIndicator(.visible)
         }
         .alert("Delete selected objections?", isPresented: $showDeleteConfirm) {
-            Button("Delete", role: .destructive) { deleteSelected() }
-            Button("Cancel", role: .cancel) {}
-        }
-    }
-
-    // MARK: - Floating Actions
-    private var floatingActions: some View {
-        VStack(spacing: 12) {
-            Button {
-                showingAddObjection = true
-            } label: {
-                floatingIcon("plus", color: .blue)
+            Button("Delete", role: .destructive) {
+                
+                // NORMAL MODE: open objection details
+                RecordingScreenHapticsController.shared.lightTap()
+                RecordingScreenSoundController.shared.playSound1()
+                
+                deleteSelected()
+                
             }
-
-            Button {
-                if isEditing && !selectedObjections.isEmpty {
-                    showDeleteConfirm = true
-                } else {
-                    isEditing.toggle()
-                }
-            } label: {
-                floatingIcon("trash.fill", color: isEditing ? .red : .blue)
+            Button("Cancel", role: .cancel) {
+                
+                // NORMAL MODE: open objection details
+                RecordingScreenHapticsController.shared.lightTap()
+                RecordingScreenSoundController.shared.playSound1()
+                
             }
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
     }
 
-    private func floatingIcon(_ name: String, color: Color) -> some View {
-        Image(systemName: name)
-            .foregroundColor(.white)
-            .frame(width: 50, height: 50)
-            .background(Circle().fill(color))
-            .shadow(radius: 4)
-    }
 
     // MARK: - Helpers
     private func toggleSelection(_ obj: Objection) {

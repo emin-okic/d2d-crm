@@ -11,7 +11,13 @@ struct WriteResponseCTA: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            // Haptics + sound when tapping the "Write a Response" button
+            ObjectionManagerHapticsController.shared.screenTap()
+            ObjectionManagerSoundController.shared.playActionSound()
+            
+            action()
+        }) {
             HStack {
                 Image(systemName: "pencil.line")
                 Text("Write a Response")

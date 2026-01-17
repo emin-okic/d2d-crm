@@ -55,6 +55,11 @@ struct WriteResponsePracticeView: View {
             Spacer()
 
             Button {
+                
+                // Haptics + sound when submitting a response
+                ObjectionManagerHapticsController.shared.successAction()
+                ObjectionManagerSoundController.shared.playActionSound()
+                
                 submit()
             } label: {
                 Text(didSubmit ? "Saved!" : "Submit Response")

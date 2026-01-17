@@ -31,6 +31,11 @@ struct ObjectionDetailsView: View {
                     ) {
                         Stepper("", value: $objection.timesHeard, in: 0...10_000)
                             .labelsHidden()
+                            .onChange(of: objection.timesHeard) { _ in
+                                // Haptics + sound when counter changes
+                                ObjectionManagerHapticsController.shared.screenTap()
+                                ObjectionManagerSoundController.shared.playActionSound()
+                            }
                     }
 
                     ObjectionEditableCard(
@@ -47,6 +52,11 @@ struct ObjectionDetailsView: View {
                         trailingAction: {
                             AnyView(
                                 Button {
+                                    
+                                    // Haptics + sound when tapping the regenerate button
+                                    ObjectionManagerHapticsController.shared.actionConfirmation()
+                                    ObjectionManagerSoundController.shared.playActionSound()
+                                    
                                     showRegenerateAlert = true
                                 } label: {
                                     Image(systemName: "arrow.clockwise")
@@ -72,7 +82,13 @@ struct ObjectionDetailsView: View {
 
                 HStack {
                     Button {
+                        
+                        // Haptics + sound when tapping the delete button
+                        ObjectionManagerHapticsController.shared.actionConfirmation()
+                        ObjectionManagerSoundController.shared.playActionSound()
+                        
                         showDeleteAlert = true
+                        
                     } label: {
                         Image(systemName: "trash.fill")
                             .font(.system(size: 20, weight: .semibold))
@@ -102,17 +118,34 @@ struct ObjectionDetailsView: View {
             }
         }
         .alert("Delete objection?", isPresented: $showDeleteAlert) {
+            
             Button("Delete", role: .destructive) {
+                
+                // Haptics + sound when tapping the delete button
+                ObjectionManagerHapticsController.shared.actionConfirmation()
+                ObjectionManagerSoundController.shared.playActionSound()
+                
                 modelContext.delete(objection)
                 try? modelContext.save()
                 dismiss()
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel", role: .cancel) {
+                
+                // Haptics + sound when tapping the delete button
+                ObjectionManagerHapticsController.shared.actionConfirmation()
+                ObjectionManagerSoundController.shared.playActionSound()
+                
+            }
         } message: {
             Text("This action cannot be undone.")
         }
         .alert("Regenerate response?", isPresented: $showRegenerateAlert) {
             Button("Regenerate", role: .destructive) {
+                
+                // Haptics + sound when confirming regenerate
+                ObjectionManagerHapticsController.shared.actionConfirmation()
+                ObjectionManagerSoundController.shared.playActionSound()
+                
                 Task {
                     let generated = await ResponseGenerator.shared.generate(for: objection.text)
                     objection.addResponse(generated)  // add to the set
@@ -120,7 +153,13 @@ struct ObjectionDetailsView: View {
                     try? modelContext.save()
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel", role: .cancel) {
+                
+                // Haptics + sound when confirming regenerate
+                ObjectionManagerHapticsController.shared.actionConfirmation()
+                ObjectionManagerSoundController.shared.playActionSound()
+                
+            }
         }
     }
 }
