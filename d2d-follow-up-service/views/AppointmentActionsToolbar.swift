@@ -37,7 +37,12 @@ struct AppointmentActionsToolbar: View {
                 title: "Reschedule",
                 color: .blue
             ) {
+                
+                FollowUpScreenHapticsController.shared.lightTap()
+                FollowUpScreenSoundController.shared.playSound1()
+                
                 showRescheduleConfirm = true
+                
             }
 
             actionButton(
@@ -45,6 +50,10 @@ struct AppointmentActionsToolbar: View {
                 title: "Calendar",
                 color: .purple
             ) {
+                
+                FollowUpScreenHapticsController.shared.lightTap()
+                FollowUpScreenSoundController.shared.playSound1()
+                
                 showAddToCalendarConfirm = true
             }
 
@@ -53,6 +62,10 @@ struct AppointmentActionsToolbar: View {
                 title: "Directions",
                 color: .orange
             ) {
+                
+                FollowUpScreenHapticsController.shared.lightTap()
+                FollowUpScreenSoundController.shared.playSound1()
+                
                 showOpenInMapsConfirm = true
             }
 
@@ -61,7 +74,12 @@ struct AppointmentActionsToolbar: View {
                 title: "Cancel",
                 color: .red
             ) {
+                
+                FollowUpScreenHapticsController.shared.lightTap()
+                FollowUpScreenSoundController.shared.playSound1()
+                
                 showCancelConfirm = true
+                
             }
         }
         .padding(.vertical, 8)
@@ -74,8 +92,19 @@ struct AppointmentActionsToolbar: View {
         EmptyView()
             .alert("Reschedule Appointment?",
                    isPresented: $showRescheduleConfirm) {
-                Button("Continue") { onReschedule() }
-                Button("Cancel", role: .cancel) {}
+                Button("Continue") {
+                    
+                    FollowUpScreenHapticsController.shared.mediumTap()
+                    FollowUpScreenSoundController.shared.playSound1()
+                    
+                    onReschedule()
+                }
+                Button("Cancel", role: .cancel) {
+                    
+                    FollowUpScreenHapticsController.shared.mediumTap()
+                    FollowUpScreenSoundController.shared.playSound1()
+                    
+                }
             }
 
                    .alert("Add to Calendar?",
