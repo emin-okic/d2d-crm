@@ -53,6 +53,11 @@ struct RecordingDetailView: View {
                                     Image(systemName: i < (recording.rating ?? 0) ? "star.fill" : "star")
                                         .foregroundColor(i < (recording.rating ?? 0) ? .yellow : .gray.opacity(0.4))
                                         .onTapGesture {
+                                            
+                                            // Haptics & sound
+                                            RecordingScreenHapticsController.shared.lightTap()
+                                            RecordingScreenSoundController.shared.playSound1()
+                                            
                                             recording.rating = i + 1
                                             try? modelContext.save()
                                         }
@@ -83,7 +88,11 @@ struct RecordingDetailView: View {
                                     .foregroundColor(.secondary)
                             }
                             
-                            Button(action: playOrPause) {
+                            Button(action: {
+                                RecordingScreenHapticsController.shared.lightTap()
+                                RecordingScreenSoundController.shared.playSound1()
+                                playOrPause()
+                            }) {
                                 HStack(spacing: 10) {
                                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                                     Text(isPlaying ? "Pause" : "Play Recording")
@@ -95,6 +104,7 @@ struct RecordingDetailView: View {
                                 .foregroundColor(.white)
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                             }
+                            
                         }
                         .padding()
                         .background(cardBackground)
@@ -121,6 +131,10 @@ struct RecordingDetailView: View {
                 // ⬅️ Back Button
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
+                        
+                        RecordingScreenHapticsController.shared.lightTap()
+                        RecordingScreenSoundController.shared.playSound1()
+                        
                         dismiss()
                     } label: {
                         Image(systemName: "chevron.left")
@@ -129,13 +143,23 @@ struct RecordingDetailView: View {
 
                 // Save / Revert
                 if hasUnsavedEdits {
+                    
                     ToolbarItemGroup(placement: .navigationBarTrailing) {
+                        
                         Button("Revert") {
+                            
+                            RecordingScreenHapticsController.shared.lightTap()
+                            RecordingScreenSoundController.shared.playSound1()
+                            
                             showRevertConfirmation = true
                         }
                         .foregroundColor(.red)
 
                         Button("Save") {
+                            
+                            RecordingScreenHapticsController.shared.successConfirmationTap()
+                            RecordingScreenSoundController.shared.playSound1()
+                            
                             commitEdits()
                         }
                         .buttonStyle(.borderedProminent)
@@ -144,9 +168,18 @@ struct RecordingDetailView: View {
             }
             .alert("Revert Changes?", isPresented: $showRevertConfirmation) {
                 Button("Revert", role: .destructive) {
+                    
+                    RecordingScreenHapticsController.shared.mediumTap()
+                    RecordingScreenSoundController.shared.playSound1()
+                    
                     revertEdits()
                 }
-                Button("Cancel", role: .cancel) {}
+                Button("Cancel", role: .cancel) {
+                    
+                    RecordingScreenHapticsController.shared.lightTap()
+                    RecordingScreenSoundController.shared.playSound1()
+                    
+                }
             } message: {
                 Text("This will discard any unsaved changes.")
             }
