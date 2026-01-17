@@ -72,8 +72,17 @@ struct TripRowView: View {
         .contentShape(Rectangle())
         .onTapGesture {
             if isEditing {
+                
+                TripManagerHapticsController.shared.lightTap()
+                TripManagerSoundController.shared.playSound1()
+                
                 toggleSelection(trip)
+                
             } else {
+                
+                TripManagerHapticsController.shared.lightTap()
+                TripManagerSoundController.shared.playSound1()
+                
                 openDetails(trip)   // 👈 OPEN DETAILS
             }
         }

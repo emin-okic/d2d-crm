@@ -34,7 +34,11 @@ struct TripFloatingActionsToolbar: View {
                 }
 
                 // 🗑 Trash / Multi-delete
-                Button(action: onTrashTap) {
+                Button {
+                    TripManagerHapticsController.shared.lightTap()
+                    TripManagerSoundController.shared.playSound1()
+                    onTrashTap()
+                } label: {
                     ZStack(alignment: .topTrailing) {
                         Image(systemName: "trash.fill")
                             .font(.system(size: 20, weight: .bold))

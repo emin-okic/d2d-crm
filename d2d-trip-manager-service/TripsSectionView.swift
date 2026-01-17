@@ -185,13 +185,23 @@ struct TripsSectionView: View {
         // NEW: bulk delete confirmation
         .alert("Delete selected trips?", isPresented: $showDeleteConfirm) {
             Button("Delete", role: .destructive) {
+                
+                TripManagerHapticsController.shared.mediumTap()
+                TripManagerSoundController.shared.playSound1()
+                
                 deleteSelected()
+                
                 withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
                     isEditing = false
                     trashPulse = false
                 }
             }
-            Button("Cancel", role: .cancel) { }
+            Button("Cancel", role: .cancel) {
+                
+                TripManagerHapticsController.shared.lightTap()
+                TripManagerSoundController.shared.playSound1()
+                
+            }
         } message: {
             Text("This action can’t be undone.")
         }
