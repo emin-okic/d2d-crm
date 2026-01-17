@@ -47,7 +47,14 @@ struct ObjectionsSectionView: View {
                 .padding(.top)
             }
 
-            floatingActions
+            ObjectionScreenToolbar(
+                onAddTapped: { showingAddObjection = true },
+                isDeleting: $isEditing,
+                selectedCount: selectedObjections.count,
+                onDeleteConfirmed: {
+                    showDeleteConfirm = true
+                }
+            )
         }
         .sheet(item: $selectedObjection) {
             ObjectionDetailsView(objection: $0)
@@ -63,36 +70,6 @@ struct ObjectionsSectionView: View {
         }
     }
 
-    // MARK: - Floating Actions
-    private var floatingActions: some View {
-        VStack(spacing: 12) {
-            Button {
-                showingAddObjection = true
-            } label: {
-                floatingIcon("plus", color: .blue)
-            }
-
-            Button {
-                if isEditing && !selectedObjections.isEmpty {
-                    showDeleteConfirm = true
-                } else {
-                    isEditing.toggle()
-                }
-            } label: {
-                floatingIcon("trash.fill", color: isEditing ? .red : .blue)
-            }
-        }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-    }
-
-    private func floatingIcon(_ name: String, color: Color) -> some View {
-        Image(systemName: name)
-            .foregroundColor(.white)
-            .frame(width: 50, height: 50)
-            .background(Circle().fill(color))
-            .shadow(radius: 4)
-    }
 
     // MARK: - Helpers
     private func toggleSelection(_ obj: Objection) {
