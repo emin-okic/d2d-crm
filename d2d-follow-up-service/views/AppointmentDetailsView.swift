@@ -120,6 +120,10 @@ struct AppointmentDetailsView: View {
                     showRescheduleSheet = false
                     dismiss()
                 }
+                .presentationDetents([
+                    .fraction(0.35),
+                ])
+                .presentationDragIndicator(.visible)
             }
 
             // ✅ Success Banner floating over everything
