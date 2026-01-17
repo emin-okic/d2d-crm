@@ -74,6 +74,8 @@ struct FollowUpAssistantView: View {
     @Binding var deepLinkFilter: AppointmentFilter?
     
     @Query private var customers: [Customer]
+    
+    @State private var selectedCustomer: Customer?
 
     var body: some View {
         NavigationView {
@@ -171,7 +173,9 @@ struct FollowUpAssistantView: View {
             .sheet(isPresented: $showAppointmentsPicker) {
                 ContactPickerView(
                     contacts: prospects as [any ContactProtocol] + customers as [any ContactProtocol],
-                    selectedProspect: $selectedProspect
+                    prospects: prospects,
+                    selectedProspect: $selectedProspect,
+                    selectedCustomer: $selectedCustomer
                 )
             }
             .alert("Delete selected appointments?", isPresented: $showDeleteAppointmentsConfirm) {
@@ -244,12 +248,17 @@ struct FollowUpAssistantView: View {
             .sheet(isPresented: $showingProspectPicker) {
                 ContactPickerView(
                     contacts: prospects as [any ContactProtocol] + customers as [any ContactProtocol],
-                    selectedProspect: $selectedProspect
+                    prospects: prospects,
+                    selectedProspect: $selectedProspect,
+                    selectedCustomer: $selectedCustomer
                 )
             }
             .sheet(item: $selectedProspect) { p in
                 // You can pass a default date if you like
                 ScheduleAppointmentView(prospect: p)
+            }
+            .sheet(item: $selectedCustomer) { c in
+                ScheduleCustomerAppointmentView(customer: c)
             }
 
             // NEW: Recordings sheet

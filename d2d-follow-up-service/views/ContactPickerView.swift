@@ -10,6 +10,8 @@ import SwiftData
 
 struct ContactPickerView: View {
     let contacts: [any ContactProtocol]   // now supports both Prospect & Customer
+    let prospects: [Prospect]
+    
     @Binding var selectedProspect: Prospect?
     @Environment(\.dismiss) private var dismiss
     var title: String = "Pick Contact"
@@ -23,6 +25,8 @@ struct ContactPickerView: View {
             $0.address.localizedCaseInsensitiveContains(searchText)
         }
     }
+    
+    @Binding var selectedCustomer: Customer?
 
     var body: some View {
         NavigationStack {
@@ -51,16 +55,22 @@ struct ContactPickerView: View {
                                 
                                 if let prospect = contact as? Prospect {
                                     selectedProspect = prospect
-                                } else if let customer = contact as? Customer {
-                                    // Convert customer to Prospect if needed or handle differently
-                                    let tempProspect = Prospect(
-                                        fullName: customer.fullName,
-                                        address: customer.address,
-                                        count: customer.knockCount
-                                    )
-                                    selectedProspect = tempProspect
+                                    selectedCustomer = nil
+                                }
+                                else if let customer = contact as? Customer {
+                                    if let match = prospects.first(where: {
+                                        $0.address == customer.address &&
+                                        $0.fullName == customer.fullName
+                                    }) {
+                                        selectedProspect = match
+                                        selectedCustomer = nil
+                                    } else {
+                                        selectedProspect = nil
+                                        selectedCustomer = customer   // 👈 open customer scheduler
+                                    }
                                 }
                                 dismiss()
+                                
                             } label: {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 2) {
