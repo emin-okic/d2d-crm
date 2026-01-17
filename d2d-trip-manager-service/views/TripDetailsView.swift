@@ -85,7 +85,13 @@ struct TripDetailsView: View {
                     // Back button top-left
                     ToolbarItem(placement: .navigationBarLeading) {
                         Button {
+                            
+                            // Haptics + sound
+                            TripManagerHapticsController.shared.lightTap()
+                            TripManagerSoundController.shared.playSound1()
+                            
                             dismiss()
+                            
                         } label: {
                             Label("Back", systemImage: "chevron.left")
                         }
@@ -121,7 +127,13 @@ struct TripDetailsView: View {
                 Spacer()
                 HStack {
                     Button(role: .destructive) {
+                        
+                        // Haptics + sound
+                        TripManagerHapticsController.shared.lightTap()
+                        TripManagerSoundController.shared.playSound1()
+                        
                         showDeleteConfirmation = true
+                        
                     } label: {
                         Image(systemName: "trash.fill")
                             .font(.system(size: 22, weight: .semibold))
@@ -141,11 +153,25 @@ struct TripDetailsView: View {
         // Delete confirmation alert
         .alert("Delete Trip?", isPresented: $showDeleteConfirmation) {
             Button("Delete", role: .destructive) {
+                
+                // Haptics + sound for deletion
+                TripManagerHapticsController.shared.mediumTap()
+                TripManagerSoundController.shared.playSound1()
+                
                 context.delete(trip)
+                
                 try? context.save()
+                
                 dismiss()
+                
             }
-            Button("Cancel", role: .cancel) { }
+            Button("Cancel", role: .cancel) {
+                
+                // Haptics + sound for cancel
+                TripManagerHapticsController.shared.lightTap()
+                TripManagerSoundController.shared.playSound1()
+                
+            }
         } message: {
             Text("This trip will be permanently deleted.")
         }
