@@ -13,21 +13,57 @@ struct ObjectionPickerView: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        NavigationView {
-            List(objections) { objection in
-                Button(objection.text) {
-                    dismiss()  // Dismiss first
-                    DispatchQueue.main.async {
-                        onSelect(objection)  // Then call startRecording
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 12) {
+                    ForEach(objections) { objection in
+                        Button {
+                            
+                            // Haptics & sound on selection
+                             RecordingScreenHapticsController.shared.lightTap()
+                             RecordingScreenSoundController.shared.playSound1()
+                            
+                            dismiss()
+                            DispatchQueue.main.async {
+                                onSelect(objection)
+                            }
+                        } label: {
+                            HStack {
+                                Text(objection.text)
+                                    .font(.body)
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.systemBackground))
+                                    .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
+                            )
+                        }
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("Select Objection")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        
+                        // Haptics & sound on selection
+                        RecordingScreenHapticsController.shared.lightTap()
+                        RecordingScreenSoundController.shared.playSound1()
+                        
+                        dismiss()
                     }
                 }
             }
-            .navigationTitle("Select Objection")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-            }
         }
+        .presentationDetents([.fraction(0.25)])
+        .presentationDragIndicator(.visible)
+        .background(Color(.secondarySystemBackground))
     }
 }

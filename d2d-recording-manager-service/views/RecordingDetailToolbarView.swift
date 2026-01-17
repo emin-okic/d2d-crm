@@ -16,7 +16,15 @@ struct RecordingDetailToolbarView: View {
 
             HStack {
                 VStack(spacing: 16) {
-                    Button(action: onDeleteTapped) {
+                    
+                    Button(action: {
+                        
+                        RecordingScreenHapticsController.shared.mediumTap()
+                        RecordingScreenSoundController.shared.playSound1()
+                        
+                        onDeleteTapped()
+                        
+                    }) {
                         Image(systemName: "trash.fill")
                             .font(.title2)
                             .foregroundColor(.white)
@@ -26,6 +34,7 @@ struct RecordingDetailToolbarView: View {
                             )
                             .shadow(radius: 5)
                     }
+                    
                 }
                 .padding(.bottom, 16)
                 .padding(.leading, 16)

@@ -64,7 +64,12 @@ struct RecordingsView: View {
                     
                     // MARK: - Training Insights
                     Button {
+                        
+                        RecordingScreenHapticsController.shared.lightTap()
+                        RecordingScreenSoundController.shared.playSound1()
+                        
                         showTopObjectionsSheet = true
+                        
                     } label: {
                         LeaderboardTextCardView(
                             title: "Top Objection",
@@ -123,6 +128,11 @@ struct RecordingsView: View {
                                         Image(systemName: selectedRecordings.contains(recording) ? "checkmark.circle.fill" : "circle")
                                             .foregroundColor(.blue)
                                             .onTapGesture {
+                                                
+                                                // Haptics & sound for delete-mode selection/unselection
+                                                RecordingScreenHapticsController.shared.lightTap()
+                                                RecordingScreenSoundController.shared.playSound1()
+                                                
                                                 toggleSelection(for: recording)
                                             }
                                     }
@@ -144,6 +154,11 @@ struct RecordingsView: View {
                                         },
                                         isPlaying: currentlyPlayingFile == recording.fileName,
                                         onSelect: {
+                                            
+                                            // Add haptics & sound
+                                            RecordingScreenHapticsController.shared.lightTap()
+                                            RecordingScreenSoundController.shared.playSound1()
+                                            
                                             if isEditing {
                                                 toggleSelection(for: recording)
                                             } else {
@@ -181,13 +196,24 @@ struct RecordingsView: View {
             }
             .alert("Delete selected recordings?", isPresented: $showDeleteConfirm) {
                 Button("Delete", role: .destructive) {
+                    
+                    // Add haptics & sound
+                    RecordingScreenHapticsController.shared.lightTap()
+                    RecordingScreenSoundController.shared.playSound1()
+                    
                     deleteSelected()
                     withAnimation(.spring(response: 0.25, dampingFraction: 0.9)) {
                         isEditing = false
                         trashPulse = false
                     }
                 }
-                Button("Cancel", role: .cancel) { }
+                Button("Cancel", role: .cancel) {
+                    
+                    // Add haptics & sound
+                    RecordingScreenHapticsController.shared.lightTap()
+                    RecordingScreenSoundController.shared.playSound1()
+                    
+                }
             } message: {
                 Text("This action can’t be undone.")
             }
@@ -224,7 +250,12 @@ struct RecordingsView: View {
             // Back button (top-left)
             ToolbarItem(placement: .topBarLeading) {
                 Button {
+                    
+                    RecordingScreenHapticsController.shared.lightTap()
+                    RecordingScreenSoundController.shared.playSound1()
+                    
                     dismiss()
+                    
                 } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .semibold))

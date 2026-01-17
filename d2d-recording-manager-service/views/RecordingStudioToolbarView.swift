@@ -26,6 +26,10 @@ struct RecordingStudioToolbarView: View {
             VStack(spacing: 12) {
                 // Add Recording (top)
                 Button {
+                    
+                    RecordingScreenHapticsController.shared.lightTap()
+                    RecordingScreenSoundController.shared.playSound1()
+                    
                     showingObjectionPicker = true
                 } label: {
                     Image(systemName: "mic.fill")
@@ -38,6 +42,10 @@ struct RecordingStudioToolbarView: View {
                 
                 // Trash (bottom)
                 Button {
+                    
+                    RecordingScreenHapticsController.shared.mediumTap()
+                    RecordingScreenSoundController.shared.playSound1()
+                    
                     if isEditing {
                         // Second tap: if nothing selected, exit edit mode; if selected, ask to confirm delete
                         if selectedRecordings.isEmpty {
