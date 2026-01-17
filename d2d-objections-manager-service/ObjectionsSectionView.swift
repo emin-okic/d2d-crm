@@ -38,8 +38,18 @@ struct ObjectionsSectionView: View {
                         selected: selectedObjections
                     ) { objection in
                         if isEditing {
+                            
+                            // DELETE / MULTI-SELECT MODE
+                            RecordingScreenHapticsController.shared.mediumTap()
+                            RecordingScreenSoundController.shared.playSound1()
+                            
                             toggleSelection(objection)
                         } else {
+                            
+                            // NORMAL MODE: open objection details
+                            RecordingScreenHapticsController.shared.lightTap()
+                            RecordingScreenSoundController.shared.playSound1()
+                            
                             selectedObjection = objection
                         }
                     }
@@ -65,8 +75,22 @@ struct ObjectionsSectionView: View {
                 .presentationDragIndicator(.visible)
         }
         .alert("Delete selected objections?", isPresented: $showDeleteConfirm) {
-            Button("Delete", role: .destructive) { deleteSelected() }
-            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                
+                // NORMAL MODE: open objection details
+                RecordingScreenHapticsController.shared.lightTap()
+                RecordingScreenSoundController.shared.playSound1()
+                
+                deleteSelected()
+                
+            }
+            Button("Cancel", role: .cancel) {
+                
+                // NORMAL MODE: open objection details
+                RecordingScreenHapticsController.shared.lightTap()
+                RecordingScreenSoundController.shared.playSound1()
+                
+            }
         }
     }
 
