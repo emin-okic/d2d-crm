@@ -164,12 +164,25 @@ struct TripsSectionView: View {
             // Export CSV button on the right
             ToolbarItem(placement: .navigationBarTrailing) {
                 if !filteredTrips.isEmpty {
-                    ShareLink(item: csvFileURL()) {
+                    Button {
+                        // Haptics + sound when tapping export
+                        TripManagerHapticsController.shared.lightTap()
+                        TripManagerSoundController.shared.playSound1()
+                        
+                        // Generate CSV and show export sheet
+                        let url = csvFileURL()
+                        csvURL = IdentifiableURL(url: url)
+                    } label: {
                         Image(systemName: "square.and.arrow.up")
                     }
                     .disabled(filteredTrips.isEmpty)
+                    .sheet(item: $csvURL) { urlItem in
+                        // This sheet now directly shows the ShareLink
+                        TripManagerShareSheet(url: urlItem.url)
+                    }
                 }
             }
+            
         }
         // Add Trip
         .sheet(isPresented: $showingAddTrip) {
