@@ -64,7 +64,12 @@ struct RecordingsView: View {
                     
                     // MARK: - Training Insights
                     Button {
+                        
+                        RecordingScreenHapticsController.shared.lightTap()
+                        RecordingScreenSoundController.shared.playSound1()
+                        
                         showTopObjectionsSheet = true
+                        
                     } label: {
                         LeaderboardTextCardView(
                             title: "Top Objection",
