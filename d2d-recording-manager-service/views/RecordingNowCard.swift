@@ -47,7 +47,13 @@ struct RecordingNowCard: View {
                 .padding(.horizontal, 18)
 
             // Stop button
-            Button(action: onStop) {
+            Button(action: {
+                // Haptics & sound on stop
+                RecordingScreenHapticsController.shared.lightTap()
+                RecordingScreenSoundController.shared.playSound1()
+                
+                onStop()
+            }) {
                 Label("Stop Recording", systemImage: "stop.fill")
                     .font(.system(size: 16, weight: .semibold))
                     .padding(.vertical, 10)
@@ -60,6 +66,7 @@ struct RecordingNowCard: View {
                     .foregroundColor(.white)
             }
             .buttonStyle(.plain)
+            
         }
         .padding(16)
         .frame(maxWidth: .infinity)
