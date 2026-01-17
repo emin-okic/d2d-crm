@@ -110,6 +110,10 @@ struct AppointmentActionsToolbar: View {
                    .alert("Add to Calendar?",
                           isPresented: $showAddToCalendarConfirm) {
                        Button("Apple Calendar") {
+                           
+                           FollowUpScreenHapticsController.shared.successConfirmationTap()
+                           FollowUpScreenSoundController.shared.playSound1()
+                           
                            calendarHelper.addToAppleCalendar(appointment: appointment) { result in
                                switch result {
                                case .success: print("Added to Apple Calendar")
@@ -118,9 +122,18 @@ struct AppointmentActionsToolbar: View {
                            }
                        }
                        Button("Google Calendar") {
+                           
+                           FollowUpScreenHapticsController.shared.successConfirmationTap()
+                           FollowUpScreenSoundController.shared.playSound1()
+                           
                            calendarHelper.addToGoogleCalendar(appointment: appointment)
                        }
-                       Button("Cancel", role: .cancel) {}
+                       Button("Cancel", role: .cancel) {
+                           
+                           FollowUpScreenHapticsController.shared.successConfirmationTap()
+                           FollowUpScreenSoundController.shared.playSound1()
+                           
+                       }
                    }
 
             .alert("Open in Apple Maps?",
