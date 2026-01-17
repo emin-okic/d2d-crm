@@ -239,7 +239,14 @@ struct RecordingsView: View {
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
                         ToolbarItem(placement: .confirmationAction) {
-                            Button("Done") { showTopObjectionsSheet = false }
+                            Button("Done") {
+                                
+                                // Play haptic & sound feedback
+                                ObjectionManagerHapticsController.shared.successAction()
+                                ObjectionManagerSoundController.shared.playActionSound()
+                                
+                                showTopObjectionsSheet = false
+                            }
                         }
                     }
             }
