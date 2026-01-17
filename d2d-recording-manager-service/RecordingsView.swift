@@ -224,7 +224,12 @@ struct RecordingsView: View {
             // Back button (top-left)
             ToolbarItem(placement: .topBarLeading) {
                 Button {
+                    
+                    RecordingScreenHapticsController.shared.lightTap()
+                    RecordingScreenSoundController.shared.playSound1()
+                    
                     dismiss()
+                    
                 } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .semibold))

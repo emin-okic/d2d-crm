@@ -24,6 +24,10 @@ struct RecordingModeToggle: View {
 
     var body: some View {
         Button {
+            
+            RecordingScreenHapticsController.shared.lightTap()
+            RecordingScreenSoundController.shared.playSound1()
+            
             guard studioUnlocked else {
                 showPromo = true
                 return
@@ -75,14 +79,24 @@ struct RecordingModeToggle: View {
         }
         .buttonStyle(.plain)
         .alert("Recording Mode", isPresented: $showConfirm) {
+            
             Button("Confirm") {
+                
+                RecordingScreenHapticsController.shared.successConfirmationTap()
+                RecordingScreenSoundController.shared.playSound1()
+                
                 if let pendingValue {
                     recordingModeEnabled = pendingValue
                 }
                 pendingValue = nil
             }
             Button("Cancel", role: .cancel) {
+                
+                RecordingScreenHapticsController.shared.successConfirmationTap()
+                RecordingScreenSoundController.shared.playSound1()
+                
                 pendingValue = nil
+                
             }
         } message: {
             Text(
