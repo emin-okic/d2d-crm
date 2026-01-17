@@ -21,7 +21,11 @@ struct TripFloatingActionsToolbar: View {
             LiquidGlassToolbarContainer {
 
                 // ➕ Add Trip
-                Button(action: onAdd) {
+                Button {
+                    TripManagerHapticsController.shared.lightTap()
+                    TripManagerSoundController.shared.playSound1()
+                    onAdd()
+                } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.white)
