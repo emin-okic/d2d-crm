@@ -37,7 +37,12 @@ struct AppointmentActionsToolbar: View {
                 title: "Reschedule",
                 color: .blue
             ) {
+                
+                FollowUpScreenHapticsController.shared.lightTap()
+                FollowUpScreenSoundController.shared.playSound1()
+                
                 showRescheduleConfirm = true
+                
             }
 
             actionButton(
@@ -45,6 +50,10 @@ struct AppointmentActionsToolbar: View {
                 title: "Calendar",
                 color: .purple
             ) {
+                
+                FollowUpScreenHapticsController.shared.lightTap()
+                FollowUpScreenSoundController.shared.playSound1()
+                
                 showAddToCalendarConfirm = true
             }
 
@@ -53,6 +62,10 @@ struct AppointmentActionsToolbar: View {
                 title: "Directions",
                 color: .orange
             ) {
+                
+                FollowUpScreenHapticsController.shared.lightTap()
+                FollowUpScreenSoundController.shared.playSound1()
+                
                 showOpenInMapsConfirm = true
             }
 
@@ -61,12 +74,25 @@ struct AppointmentActionsToolbar: View {
                 title: "Cancel",
                 color: .red
             ) {
+                
+                FollowUpScreenHapticsController.shared.lightTap()
+                FollowUpScreenSoundController.shared.playSound1()
+                
                 showCancelConfirm = true
+                
             }
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
         .overlay(confirmationDialogs)
+        .sheet(isPresented: $showAddToCalendarConfirm) {
+            ExportToCalendarSheet(
+                appointment: appointment,
+                calendarHelper: calendarHelper
+            )
+            .presentationDetents([.fraction(0.40)])
+            .presentationDragIndicator(.visible)
+        }
     }
 
     // MARK: - Confirmation dialogs
@@ -74,43 +100,56 @@ struct AppointmentActionsToolbar: View {
         EmptyView()
             .alert("Reschedule Appointment?",
                    isPresented: $showRescheduleConfirm) {
-                Button("Continue") { onReschedule() }
-                Button("Cancel", role: .cancel) {}
+                Button("Continue") {
+                    
+                    FollowUpScreenHapticsController.shared.mediumTap()
+                    FollowUpScreenSoundController.shared.playSound1()
+                    
+                    onReschedule()
+                }
+                Button("Cancel", role: .cancel) {
+                    
+                    FollowUpScreenHapticsController.shared.mediumTap()
+                    FollowUpScreenSoundController.shared.playSound1()
+                    
+                }
             }
-
-                   .alert("Add to Calendar?",
-                          isPresented: $showAddToCalendarConfirm) {
-                       Button("Apple Calendar") {
-                           calendarHelper.addToAppleCalendar(appointment: appointment) { result in
-                               switch result {
-                               case .success: print("Added to Apple Calendar")
-                               case .failure(let error): print("Error: \(error)")
-                               }
-                           }
-                       }
-                       Button("Google Calendar") {
-                           calendarHelper.addToGoogleCalendar(appointment: appointment)
-                       }
-                       Button("Cancel", role: .cancel) {}
-                   }
 
             .alert("Open in Apple Maps?",
                    isPresented: $showOpenInMapsConfirm) {
                 Button("Open Maps") {
+                    
+                    FollowUpScreenHapticsController.shared.successConfirmationTap()
+                    FollowUpScreenSoundController.shared.playSound1()
+                    
                     openInMaps(destination: appointment.location)
                 }
-                Button("Cancel", role: .cancel) {}
+                Button("Cancel", role: .cancel) {
+                    
+                    FollowUpScreenHapticsController.shared.successConfirmationTap()
+                    FollowUpScreenSoundController.shared.playSound1()
+                    
+                }
             }
 
             .alert("Cancel Appointment?",
                    isPresented: $showCancelConfirm) {
                 Button("Delete", role: .destructive) {
+                    
+                    FollowUpScreenHapticsController.shared.successConfirmationTap()
+                    FollowUpScreenSoundController.shared.playSound1()
+                    
                     context.delete(appointment)
                     try? context.save()
                     dismiss()
                     onDelete?()
                 }
-                Button("Keep", role: .cancel) {}
+                Button("Keep", role: .cancel) {
+                    
+                    FollowUpScreenHapticsController.shared.successConfirmationTap()
+                    FollowUpScreenSoundController.shared.playSound1()
+                    
+                }
             } message: {
                 Text("This will permanently delete this appointment.")
             }
