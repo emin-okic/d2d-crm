@@ -18,6 +18,10 @@ struct TripFilterChips: View {
                     withAnimation(.easeInOut(duration: 0.15)) {
                         selectedFilter = option
                         onChange?(option)
+                        
+                        // Haptics + sound for filter switch
+                        TripManagerHapticsController.shared.lightTap()
+                        TripManagerSoundController.shared.playSound1()
                     }
                 } label: {
                     Text(option.rawValue)

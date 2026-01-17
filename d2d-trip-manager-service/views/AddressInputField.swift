@@ -36,6 +36,10 @@ struct AddressInputField: View {
                         VStack(spacing: 0) {
                             ForEach(searchVM.results.prefix(5), id: \.self) { result in
                                 Button {
+                                    
+                                    TripManagerHapticsController.shared.lightTap()
+                                    TripManagerSoundController.shared.playSound1()
+                                    
                                     SearchBarController.resolveAndSelectAddress(from: result) { resolved in
                                         text = resolved
                                         searchVM.results = []

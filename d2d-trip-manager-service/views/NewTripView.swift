@@ -65,7 +65,12 @@ struct NewTripView: View {
                     
                     // MARK: - Save Button
                     Button {
+                        
+                        TripManagerHapticsController.shared.successConfirmationTap()
+                        TripManagerSoundController.shared.playSound1()
+                        
                         saveTrip()
+                        
                     } label: {
                         Text("Save Trip")
                             .frame(maxWidth: .infinity)
