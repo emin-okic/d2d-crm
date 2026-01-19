@@ -17,6 +17,8 @@ struct ObjectionDetailsView: View {
     @State private var showRegenerateAlert = false
     
     @State private var showPracticeSheet = false
+    
+    @State private var associatedRecordingCount = 0
 
     var body: some View {
         ZStack {
@@ -87,6 +89,9 @@ struct ObjectionDetailsView: View {
                         ObjectionManagerHapticsController.shared.actionConfirmation()
                         ObjectionManagerSoundController.shared.playActionSound()
                         
+                        associatedRecordingCount = ObjectionManager()
+                            .recordingsCount(for: objection, in: modelContext)
+                        
                         showDeleteAlert = true
                         
                     } label: {
@@ -124,10 +129,14 @@ struct ObjectionDetailsView: View {
                 // Haptics + sound when tapping the delete button
                 ObjectionManagerHapticsController.shared.actionConfirmation()
                 ObjectionManagerSoundController.shared.playActionSound()
-                
-                modelContext.delete(objection)
-                try? modelContext.save()
+
+                // IMPORTANT: dismiss first so SwiftUI stops observing it
                 dismiss()
+
+                DispatchQueue.main.async {
+                    ObjectionManager().delete(objection, from: modelContext)
+                }
+                
             }
             Button("Cancel", role: .cancel) {
                 
@@ -137,7 +146,11 @@ struct ObjectionDetailsView: View {
                 
             }
         } message: {
-            Text("This action cannot be undone.")
+            if associatedRecordingCount > 0 {
+                Text("This will also delete \(associatedRecordingCount) recording(s) linked to this objection. This action cannot be undone.")
+            } else {
+                Text("This action cannot be undone.")
+            }
         }
         .alert("Regenerate response?", isPresented: $showRegenerateAlert) {
             Button("Regenerate", role: .destructive) {
