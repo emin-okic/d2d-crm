@@ -34,7 +34,6 @@ struct MapSearchView: View {
     @State private var showObjectionPicker = false
     @State private var objectionOptions: [Objection] = []
     @State private var selectedObjection: Objection?
-    @State private var showingAddObjection = false
 
     @State private var showConversionSheet = false
     @State private var prospectToConvert: Prospect?
@@ -574,11 +573,6 @@ struct MapSearchView: View {
                 },
                 filter: { $0.text != "Converted To Sale" }
             )
-        }
-        .sheet(isPresented: $showingAddObjection, onDismiss: {
-            if let _ = prospectToNote { showFollowUpSheet = true }
-        }) {
-            AddObjectionView()
         }
         .onReceive(NotificationCenter.default.publisher(for: .didRequestBulkAdd)) { note in
             guard let bulk = note.object as? PendingBulkAdd else { return }
@@ -1184,19 +1178,6 @@ struct MapSearchView: View {
                 list: "Prospects"
             )
         )
-    }
-
-    private func presentObjectionFlow(filtered: [Objection], for prospect: Prospect) {
-        objectionOptions = filtered
-        prospectToNote = prospect
-        followUpAddress = prospect.address
-        followUpProspectName = prospect.fullName
-        if filtered.isEmpty {
-            showObjectionPicker = false
-            showingAddObjection = true
-        } else {
-            showObjectionPicker = true
-        }
     }
     
     @MainActor
