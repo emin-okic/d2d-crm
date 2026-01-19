@@ -447,6 +447,8 @@ struct MapSearchView: View {
             // Other Stuff
             //
             // inside body chain where you had the presenter & lifecycle hooks
+            
+            // Add related modifiers
             .presentRotatingAdsCentered()
             .onAppear {
                 // 🔹 Show exactly one ad for this app session (centered). Will differ each launch.
@@ -456,6 +458,8 @@ struct MapSearchView: View {
                 // No-op for single-shot, but keep if you want to explicitly clear.
                 AdEngine.shared.stop()
             }
+            
+            // Search engine related modifiers
             .onChange(of: popupState) { newValue in
                 // Close the search bar when a popup opens
                 if newValue != nil, isSearchExpanded {
@@ -476,6 +480,7 @@ struct MapSearchView: View {
                 }
             }
             
+            // Confetti for finishing a follow up
             if showConfetti {
                 ConfettiBurstView()
                     .ignoresSafeArea()
@@ -490,9 +495,12 @@ struct MapSearchView: View {
             }
             
         }
+        
+        // Modifier for markers
         .onReceive(NotificationCenter.default.publisher(for: .mapShouldRecenterAllMarkers)) { _ in
-                    controller.recenterToFitAllMarkers()
-                }
+            controller.recenterToFitAllMarkers()
+            
+        }
         .onChange(of: searchText) { searchVM.updateQuery($0) }
         .onAppear {
             updateMarkers()
@@ -535,20 +543,6 @@ struct MapSearchView: View {
             .onAppear {
                 // ✨ Entry sound
                 MapScreenSoundController.shared.playPropertyOpen()
-            }
-        }
-        .sheet(isPresented: $showNoteInput) {
-            if let prospect = prospectToNote {
-                LogNoteView(
-                    prospect: prospect,
-                    objection: selectedObjection,
-                    pendingAddress: pendingAddress
-                ) {
-                    followUpAddress = prospect.address
-                    followUpProspectName = prospect.fullName
-                    selectedObjection = nil
-                    showTripPrompt = true
-                }
             }
         }
         .sheet(isPresented: $showObjectionPicker) {
