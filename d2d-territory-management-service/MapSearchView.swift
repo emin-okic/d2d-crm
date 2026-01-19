@@ -545,29 +545,6 @@ struct MapSearchView: View {
                 MapScreenSoundController.shared.playPropertyOpen()
             }
         }
-        .sheet(isPresented: $showObjectionPicker) {
-            ObjectionSelectorView(
-                isPresented: $showObjectionPicker,
-                onSelect: { obj in
-                    selectedObjection = obj
-                    if let name = pendingRecordingFileName {
-                        
-                        let newRecording = Recording(
-                            fileName: name,
-                            title: obj.text,
-                            date: .now,
-                            objection: obj,
-                            rating: 3
-                        )
-                        modelContext.insert(newRecording)
-                        try? modelContext.save()
-                        pendingRecordingFileName = nil
-                    }
-                    showFollowUpSheet = true
-                },
-                filter: { $0.text != "Converted To Sale" }
-            )
-        }
         .onReceive(NotificationCenter.default.publisher(for: .didRequestBulkAdd)) { note in
             guard let bulk = note.object as? PendingBulkAdd else { return }
 
