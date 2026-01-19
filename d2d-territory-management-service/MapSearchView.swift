@@ -545,6 +545,8 @@ struct MapSearchView: View {
                 MapScreenSoundController.shared.playPropertyOpen()
             }
         }
+        
+        // This is for bulk property additions
         .onReceive(NotificationCenter.default.publisher(for: .didRequestBulkAdd)) { note in
             guard let bulk = note.object as? PendingBulkAdd else { return }
 
@@ -602,6 +604,8 @@ struct MapSearchView: View {
                 MapScreenSoundController.shared.playPropertyOpen()
             }
         }
+        
+        // This is for opening the contact details
         .sheet(item: $selectedProspect) { prospect in
             NavigationStack {
                 ProspectDetailsView(prospect: prospect)
