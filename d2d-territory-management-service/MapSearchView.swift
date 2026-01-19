@@ -575,26 +575,6 @@ struct MapSearchView: View {
                 filter: { $0.text != "Converted To Sale" }
             )
         }
-        .alert("Schedule Follow-Up?", isPresented: $showFollowUpPrompt) {
-            Button("Yes") { showFollowUpSheet = true }
-            Button("No", role: .cancel) { showTripPrompt = true }
-        } message: { Text("Schedule follow-up for \(followUpProspectName)?") }
-        .sheet(isPresented: $showFollowUpSheet, onDismiss: {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                showNoteInput = true
-            }
-        }) {
-            if let prospect = prospectToNote {
-                FollowUpScheduleView(prospect: prospect)
-            }
-        }
-        .alert("Log a trip?", isPresented: $showTripPrompt) {
-            Button("Yes") { showTripPopup = true }
-            Button("No", role: .cancel) {}
-        }
-        .sheet(isPresented: $showTripPopup) {
-            if let addr = pendingAddress { LogTripPopupView(endAddress: addr) }
-        }
         .sheet(isPresented: $showingAddObjection, onDismiss: {
             if let _ = prospectToNote { showFollowUpSheet = true }
         }) {
