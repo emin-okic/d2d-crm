@@ -27,7 +27,6 @@ struct MapSearchView: View {
 
     @State private var pendingAddress: String?
 
-    @State private var showObjectionPicker = false
     @State private var objectionOptions: [Objection] = []
     @State private var selectedObjection: Objection?
 
