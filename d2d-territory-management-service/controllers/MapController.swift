@@ -195,6 +195,33 @@ class MapController: ObservableObject {
             }
         }
     }
+    
+    @MainActor
+    func centerMapForPopup(coordinate: CLLocationCoordinate2D) {
+
+        // Target zoom (tight enough to matter visually)
+        let latMeters: CLLocationDistance = 250
+        let lonMeters: CLLocationDistance = 250
+
+        // Convert meters → degrees (approx)
+        let metersToDegrees = 1.0 / 111_000.0
+        let latitudeSpanDegrees = latMeters * metersToDegrees
+
+        // Push marker into TOP HALF (25% from top)
+        let verticalOffset = latitudeSpanDegrees * 0.25
+
+        let adjustedCenter = CLLocationCoordinate2D(
+            latitude: coordinate.latitude - verticalOffset,
+            longitude: coordinate.longitude
+        )
+
+        self.region = MKCoordinateRegion(
+            center: adjustedCenter,
+            latitudinalMeters: latMeters,
+            longitudinalMeters: lonMeters
+        )
+        
+    }
 }
 
 extension MapController {

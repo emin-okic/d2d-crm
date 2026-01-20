@@ -529,7 +529,9 @@ struct MapSearchView: View {
 
         if units.count > 1 {
             // ✅ Center map on the apartment complex itself
-            centerMapForPopup(coordinate: place.location)
+            withAnimation(.easeInOut(duration: 0.35)) {
+                controller.centerMapForPopup(coordinate: place.location)
+            }
             
             // Show unit selector instead of prospect popup
             selectedUnitGroup = UnitGroup(base: parts.base, units: units)
@@ -537,7 +539,9 @@ struct MapSearchView: View {
         }
         
         // Center the map each time a prospect is selected
-        centerMapForPopup(coordinate: place.location)
+        withAnimation(.easeInOut(duration: 0.35)) {
+            controller.centerMapForPopup(coordinate: place.location)
+        }
         
         // Keep ProspectPopupView behavior as-is
         let state = PopupState(place: place)
@@ -727,7 +731,9 @@ struct MapSearchView: View {
         
         selectedPlaceID = place.id
         
-        centerMapForPopup(coordinate: place.location)
+        withAnimation(.easeInOut(duration: 0.35)) {
+            controller.centerMapForPopup(coordinate: place.location)
+        }
         
         let state = PopupState(place: place)
         popupState = nil
@@ -998,34 +1004,6 @@ struct MapSearchView: View {
 
         // Fallback: original coordinate
         return coordinate
-    }
-    
-    @MainActor
-    private func centerMapForPopup(coordinate: CLLocationCoordinate2D) {
-
-        // Target zoom (tight enough to matter visually)
-        let latMeters: CLLocationDistance = 250
-        let lonMeters: CLLocationDistance = 250
-
-        // Convert meters → degrees (approx)
-        let metersToDegrees = 1.0 / 111_000.0
-        let latitudeSpanDegrees = latMeters * metersToDegrees
-
-        // Push marker into TOP HALF (25% from top)
-        let verticalOffset = latitudeSpanDegrees * 0.25
-
-        let adjustedCenter = CLLocationCoordinate2D(
-            latitude: coordinate.latitude - verticalOffset,
-            longitude: coordinate.longitude
-        )
-
-        withAnimation(.easeInOut(duration: 0.35)) {
-            controller.region = MKCoordinateRegion(
-                center: adjustedCenter,
-                latitudinalMeters: latMeters,
-                longitudinalMeters: lonMeters
-            )
-        }
     }
     
     private func centerMapForNewProperty(coordinate: CLLocationCoordinate2D) {
