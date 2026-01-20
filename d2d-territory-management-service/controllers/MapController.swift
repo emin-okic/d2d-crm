@@ -8,6 +8,7 @@
 import Foundation
 import MapKit
 import CoreLocation
+import Contacts
 
 /// `MapController` manages map-related logic such as marker placement, geocoding searches,
 /// and updating the visible map region based on annotations.
@@ -17,6 +18,7 @@ import CoreLocation
 /// - Performing geocoded address searches
 /// - Centering and zooming the map to fit all markers
 /// - Dynamically updating markers based on prospects
+@MainActor
 class MapController: ObservableObject {
     
     /// Published list of markers (used in SwiftUI map annotations)
@@ -253,6 +255,51 @@ class MapController: ObservableObject {
         )
 
         mapView.setRegion(region, animated: true)
+    }
+    
+    private let geocoder = CLGeocoder()
+
+    func reverseGeocode(
+        coordinate: CLLocationCoordinate2D
+    ) async -> String? {
+
+        let location = CLLocation(
+            latitude: coordinate.latitude,
+           longitude: coordinate.longitude
+        )
+
+        do {
+            let placemarks = try await geocoder.reverseGeocodeLocation(location)
+            guard let placemark = placemarks.first else { return nil }
+
+            if let postal = placemark.postalAddress {
+                return CNPostalAddressFormatter()
+                    .string(from: postal)
+                    .replacingOccurrences(of: "\n", with: ", ")
+            }
+
+            if let name = placemark.name,
+               let street = placemark.thoroughfare {
+                return "\(name) \(street)"
+            }
+
+            let parts = [
+                placemark.subThoroughfare,
+                placemark.thoroughfare,
+                placemark.locality,
+                placemark.administrativeArea
+            ]
+
+            let address = parts
+                .compactMap { $0 }
+                .joined(separator: " ")
+
+            return address.isEmpty ? nil : address
+
+        } catch {
+            print("❌ Reverse geocode failed:", error)
+            return nil
+        }
     }
     
 }

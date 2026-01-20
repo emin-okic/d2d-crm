@@ -458,7 +458,7 @@ struct MapSearchView: View {
 
                     let snapped = await snapToNearestRoad(coordinate: prop.coordinate)
 
-                    let address = await reverseGeocode(coordinate: snapped) ?? "Unknown Address"
+                    let address = await controller.reverseGeocode(coordinate: snapped) ?? "Unknown Address"
 
                     let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -911,54 +911,6 @@ struct MapSearchView: View {
             .map { UnitContact.customer($0) }
 
         return prospectUnits + customerUnits
-    }
-    
-    private let bulkGeocoder = CLGeocoder()
-
-    private func reverseGeocode(
-        coordinate: CLLocationCoordinate2D
-    ) async -> String? {
-
-        let location = CLLocation(
-            latitude: coordinate.latitude,
-            longitude: coordinate.longitude
-        )
-
-        do {
-            let placemarks = try await bulkGeocoder.reverseGeocodeLocation(location)
-            guard let placemark = placemarks.first else { return nil }
-
-            // Prefer full postal address if available
-            if let postal = placemark.postalAddress {
-                return CNPostalAddressFormatter()
-                    .string(from: postal)
-                    .replacingOccurrences(of: "\n", with: ", ")
-            }
-
-            // Fallbacks
-            if let name = placemark.name,
-               let street = placemark.thoroughfare {
-                return "\(name) \(street)"
-            }
-
-            // Final fallback: build a readable address manually
-            let parts = [
-                placemark.subThoroughfare,
-                placemark.thoroughfare,
-                placemark.locality,
-                placemark.administrativeArea
-            ]
-
-            let address = parts
-                .compactMap { $0 }
-                .joined(separator: " ")
-
-            return address.isEmpty ? nil : address
-            
-        } catch {
-            print("❌ Reverse geocode failed:", error)
-            return nil
-        }
     }
     
     private func snapToNearestRoad(
