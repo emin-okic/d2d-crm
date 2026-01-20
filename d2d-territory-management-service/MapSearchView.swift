@@ -832,10 +832,7 @@ struct MapSearchView: View {
                 address: addr,
                 status: status,
                 prospects: prospects,
-                onUpdateMarkers: { updateMarkers() },
-                onShowNoteInput: { prospect in
-                    prospectToNote = prospect
-                }
+                onUpdateMarkers: { updateMarkers() }
             )
             
         case "Unqualified":
