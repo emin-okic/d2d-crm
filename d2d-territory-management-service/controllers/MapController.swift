@@ -302,6 +302,52 @@ class MapController: ObservableObject {
         }
     }
     
+    /// Snaps a given coordinate to the nearest road using a short MKDirections route.
+    /// - Parameter coordinate: The coordinate to snap.
+    /// - Returns: The coordinate snapped to the nearest road, or the original if snapping fails.
+    func snapToNearestRoad(coordinate: CLLocationCoordinate2D) async -> CLLocationCoordinate2D {
+
+        let request = MKDirections.Request()
+
+        // Tiny offset destination (~10m) to force route solving
+        let offset = 0.00009
+
+        request.source = MKMapItem(
+            placemark: MKPlacemark(coordinate: coordinate)
+        )
+
+        request.destination = MKMapItem(
+            placemark: MKPlacemark(
+                coordinate: CLLocationCoordinate2D(
+                    latitude: coordinate.latitude + offset,
+                    longitude: coordinate.longitude + offset
+                )
+            )
+        )
+
+        request.transportType = .walking
+        request.requestsAlternateRoutes = false
+
+        let directions = MKDirections(request: request)
+
+        do {
+            let response = try await directions.calculate()
+
+            // First polyline point = snapped road position
+            if let route = response.routes.first {
+                let points = route.polyline.points()
+                if route.polyline.pointCount > 0 {
+                    return points[0].coordinate
+                }
+            }
+        } catch {
+            print("❌ Road snap failed:", error)
+        }
+
+        // Fallback: original coordinate
+        return coordinate
+    }
+    
 }
 
 extension MapController {

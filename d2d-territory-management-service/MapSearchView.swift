@@ -456,7 +456,7 @@ struct MapSearchView: View {
 
                 for prop in bulk.properties {
 
-                    let snapped = await snapToNearestRoad(coordinate: prop.coordinate)
+                    let snapped = await controller.snapToNearestRoad(coordinate: prop.coordinate)
 
                     let address = await controller.reverseGeocode(coordinate: snapped) ?? "Unknown Address"
 
@@ -911,51 +911,6 @@ struct MapSearchView: View {
             .map { UnitContact.customer($0) }
 
         return prospectUnits + customerUnits
-    }
-    
-    private func snapToNearestRoad(
-        coordinate: CLLocationCoordinate2D
-    ) async -> CLLocationCoordinate2D {
-
-        let request = MKDirections.Request()
-
-        // Tiny offset destination (~10m) to force route solving
-        let offset = 0.00009
-
-        request.source = MKMapItem(
-            placemark: MKPlacemark(coordinate: coordinate)
-        )
-
-        request.destination = MKMapItem(
-            placemark: MKPlacemark(
-                coordinate: CLLocationCoordinate2D(
-                    latitude: coordinate.latitude + offset,
-                    longitude: coordinate.longitude + offset
-                )
-            )
-        )
-
-        request.transportType = .walking
-        request.requestsAlternateRoutes = false
-
-        let directions = MKDirections(request: request)
-
-        do {
-            let response = try await directions.calculate()
-
-            // First polyline point = snapped road position
-            if let route = response.routes.first {
-                let points = route.polyline.points()
-                if route.polyline.pointCount > 0 {
-                    return points[0].coordinate
-                }
-            }
-        } catch {
-            print("❌ Road snap failed:", error)
-        }
-
-        // Fallback: original coordinate
-        return coordinate
     }
     
     private func saveFollowUp(
