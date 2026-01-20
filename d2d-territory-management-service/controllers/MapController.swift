@@ -8,6 +8,7 @@
 import Foundation
 import MapKit
 import CoreLocation
+import Contacts
 
 /// `MapController` manages map-related logic such as marker placement, geocoding searches,
 /// and updating the visible map region based on annotations.
@@ -17,6 +18,7 @@ import CoreLocation
 /// - Performing geocoded address searches
 /// - Centering and zooming the map to fit all markers
 /// - Dynamically updating markers based on prospects
+@MainActor
 class MapController: ObservableObject {
     
     /// Published list of markers (used in SwiftUI map annotations)
@@ -195,6 +197,157 @@ class MapController: ObservableObject {
             }
         }
     }
+    
+    @MainActor
+    func centerMapForPopup(coordinate: CLLocationCoordinate2D) {
+
+        // Target zoom (tight enough to matter visually)
+        let latMeters: CLLocationDistance = 250
+        let lonMeters: CLLocationDistance = 250
+
+        // Convert meters → degrees (approx)
+        let metersToDegrees = 1.0 / 111_000.0
+        let latitudeSpanDegrees = latMeters * metersToDegrees
+
+        // Push marker into TOP HALF (25% from top)
+        let verticalOffset = latitudeSpanDegrees * 0.25
+
+        let adjustedCenter = CLLocationCoordinate2D(
+            latitude: coordinate.latitude - verticalOffset,
+            longitude: coordinate.longitude
+        )
+
+        self.region = MKCoordinateRegion(
+            center: adjustedCenter,
+            latitudinalMeters: latMeters,
+            longitudinalMeters: lonMeters
+        )
+        
+    }
+    
+    func centerMapForNewProperty(coordinate: CLLocationCoordinate2D) {
+        guard let mapView = MapDisplayView.cachedMapView else { return }
+
+        // Convert map coordinate → screen point
+        let point = mapView.convert(coordinate, toPointTo: mapView)
+
+        // Visible height minus detented sheet (~260)
+        let sheetHeight: CGFloat = 260
+        let visibleHeight = mapView.bounds.height - sheetHeight
+
+        // Target Y = vertical center of visible map area
+        let targetY = visibleHeight / 2
+
+        // Calculate vertical delta in screen space
+        let deltaY = point.y - targetY
+
+        // Convert that delta back into map coordinates
+        let offsetPoint = CGPoint(
+            x: point.x,
+            y: point.y + deltaY
+        )
+
+        let offsetCoordinate = mapView.convert(offsetPoint, toCoordinateFrom: mapView)
+
+        let region = MKCoordinateRegion(
+            center: offsetCoordinate,
+            span: mapView.region.span
+        )
+
+        mapView.setRegion(region, animated: true)
+    }
+    
+    private let geocoder = CLGeocoder()
+
+    func reverseGeocode(
+        coordinate: CLLocationCoordinate2D
+    ) async -> String? {
+
+        let location = CLLocation(
+            latitude: coordinate.latitude,
+           longitude: coordinate.longitude
+        )
+
+        do {
+            let placemarks = try await geocoder.reverseGeocodeLocation(location)
+            guard let placemark = placemarks.first else { return nil }
+
+            if let postal = placemark.postalAddress {
+                return CNPostalAddressFormatter()
+                    .string(from: postal)
+                    .replacingOccurrences(of: "\n", with: ", ")
+            }
+
+            if let name = placemark.name,
+               let street = placemark.thoroughfare {
+                return "\(name) \(street)"
+            }
+
+            let parts = [
+                placemark.subThoroughfare,
+                placemark.thoroughfare,
+                placemark.locality,
+                placemark.administrativeArea
+            ]
+
+            let address = parts
+                .compactMap { $0 }
+                .joined(separator: " ")
+
+            return address.isEmpty ? nil : address
+
+        } catch {
+            print("❌ Reverse geocode failed:", error)
+            return nil
+        }
+    }
+    
+    /// Snaps a given coordinate to the nearest road using a short MKDirections route.
+    /// - Parameter coordinate: The coordinate to snap.
+    /// - Returns: The coordinate snapped to the nearest road, or the original if snapping fails.
+    func snapToNearestRoad(coordinate: CLLocationCoordinate2D) async -> CLLocationCoordinate2D {
+
+        let request = MKDirections.Request()
+
+        // Tiny offset destination (~10m) to force route solving
+        let offset = 0.00009
+
+        request.source = MKMapItem(
+            placemark: MKPlacemark(coordinate: coordinate)
+        )
+
+        request.destination = MKMapItem(
+            placemark: MKPlacemark(
+                coordinate: CLLocationCoordinate2D(
+                    latitude: coordinate.latitude + offset,
+                    longitude: coordinate.longitude + offset
+                )
+            )
+        )
+
+        request.transportType = .walking
+        request.requestsAlternateRoutes = false
+
+        let directions = MKDirections(request: request)
+
+        do {
+            let response = try await directions.calculate()
+
+            // First polyline point = snapped road position
+            if let route = response.routes.first {
+                let points = route.polyline.points()
+                if route.polyline.pointCount > 0 {
+                    return points[0].coordinate
+                }
+            }
+        } catch {
+            print("❌ Road snap failed:", error)
+        }
+
+        // Fallback: original coordinate
+        return coordinate
+    }
+    
 }
 
 extension MapController {

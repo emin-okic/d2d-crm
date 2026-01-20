@@ -25,41 +25,16 @@ struct MapSearchView: View {
 
     @StateObject private var controller: MapController
 
-    // Existing prompt/flow state
     @State private var pendingAddress: String?
-    @State private var showOutcomePrompt = false
-    @State private var showNoteInput = false
-    @State private var prospectToNote: Prospect?
-
-    @State private var showObjectionPicker = false
-    @State private var objectionOptions: [Objection] = []
-    @State private var selectedObjection: Objection?
-    @State private var showingAddObjection = false
 
     @State private var showConversionSheet = false
     @State private var prospectToConvert: Prospect?
-
-    @State private var showTripPrompt = false
-    @State private var showTripPopup = false
-
-    @State private var showFollowUpSheet = false
-    @State private var followUpAddress: String = ""
-    @State private var followUpProspectName: String = ""
-    @State private var showFollowUpPrompt = false
-
-    @State private var shouldAskForTripAfterFollowUp = false
 
     @StateObject private var tapManager = MapTapAddressManager()
     @StateObject private var searchVM = SearchCompleterViewModel()
     @FocusState private var isSearchFocused: Bool
 
     @State private var isTappedAddressCustomer = false
-
-    struct PopupState: Identifiable, Equatable {
-        let id = UUID()
-        let place: IdentifiablePlace
-        static func == (lhs: PopupState, rhs: PopupState) -> Bool { lhs.id == rhs.id }
-    }
 
     @State private var popupState: PopupState?
     @State private var popupScreenPosition: CGPoint? = nil
@@ -91,10 +66,8 @@ struct MapSearchView: View {
     @State private var pendingBulkAdd: PendingBulkAdd?
     
     @State private var selectedUnitGroup: UnitGroup?
-    
     @State private var selectedProspect: Prospect?
     @State private var selectedCustomer: Customer?
-    
     @State private var pendingSelectedContact: UnitContact? = nil
     
     init(searchText: Binding<String>,
@@ -118,84 +91,10 @@ struct MapSearchView: View {
                     selectedPlaceID: selectedPlaceID,
                     userLocationManager: userLocationManager,
                     onMarkerTapped: { place in
-                        
-                        selectedPlaceID = place.id
-                        
-                        // 🔹 STEP for Apartment / multi-unit interception
-                        let parts = parseAddress(place.address)
-                        let units = unitsForBaseAddress(parts.base)
-
-                        if units.count > 1 {
-                            
-                            // ✅ Center map on the apartment complex itself
-                            centerMapForPopup(coordinate: place.location)
-                            
-                            // Show unit selector instead of prospect popup
-                            selectedUnitGroup = UnitGroup(base: parts.base, units: units)
-                            
-                            return
-                        }
-                        
-                        // Center the map each time a prospect is selected
-                        centerMapForPopup(coordinate: place.location)
-                        
-                        // Keep ProspectPopupView behavior as-is
-                        let state = PopupState(place: place)
-                        popupState = nil
-                        
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-                            popupState = state
-                        }
-
-                        if let mapView = MapDisplayView.cachedMapView {
-                            let raw = mapView.convert(place.location, toPointTo: mapView)
-                            let popupW: CGFloat = 240
-                            let halfW = popupW / 2
-                            let halfH: CGFloat = 60
-                            let offsetY = halfH + 14
-                            let x = min(max(raw.x, halfW), geo.size.width - halfW)
-                            let y = min(max(raw.y - offsetY, halfH), geo.size.height - halfH)
-                            popupScreenPosition = CGPoint(x: x, y: y)
-                        }
+                        handleMarkerTap(place: place, geo: geo)
                     },
                     onMapTapped: { coordinate in
-                        
-                        // 🎯 Center map FIRST (same as marker tap)
-                        centerMapForNewProperty(coordinate: coordinate)
-                        
-                        // 🎯 Haptic: instant response
-                        MapScreenHapticsController.shared.mapTap()
-                        
-                        selectedPlaceID = nil
-                        
-                        // CLOSE SEARCH FIRST if click anywhere other than search
-                        if isSearchExpanded {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                isSearchExpanded = false
-                                isSearchFocused = false
-                                searchText = ""
-                            }
-                        }
-                        
-                        tapManager.handleTap(at: coordinate)
-
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                            let tapped = tapManager.tappedAddress
-                            guard !tapped.isEmpty else { return }
-
-                            // If this address already exists, do nothing
-                            let normalized = tapped.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-                            let exists = prospects.contains {
-                                $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
-                            }
-
-                            guard !exists else { return }
-
-                            pendingAddProperty = PendingAddProperty(
-                                address: tapped,
-                                coordinate: coordinate
-                            )
-                        }
+                        handleMapTap(at: coordinate)
                     },
                     onRegionChange: { newRegion in
                         controller.region = newRegion
@@ -218,19 +117,6 @@ struct MapSearchView: View {
                     userLocationManager: userLocationManager,
                     mapController: controller
                 )
-                
-                // ✅ Floating QR Code Button
-                if !isSearchExpanded {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            QRCodeCardView()
-                        }
-                        .padding(.trailing, 20)
-                        .padding(.bottom, 30)
-                    }
-                }
                 
             }
             
@@ -448,6 +334,8 @@ struct MapSearchView: View {
             // Other Stuff
             //
             // inside body chain where you had the presenter & lifecycle hooks
+            
+            // Add related modifiers
             .presentRotatingAdsCentered()
             .onAppear {
                 // 🔹 Show exactly one ad for this app session (centered). Will differ each launch.
@@ -457,6 +345,8 @@ struct MapSearchView: View {
                 // No-op for single-shot, but keep if you want to explicitly clear.
                 AdEngine.shared.stop()
             }
+            
+            // Search engine related modifiers
             .onChange(of: popupState) { newValue in
                 // Close the search bar when a popup opens
                 if newValue != nil, isSearchExpanded {
@@ -477,6 +367,7 @@ struct MapSearchView: View {
                 }
             }
             
+            // Confetti for finishing a follow up
             if showConfetti {
                 ConfettiBurstView()
                     .ignoresSafeArea()
@@ -491,9 +382,12 @@ struct MapSearchView: View {
             }
             
         }
+        
+        // Modifier for markers
         .onReceive(NotificationCenter.default.publisher(for: .mapShouldRecenterAllMarkers)) { _ in
-                    controller.recenterToFitAllMarkers()
-                }
+            controller.recenterToFitAllMarkers()
+            
+        }
         .onChange(of: searchText) { searchVM.updateQuery($0) }
         .onAppear {
             updateMarkers()
@@ -538,68 +432,8 @@ struct MapSearchView: View {
                 MapScreenSoundController.shared.playPropertyOpen()
             }
         }
-        .sheet(isPresented: $showNoteInput) {
-            if let prospect = prospectToNote {
-                LogNoteView(
-                    prospect: prospect,
-                    objection: selectedObjection,
-                    pendingAddress: pendingAddress
-                ) {
-                    followUpAddress = prospect.address
-                    followUpProspectName = prospect.fullName
-                    selectedObjection = nil
-                    showTripPrompt = true
-                }
-            }
-        }
-        .sheet(isPresented: $showObjectionPicker) {
-            ObjectionSelectorView(
-                isPresented: $showObjectionPicker,
-                onSelect: { obj in
-                    selectedObjection = obj
-                    if let name = pendingRecordingFileName {
-                        
-                        let newRecording = Recording(
-                            fileName: name,
-                            title: obj.text,
-                            date: .now,
-                            objection: obj,
-                            rating: 3
-                        )
-                        modelContext.insert(newRecording)
-                        try? modelContext.save()
-                        pendingRecordingFileName = nil
-                    }
-                    showFollowUpSheet = true
-                },
-                filter: { $0.text != "Converted To Sale" }
-            )
-        }
-        .alert("Schedule Follow-Up?", isPresented: $showFollowUpPrompt) {
-            Button("Yes") { showFollowUpSheet = true }
-            Button("No", role: .cancel) { showTripPrompt = true }
-        } message: { Text("Schedule follow-up for \(followUpProspectName)?") }
-        .sheet(isPresented: $showFollowUpSheet, onDismiss: {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                showNoteInput = true
-            }
-        }) {
-            if let prospect = prospectToNote {
-                FollowUpScheduleView(prospect: prospect)
-            }
-        }
-        .alert("Log a trip?", isPresented: $showTripPrompt) {
-            Button("Yes") { showTripPopup = true }
-            Button("No", role: .cancel) {}
-        }
-        .sheet(isPresented: $showTripPopup) {
-            if let addr = pendingAddress { LogTripPopupView(endAddress: addr) }
-        }
-        .sheet(isPresented: $showingAddObjection, onDismiss: {
-            if let _ = prospectToNote { showFollowUpSheet = true }
-        }) {
-            AddObjectionView()
-        }
+        
+        // This is for bulk property additions
         .onReceive(NotificationCenter.default.publisher(for: .didRequestBulkAdd)) { note in
             guard let bulk = note.object as? PendingBulkAdd else { return }
 
@@ -609,9 +443,9 @@ struct MapSearchView: View {
 
                 for prop in bulk.properties {
 
-                    let snapped = await snapToNearestRoad(coordinate: prop.coordinate)
+                    let snapped = await controller.snapToNearestRoad(coordinate: prop.coordinate)
 
-                    let address = await reverseGeocode(coordinate: snapped) ?? "Unknown Address"
+                    let address = await controller.reverseGeocode(coordinate: snapped) ?? "Unknown Address"
 
                     let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -657,6 +491,8 @@ struct MapSearchView: View {
                 MapScreenSoundController.shared.playPropertyOpen()
             }
         }
+        
+        // This is for opening the contact details
         .sheet(item: $selectedProspect) { prospect in
             NavigationStack {
                 ProspectDetailsView(prospect: prospect)
@@ -667,6 +503,95 @@ struct MapSearchView: View {
             NavigationStack {
                 CustomerDetailsView(customer: customer)
             }
+        }
+    }
+    
+    private func handleMarkerTap(place: IdentifiablePlace, geo: GeometryProxy) {
+        
+        selectedPlaceID = place.id
+        
+        // 🔹 STEP for Apartment / multi-unit interception
+        let parts = parseAddress(place.address)
+        let units = unitsForBaseAddress(parts.base)
+
+        if units.count > 1 {
+            // ✅ Center map on the apartment complex itself
+            withAnimation(.easeInOut(duration: 0.35)) {
+                controller.centerMapForPopup(coordinate: place.location)
+            }
+            
+            // Show unit selector instead of prospect popup
+            selectedUnitGroup = UnitGroup(base: parts.base, units: units)
+            return
+        }
+        
+        // Center the map each time a prospect is selected
+        withAnimation(.easeInOut(duration: 0.35)) {
+            controller.centerMapForPopup(coordinate: place.location)
+        }
+        
+        // Keep ProspectPopupView behavior as-is
+        let state = PopupState(place: place)
+        popupState = nil
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+            popupState = state
+        }
+
+        if let mapView = MapDisplayView.cachedMapView {
+            let raw = mapView.convert(place.location, toPointTo: mapView)
+            let popupW: CGFloat = 240
+            let halfW = popupW / 2
+            let halfH: CGFloat = 60
+            let offsetY = halfH + 14
+            let x = min(max(raw.x, halfW), geo.size.width - halfW)
+            let y = min(max(raw.y - offsetY, halfH), geo.size.height - halfH)
+            popupScreenPosition = CGPoint(x: x, y: y)
+        }
+    }
+
+    private func handleMapTap(at coordinate: CLLocationCoordinate2D) {
+        // 🎯 Center map FIRST (same as marker tap)
+        controller.centerMapForNewProperty(coordinate: coordinate)
+        
+        // 🎯 Haptic: instant response
+        MapScreenHapticsController.shared.mapTap()
+        
+        // Deselect any currently selected marker
+        selectedPlaceID = nil
+        
+        // CLOSE SEARCH FIRST if click anywhere other than search
+        if isSearchExpanded {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isSearchExpanded = false
+                isSearchFocused = false
+                searchText = ""
+            }
+        }
+        
+        // Register tap in tap manager
+        tapManager.handleTap(at: coordinate)
+
+        // Check after a short delay for new address
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            let tapped = tapManager.tappedAddress
+            guard !tapped.isEmpty else { return }
+
+            // Normalize address for comparison
+            let normalized = tapped.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+
+            // Skip if address already exists
+            let exists = prospects.contains {
+                $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
+            }
+
+            guard !exists else { return }
+
+            // Prepare for adding a new prospect
+            pendingAddProperty = PendingAddProperty(
+                address: tapped,
+                coordinate: coordinate
+            )
         }
     }
     
@@ -793,7 +718,9 @@ struct MapSearchView: View {
         
         selectedPlaceID = place.id
         
-        centerMapForPopup(coordinate: place.location)
+        withAnimation(.easeInOut(duration: 0.35)) {
+            controller.centerMapForPopup(coordinate: place.location)
+        }
         
         let state = PopupState(place: place)
         popupState = nil
@@ -886,11 +813,7 @@ struct MapSearchView: View {
                 address: addr,
                 status: status,
                 prospects: prospects,
-                onUpdateMarkers: { updateMarkers() },
-                onShowNoteInput: { prospect in
-                    prospectToNote = prospect
-                    showNoteInput = true
-                }
+                onUpdateMarkers: { updateMarkers() }
             )
             
         case "Unqualified":
@@ -977,159 +900,6 @@ struct MapSearchView: View {
         return prospectUnits + customerUnits
     }
     
-    private let bulkGeocoder = CLGeocoder()
-
-    private func reverseGeocode(
-        coordinate: CLLocationCoordinate2D
-    ) async -> String? {
-
-        let location = CLLocation(
-            latitude: coordinate.latitude,
-            longitude: coordinate.longitude
-        )
-
-        do {
-            let placemarks = try await bulkGeocoder.reverseGeocodeLocation(location)
-            guard let placemark = placemarks.first else { return nil }
-
-            // Prefer full postal address if available
-            if let postal = placemark.postalAddress {
-                return CNPostalAddressFormatter()
-                    .string(from: postal)
-                    .replacingOccurrences(of: "\n", with: ", ")
-            }
-
-            // Fallbacks
-            if let name = placemark.name,
-               let street = placemark.thoroughfare {
-                return "\(name) \(street)"
-            }
-
-            // Final fallback: build a readable address manually
-            let parts = [
-                placemark.subThoroughfare,
-                placemark.thoroughfare,
-                placemark.locality,
-                placemark.administrativeArea
-            ]
-
-            let address = parts
-                .compactMap { $0 }
-                .joined(separator: " ")
-
-            return address.isEmpty ? nil : address
-            
-        } catch {
-            print("❌ Reverse geocode failed:", error)
-            return nil
-        }
-    }
-    
-    private func snapToNearestRoad(
-        coordinate: CLLocationCoordinate2D
-    ) async -> CLLocationCoordinate2D {
-
-        let request = MKDirections.Request()
-
-        // Tiny offset destination (~10m) to force route solving
-        let offset = 0.00009
-
-        request.source = MKMapItem(
-            placemark: MKPlacemark(coordinate: coordinate)
-        )
-
-        request.destination = MKMapItem(
-            placemark: MKPlacemark(
-                coordinate: CLLocationCoordinate2D(
-                    latitude: coordinate.latitude + offset,
-                    longitude: coordinate.longitude + offset
-                )
-            )
-        )
-
-        request.transportType = .walking
-        request.requestsAlternateRoutes = false
-
-        let directions = MKDirections(request: request)
-
-        do {
-            let response = try await directions.calculate()
-
-            // First polyline point = snapped road position
-            if let route = response.routes.first {
-                let points = route.polyline.points()
-                if route.polyline.pointCount > 0 {
-                    return points[0].coordinate
-                }
-            }
-        } catch {
-            print("❌ Road snap failed:", error)
-        }
-
-        // Fallback: original coordinate
-        return coordinate
-    }
-    
-    @MainActor
-    private func centerMapForPopup(coordinate: CLLocationCoordinate2D) {
-
-        // Target zoom (tight enough to matter visually)
-        let latMeters: CLLocationDistance = 250
-        let lonMeters: CLLocationDistance = 250
-
-        // Convert meters → degrees (approx)
-        let metersToDegrees = 1.0 / 111_000.0
-        let latitudeSpanDegrees = latMeters * metersToDegrees
-
-        // Push marker into TOP HALF (25% from top)
-        let verticalOffset = latitudeSpanDegrees * 0.25
-
-        let adjustedCenter = CLLocationCoordinate2D(
-            latitude: coordinate.latitude - verticalOffset,
-            longitude: coordinate.longitude
-        )
-
-        withAnimation(.easeInOut(duration: 0.35)) {
-            controller.region = MKCoordinateRegion(
-                center: adjustedCenter,
-                latitudinalMeters: latMeters,
-                longitudinalMeters: lonMeters
-            )
-        }
-    }
-    
-    private func centerMapForNewProperty(coordinate: CLLocationCoordinate2D) {
-        guard let mapView = MapDisplayView.cachedMapView else { return }
-
-        // Convert map coordinate → screen point
-        let point = mapView.convert(coordinate, toPointTo: mapView)
-
-        // Visible height minus detented sheet (~260)
-        let sheetHeight: CGFloat = 260
-        let visibleHeight = mapView.bounds.height - sheetHeight
-
-        // Target Y = vertical center of visible map area
-        let targetY = visibleHeight / 2
-
-        // Calculate vertical delta in screen space
-        let deltaY = point.y - targetY
-
-        // Convert that delta back into map coordinates
-        let offsetPoint = CGPoint(
-            x: point.x,
-            y: point.y + deltaY
-        )
-
-        let offsetCoordinate = mapView.convert(offsetPoint, toCoordinateFrom: mapView)
-
-        let region = MKCoordinateRegion(
-            center: offsetCoordinate,
-            span: mapView.region.span
-        )
-
-        mapView.setRegion(region, animated: true)
-    }
-    
     private func saveFollowUp(
         for ctx: KnockContext,
         prospect: Prospect,
@@ -1192,8 +962,6 @@ struct MapSearchView: View {
         Latitude: \(coordinate.latitude)
         Longitude: \(coordinate.longitude)
         """)
-
-        // controller.performSearch(query: address)
         
         // Add marker WITHOUT geocoding
         controller.markers.append(
@@ -1204,19 +972,6 @@ struct MapSearchView: View {
                 list: "Prospects"
             )
         )
-    }
-
-    private func presentObjectionFlow(filtered: [Objection], for prospect: Prospect) {
-        objectionOptions = filtered
-        prospectToNote = prospect
-        followUpAddress = prospect.address
-        followUpProspectName = prospect.fullName
-        if filtered.isEmpty {
-            showObjectionPicker = false
-            showingAddObjection = true
-        } else {
-            showObjectionPicker = true
-        }
     }
     
     @MainActor
@@ -1446,10 +1201,4 @@ struct MapSearchView: View {
             )
         }
     }
-}
-
-// MARK: - Stepper types used here
-
-extension MapSearchView {
-    struct KnockStepperState: Identifiable, Equatable { let id = UUID(); var ctx: KnockContext }
 }

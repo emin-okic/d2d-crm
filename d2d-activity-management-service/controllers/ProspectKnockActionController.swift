@@ -21,22 +21,20 @@ class ProspectKnockActionController {
         self.controller = controller
     }
 
+    @discardableResult
     func handleKnockAndPromptNote(
         address: String,
         status: String,
         prospects: [Prospect],
-        onUpdateMarkers: @escaping () -> Void,
-        onShowNoteInput: @escaping (Prospect) -> Void
-    ) {
+        onUpdateMarkers: @escaping () -> Void
+    ) -> Prospect? {
         let prospect = saveKnock(address: address, status: status, prospects: prospects)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             onUpdateMarkers()
         }
 
-        if status != "Wasn't Home" {
-            onShowNoteInput(prospect)
-        }
+        return status != "Wasn't Home" ? prospect : nil
     }
 
     func handleKnockAndPromptObjection(
