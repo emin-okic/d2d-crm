@@ -36,12 +36,6 @@ struct MapSearchView: View {
 
     @State private var isTappedAddressCustomer = false
 
-    struct PopupState: Identifiable, Equatable {
-        let id = UUID()
-        let place: IdentifiablePlace
-        static func == (lhs: PopupState, rhs: PopupState) -> Bool { lhs.id == rhs.id }
-    }
-
     @State private var popupState: PopupState?
     @State private var popupScreenPosition: CGPoint? = nil
 
@@ -72,10 +66,8 @@ struct MapSearchView: View {
     @State private var pendingBulkAdd: PendingBulkAdd?
     
     @State private var selectedUnitGroup: UnitGroup?
-    
     @State private var selectedProspect: Prospect?
     @State private var selectedCustomer: Customer?
-    
     @State private var pendingSelectedContact: UnitContact? = nil
     
     init(searchText: Binding<String>,
