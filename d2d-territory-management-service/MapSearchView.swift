@@ -1364,9 +1364,3 @@ struct MapSearchView: View {
         }
     }
 }
-
-// MARK: - Stepper types used here
-
-extension MapSearchView {
-    struct KnockStepperState: Identifiable, Equatable { let id = UUID(); var ctx: KnockContext }
-}
