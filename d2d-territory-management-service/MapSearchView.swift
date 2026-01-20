@@ -25,9 +25,7 @@ struct MapSearchView: View {
 
     @StateObject private var controller: MapController
 
-    // Existing prompt/flow state
     @State private var pendingAddress: String?
-    @State private var prospectToNote: Prospect?
 
     @State private var showObjectionPicker = false
     @State private var objectionOptions: [Objection] = []
