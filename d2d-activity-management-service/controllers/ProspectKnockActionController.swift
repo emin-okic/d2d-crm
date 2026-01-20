@@ -37,31 +37,6 @@ class ProspectKnockActionController {
         return status != "Wasn't Home" ? prospect : nil
     }
 
-    func handleKnockAndPromptObjection(
-        address: String,
-        status: String,
-        prospects: [Prospect],
-        objections: [Objection],
-        onUpdateMarkers: @escaping () -> Void,
-        onShowObjectionPicker: @escaping ([Objection], Prospect) -> Void,
-        onShowAddObjection: @escaping (Prospect) -> Void
-    ) {
-        let prospect = saveKnock(address: address, status: status, prospects: prospects)
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            onUpdateMarkers()
-        }
-
-        if objections.isEmpty {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                onShowAddObjection(prospect)
-            }
-        } else {
-            let filtered = objections.filter { $0.text != "Converted To Sale" }
-            onShowObjectionPicker(filtered, prospect)
-        }
-    }
-
     func handleKnockAndConvertToCustomer(
         address: String,
         status: String,
