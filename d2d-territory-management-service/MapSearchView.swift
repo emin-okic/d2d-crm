@@ -91,45 +91,7 @@ struct MapSearchView: View {
                     selectedPlaceID: selectedPlaceID,
                     userLocationManager: userLocationManager,
                     onMarkerTapped: { place in
-                        
-                        selectedPlaceID = place.id
-                        
-                        // 🔹 STEP for Apartment / multi-unit interception
-                        let parts = parseAddress(place.address)
-                        let units = unitsForBaseAddress(parts.base)
-
-                        if units.count > 1 {
-                            
-                            // ✅ Center map on the apartment complex itself
-                            centerMapForPopup(coordinate: place.location)
-                            
-                            // Show unit selector instead of prospect popup
-                            selectedUnitGroup = UnitGroup(base: parts.base, units: units)
-                            
-                            return
-                        }
-                        
-                        // Center the map each time a prospect is selected
-                        centerMapForPopup(coordinate: place.location)
-                        
-                        // Keep ProspectPopupView behavior as-is
-                        let state = PopupState(place: place)
-                        popupState = nil
-                        
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-                            popupState = state
-                        }
-
-                        if let mapView = MapDisplayView.cachedMapView {
-                            let raw = mapView.convert(place.location, toPointTo: mapView)
-                            let popupW: CGFloat = 240
-                            let halfW = popupW / 2
-                            let halfH: CGFloat = 60
-                            let offsetY = halfH + 14
-                            let x = min(max(raw.x, halfW), geo.size.width - halfW)
-                            let y = min(max(raw.y - offsetY, halfH), geo.size.height - halfH)
-                            popupScreenPosition = CGPoint(x: x, y: y)
-                        }
+                        handleMarkerTap(place: place, geo: geo)
                     },
                     onMapTapped: { coordinate in
                         
@@ -590,6 +552,46 @@ struct MapSearchView: View {
             NavigationStack {
                 CustomerDetailsView(customer: customer)
             }
+        }
+    }
+    
+    private func handleMarkerTap(place: IdentifiablePlace, geo: GeometryProxy) {
+        
+        selectedPlaceID = place.id
+        
+        // 🔹 STEP for Apartment / multi-unit interception
+        let parts = parseAddress(place.address)
+        let units = unitsForBaseAddress(parts.base)
+
+        if units.count > 1 {
+            // ✅ Center map on the apartment complex itself
+            centerMapForPopup(coordinate: place.location)
+            
+            // Show unit selector instead of prospect popup
+            selectedUnitGroup = UnitGroup(base: parts.base, units: units)
+            return
+        }
+        
+        // Center the map each time a prospect is selected
+        centerMapForPopup(coordinate: place.location)
+        
+        // Keep ProspectPopupView behavior as-is
+        let state = PopupState(place: place)
+        popupState = nil
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+            popupState = state
+        }
+
+        if let mapView = MapDisplayView.cachedMapView {
+            let raw = mapView.convert(place.location, toPointTo: mapView)
+            let popupW: CGFloat = 240
+            let halfW = popupW / 2
+            let halfH: CGFloat = 60
+            let offsetY = halfH + 14
+            let x = min(max(raw.x, halfW), geo.size.width - halfW)
+            let y = min(max(raw.y - offsetY, halfH), geo.size.height - halfH)
+            popupScreenPosition = CGPoint(x: x, y: y)
         }
     }
     
