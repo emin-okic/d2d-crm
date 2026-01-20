@@ -35,7 +35,7 @@ class CustomerKnockActionController {
         }
     }
 
-    // MARK: - Core Save Logic
+    /// Core Logic For Saving Knocks
 
     private func saveKnock(address: String, status: String, customers: [Customer]) -> Customer {
         let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
@@ -65,8 +65,6 @@ class CustomerKnockActionController {
 
         return updatedCustomer
     }
-
-    // MARK: - Convenience
 
     @discardableResult
     func saveKnockOnly(address: String, status: String, customers: [Customer], onUpdateMarkers: @escaping () -> Void) -> Customer {

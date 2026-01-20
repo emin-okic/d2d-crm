@@ -37,27 +37,6 @@ class ProspectKnockActionController {
         return status != "Wasn't Home" ? prospect : nil
     }
 
-    func handleKnockAndConvertToCustomer(
-        address: String,
-        status: String,
-        prospects: [Prospect],
-        onUpdateMarkers: () -> Void,
-        onSetCustomerMarker: () -> Void,
-        onShowConversionSheet: @escaping (Prospect) -> Void
-    ) {
-        if let prospect = prospects.first(where: {
-            $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
-            address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        }) {
-            
-            onShowConversionSheet(prospect)
-
-            // Update map marker
-            onSetCustomerMarker()
-            onUpdateMarkers()
-        }
-    }
-
     private func saveKnock(address: String, status: String, prospects: [Prospect]) -> Prospect {
         let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         let now = Date()
