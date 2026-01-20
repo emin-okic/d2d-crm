@@ -94,43 +94,7 @@ struct MapSearchView: View {
                         handleMarkerTap(place: place, geo: geo)
                     },
                     onMapTapped: { coordinate in
-                        
-                        // 🎯 Center map FIRST (same as marker tap)
-                        centerMapForNewProperty(coordinate: coordinate)
-                        
-                        // 🎯 Haptic: instant response
-                        MapScreenHapticsController.shared.mapTap()
-                        
-                        selectedPlaceID = nil
-                        
-                        // CLOSE SEARCH FIRST if click anywhere other than search
-                        if isSearchExpanded {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                isSearchExpanded = false
-                                isSearchFocused = false
-                                searchText = ""
-                            }
-                        }
-                        
-                        tapManager.handleTap(at: coordinate)
-
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                            let tapped = tapManager.tappedAddress
-                            guard !tapped.isEmpty else { return }
-
-                            // If this address already exists, do nothing
-                            let normalized = tapped.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-                            let exists = prospects.contains {
-                                $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
-                            }
-
-                            guard !exists else { return }
-
-                            pendingAddProperty = PendingAddProperty(
-                                address: tapped,
-                                coordinate: coordinate
-                            )
-                        }
+                        handleMapTap(at: coordinate)
                     },
                     onRegionChange: { newRegion in
                         controller.region = newRegion
@@ -592,6 +556,51 @@ struct MapSearchView: View {
             let x = min(max(raw.x, halfW), geo.size.width - halfW)
             let y = min(max(raw.y - offsetY, halfH), geo.size.height - halfH)
             popupScreenPosition = CGPoint(x: x, y: y)
+        }
+    }
+
+    private func handleMapTap(at coordinate: CLLocationCoordinate2D) {
+        // 🎯 Center map FIRST (same as marker tap)
+        centerMapForNewProperty(coordinate: coordinate)
+        
+        // 🎯 Haptic: instant response
+        MapScreenHapticsController.shared.mapTap()
+        
+        // Deselect any currently selected marker
+        selectedPlaceID = nil
+        
+        // CLOSE SEARCH FIRST if click anywhere other than search
+        if isSearchExpanded {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isSearchExpanded = false
+                isSearchFocused = false
+                searchText = ""
+            }
+        }
+        
+        // Register tap in tap manager
+        tapManager.handleTap(at: coordinate)
+
+        // Check after a short delay for new address
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            let tapped = tapManager.tappedAddress
+            guard !tapped.isEmpty else { return }
+
+            // Normalize address for comparison
+            let normalized = tapped.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+
+            // Skip if address already exists
+            let exists = prospects.contains {
+                $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) == normalized
+            }
+
+            guard !exists else { return }
+
+            // Prepare for adding a new prospect
+            pendingAddProperty = PendingAddProperty(
+                address: tapped,
+                coordinate: coordinate
+            )
         }
     }
     
