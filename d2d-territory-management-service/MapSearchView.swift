@@ -118,19 +118,6 @@ struct MapSearchView: View {
                     mapController: controller
                 )
                 
-                // ✅ Floating QR Code Button
-                if !isSearchExpanded {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            QRCodeCardView()
-                        }
-                        .padding(.trailing, 20)
-                        .padding(.bottom, 30)
-                    }
-                }
-                
             }
             
             // This is for the prospect updating marker stuff
