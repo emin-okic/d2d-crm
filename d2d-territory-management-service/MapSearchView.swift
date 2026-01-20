@@ -27,7 +27,6 @@ struct MapSearchView: View {
 
     // Existing prompt/flow state
     @State private var pendingAddress: String?
-    @State private var showOutcomePrompt = false
     @State private var showNoteInput = false
     @State private var prospectToNote: Prospect?
 
