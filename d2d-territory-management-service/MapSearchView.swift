@@ -565,7 +565,7 @@ struct MapSearchView: View {
 
     private func handleMapTap(at coordinate: CLLocationCoordinate2D) {
         // 🎯 Center map FIRST (same as marker tap)
-        centerMapForNewProperty(coordinate: coordinate)
+        controller.centerMapForNewProperty(coordinate: coordinate)
         
         // 🎯 Haptic: instant response
         MapScreenHapticsController.shared.mapTap()
@@ -1004,38 +1004,6 @@ struct MapSearchView: View {
 
         // Fallback: original coordinate
         return coordinate
-    }
-    
-    private func centerMapForNewProperty(coordinate: CLLocationCoordinate2D) {
-        guard let mapView = MapDisplayView.cachedMapView else { return }
-
-        // Convert map coordinate → screen point
-        let point = mapView.convert(coordinate, toPointTo: mapView)
-
-        // Visible height minus detented sheet (~260)
-        let sheetHeight: CGFloat = 260
-        let visibleHeight = mapView.bounds.height - sheetHeight
-
-        // Target Y = vertical center of visible map area
-        let targetY = visibleHeight / 2
-
-        // Calculate vertical delta in screen space
-        let deltaY = point.y - targetY
-
-        // Convert that delta back into map coordinates
-        let offsetPoint = CGPoint(
-            x: point.x,
-            y: point.y + deltaY
-        )
-
-        let offsetCoordinate = mapView.convert(offsetPoint, toCoordinateFrom: mapView)
-
-        let region = MKCoordinateRegion(
-            center: offsetCoordinate,
-            span: mapView.region.span
-        )
-
-        mapView.setRegion(region, animated: true)
     }
     
     private func saveFollowUp(
