@@ -27,9 +27,6 @@ struct MapSearchView: View {
 
     @State private var pendingAddress: String?
 
-    @State private var objectionOptions: [Objection] = []
-    @State private var selectedObjection: Objection?
-
     @State private var showConversionSheet = false
     @State private var prospectToConvert: Prospect?
 
