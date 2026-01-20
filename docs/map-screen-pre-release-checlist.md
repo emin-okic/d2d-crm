@@ -74,3 +74,4 @@ This checklist ensures the Map Screen is fully functional and reliable before re
 1. Does clicking each scorecard open a detented popup sheet?
 2. Does the knocking scorecard update correctly after logging multiple knocks?
 3. Does the sales scorecard update correctly after logging multiple sales?
+
