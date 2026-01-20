@@ -30,12 +30,6 @@ struct MapSearchView: View {
     @State private var showConversionSheet = false
     @State private var prospectToConvert: Prospect?
 
-    @State private var followUpAddress: String = ""
-    @State private var followUpProspectName: String = ""
-    @State private var showFollowUpPrompt = false
-
-    @State private var shouldAskForTripAfterFollowUp = false
-
     @StateObject private var tapManager = MapTapAddressManager()
     @StateObject private var searchVM = SearchCompleterViewModel()
     @FocusState private var isSearchFocused: Bool
