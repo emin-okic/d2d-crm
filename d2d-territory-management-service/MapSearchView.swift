@@ -30,9 +30,6 @@ struct MapSearchView: View {
     @State private var showConversionSheet = false
     @State private var prospectToConvert: Prospect?
 
-    @State private var showTripPrompt = false
-    @State private var showTripPopup = false
-
     @State private var followUpAddress: String = ""
     @State private var followUpProspectName: String = ""
     @State private var showFollowUpPrompt = false
