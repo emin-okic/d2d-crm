@@ -27,7 +27,6 @@ struct MapSearchView: View {
 
     // Existing prompt/flow state
     @State private var pendingAddress: String?
-    @State private var showNoteInput = false
     @State private var prospectToNote: Prospect?
 
     @State private var showObjectionPicker = false
@@ -836,7 +835,6 @@ struct MapSearchView: View {
                 onUpdateMarkers: { updateMarkers() },
                 onShowNoteInput: { prospect in
                     prospectToNote = prospect
-                    showNoteInput = true
                 }
             )
             
