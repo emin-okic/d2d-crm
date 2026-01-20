@@ -975,8 +975,6 @@ struct MapSearchView: View {
         Latitude: \(coordinate.latitude)
         Longitude: \(coordinate.longitude)
         """)
-
-        // controller.performSearch(query: address)
         
         // Add marker WITHOUT geocoding
         controller.markers.append(
