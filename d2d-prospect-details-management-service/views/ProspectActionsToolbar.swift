@@ -150,7 +150,21 @@ struct ProspectActionsToolbar: View {
                 
                 logEmailNote()   // ✅ log it first
 
-                if let url = URL(string: "mailto:\(prospect.contactEmail)") {
+                let subject = "Quick follow-up"
+                let body = """
+                Hi \(prospect.fullName),
+
+                It was great connecting with you earlier. I just wanted to follow up and see if you had any questions or wanted to take the next step.
+
+                Looking forward to hearing from you,
+                """
+
+                let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+                let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+
+                let urlString = "mailto:\(prospect.contactEmail)?subject=\(encodedSubject)&body=\(encodedBody)"
+
+                if let url = URL(string: urlString) {
                     UIApplication.shared.open(url)
                 }
             }
