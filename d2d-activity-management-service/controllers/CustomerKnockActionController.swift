@@ -20,50 +20,6 @@ class CustomerKnockActionController {
         self.controller = controller
     }
 
-    // MARK: - Knock Handling
-
-    func handleKnockAndPromptNote(
-        address: String,
-        status: String,
-        customers: [Customer],
-        onUpdateMarkers: @escaping () -> Void,
-        onShowNoteInput: @escaping (Customer) -> Void
-    ) {
-        let customer = saveKnock(address: address, status: status, customers: customers)
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            onUpdateMarkers()
-        }
-
-        if status != "Wasn't Home" {
-            onShowNoteInput(customer)
-        }
-    }
-
-    func handleKnockAndPromptObjection(
-        address: String,
-        status: String,
-        customers: [Customer],
-        objections: [Objection],
-        onUpdateMarkers: @escaping () -> Void,
-        onShowObjectionPicker: @escaping ([Objection], Customer) -> Void,
-        onShowAddObjection: @escaping (Customer) -> Void
-    ) {
-        let customer = saveKnock(address: address, status: status, customers: customers)
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            onUpdateMarkers()
-        }
-
-        if objections.isEmpty {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                onShowAddObjection(customer)
-            }
-        } else {
-            onShowObjectionPicker(objections, customer)
-        }
-    }
-
     func handleKnockAndUpdateMarker(
         address: String,
         status: String,
@@ -79,7 +35,7 @@ class CustomerKnockActionController {
         }
     }
 
-    // MARK: - Core Save Logic
+    /// Core Logic For Saving Knocks
 
     private func saveKnock(address: String, status: String, customers: [Customer]) -> Customer {
         let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
@@ -109,8 +65,6 @@ class CustomerKnockActionController {
 
         return updatedCustomer
     }
-
-    // MARK: - Convenience
 
     @discardableResult
     func saveKnockOnly(address: String, status: String, customers: [Customer], onUpdateMarkers: @escaping () -> Void) -> Customer {

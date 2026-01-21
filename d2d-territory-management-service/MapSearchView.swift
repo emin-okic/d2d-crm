@@ -50,7 +50,7 @@ struct MapSearchView: View {
     @AppStorage("studioUnlocked") private var studioUnlocked: Bool = false
     private var recordingFeaturesActive: Bool { studioUnlocked && recordingModeEnabled }
 
-    @State private var knockController: ProspectKnockActionController? = nil
+    @State private var prospectKnockingController: ProspectKnockActionController? = nil
 
     // NEW: Stepper state (only used for Follow-Up Later)
     @State private var stepperState: KnockStepperState? = nil
@@ -230,7 +230,7 @@ struct MapSearchView: View {
                                 p.longitude = customer.longitude
                                 return p
                             } else {
-                                return knockController!.saveKnockOnly(
+                                return prospectKnockingController!.saveKnockOnly(
                                     address: state.ctx.address,
                                     status: outcome.rawValue,
                                     prospects: prospects,
@@ -391,7 +391,7 @@ struct MapSearchView: View {
         .onChange(of: searchText) { searchVM.updateQuery($0) }
         .onAppear {
             updateMarkers()
-            knockController = ProspectKnockActionController(modelContext: modelContext, controller: controller)
+            prospectKnockingController = ProspectKnockActionController(modelContext: modelContext, controller: controller)
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     NotificationCenter.default.post(name: .mapShouldRecenterAllMarkers, object: nil)
@@ -648,7 +648,7 @@ struct MapSearchView: View {
                             p.longitude = customer.longitude
                             return p
                         } else {
-                            return knockController!.saveKnockOnly(
+                            return prospectKnockingController!.saveKnockOnly(
                                 address: s.ctx.address,
                                 status: outcome.rawValue,
                                 prospects: prospects,
@@ -786,7 +786,7 @@ struct MapSearchView: View {
             if let prospect = resolveProspectForSale(address: addr) {
 
                 // Log knock
-                knockController?.saveKnockOnly(
+                prospectKnockingController?.saveKnockOnly(
                     address: addr,
                     status: status,
                     prospects: prospects,
@@ -809,7 +809,7 @@ struct MapSearchView: View {
             )
 
         case "Wasn't Home":
-            knockController?.handleKnockAndPromptNote(
+            prospectKnockingController?.handleKnockAndPromptNote(
                 address: addr,
                 status: status,
                 prospects: prospects,
@@ -817,7 +817,7 @@ struct MapSearchView: View {
             )
             
         case "Unqualified":
-            knockController?.saveKnockOnly(
+            prospectKnockingController?.saveKnockOnly(
                 address: addr,
                 status: status,
                 prospects: prospects,
@@ -837,7 +837,7 @@ struct MapSearchView: View {
                     .replacingOccurrences(of: " - Unqualified", with: "")
 
                 // 3️⃣ Log a knock for history
-                knockController?.saveKnockOnly(
+                prospectKnockingController?.saveKnockOnly(
                     address: addr,
                     status: "Requalified",
                     prospects: prospects,
