@@ -32,6 +32,8 @@ struct CustomerCreateStepperView: View {
     @StateObject private var searchVM = SearchCompleterViewModel()
     @FocusState private var isAddressFocused: Bool
     @State private var phoneError: String?
+    
+    @State private var emailError: String?
 
     init(
         initialName: String? = nil,
@@ -194,6 +196,13 @@ struct CustomerCreateStepperView: View {
                 TextField("name@email.com", text: $contactEmail)
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
+                    .onChange(of: contactEmail) { _ in _ = validateEmail() }
+            }
+
+            if let emailError = emailError {
+                Text(emailError)
+                    .font(.caption)
+                    .foregroundColor(.red)
             }
         }
     }
@@ -246,7 +255,7 @@ struct CustomerCreateStepperView: View {
             } else {
                 Button("Finish") {
                     
-                    guard validatePhoneNumber() else { return }
+                    guard validatePhoneNumber(), validateEmail() else { return }
                     
                     ContactScreenHapticsController.shared.lightTap()
                     ContactScreenSoundController.shared.playSound1()
@@ -298,8 +307,7 @@ struct CustomerCreateStepperView: View {
     }
 
     private var canProceedStepTwo: Bool {
-        // Phone/email optional; only reject on explicit invalid phone
-        phoneError == nil
+        phoneError == nil && emailError == nil
     }
 
     private func handleAddressSelection(_ result: MKLocalSearchCompletion) {
@@ -324,6 +332,27 @@ struct CustomerCreateStepperView: View {
             return true
         } catch {
             phoneError = "Invalid phone number."
+            return false
+        }
+    }
+    
+    @discardableResult
+    private func validateEmail() -> Bool {
+        let raw = contactEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else {
+            emailError = nil
+            return true   // optional field
+        }
+
+        // Basic but effective pattern
+        let pattern = #"^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
+        let isValid = raw.range(of: pattern, options: .regularExpression) != nil
+
+        if isValid {
+            emailError = nil
+            return true
+        } else {
+            emailError = "Invalid email address."
             return false
         }
     }

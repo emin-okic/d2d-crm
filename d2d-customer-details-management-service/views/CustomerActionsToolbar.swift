@@ -192,14 +192,22 @@ struct CustomerActionsToolbar: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                // Input
                 TextField("name@example.com", text: $controller.newEmail)
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                    .onChange(of: controller.newEmail) { _ in
+                        _ = controller.validateEmail()
+                    }
                     .padding()
                     .background(Color(.secondarySystemBackground))
                     .cornerRadius(14)
+                
+                if let error = controller.emailError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
 
                 // Actions
                 HStack(spacing: 12) {
@@ -222,7 +230,10 @@ struct CustomerActionsToolbar: View {
                     }
                     .frame(maxWidth: .infinity)
                     .buttonStyle(.borderedProminent)
-                    .disabled(controller.newEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(
+                        controller.newEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                        controller.emailError != nil
+                    )
                 }
 
                 Spacer()

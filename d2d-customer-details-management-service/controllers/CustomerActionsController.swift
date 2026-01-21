@@ -32,6 +32,8 @@ final class CustomerActionsController: ObservableObject {
     @Published var originalPhone: String?
     
     @Published var originalEmail: String?
+    
+    @Published var emailError: String?
 
     // MARK: - Init
     init(
@@ -94,6 +96,8 @@ final class CustomerActionsController: ObservableObject {
     // MARK: - Email Flow
 
     func saveEmail() {
+        
+        guard validateEmail() else { return }
         
         let previous = originalEmail
         
@@ -206,5 +210,27 @@ final class CustomerActionsController: ObservableObject {
         modelContext.insert(prospect)
         modelContext.delete(customer)
         try? modelContext.save()
+    }
+    
+    @discardableResult
+    func validateEmail() -> Bool {
+        let raw = newEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Optional field: empty is allowed
+        guard !raw.isEmpty else {
+            emailError = nil
+            return true
+        }
+
+        let pattern = #"^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
+        let isValid = raw.range(of: pattern, options: .regularExpression) != nil
+
+        if isValid {
+            emailError = nil
+            return true
+        } else {
+            emailError = "Invalid email format."
+            return false
+        }
     }
 }
