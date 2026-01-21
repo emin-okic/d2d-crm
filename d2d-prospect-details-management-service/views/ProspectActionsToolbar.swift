@@ -35,6 +35,8 @@ struct ProspectActionsToolbar: View {
     
     @State private var originalEmail: String?
     
+    @State private var emailError: String?
+    
     init(prospect: Prospect, modelContext: ModelContext) {
         self._prospect = Bindable(prospect)
         self.customerController = CustomerController(modelContext: modelContext)
@@ -249,9 +251,16 @@ struct ProspectActionsToolbar: View {
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                    .onChange(of: newEmail) { _ in _ = validateEmail() }
                     .padding()
                     .background(Color(.secondarySystemBackground))
                     .cornerRadius(14)
+                
+                if let emailError = emailError {
+                    Text(emailError)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
 
                 // Actions
                 HStack(spacing: 12) {
@@ -272,6 +281,8 @@ struct ProspectActionsToolbar: View {
                         ContactScreenHapticsController.shared.lightTap()
                         ContactScreenSoundController.shared.playSound1()
                         
+                        guard validateEmail() else { return }
+                        
                         let previous = originalEmail
                         
                         prospect.contactEmail = newEmail
@@ -286,7 +297,9 @@ struct ProspectActionsToolbar: View {
                     }
                     .frame(maxWidth: .infinity)
                     .buttonStyle(.borderedProminent)
-                    .disabled(newEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(
+                        newEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || emailError != nil
+                    )
                 }
 
                 Spacer()
@@ -406,6 +419,26 @@ struct ProspectActionsToolbar: View {
         } else {
             phoneError = nil
             return true
+        }
+    }
+    
+    @discardableResult
+    private func validateEmail() -> Bool {
+        let raw = newEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else {
+            emailError = nil
+            return true   // optional
+        }
+
+        let pattern = #"^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
+        let isValid = raw.range(of: pattern, options: .regularExpression) != nil
+
+        if isValid {
+            emailError = nil
+            return true
+        } else {
+            emailError = "Invalid email address."
+            return false
         }
     }
 
