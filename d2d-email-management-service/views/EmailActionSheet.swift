@@ -103,6 +103,10 @@ struct EmailActionSheet: View {
                             }
 
                             Button("Create New Template") {
+                                
+                                haptics.lightTap()
+                                sounds.playSound1()
+                                
                                 showCreateTemplate = true
                             }
                             .padding(.top, 4)
@@ -208,6 +212,11 @@ struct EmailActionSheet: View {
     }
 
     private func handleTemplateSelection(template: EmailTemplate?) {
+        
+        
+        haptics.lightTap()
+        sounds.playSound1()
+        
         if let template {
             selectedTemplate = template   // ← this alone triggers the sheet
         } else {
