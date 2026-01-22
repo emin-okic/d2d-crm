@@ -16,6 +16,9 @@
 import SwiftUI
 import SwiftData
 
+import SwiftUI
+import SwiftData
+
 struct EmailActionSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -28,176 +31,178 @@ struct EmailActionSheet: View {
 
     @State private var selectedTemplate: EmailTemplate?
 
-    @Query(sort: \EmailTemplate.createdAt) private var templates: [EmailTemplate]
+    @Query(sort: \EmailTemplate.createdAt)
+    private var templates: [EmailTemplate]
+
     @State private var showCreateTemplate = false
     @State private var emailError: String?
-
     @State private var showRevertConfirmation = false
-
-    // ✅ Computed property to check if there are unsaved changes
-    private var hasUnsavedChanges: Bool {
-        tempEmail.trimmingCharacters(in: .whitespacesAndNewlines) != (prospect.contactEmail ?? "")
-    }
-    
     @State private var showTemplateDetail = false
 
+    // MARK: - Dirty check
+    private var hasUnsavedChanges: Bool {
+        tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        != (prospect.contactEmail ?? "")
+    }
+
     var body: some View {
-        VStack(spacing: 16) {
-            // Drag indicator
-            Capsule()
-                .fill(Color.secondary.opacity(0.4))
-                .frame(width: 36, height: 5)
-                .padding(.top, 8)
+        NavigationStack {
+            VStack(spacing: 16) {
 
-            // Header
-            HStack(spacing: 10) {
-                Image(systemName: "envelope.fill")
-                    .foregroundColor(.purple)
-                    .font(.title3)
-                Text("Edit Email")
-                    .font(.headline)
-            }
+                // Drag indicator
+                Capsule()
+                    .fill(Color.secondary.opacity(0.4))
+                    .frame(width: 36, height: 5)
+                    .padding(.top, 8)
 
-            // Email Input (always visible)
-            TextField("name@example.com", text: $tempEmail)
-                .keyboardType(.emailAddress)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(14)
-                .onChange(of: tempEmail) { _ in validateEmail() }
-
-            if let emailError = emailError {
-                Text(emailError)
-                    .font(.caption)
-                    .foregroundColor(.red)
-            }
-
-            // Show Save + Revert buttons whenever user edits the email
-            if hasUnsavedChanges {
-                HStack(spacing: 12) {
-                    Button("Revert") {
-                        showRevertConfirmation = true
-                    }
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(.bordered)
-                    .tint(.red)
-
-                    Button("Save") {
-                        saveEmail()
-                    }
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!isEmailValid() || tempEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                // Header
+                HStack(spacing: 10) {
+                    Image(systemName: "envelope.fill")
+                        .foregroundColor(.purple)
+                        .font(.title3)
+                    Text("Edit Email")
+                        .font(.headline)
                 }
-            }
 
-            // Template Picker
-            if !templates.isEmpty {
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 8) {
+                // Email field
+                TextField("name@example.com", text: $tempEmail)
+                    .keyboardType(.emailAddress)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(14)
+                    .onChange(of: tempEmail) { _ in validateEmail() }
 
-                        // Email Without Template
-                        Button {
-                            handleTemplateSelection(template: nil)
-                        } label: {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Email Without Template")
-                                        .fontWeight(.medium)
-                                    Text("Start from a blank email")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .foregroundStyle(.secondary)
-                            }
-                            .padding()
-                            .background(.ultraThinMaterial)
-                            .cornerRadius(12)
-                        }
-                        .buttonStyle(.plain)
+                if let emailError = emailError {
+                    Text(emailError)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
 
-                        // Existing templates
-                        ForEach(templates) { template in
+                // Template Picker
+                if !templates.isEmpty {
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 8) {
+
                             Button {
-                                handleTemplateSelection(template: template)
+                                handleTemplateSelection(template: nil)
                             } label: {
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(template.title)
-                                            .fontWeight(.medium)
-                                        Text(template.subject)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .foregroundStyle(.secondary)
-                                }
-                                .padding()
-                                .background(.ultraThinMaterial)
-                                .cornerRadius(12)
+                                templateRow(
+                                    title: "Email Without Template",
+                                    subtitle: "Start from a blank email"
+                                )
                             }
-                            .buttonStyle(.plain)
-                        }
 
-                        Button("Create New Template") { showCreateTemplate = true }
+                            ForEach(templates) { template in
+                                Button {
+                                    handleTemplateSelection(template: template)
+                                } label: {
+                                    templateRow(
+                                        title: template.title,
+                                        subtitle: template.subject
+                                    )
+                                }
+                            }
+
+                            Button("Create New Template") {
+                                showCreateTemplate = true
+                            }
                             .padding(.top, 4)
+                        }
                     }
                 }
             }
+            .padding()
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
+            .toolbar {
+                // Left
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Close") {
+                        dismiss()
+                    }
+                }
 
-        }
-        .padding()
-        .presentationDetents([.medium])
-        .presentationDragIndicator(.visible)
-        .sheet(isPresented: $showCreateTemplate) {
-            CreateEmailTemplateSheet(onSave: { newTemplate in
-                showCreateTemplate = false
-                apply(template: newTemplate)
-            })
-            .environment(\.modelContext, modelContext)
-        }
-        .alert(
-            "Revert Changes?",
-            isPresented: $showRevertConfirmation,
-            actions: {
+                // Right (ONLY when dirty)
+                if hasUnsavedChanges {
+                    ToolbarItemGroup(placement: .navigationBarTrailing) {
+                        Button {
+                            showRevertConfirmation = true
+                        } label: {
+                            Image(systemName: "arrow.uturn.left")
+                        }
+                        .tint(.red)
+
+                        Button("Save") {
+                            saveEmail()
+                        }
+                        .bold()
+                        .disabled(!isEmailValid())
+                    }
+                }
+            }
+            .sheet(isPresented: $showCreateTemplate) {
+                CreateEmailTemplateSheet { newTemplate in
+                    apply(template: newTemplate)
+                }
+                .environment(\.modelContext, modelContext)
+            }
+            .sheet(isPresented: $showTemplateDetail) {
+                if let template = selectedTemplate {
+                    TemplateDetailView(
+                        prospect: prospect,
+                        template: template
+                    )
+                    .environment(\.modelContext, modelContext)
+                }
+            }
+            .alert(
+                "Revert Changes?",
+                isPresented: $showRevertConfirmation
+            ) {
                 Button("Revert", role: .destructive) {
-                    tempEmail = prospect.contactEmail
+                    tempEmail = prospect.contactEmail ?? ""
                 }
                 Button("Cancel", role: .cancel) {}
-            },
-            message: {
+            } message: {
                 Text("This will discard unsaved changes.")
             }
-        )
-        .onAppear {
-            // Always populate the email field with the prospect’s email
-            tempEmail = prospect.contactEmail ?? ""
-        }
-        .sheet(isPresented: $showTemplateDetail) {
-            if let template = selectedTemplate {
-                TemplateDetailView(prospect: prospect, template: template)
-                    .environment(\.modelContext, modelContext)
+            .onAppear {
+                tempEmail = prospect.contactEmail ?? ""
             }
         }
     }
-    
+
+    // MARK: - Helpers
+
+    private func templateRow(title: String, subtitle: String) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).fontWeight(.medium)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+        .background(.ultraThinMaterial)
+        .cornerRadius(12)
+    }
+
     private func handleTemplateSelection(template: EmailTemplate?) {
-        if let template = template {
-            // Template selected → show detail view
+        if let template {
             selectedTemplate = template
             showTemplateDetail = true
         } else {
-            // No template → send immediately
             sendEmail(subject: "", body: "")
             dismiss()
         }
     }
-    
+
     private func sendEmail(subject: String, body: String) {
         EmailComposer.compose(
             to: tempEmail,
@@ -214,12 +219,15 @@ struct EmailActionSheet: View {
             of: "{{name}}",
             with: prospect.fullName
         )
-        tempEmail = prospect.contactEmail ?? "" // keep tempEmail in sync
+        tempEmail = prospect.contactEmail ?? ""
     }
 
     private func logEmailNote() {
-        let content = "Composed email to \(tempEmail) on \(Date().formatted(date: .abbreviated, time: .shortened))."
-        let note = Note(content: content, date: Date(), prospect: prospect)
+        let note = Note(
+            content: "Composed email to \(tempEmail) on \(Date().formatted(date: .abbreviated, time: .shortened)).",
+            date: Date(),
+            prospect: prospect
+        )
         prospect.notes.append(note)
         try? modelContext.save()
     }
@@ -240,19 +248,15 @@ struct EmailActionSheet: View {
         let previous = prospect.contactEmail.trimmingCharacters(in: .whitespacesAndNewlines)
         prospect.contactEmail = tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // Log note if changed
         if previous.lowercased() != prospect.contactEmail.lowercased() {
-            let noteContent: String
-            if previous.isEmpty {
-                noteContent = "Added email \(prospect.contactEmail)."
-            } else {
-                noteContent = "Updated email from \(previous) to \(prospect.contactEmail)."
-            }
-            let note = Note(content: noteContent, date: Date(), prospect: prospect)
+            let note = Note(
+                content: "Updated email from \(previous) to \(prospect.contactEmail).",
+                date: Date(),
+                prospect: prospect
+            )
             prospect.notes.append(note)
         }
 
-        // Save to SwiftData
         try? modelContext.save()
     }
 }
