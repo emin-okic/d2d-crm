@@ -24,6 +24,8 @@ struct ProspectCreateStepperView: View {
     @StateObject private var searchVM = SearchCompleterViewModel()
     @FocusState private var isAddressFocused: Bool
     @State private var phoneError: String?
+    
+    @State private var emailError: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -168,6 +170,14 @@ struct ProspectCreateStepperView: View {
                 TextField("name@email.com", text: $contactEmail)
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
+                    .onChange(of: contactEmail) { _ in _ = validateEmail() }
+            }
+
+            // Show error message
+            if let emailError = emailError {
+                Text(emailError)
+                    .font(.caption)
+                    .foregroundColor(.red)
             }
         }
     }
@@ -241,7 +251,9 @@ struct ProspectCreateStepperView: View {
         !address.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    private var canProceedStepTwo: Bool { phoneError == nil }
+    private var canProceedStepTwo: Bool {
+        phoneError == nil && validateEmail()
+    }
 
     private func handleAddressSelection(_ result: MKLocalSearchCompletion) {
         Task {
@@ -260,6 +272,26 @@ struct ProspectCreateStepperView: View {
         let utility = PhoneNumberUtility()
         do { _ = try utility.parse(raw); phoneError = nil; return true }
         catch { phoneError = "Invalid phone number."; return false }
+    }
+    
+    @discardableResult
+    private func validateEmail() -> Bool {
+        let raw = contactEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else {
+            emailError = nil
+            return true // email is optional
+        }
+
+        let pattern = #"^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
+        let isValid = raw.range(of: pattern, options: .regularExpression) != nil
+
+        if isValid {
+            emailError = nil
+            return true
+        } else {
+            emailError = "Invalid email address."
+            return false
+        }
     }
 
     private func createProspect() {
