@@ -49,12 +49,6 @@ struct EmailActionSheet: View {
         NavigationStack {
             VStack(spacing: 16) {
 
-                // Drag indicator
-                Capsule()
-                    .fill(Color.secondary.opacity(0.4))
-                    .frame(width: 36, height: 5)
-                    .padding(.top, 8)
-
                 // Header
                 HStack(spacing: 10) {
                     Image(systemName: "envelope.fill")
@@ -148,14 +142,12 @@ struct EmailActionSheet: View {
                 }
                 .environment(\.modelContext, modelContext)
             }
-            .sheet(isPresented: $showTemplateDetail) {
-                if let template = selectedTemplate {
-                    TemplateDetailView(
-                        prospect: prospect,
-                        template: template
-                    )
-                    .environment(\.modelContext, modelContext)
-                }
+            .sheet(item: $selectedTemplate) { template in
+                TemplateDetailView(
+                    prospect: prospect,
+                    template: template
+                )
+                .environment(\.modelContext, modelContext)
             }
             .alert(
                 "Revert Changes?",
@@ -195,8 +187,7 @@ struct EmailActionSheet: View {
 
     private func handleTemplateSelection(template: EmailTemplate?) {
         if let template {
-            selectedTemplate = template
-            showTemplateDetail = true
+            selectedTemplate = template   // ← this alone triggers the sheet
         } else {
             sendEmail(subject: "", body: "")
             dismiss()
