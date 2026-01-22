@@ -28,4 +28,12 @@ final class EmailTemplatesController: ObservableObject {
             body: personalizedBody
         )
     }
+    
+    func composeBlankEmail() {
+        EmailComposer.compose(
+            to: prospect.contactEmail,
+            subject: "",
+            body: ""
+        )
+    }
 }

@@ -62,6 +62,22 @@ struct EmailTemplatePickerSheet: View {
 
     private var templateList: some View {
         VStack(spacing: 8) {
+            
+            Button {
+                controller.composeBlankEmail()
+                onClose()
+            } label: {
+                HStack {
+                    Image(systemName: "square.and.pencil")
+                    Text("Blank Email")
+                        .fontWeight(.medium)
+                    Spacer()
+                }
+                .padding()
+                .background(.ultraThinMaterial)
+                .cornerRadius(12)
+            }
+            .buttonStyle(.plain)
 
             // Existing templates
             ForEach(templates) { template in
@@ -108,4 +124,5 @@ struct EmailTemplatePickerSheet: View {
             .padding(.top, 4)
         }
     }
+    
 }
