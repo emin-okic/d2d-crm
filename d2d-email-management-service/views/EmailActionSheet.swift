@@ -38,6 +38,8 @@ struct EmailActionSheet: View {
     private var hasUnsavedChanges: Bool {
         tempEmail.trimmingCharacters(in: .whitespacesAndNewlines) != (prospect.contactEmail ?? "")
     }
+    
+    @State private var showTemplateDetail = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -96,12 +98,9 @@ struct EmailActionSheet: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 8) {
 
-                        // ✅ Add this
+                        // Email Without Template
                         Button {
-                            tempEmail = prospect.contactEmail ?? ""
-                            subject = ""
-                            emailBody = ""
-                            selectedTemplate = nil
+                            handleTemplateSelection(template: nil)
                         } label: {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
@@ -121,9 +120,10 @@ struct EmailActionSheet: View {
                         }
                         .buttonStyle(.plain)
 
+                        // Existing templates
                         ForEach(templates) { template in
                             Button {
-                                apply(template: template)
+                                handleTemplateSelection(template: template)
                             } label: {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 4) {
@@ -150,18 +150,6 @@ struct EmailActionSheet: View {
                 }
             }
 
-            Button("Send Email") {
-                EmailComposer.compose(
-                    to: tempEmail,
-                    subject: subject,
-                    body: emailBody
-                )
-
-                logEmailNote()
-                dismiss()
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(!isEmailValid() || tempEmail.isEmpty)
         }
         .padding()
         .presentationDetents([.medium])
@@ -190,6 +178,33 @@ struct EmailActionSheet: View {
             // Always populate the email field with the prospect’s email
             tempEmail = prospect.contactEmail ?? ""
         }
+        .sheet(isPresented: $showTemplateDetail) {
+            if let template = selectedTemplate {
+                TemplateDetailView(prospect: prospect, template: template)
+                    .environment(\.modelContext, modelContext)
+            }
+        }
+    }
+    
+    private func handleTemplateSelection(template: EmailTemplate?) {
+        if let template = template {
+            // Template selected → show detail view
+            selectedTemplate = template
+            showTemplateDetail = true
+        } else {
+            // No template → send immediately
+            sendEmail(subject: "", body: "")
+            dismiss()
+        }
+    }
+    
+    private func sendEmail(subject: String, body: String) {
+        EmailComposer.compose(
+            to: tempEmail,
+            subject: subject,
+            body: body
+        )
+        logEmailNote()
     }
 
     private func apply(template: EmailTemplate) {
