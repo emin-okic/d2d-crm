@@ -37,6 +37,10 @@ struct ProspectActionsToolbar: View {
     
     @State private var emailError: String?
     
+    @State private var showEmailTemplates = false
+    
+    @State private var showCreateEmailTemplate = false
+    
     init(prospect: Prospect, modelContext: ModelContext) {
         self._prospect = Bindable(prospect)
         self.customerController = CustomerController(modelContext: modelContext)
@@ -148,25 +152,9 @@ struct ProspectActionsToolbar: View {
                 ContactScreenHapticsController.shared.lightTap()
                 ContactScreenSoundController.shared.playSound1()
                 
-                logEmailNote()   // ✅ log it first
+                logEmailNote()
 
-                let subject = "Quick follow-up"
-                let body = """
-                Hi \(prospect.fullName),
-
-                It was great connecting with you earlier. I just wanted to follow up and see if you had any questions or wanted to take the next step.
-
-                Looking forward to hearing from you,
-                """
-
-                let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-                let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-
-                let urlString = "mailto:\(prospect.contactEmail)?subject=\(encodedSubject)&body=\(encodedBody)"
-
-                if let url = URL(string: urlString) {
-                    UIApplication.shared.open(url)
-                }
+                showEmailTemplates = true
             }
 
             Button("Edit Email") {
@@ -182,6 +170,21 @@ struct ProspectActionsToolbar: View {
             }
 
             Button("Cancel", role: .cancel) { }
+        }
+        
+        .sheet(isPresented: $showEmailTemplates) {
+            EmailTemplatePickerSheet(
+                controller: EmailTemplatesController(
+                    modelContext: modelContext,
+                    prospect: prospect
+                ),
+                onClose: { showEmailTemplates = false }
+            )
+        }
+        .sheet(isPresented: $showCreateEmailTemplate, onDismiss: {
+            showEmailTemplates = true
+        }) {
+            CreateEmailTemplateSheet()
         }
 
         // Convert to Customer sheet using common stepper form
