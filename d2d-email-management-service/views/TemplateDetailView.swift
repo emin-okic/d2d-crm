@@ -22,41 +22,64 @@ struct TemplateDetailView: View {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text("Preview Email")
-                .font(.headline)
+        NavigationStack {
+            VStack(spacing: 16) {
+                Text("Preview Email")
+                    .font(.headline)
 
-            // Subject Field
-            TextField("Subject", text: $subject)
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(12)
+                // Subject Field
+                TextField("Subject", text: $subject)
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(12)
 
-            // Body Field
-            TextEditor(text: $emailBody)
-                .frame(minHeight: 180)
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(12)
+                // Body Field
+                TextEditor(text: $emailBody)
+                    .frame(minHeight: 180)
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(12)
 
-            // Send Button
-            Button("Send") {
-                EmailComposer.compose(to: prospect.contactEmail, subject: subject, body: emailBody)
-
-                // Log note
-                let note = Note(
-                    content: "Sent email to \(prospect.contactEmail) on \(Date().formatted(date: .abbreviated, time: .shortened)).",
-                    date: Date(),
-                    prospect: prospect
-                )
-                prospect.notes.append(note)
-                try? prospect.modelContext?.save()
-
-                dismiss()
+                Spacer()
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(prospect.contactEmail.isEmpty)
+            .padding()
+            .navigationTitle("Email Preview")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                // Left: Dismiss button
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.primary)
+                    }
+                }
+
+                // Right: Send button
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Send") {
+                        sendEmail()
+                    }
+                    .disabled(prospect.contactEmail.isEmpty)
+                    .bold()
+                }
+            }
         }
-        .padding()
+    }
+
+    private func sendEmail() {
+        EmailComposer.compose(to: prospect.contactEmail, subject: subject, body: emailBody)
+
+        // Log note
+        let note = Note(
+            content: "Sent email to \(prospect.contactEmail) on \(Date().formatted(date: .abbreviated, time: .shortened)).",
+            date: Date(),
+            prospect: prospect
+        )
+        prospect.notes.append(note)
+        try? prospect.modelContext?.save()
+
+        dismiss()
     }
 }
