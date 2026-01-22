@@ -44,6 +44,9 @@ struct EmailActionSheet: View {
         tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
         != (prospect.contactEmail ?? "")
     }
+    
+    private let haptics = EmailManagerHapticsController.shared
+    private let sounds = EmailManagerSoundController.shared
 
     var body: some View {
         NavigationStack {
@@ -115,7 +118,12 @@ struct EmailActionSheet: View {
                 // Left
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
+                        
+                        haptics.lightTap()
+                        sounds.playSound1()
+                        
                         dismiss()
+                        
                     } label: {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 17, weight: .semibold))
@@ -126,14 +134,24 @@ struct EmailActionSheet: View {
                 if hasUnsavedChanges {
                     ToolbarItemGroup(placement: .navigationBarTrailing) {
                         Button {
+                            
+                            haptics.mediumTap()
+                            sounds.playSound1()
+                            
                             showRevertConfirmation = true
+                            
                         } label: {
                             Image(systemName: "arrow.uturn.left")
                         }
                         .tint(.red)
 
                         Button("Save") {
+                            
+                            haptics.mediumTap()
+                            sounds.playSound1()
+                            
                             saveEmail()
+                            
                         }
                         .bold()
                         .disabled(!isEmailValid())
