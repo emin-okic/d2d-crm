@@ -13,11 +13,10 @@ struct TemplateDetailView: View {
     var prospect: Prospect
     var template: EmailTemplate
 
-    @State private var title: String           // <-- added title
+    @State private var title: String
     @State private var subject: String
     @State private var emailBody: String
 
-    // Keep track of original values
     @State private var originalTitle: String
     @State private var originalSubject: String
     @State private var originalBody: String
@@ -27,47 +26,70 @@ struct TemplateDetailView: View {
         self.template = template
         
         let personalizedBody = template.body.replacingOccurrences(of: "{{name}}", with: prospect.fullName)
-        _title = State(initialValue: template.title)        // <-- initialize title
+        _title = State(initialValue: template.title)
         _subject = State(initialValue: template.subject)
         _emailBody = State(initialValue: personalizedBody)
         
-        originalTitle = template.title                     // <-- track original title
+        originalTitle = template.title
         originalSubject = template.subject
         originalBody = personalizedBody
     }
 
-    // Track if template has been edited
     private var hasEdits: Bool {
         title != originalTitle || subject != originalSubject || emailBody != originalBody
     }
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 16) {
-                
-                // Editable Template Title
-                TextField("Template Title", text: $title)
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(12)
-                
-                // Editable Subject
-                TextField("Subject", text: $subject)
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(12)
+            ScrollView {
+                VStack(spacing: 24) {
+                    
+                    // Template Title
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Template Title")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        TextField("Enter a descriptive title", text: $title)
+                            .padding()
+                            .background(.ultraThinMaterial)
+                            .cornerRadius(12)
+                            .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+                    }
 
-                // Editable Body
-                TextEditor(text: $emailBody)
-                    .frame(minHeight: 180)
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(12)
+                    // Subject
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Email Subject")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        TextField("Enter email subject", text: $subject)
+                            .padding()
+                            .background(.ultraThinMaterial)
+                            .cornerRadius(12)
+                            .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+                    }
 
-                Spacer()
+                    // Body
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Email Body")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        TextEditor(text: $emailBody)
+                            .frame(minHeight: 200)
+                            .padding()
+                            .background(.ultraThinMaterial)
+                            .cornerRadius(12)
+                            .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+                        Text("Use {{name}} to insert the prospect’s name automatically.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 2)
+                    }
+
+                    Spacer()
+                }
+                .padding()
             }
-            .padding()
-            .navigationTitle("Email Preview")
+            .navigationTitle("Email Template")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 // Left: Dismiss
@@ -80,12 +102,11 @@ struct TemplateDetailView: View {
                     }
                 }
 
-                // Right: Send OR Save/Revert
+                // Right: Send or Save/Revert
                 ToolbarItem(placement: .navigationBarTrailing) {
                     if hasEdits {
                         HStack(spacing: 12) {
-                            
-                            // Revert button as a curving left arrow
+                            // Revert button
                             Button {
                                 title = originalTitle
                                 subject = originalSubject
@@ -133,7 +154,6 @@ struct TemplateDetailView: View {
         template.body = emailBody.replacingOccurrences(of: prospect.fullName, with: "{{name}}")
         try? modelContext.save()
 
-        // Update originals so toolbar switches back to Send
         originalTitle = template.title
         originalSubject = template.subject
         originalBody = template.body.replacingOccurrences(of: "{{name}}", with: prospect.fullName)
