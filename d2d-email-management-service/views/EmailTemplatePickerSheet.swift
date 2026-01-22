@@ -62,6 +62,8 @@ struct EmailTemplatePickerSheet: View {
 
     private var templateList: some View {
         VStack(spacing: 8) {
+
+            // Existing templates
             ForEach(templates) { template in
                 Button {
                     controller.compose(template: template)
@@ -86,10 +88,24 @@ struct EmailTemplatePickerSheet: View {
                 .buttonStyle(.plain)
             }
 
+            // Option to continue without a template
+            Button("Continue Without Template") {
+                // Compose a blank email using just the prospect's email
+                EmailComposer.compose(
+                    to: controller.prospect.contactEmail,
+                    subject: "",
+                    body: ""
+                )
+                onClose()
+            }
+            .padding(.top, 8)
+            .foregroundStyle(.blue)
+            .fontWeight(.semibold)
+
             Button("Create New Template") {
                 showCreateTemplate = true
             }
-            .padding(.top, 8)
+            .padding(.top, 4)
         }
     }
 }
