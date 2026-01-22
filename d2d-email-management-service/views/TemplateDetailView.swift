@@ -13,10 +13,12 @@ struct TemplateDetailView: View {
     var prospect: Prospect
     var template: EmailTemplate
 
+    @State private var title: String           // <-- added title
     @State private var subject: String
     @State private var emailBody: String
 
-    // Keep track of the original template values
+    // Keep track of original values
+    @State private var originalTitle: String
     @State private var originalSubject: String
     @State private var originalBody: String
 
@@ -25,27 +27,37 @@ struct TemplateDetailView: View {
         self.template = template
         
         let personalizedBody = template.body.replacingOccurrences(of: "{{name}}", with: prospect.fullName)
+        _title = State(initialValue: template.title)        // <-- initialize title
         _subject = State(initialValue: template.subject)
         _emailBody = State(initialValue: personalizedBody)
         
+        originalTitle = template.title                     // <-- track original title
         originalSubject = template.subject
         originalBody = personalizedBody
     }
 
     // Track if template has been edited
     private var hasEdits: Bool {
-        subject != originalSubject || emailBody != originalBody
+        title != originalTitle || subject != originalSubject || emailBody != originalBody
     }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
-
+                
+                // Editable Template Title
+                TextField("Template Title", text: $title)
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(12)
+                
+                // Editable Subject
                 TextField("Subject", text: $subject)
                     .padding()
                     .background(Color(.secondarySystemBackground))
                     .cornerRadius(12)
 
+                // Editable Body
                 TextEditor(text: $emailBody)
                     .frame(minHeight: 180)
                     .padding()
@@ -75,6 +87,7 @@ struct TemplateDetailView: View {
                             
                             // Revert button as a curving left arrow
                             Button {
+                                title = originalTitle
                                 subject = originalSubject
                                 emailBody = originalBody
                             } label: {
@@ -115,12 +128,13 @@ struct TemplateDetailView: View {
     }
 
     private func saveTemplateChanges() {
+        template.title = title
         template.subject = subject
         template.body = emailBody.replacingOccurrences(of: prospect.fullName, with: "{{name}}")
         try? modelContext.save()
 
-        // Update the originals so the toolbar switches back to "Send"
-        // after saving
+        // Update originals so toolbar switches back to Send
+        originalTitle = template.title
         originalSubject = template.subject
         originalBody = template.body.replacingOccurrences(of: "{{name}}", with: prospect.fullName)
     }
