@@ -7,33 +7,45 @@
 import SwiftUI
 
 struct TemplateDetailView: View {
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) var dismiss
+    
     var prospect: Prospect
     var template: EmailTemplate
 
     @State private var subject: String
     @State private var emailBody: String
 
+    // Keep track of the original template values
+    @State private var originalSubject: String
+    @State private var originalBody: String
+
     init(prospect: Prospect, template: EmailTemplate) {
         self.prospect = prospect
         self.template = template
+        
+        let personalizedBody = template.body.replacingOccurrences(of: "{{name}}", with: prospect.fullName)
         _subject = State(initialValue: template.subject)
-        _emailBody = State(initialValue: template.body.replacingOccurrences(of: "{{name}}", with: prospect.fullName))
+        _emailBody = State(initialValue: personalizedBody)
+        
+        originalSubject = template.subject
+        originalBody = personalizedBody
+    }
+
+    // Track if template has been edited
+    private var hasEdits: Bool {
+        subject != originalSubject || emailBody != originalBody
     }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
-                Text("Preview Email")
-                    .font(.headline)
 
-                // Subject Field
                 TextField("Subject", text: $subject)
                     .padding()
                     .background(Color(.secondarySystemBackground))
                     .cornerRadius(12)
 
-                // Body Field
                 TextEditor(text: $emailBody)
                     .frame(minHeight: 180)
                     .padding()
@@ -46,7 +58,7 @@ struct TemplateDetailView: View {
             .navigationTitle("Email Preview")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                // Left: Dismiss button
+                // Left: Dismiss
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
                         dismiss()
@@ -56,13 +68,28 @@ struct TemplateDetailView: View {
                     }
                 }
 
-                // Right: Send button
+                // Right: Send OR Save/Revert
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Send") {
-                        sendEmail()
+                    if hasEdits {
+                        HStack(spacing: 12) {
+                            Button("Revert") {
+                                subject = originalSubject
+                                emailBody = originalBody
+                            }
+                            .tint(.red)
+
+                            Button("Save") {
+                                saveTemplateChanges()
+                            }
+                            .bold()
+                        }
+                    } else {
+                        Button("Send") {
+                            sendEmail()
+                        }
+                        .disabled(prospect.contactEmail.isEmpty)
+                        .bold()
                     }
-                    .disabled(prospect.contactEmail.isEmpty)
-                    .bold()
                 }
             }
         }
@@ -71,15 +98,25 @@ struct TemplateDetailView: View {
     private func sendEmail() {
         EmailComposer.compose(to: prospect.contactEmail, subject: subject, body: emailBody)
 
-        // Log note
         let note = Note(
             content: "Sent email to \(prospect.contactEmail) on \(Date().formatted(date: .abbreviated, time: .shortened)).",
             date: Date(),
             prospect: prospect
         )
         prospect.notes.append(note)
-        try? prospect.modelContext?.save()
+        try? modelContext.save()
 
         dismiss()
+    }
+
+    private func saveTemplateChanges() {
+        template.subject = subject
+        template.body = emailBody.replacingOccurrences(of: prospect.fullName, with: "{{name}}")
+        try? modelContext.save()
+
+        // Update the originals so the toolbar switches back to "Send"
+        // after saving
+        originalSubject = template.subject
+        originalBody = template.body.replacingOccurrences(of: "{{name}}", with: prospect.fullName)
     }
 }
