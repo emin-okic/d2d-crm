@@ -72,11 +72,16 @@ struct TemplateDetailView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     if hasEdits {
                         HStack(spacing: 12) {
-                            Button("Revert") {
+                            
+                            // Revert button as a curving left arrow
+                            Button {
                                 subject = originalSubject
                                 emailBody = originalBody
+                            } label: {
+                                Image(systemName: "arrow.uturn.left")
+                                    .foregroundColor(.red)
+                                    .imageScale(.large)
                             }
-                            .tint(.red)
 
                             Button("Save") {
                                 saveTemplateChanges()
