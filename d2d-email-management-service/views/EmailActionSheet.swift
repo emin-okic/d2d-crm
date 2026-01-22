@@ -111,10 +111,14 @@ struct EmailActionSheet: View {
             .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
             .toolbar {
+                
                 // Left
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Close") {
+                    Button {
                         dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .semibold))
                     }
                 }
 
