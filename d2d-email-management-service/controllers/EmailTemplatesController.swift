@@ -22,11 +22,15 @@ final class EmailTemplatesController: ObservableObject {
         let personalizedBody = template.body
             .replacingOccurrences(of: "{{name}}", with: prospect.fullName)
 
+        // Send email
         EmailComposer.compose(
             to: prospect.contactEmail,
             subject: template.subject,
             body: personalizedBody
         )
+
+        // Log the email sent
+        logEmailNote()
     }
     
     func composeBlankEmail() {
@@ -35,5 +39,13 @@ final class EmailTemplatesController: ObservableObject {
             subject: "",
             body: ""
         )
+        logEmailNote()
+    }
+
+    private func logEmailNote() {
+        let content = "Sent email to \(prospect.contactEmail) on \(Date().formatted(date: .abbreviated, time: .shortened))."
+        let note = Note(content: content, date: Date(), prospect: prospect)
+        prospect.notes.append(note)
+        try? modelContext.save()
     }
 }

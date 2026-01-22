@@ -27,51 +27,54 @@ struct EmailTemplatePickerSheet: View {
             Text("Email Templates")
                 .font(.headline)
 
-            if templates.isEmpty {
-                emptyState
-            } else {
-                templateList
-            }
+            ScrollView {
+                VStack(spacing: 8) {
 
-            Spacer()
+                    if templates.isEmpty {
+                        emptyState
+                    }
+
+                    templateList
+                }
+            }
         }
         .padding()
-        .presentationDetents([.fraction(0.35)])
+        .presentationDetents([.medium]) // ⬅️ important
         .presentationDragIndicator(.visible)
         .sheet(isPresented: $showCreateTemplate) {
-            CreateEmailTemplateSheet(onSave: { newTemplate in
+            CreateEmailTemplateSheet(onSave: { _ in
                 showCreateTemplate = false
             })
-            .environment(\.modelContext, controller.modelContext) // <-- important
+            .environment(\.modelContext, controller.modelContext)
         }
     }
 
     private var emptyState: some View {
-        VStack(spacing: 12) {
-            Text("No templates yet")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-
-            Button("Create Email Template") {
-                showCreateTemplate = true
-            }
-            .buttonStyle(.borderedProminent)
-        }
-        .padding(.top, 20)
+        Text("No templates yet")
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .padding(.top, 12)
     }
 
     private var templateList: some View {
         VStack(spacing: 8) {
-            
+
+            // ✅ Email Without Template button
             Button {
                 controller.composeBlankEmail()
                 onClose()
             } label: {
                 HStack {
-                    Image(systemName: "square.and.pencil")
-                    Text("Blank Email")
-                        .fontWeight(.medium)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Email Without Template")
+                            .fontWeight(.medium)
+                        Text("Start from a blank email")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                     Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(.secondary)
                 }
                 .padding()
                 .background(.ultraThinMaterial)
@@ -104,24 +107,9 @@ struct EmailTemplatePickerSheet: View {
                 .buttonStyle(.plain)
             }
 
-            // Option to continue without a template
-            Button("Continue Without Template") {
-                // Compose a blank email using just the prospect's email
-                EmailComposer.compose(
-                    to: controller.prospect.contactEmail,
-                    subject: "",
-                    body: ""
-                )
-                onClose()
-            }
-            .padding(.top, 8)
-            .foregroundStyle(.blue)
-            .fontWeight(.semibold)
-
-            Button("Create New Template") {
-                showCreateTemplate = true
-            }
-            .padding(.top, 4)
+            // Create new template
+            Button("Create New Template") { showCreateTemplate = true }
+                .padding(.top, 4)
         }
     }
     

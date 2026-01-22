@@ -22,23 +22,23 @@ struct EmailActionSheet: View {
 
     @Bindable var prospect: Prospect
     
-    @State private var toEmail: String = ""
+    @State private var tempEmail: String = ""
     @State private var subject: String = ""
     @State private var emailBody: String = ""
 
     @State private var selectedTemplate: EmailTemplate?
-    
+
     @Query(sort: \EmailTemplate.createdAt) private var templates: [EmailTemplate]
     @State private var showCreateTemplate = false
     @State private var emailError: String?
-    
+
     @State private var showRevertConfirmation = false
-    
+
     // ✅ Computed property to check if there are unsaved changes
     private var hasUnsavedChanges: Bool {
-        toEmail.trimmingCharacters(in: .whitespacesAndNewlines) != prospect.contactEmail
+        tempEmail.trimmingCharacters(in: .whitespacesAndNewlines) != (prospect.contactEmail ?? "")
     }
-    
+
     var body: some View {
         VStack(spacing: 16) {
             // Drag indicator
@@ -56,26 +56,71 @@ struct EmailActionSheet: View {
                     .font(.headline)
             }
 
-            // Email Input
-            TextField("name@example.com", text: $toEmail)
+            // Email Input (always visible)
+            TextField("name@example.com", text: $tempEmail)
                 .keyboardType(.emailAddress)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .padding()
                 .background(Color(.secondarySystemBackground))
                 .cornerRadius(14)
-                .onChange(of: toEmail) { _ in validateEmail() }
-            
+                .onChange(of: tempEmail) { _ in validateEmail() }
+
             if let emailError = emailError {
                 Text(emailError)
                     .font(.caption)
                     .foregroundColor(.red)
             }
 
+            // Show Save + Revert buttons whenever user edits the email
+            if hasUnsavedChanges {
+                HStack(spacing: 12) {
+                    Button("Revert") {
+                        showRevertConfirmation = true
+                    }
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(.bordered)
+                    .tint(.red)
+
+                    Button("Save") {
+                        saveEmail()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!isEmailValid() || tempEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+
             // Template Picker
             if !templates.isEmpty {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 8) {
+
+                        // ✅ Add this
+                        Button {
+                            tempEmail = prospect.contactEmail ?? ""
+                            subject = ""
+                            emailBody = ""
+                            selectedTemplate = nil
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Email Without Template")
+                                        .fontWeight(.medium)
+                                    Text("Start from a blank email")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding()
+                            .background(.ultraThinMaterial)
+                            .cornerRadius(12)
+                        }
+                        .buttonStyle(.plain)
+
                         ForEach(templates) { template in
                             Button {
                                 apply(template: template)
@@ -105,28 +150,9 @@ struct EmailActionSheet: View {
                 }
             }
 
-            // Actions (only show if there are unsaved changes)
-            if hasUnsavedChanges {
-                HStack(spacing: 12) {
-                    Button("Revert") {
-                        showRevertConfirmation = true
-                    }
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(.bordered)
-                    .tint(.red)
-
-                    Button("Save") {
-                        saveEmail()
-                    }
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!isEmailValid() || toEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                }
-            }
-            
             Button("Send Email") {
                 EmailComposer.compose(
-                    to: toEmail,
+                    to: tempEmail,
                     subject: subject,
                     body: emailBody
                 )
@@ -135,7 +161,7 @@ struct EmailActionSheet: View {
                 dismiss()
             }
             .buttonStyle(.borderedProminent)
-            .disabled(!isEmailValid() || toEmail.isEmpty)
+            .disabled(!isEmailValid() || tempEmail.isEmpty)
         }
         .padding()
         .presentationDetents([.medium])
@@ -147,38 +173,44 @@ struct EmailActionSheet: View {
             })
             .environment(\.modelContext, modelContext)
         }
-        .alert("Revert Changes?", isPresented: $showRevertConfirmation) {
-            Button("Revert", role: .destructive) {
-                toEmail = prospect.contactEmail
+        .alert(
+            "Revert Changes?",
+            isPresented: $showRevertConfirmation,
+            actions: {
+                Button("Revert", role: .destructive) {
+                    tempEmail = prospect.contactEmail
+                }
+                Button("Cancel", role: .cancel) {}
+            },
+            message: {
+                Text("This will discard unsaved changes.")
             }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("This will discard unsaved changes.")
-        }
+        )
         .onAppear {
-            toEmail = prospect.contactEmail
+            // Always populate the email field with the prospect’s email
+            tempEmail = prospect.contactEmail ?? ""
         }
     }
 
     private func apply(template: EmailTemplate) {
         selectedTemplate = template
-
         subject = template.subject
         emailBody = template.body.replacingOccurrences(
             of: "{{name}}",
             with: prospect.fullName
         )
+        tempEmail = prospect.contactEmail ?? "" // keep tempEmail in sync
     }
-    
+
     private func logEmailNote() {
-        let content = "Sent email to \(toEmail) on \(Date().formatted(date: .abbreviated, time: .shortened))."
+        let content = "Composed email to \(tempEmail) on \(Date().formatted(date: .abbreviated, time: .shortened))."
         let note = Note(content: content, date: Date(), prospect: prospect)
         prospect.notes.append(note)
         try? modelContext.save()
     }
 
     private func isEmailValid() -> Bool {
-        let raw = toEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        let raw = tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
         let pattern = #"^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
         return raw.range(of: pattern, options: .regularExpression) != nil
     }
@@ -190,11 +222,11 @@ struct EmailActionSheet: View {
     private func saveEmail() {
         guard isEmailValid() else { return }
 
-        let previous = prospect.contactEmail
-        prospect.contactEmail = toEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        let previous = prospect.contactEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        prospect.contactEmail = tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
 
         // Log note if changed
-        if previous.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != prospect.contactEmail.lowercased() {
+        if previous.lowercased() != prospect.contactEmail.lowercased() {
             let noteContent: String
             if previous.isEmpty {
                 noteContent = "Added email \(prospect.contactEmail)."
@@ -207,6 +239,5 @@ struct EmailActionSheet: View {
 
         // Save to SwiftData
         try? modelContext.save()
-        
     }
 }

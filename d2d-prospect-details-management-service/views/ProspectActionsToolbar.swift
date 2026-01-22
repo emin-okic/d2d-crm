@@ -31,6 +31,8 @@ struct ProspectActionsToolbar: View {
     
     @State private var showEmailSheet = false
     
+    @State private var showTemplatePicker = false
+    
     init(prospect: Prospect, modelContext: ModelContext) {
         self._prospect = Bindable(prospect)
         self.customerController = CustomerController(modelContext: modelContext)
@@ -67,7 +69,9 @@ struct ProspectActionsToolbar: View {
                 ) {
                     ContactScreenHapticsController.shared.successConfirmationTap()
                     ContactScreenSoundController.shared.playSound1()
+                    
                     showEmailSheet = true
+                    
                 }
 
                 if prospect.list == "Prospects" {
@@ -173,6 +177,17 @@ struct ProspectActionsToolbar: View {
         .sheet(isPresented: $showEmailSheet) {
             EmailActionSheet(prospect: prospect)
                 .environment(\.modelContext, modelContext)
+        }
+        .sheet(isPresented: $showTemplatePicker) {
+            EmailTemplatePickerSheet(
+                controller: EmailTemplatesController(
+                    modelContext: modelContext,
+                    prospect: prospect
+                ),
+                onClose: {
+                    showTemplatePicker = false
+                }
+            )
         }
         
     }
