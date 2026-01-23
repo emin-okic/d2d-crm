@@ -51,7 +51,6 @@ struct EmailActionSheet: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
-
                 // Header
                 HStack(spacing: 10) {
                     Image(systemName: "envelope.fill")
@@ -77,40 +76,39 @@ struct EmailActionSheet: View {
                         .foregroundColor(.red)
                 }
 
-                // Template Picker
-                if !templates.isEmpty {
-                    ScrollView(showsIndicators: false) {
-                        VStack(spacing: 8) {
+                // Template Picker + "Email Without Template"
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 8) {
 
+                        // Always show "Email Without Template" button
+                        Button {
+                            handleTemplateSelection(template: nil)
+                        } label: {
+                            templateRow(
+                                title: "Email Without Template",
+                                subtitle: "Start from a blank email"
+                            )
+                        }
+
+                        // Show actual templates if they exist
+                        ForEach(templates) { template in
                             Button {
-                                handleTemplateSelection(template: nil)
+                                handleTemplateSelection(template: template)
                             } label: {
                                 templateRow(
-                                    title: "Email Without Template",
-                                    subtitle: "Start from a blank email"
+                                    title: template.title,
+                                    subtitle: template.subject
                                 )
                             }
-
-                            ForEach(templates) { template in
-                                Button {
-                                    handleTemplateSelection(template: template)
-                                } label: {
-                                    templateRow(
-                                        title: template.title,
-                                        subtitle: template.subject
-                                    )
-                                }
-                            }
-
-                            Button("Create New Template") {
-                                
-                                haptics.lightTap()
-                                sounds.playSound1()
-                                
-                                showCreateTemplate = true
-                            }
-                            .padding(.top, 4)
                         }
+
+                        // Always show "Create New Template" button
+                        Button("Create New Template") {
+                            haptics.lightTap()
+                            sounds.playSound1()
+                            showCreateTemplate = true
+                        }
+                        .padding(.top, 4)
                     }
                 }
             }
