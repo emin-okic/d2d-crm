@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-
+import SwiftData
 
 struct CreateEmailTemplateSheet: View {
     @Environment(\.modelContext) private var modelContext
@@ -16,29 +16,77 @@ struct CreateEmailTemplateSheet: View {
     @State private var subject = ""
     @State private var emailBody = ""
 
-    var onSave: ((EmailTemplate) -> Void)? // <-- new
+    var onSave: ((EmailTemplate) -> Void)?
+    
+    private let haptics = EmailManagerHapticsController.shared
+    private let sounds = EmailManagerSoundController.shared
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Title") {
-                    TextField("Follow-up after visit", text: $title)
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Title
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Title")
+                            .font(.headline)
+                        TextField("Follow-up after visit", text: $title)
+                            .padding()
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(12)
+                    }
+
+                    // Subject
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Subject")
+                            .font(.headline)
+                        TextField("Quick follow-up", text: $subject)
+                            .padding()
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(12)
+                    }
+
+                    // Email Body
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Body")
+                            .font(.headline)
+                        TextEditor(text: $emailBody)
+                            .frame(minHeight: 180)
+                            .padding(8)
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(12)
+                        
+                        Text("Use {{name}} to insert the prospect’s name.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                Section("Subject") {
-                    TextField("Quick follow-up", text: $subject)
-                }
-                Section("Body") {
-                    TextEditor(text: $emailBody)
-                        .frame(minHeight: 120)
-                    Text("Use {{name}} to insert the prospect’s name.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                .padding()
             }
             .navigationTitle("New Email Template")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // Left: Chevron Cancel
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        
+                        haptics.lightTap()
+                        sounds.playSound1()
+                        
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.primary)
+                    }
+                }
+
+                // Right: Save Button
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
+                        
+                        haptics.lightTap()
+                        sounds.playSound1()
+                        
                         let template = EmailTemplate(
                             title: title,
                             subject: subject,
@@ -47,15 +95,11 @@ struct CreateEmailTemplateSheet: View {
                         modelContext.insert(template)
                         try? modelContext.save()
                         
-                        // Call the callback
                         onSave?(template)
-                        
                         dismiss()
                     }
+                    .bold()
                     .disabled(title.isEmpty || subject.isEmpty || emailBody.isEmpty)
-                }
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
                 }
             }
         }
