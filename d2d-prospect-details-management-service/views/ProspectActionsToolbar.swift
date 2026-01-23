@@ -19,10 +19,6 @@ struct ProspectActionsToolbar: View {
     @State private var newPhone = ""
     
     @State private var showCallSheet = false
-
-    @State private var showAddEmailSheet = false
-    @State private var newEmail = ""
-    @State private var showEmailConfirmation = false
     
     @State private var showCreateSaleSheet = false
     
@@ -33,9 +29,7 @@ struct ProspectActionsToolbar: View {
     
     private let customerController: CustomerController
     
-    @State private var originalEmail: String?
-    
-    @State private var emailError: String?
+    @State private var showEmailSheet = false
     
     init(prospect: Prospect, modelContext: ModelContext) {
         self._prospect = Bindable(prospect)
@@ -66,26 +60,16 @@ struct ProspectActionsToolbar: View {
                     }
                 }
 
-                // Email
                 ContactDetailsActionButton(
                     icon: "envelope.fill",
                     title: "Email",
                     color: .purple
                 ) {
-                    
-                    // ✅ Haptic + sound
                     ContactScreenHapticsController.shared.successConfirmationTap()
                     ContactScreenSoundController.shared.playSound1()
                     
-                    if prospect.contactEmail.nilIfEmpty == nil {
-                        
-                        originalEmail = nil
-                        
-                        showAddEmailSheet = true
-                        
-                    } else {
-                        showEmailConfirmation = true
-                    }
+                    showEmailSheet = true
+                    
                 }
 
                 if prospect.list == "Prospects" {
@@ -134,40 +118,6 @@ struct ProspectActionsToolbar: View {
             )
             .presentationDetents([.fraction(0.25)])
             .presentationDragIndicator(.visible)
-        }
-
-        // Email confirmation
-        .confirmationDialog(
-            "Send email to \(prospect.contactEmail)?",
-            isPresented: $showEmailConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Compose Email") {
-                
-                // Haptic + sound
-                ContactScreenHapticsController.shared.lightTap()
-                ContactScreenSoundController.shared.playSound1()
-                
-                logEmailNote()   // ✅ log it first
-
-                if let url = URL(string: "mailto:\(prospect.contactEmail)") {
-                    UIApplication.shared.open(url)
-                }
-            }
-
-            Button("Edit Email") {
-                
-                // Haptic + sound
-                ContactScreenHapticsController.shared.lightTap()
-                ContactScreenSoundController.shared.playSound1()
-                
-                originalEmail = prospect.contactEmail
-                newEmail = prospect.contactEmail
-                
-                showAddEmailSheet = true
-            }
-
-            Button("Cancel", role: .cancel) { }
         }
 
         // Convert to Customer sheet using common stepper form
@@ -221,92 +171,10 @@ struct ProspectActionsToolbar: View {
             .presentationDetents([.fraction(0.25)])
             .presentationDragIndicator(.visible)
         }
-
-        // Add email sheet (modern CRM style)
-        .sheet(isPresented: $showAddEmailSheet) {
-            VStack(spacing: 16) {
-
-                // Drag indicator
-                Capsule()
-                    .fill(Color.secondary.opacity(0.4))
-                    .frame(width: 36, height: 5)
-                    .padding(.top, 8)
-
-                // Header
-                HStack(spacing: 10) {
-                    Image(systemName: "envelope.fill")
-                        .foregroundColor(.purple)
-                        .font(.title3)
-
-                    Text("Email Address")
-                        .font(.headline)
-                }
-
-                Text("Update or add the prospect’s email.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                // Input
-                TextField("name@example.com", text: $newEmail)
-                    .keyboardType(.emailAddress)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .onChange(of: newEmail) { _ in _ = validateEmail() }
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(14)
-                
-                if let emailError = emailError {
-                    Text(emailError)
-                        .font(.caption)
-                        .foregroundColor(.red)
-                }
-
-                // Actions
-                HStack(spacing: 12) {
-                    Button("Cancel") {
-                        
-                        // Haptic + sound
-                        ContactScreenHapticsController.shared.lightTap()
-                        ContactScreenSoundController.shared.playSound1()
-                        
-                        showAddEmailSheet = false
-                    }
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(.bordered)
-
-                    Button("Save") {
-                        
-                        // Haptic + sound
-                        ContactScreenHapticsController.shared.lightTap()
-                        ContactScreenSoundController.shared.playSound1()
-                        
-                        guard validateEmail() else { return }
-                        
-                        let previous = originalEmail
-                        
-                        prospect.contactEmail = newEmail
-                        
-                        try? modelContext.save()
-                        
-                        
-                        logEmailChangeNote(old: previous, new: newEmail)
-                        
-                        showAddEmailSheet = false
-                        
-                    }
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(.borderedProminent)
-                    .disabled(
-                        newEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || emailError != nil
-                    )
-                }
-
-                Spacer()
-            }
-            .padding()
-            .presentationDetents([.fraction(0.25)])
-            .presentationDragIndicator(.visible)
+        
+        .sheet(isPresented: $showEmailSheet) {
+            EmailActionSheet(prospect: prospect)
+                .environment(\.modelContext, modelContext)
         }
         
     }
@@ -419,26 +287,6 @@ struct ProspectActionsToolbar: View {
         } else {
             phoneError = nil
             return true
-        }
-    }
-    
-    @discardableResult
-    private func validateEmail() -> Bool {
-        let raw = newEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !raw.isEmpty else {
-            emailError = nil
-            return true   // optional
-        }
-
-        let pattern = #"^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
-        let isValid = raw.range(of: pattern, options: .regularExpression) != nil
-
-        if isValid {
-            emailError = nil
-            return true
-        } else {
-            emailError = "Invalid email address."
-            return false
         }
     }
 

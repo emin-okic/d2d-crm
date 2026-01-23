@@ -119,6 +119,11 @@
 			path = "d2d-search-engine-service";
 			sourceTree = "<group>";
 		};
+		C5138ED42F21A31800518910 /* d2d-email-management-service */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "d2d-email-management-service";
+			sourceTree = "<group>";
+		};
 		C51C3CC42E82FAA80081B571 /* d2d-customer-management-service */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "d2d-customer-management-service";
@@ -259,6 +264,7 @@
 				C510D6C72F0BA7ED00D7938E /* d2d-prospect-details-management-service */,
 				C51C3CC42E82FAA80081B571 /* d2d-customer-management-service */,
 				C510D6D62F0BAD6C00D7938E /* d2d-customer-details-management-service */,
+				C5138ED42F21A31800518910 /* d2d-email-management-service */,
 				C591DBC02F00877B000C99BD /* d2d-contact-import-service */,
 				C5B391272F0974E30061B04A /* d2d-contact-export-service */,
 				C56CD3852E1993CB00232EF7 /* d2d-territory-management-service */,
@@ -341,6 +347,7 @@
 				C510D6D62F0BAD6C00D7938E /* d2d-customer-details-management-service */,
 				C511DEA22E40EF5C001BAA36 /* d2d-trip-manager-service */,
 				C511E0372E40F502001BAA36 /* d2d-search-engine-service */,
+				C5138ED42F21A31800518910 /* d2d-email-management-service */,
 				C51C3CC42E82FAA80081B571 /* d2d-customer-management-service */,
 				C5328C812E1B1D180057F68E /* d2d-follow-up-service */,
 				C55449012E5A104300677585 /* d2d-ad-engine-service */,
@@ -677,7 +684,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = Y3JJD7DBP3;
 				ENABLE_PREVIEWS = YES;
@@ -727,7 +734,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = Y3JJD7DBP3;
 				ENABLE_PREVIEWS = YES;
