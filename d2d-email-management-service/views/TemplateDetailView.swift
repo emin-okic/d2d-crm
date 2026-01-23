@@ -40,6 +40,9 @@ struct TemplateDetailView: View {
     private var hasEdits: Bool {
         title != originalTitle || subject != originalSubject || emailBody != originalBody
     }
+    
+    private let haptics = EmailManagerHapticsController.shared
+    private let sounds = EmailManagerSoundController.shared
 
     var body: some View {
         ZStack {
@@ -98,7 +101,12 @@ struct TemplateDetailView: View {
                     // Left: Dismiss
                     ToolbarItem(placement: .navigationBarLeading) {
                         Button {
+                            
+                            haptics.lightTap()
+                            sounds.playSound1()
+                            
                             dismiss()
+                            
                         } label: {
                             Image(systemName: "chevron.left")
                                 .foregroundColor(.primary)
@@ -111,6 +119,10 @@ struct TemplateDetailView: View {
                             HStack(spacing: 12) {
                                 // Revert button
                                 Button {
+                                    
+                                    haptics.lightTap()
+                                    sounds.playSound1()
+                                    
                                     title = originalTitle
                                     subject = originalSubject
                                     emailBody = originalBody
@@ -121,12 +133,20 @@ struct TemplateDetailView: View {
                                 }
 
                                 Button("Save") {
+                                    
+                                    haptics.lightTap()
+                                    sounds.playSound1()
+                                    
                                     saveTemplateChanges()
                                 }
                                 .bold()
                             }
                         } else {
                             Button("Send") {
+                                
+                                haptics.lightTap()
+                                sounds.playSound1()
+                                
                                 sendEmail()
                             }
                             .disabled(prospect.contactEmail.isEmpty)
@@ -141,6 +161,10 @@ struct TemplateDetailView: View {
                 Spacer()
                 HStack {
                     Button(role: .destructive) {
+                        
+                        haptics.lightTap()
+                        sounds.playSound1()
+                        
                         showDeleteConfirmation = true
                     } label: {
                         Image(systemName: "trash.fill")
@@ -161,11 +185,20 @@ struct TemplateDetailView: View {
         // MARK: - Delete Confirmation Alert
         .alert("Delete Template?", isPresented: $showDeleteConfirmation) {
             Button("Delete", role: .destructive) {
+                
+                haptics.lightTap()
+                sounds.playSound1()
+                
                 modelContext.delete(template)
                 try? modelContext.save()
                 dismiss()
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel", role: .cancel) {
+                
+                haptics.lightTap()
+                sounds.playSound1()
+                
+            }
         } message: {
             Text("This template will be permanently deleted.")
         }

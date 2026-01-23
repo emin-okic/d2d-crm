@@ -16,9 +16,6 @@
 import SwiftUI
 import SwiftData
 
-import SwiftUI
-import SwiftData
-
 struct EmailActionSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -178,9 +175,18 @@ struct EmailActionSheet: View {
                 isPresented: $showRevertConfirmation
             ) {
                 Button("Revert", role: .destructive) {
+                    
+                    haptics.lightTap()
+                    sounds.playSound1()
+                    
                     tempEmail = prospect.contactEmail ?? ""
                 }
-                Button("Cancel", role: .cancel) {}
+                Button("Cancel", role: .cancel) {
+                    
+                    haptics.lightTap()
+                    sounds.playSound1()
+                    
+                }
             } message: {
                 Text("This will discard unsaved changes.")
             }
