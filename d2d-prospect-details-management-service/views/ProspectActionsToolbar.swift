@@ -173,8 +173,9 @@ struct ProspectActionsToolbar: View {
         }
         
         .sheet(isPresented: $showEmailSheet) {
-            EmailActionSheet(prospect: prospect)
-                .environment(\.modelContext, modelContext)
+            EmailActionSheet(
+                context: .prospect(prospect)
+            )
         }
         
     }

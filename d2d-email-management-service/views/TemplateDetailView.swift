@@ -10,8 +10,8 @@ struct TemplateDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) var dismiss
     
-    var prospect: Prospect
-    var template: EmailTemplate
+    let template: EmailTemplate
+    let emailContext: EmailContactContext
 
     @State private var title: String
     @State private var subject: String
@@ -23,15 +23,17 @@ struct TemplateDetailView: View {
 
     @State private var showDeleteConfirmation = false
 
-    init(prospect: Prospect, template: EmailTemplate) {
-        self.prospect = prospect
+    init(template: EmailTemplate, emailContext: EmailContactContext) {
         self.template = template
-        
-        let personalizedBody = template.body.replacingOccurrences(of: "{{name}}", with: prospect.fullName)
+        self.emailContext = emailContext
+
+        let personalizedBody = template.body
+            .replacingOccurrences(of: "{{name}}", with: emailContext.displayName)
+
         _title = State(initialValue: template.title)
         _subject = State(initialValue: template.subject)
         _emailBody = State(initialValue: personalizedBody)
-        
+
         originalTitle = template.title
         originalSubject = template.subject
         originalBody = personalizedBody
@@ -149,7 +151,7 @@ struct TemplateDetailView: View {
                                 
                                 sendEmail()
                             }
-                            .disabled(prospect.contactEmail.isEmpty)
+                            .disabled(emailContext.getEmail().isEmpty)
                             .bold()
                         }
                     }
@@ -205,27 +207,28 @@ struct TemplateDetailView: View {
     }
 
     private func sendEmail() {
-        EmailComposer.compose(to: prospect.contactEmail, subject: subject, body: emailBody)
-
-        let note = Note(
-            content: "Sent email to \(prospect.contactEmail) on \(Date().formatted(date: .abbreviated, time: .shortened)).",
-            date: Date(),
-            prospect: prospect
+        let manager = EmailManager(
+            context: emailContext,
+            modelContext: modelContext
         )
-        prospect.notes.append(note)
-        try? modelContext.save()
 
+        manager.send(template: template)
         dismiss()
     }
 
     private func saveTemplateChanges() {
         template.title = title
         template.subject = subject
-        template.body = emailBody.replacingOccurrences(of: prospect.fullName, with: "{{name}}")
+
+        template.body = emailBody.replacingOccurrences(
+            of: emailContext.displayName,
+            with: "{{name}}"
+        )
+
         try? modelContext.save()
 
         originalTitle = template.title
         originalSubject = template.subject
-        originalBody = template.body.replacingOccurrences(of: "{{name}}", with: prospect.fullName)
+        originalBody = emailBody
     }
 }
