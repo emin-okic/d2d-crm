@@ -20,44 +20,41 @@ struct EmailActionSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
-    @Bindable var prospect: Prospect
-    
-    @State private var tempEmail: String = ""
-    @State private var subject: String = ""
-    @State private var emailBody: String = ""
+    let context: EmailContactContext
 
+    @State private var tempEmail: String = ""
     @State private var selectedTemplate: EmailTemplate?
+
+    @State private var emailError: String?
+    @State private var showCreateTemplate = false
+    @State private var showRevertConfirmation = false
 
     @Query(sort: \EmailTemplate.createdAt)
     private var templates: [EmailTemplate]
 
-    @State private var showCreateTemplate = false
-    @State private var emailError: String?
-    @State private var showRevertConfirmation = false
-    @State private var showTemplateDetail = false
-
-    // MARK: - Dirty check
     private var hasUnsavedChanges: Bool {
         tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-        != (prospect.contactEmail ?? "")
+        != context.getEmail().trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    
+
     private let haptics = EmailManagerHapticsController.shared
     private let sounds = EmailManagerSoundController.shared
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
+
                 // Header
                 HStack(spacing: 10) {
                     Image(systemName: "envelope.fill")
                         .foregroundColor(.purple)
                         .font(.title3)
-                    Text("Edit Email")
+
+                    Text("Email")
                         .font(.headline)
                 }
 
-                // Email field
+                // Email Field
                 TextField("name@example.com", text: $tempEmail)
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
@@ -67,19 +64,18 @@ struct EmailActionSheet: View {
                     .cornerRadius(14)
                     .onChange(of: tempEmail) { _ in validateEmail() }
 
-                if let emailError = emailError {
+                if let emailError {
                     Text(emailError)
                         .font(.caption)
                         .foregroundColor(.red)
                 }
 
-                // Template Picker + "Email Without Template"
+                // Templates
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 8) {
 
-                        // Always show "Email Without Template" button
                         Button {
-                            handleTemplateSelection(template: nil)
+                            sendBlankEmail()
                         } label: {
                             templateRow(
                                 title: "Email Without Template",
@@ -87,10 +83,9 @@ struct EmailActionSheet: View {
                             )
                         }
 
-                        // Show actual templates if they exist
                         ForEach(templates) { template in
                             Button {
-                                handleTemplateSelection(template: template)
+                                selectedTemplate = template
                             } label: {
                                 templateRow(
                                     title: template.title,
@@ -99,7 +94,6 @@ struct EmailActionSheet: View {
                             }
                         }
 
-                        // Always show "Create New Template" button
                         Button("Create New Template") {
                             haptics.lightTap()
                             sounds.playSound1()
@@ -112,45 +106,33 @@ struct EmailActionSheet: View {
             .padding()
             .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
+            .navigationTitle("")
             .toolbar {
-                
-                // Left
+
+                // Cancel (Chevron)
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
-                        
                         haptics.lightTap()
                         sounds.playSound1()
-                        
                         dismiss()
-                        
                     } label: {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 17, weight: .semibold))
                     }
                 }
 
-                // Right (ONLY when dirty)
+                // Save / Revert (only when dirty)
                 if hasUnsavedChanges {
                     ToolbarItemGroup(placement: .navigationBarTrailing) {
                         Button {
-                            
-                            haptics.mediumTap()
-                            sounds.playSound1()
-                            
                             showRevertConfirmation = true
-                            
                         } label: {
                             Image(systemName: "arrow.uturn.left")
                         }
                         .tint(.red)
 
                         Button("Save") {
-                            
-                            haptics.mediumTap()
-                            sounds.playSound1()
-                            
                             saveEmail()
-                            
                         }
                         .bold()
                         .disabled(!isEmailValid())
@@ -159,39 +141,27 @@ struct EmailActionSheet: View {
             }
             .sheet(isPresented: $showCreateTemplate) {
                 CreateEmailTemplateSheet { newTemplate in
-                    apply(template: newTemplate)
+                    selectedTemplate = newTemplate
                 }
                 .environment(\.modelContext, modelContext)
             }
             .sheet(item: $selectedTemplate) { template in
                 TemplateDetailView(
-                    prospect: prospect,
-                    template: template
+                    template: template,
+                    emailContext: context
                 )
                 .environment(\.modelContext, modelContext)
             }
-            .alert(
-                "Revert Changes?",
-                isPresented: $showRevertConfirmation
-            ) {
+            .alert("Revert Changes?", isPresented: $showRevertConfirmation) {
                 Button("Revert", role: .destructive) {
-                    
-                    haptics.lightTap()
-                    sounds.playSound1()
-                    
-                    tempEmail = prospect.contactEmail ?? ""
+                    tempEmail = context.getEmail()
                 }
-                Button("Cancel", role: .cancel) {
-                    
-                    haptics.lightTap()
-                    sounds.playSound1()
-                    
-                }
+                Button("Cancel", role: .cancel) {}
             } message: {
                 Text("This will discard unsaved changes.")
             }
             .onAppear {
-                tempEmail = prospect.contactEmail ?? ""
+                tempEmail = context.getEmail()
             }
         }
     }
@@ -215,46 +185,26 @@ struct EmailActionSheet: View {
         .cornerRadius(12)
     }
 
-    private func handleTemplateSelection(template: EmailTemplate?) {
-        
-        
-        haptics.lightTap()
-        sounds.playSound1()
-        
-        if let template {
-            selectedTemplate = template   // ← this alone triggers the sheet
-        } else {
-            sendEmail(subject: "", body: "")
-            dismiss()
+    private func sendBlankEmail() {
+        let manager = EmailManager(context: context, modelContext: modelContext)
+        manager.sendBlank()
+        dismiss()
+    }
+
+    private func saveEmail() {
+        let trimmed = tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        let previous = context.getEmail()
+
+        context.setEmail(trimmed)
+
+        if previous.lowercased() != trimmed.lowercased() {
+            let note = Note(
+                content: "Updated email from \(previous) to \(trimmed).",
+                date: Date()
+            )
+            context.appendNote(note)
         }
-    }
 
-    private func sendEmail(subject: String, body: String) {
-        EmailComposer.compose(
-            to: tempEmail,
-            subject: subject,
-            body: body
-        )
-        logEmailNote()
-    }
-
-    private func apply(template: EmailTemplate) {
-        selectedTemplate = template
-        subject = template.subject
-        emailBody = template.body.replacingOccurrences(
-            of: "{{name}}",
-            with: prospect.fullName
-        )
-        tempEmail = prospect.contactEmail ?? ""
-    }
-
-    private func logEmailNote() {
-        let note = Note(
-            content: "Composed email to \(tempEmail) on \(Date().formatted(date: .abbreviated, time: .shortened)).",
-            date: Date(),
-            prospect: prospect
-        )
-        prospect.notes.append(note)
         try? modelContext.save()
     }
 
@@ -266,23 +216,5 @@ struct EmailActionSheet: View {
 
     private func validateEmail() {
         emailError = isEmailValid() ? nil : "Invalid email address."
-    }
-
-    private func saveEmail() {
-        guard isEmailValid() else { return }
-
-        let previous = prospect.contactEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-        prospect.contactEmail = tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        if previous.lowercased() != prospect.contactEmail.lowercased() {
-            let note = Note(
-                content: "Updated email from \(previous) to \(prospect.contactEmail).",
-                date: Date(),
-                prospect: prospect
-            )
-            prospect.notes.append(note)
-        }
-
-        try? modelContext.save()
     }
 }
