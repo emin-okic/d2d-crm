@@ -11,6 +11,8 @@ import SwiftData
 struct CustomerActionsToolbar: View {
     
     @StateObject private var controller: CustomerActionsController
+    
+    @State private var showEmailSheet = false
 
     init(customer: Customer, onClose: (() -> Void)? = nil, modelContext: ModelContext) {
         _controller = StateObject(
@@ -42,7 +44,7 @@ struct CustomerActionsToolbar: View {
                     ContactScreenHapticsController.shared.successConfirmationTap()
                     ContactScreenSoundController.shared.playSound1()
                     
-                    controller.emailTapped()
+                    showEmailSheet = true
                 }
 
                 ContactDetailsActionButton(icon: "person.crop.circle.badge.xmark", title: "Sale Lost", color: .red) {
@@ -74,35 +76,6 @@ struct CustomerActionsToolbar: View {
                 controller.showAddPhoneSheet = true
             }
             Button("Cancel", role: .cancel) {}
-        }
-
-        .confirmationDialog("Send email to \(controller.customer.contactEmail)?",
-                            isPresented: $controller.showEmailConfirmation,
-                            titleVisibility: .visible) {
-            Button("Compose Email") {
-                
-                ContactScreenHapticsController.shared.lightTap()
-                ContactScreenSoundController.shared.playSound1()
-                
-                controller.logCustomerEmailNote()   // ✅ log it
-
-                if let url = URL(string: "mailto:\(controller.customer.contactEmail)") {
-                    UIApplication.shared.open(url)
-                }
-            }
-            Button("Edit Email") {
-                
-                ContactScreenHapticsController.shared.lightTap()
-                ContactScreenSoundController.shared.playSound1()
-                
-                
-                controller.originalEmail = controller.customer.contactEmail
-                
-                controller.newEmail = controller.customer.contactEmail
-                
-                controller.showAddEmailSheet = true
-            }
-            Button("Cancel", role: .cancel) { }
         }
         
         .sheet(isPresented: $controller.showCallSheet) {
@@ -168,80 +141,14 @@ struct CustomerActionsToolbar: View {
             }
             Button("Cancel", role: .cancel) { }
         }
-
-        .sheet(isPresented: $controller.showAddEmailSheet) {
-            VStack(spacing: 16) {
-
-                // Drag indicator
-                Capsule()
-                    .fill(Color.secondary.opacity(0.4))
-                    .frame(width: 36, height: 5)
-                    .padding(.top, 8)
-
-                // Header
-                HStack(spacing: 10) {
-                    Image(systemName: "envelope.fill")
-                        .foregroundColor(.purple)
-                        .font(.title3)
-
-                    Text("Email Address")
-                        .font(.headline)
-                }
-
-                Text("Update or add the customer’s email.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                TextField("name@example.com", text: $controller.newEmail)
-                    .keyboardType(.emailAddress)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .onChange(of: controller.newEmail) { _ in
-                        _ = controller.validateEmail()
-                    }
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(14)
-                
-                if let error = controller.emailError {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundColor(.red)
-                }
-
-                // Actions
-                HStack(spacing: 12) {
-                    Button("Cancel") {
-
-                        ContactScreenHapticsController.shared.lightTap()
-                        ContactScreenSoundController.shared.playSound1()
-
-                        controller.showAddEmailSheet = false
-                    }
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(.bordered)
-
-                    Button("Save") {
-
-                        ContactScreenHapticsController.shared.lightTap()
-                        ContactScreenSoundController.shared.playSound1()
-
-                        controller.saveEmail()
-                    }
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(.borderedProminent)
-                    .disabled(
-                        controller.newEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                        controller.emailError != nil
-                    )
-                }
-
-                Spacer()
-            }
-            .padding()
-            .presentationDetents([.fraction(0.25)])
-            .presentationDragIndicator(.visible)
+        
+        .sheet(isPresented: $showEmailSheet) {
+            EmailActionSheet(
+                context: .customer(controller.customer)
+            )
+            .environment(\.modelContext, controller.modelContext)
         }
+
     }
     
 }

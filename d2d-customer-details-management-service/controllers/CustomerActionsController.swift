@@ -20,20 +20,16 @@ final class CustomerActionsController: ObservableObject {
     // MARK: - UI State
     @Published var showAddPhoneSheet = false
     @Published var showCallConfirmation = false
-    @Published var showAddEmailSheet = false
-    @Published var showEmailConfirmation = false
+
+    
     @Published var showCallSheet = false
     @Published var showCustomerLostConfirmation = false
 
     @Published var newPhone = ""
-    @Published var newEmail = ""
+
     @Published var phoneError: String?
 
     @Published var originalPhone: String?
-    
-    @Published var originalEmail: String?
-    
-    @Published var emailError: String?
 
     // MARK: - Init
     init(
@@ -54,15 +50,6 @@ final class CustomerActionsController: ObservableObject {
             showAddPhoneSheet = true
         } else {
             showCallSheet = true
-        }
-    }
-
-    func emailTapped() {
-        if customer.contactEmail.nilIfEmpty == nil {
-            originalEmail = nil
-            showAddEmailSheet = true
-        } else {
-            showEmailConfirmation = true
         }
     }
 
@@ -92,48 +79,7 @@ final class CustomerActionsController: ObservableObject {
         performCall()
         showAddPhoneSheet = false
     }
-
-    // MARK: - Email Flow
-
-    func saveEmail() {
-        
-        guard validateEmail() else { return }
-        
-        let previous = originalEmail
-        
-        customer.contactEmail = newEmail
-        
-        try? modelContext.save()
-        
-        logCustomerEmailChangeNote(old: previous, new: newEmail)
-
-        showAddEmailSheet = false
-    }
     
-    func logCustomerEmailChangeNote(old: String?, new: String) {
-        let oldNormalized = old?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ?? ""
-        let newNormalized = new.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-
-        // 🚫 Skip if no change
-        guard oldNormalized != newNormalized else { return }
-
-        let content: String
-        if !oldNormalized.isEmpty {
-            content = "Updated email from \(oldNormalized) to \(newNormalized)."
-        } else {
-            content = "Added email address \(newNormalized)."
-        }
-
-        customer.notes.append(Note(content: content, date: Date()))
-        try? modelContext.save()
-    }
-    
-    func logCustomerEmailNote() {
-        let content = "Composed email to \(customer.contactEmail) on \(Date().formatted(date: .abbreviated, time: .shortened))."
-        customer.notes.append(Note(content: content, date: Date()))
-        try? modelContext.save()
-    }
-
     // MARK: - Customer Lost
 
     func markCustomerLost() {
@@ -212,25 +158,4 @@ final class CustomerActionsController: ObservableObject {
         try? modelContext.save()
     }
     
-    @discardableResult
-    func validateEmail() -> Bool {
-        let raw = newEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        // Optional field: empty is allowed
-        guard !raw.isEmpty else {
-            emailError = nil
-            return true
-        }
-
-        let pattern = #"^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
-        let isValid = raw.range(of: pattern, options: .regularExpression) != nil
-
-        if isValid {
-            emailError = nil
-            return true
-        } else {
-            emailError = "Invalid email format."
-            return false
-        }
-    }
 }
