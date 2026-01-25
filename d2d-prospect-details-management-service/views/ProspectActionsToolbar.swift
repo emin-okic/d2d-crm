@@ -31,9 +31,15 @@ struct ProspectActionsToolbar: View {
     
     @State private var showEmailSheet = false
     
+    private let actions: ProspectActionsController
+    
     init(prospect: Prospect, modelContext: ModelContext) {
         self._prospect = Bindable(prospect)
         self.customerController = CustomerController(modelContext: modelContext)
+        self.actions = ProspectActionsController(
+            prospect: prospect,
+            modelContext: modelContext
+        )
     }
 
     var body: some View {
@@ -98,12 +104,8 @@ struct ProspectActionsToolbar: View {
             CallActionBottomSheet(
                 phone: PhoneValidator.formatted(prospect.contactPhone),
                 onCall: {
-                    logCallNote()
-
-                    if let url = URL(string: "tel://\(prospect.contactPhone.filter(\.isNumber))") {
-                        UIApplication.shared.open(url)
-                    }
-
+                    actions.logCall()
+                    actions.callPhone()
                     showCallSheet = false
                 },
                 onEdit: {
@@ -129,9 +131,7 @@ struct ProspectActionsToolbar: View {
                     initialPhone: prospect.contactPhone,
                     initialEmail: prospect.contactEmail,
                     onComplete: { newCustomer in
-                        // Transfer notes, knocks, appointments
-                        transferProspectData(to: newCustomer)
-                        
+                        actions.convertToCustomer(newCustomer)
                         showCreateSaleSheet = false
                     },
                     onCancel: {
@@ -150,19 +150,14 @@ struct ProspectActionsToolbar: View {
                 phone: $newPhone,
                 error: $phoneError,
                 onSave: {
-                    if validatePhoneNumber() {
-                        let previous = originalPhone
-                        prospect.contactPhone = newPhone
-                        try? modelContext.save()
-
-                        logPhoneChangeNote(old: previous, new: newPhone)
-
-                        if let url = URL(string: "tel://\(newPhone.filter(\.isNumber))") {
-                            UIApplication.shared.open(url)
-                        }
-
-                        showAddPhoneSheet = false
+                    if let error = actions.validatePhone(newPhone) {
+                        phoneError = error
+                        return
                     }
+
+                    actions.savePhoneChange(old: originalPhone, new: newPhone)
+                    actions.callPhone()
+                    showAddPhoneSheet = false
                 },
                 onCancel: {
                     showAddPhoneSheet = false
@@ -202,48 +197,6 @@ struct ProspectActionsToolbar: View {
         try? modelContext.save()
     }
     
-    private func transferProspectData(to customer: Customer) {
-        // Deep copy notes, knocks, appointments
-        customer.notes = prospect.notes.map { Note(content: $0.content, date: $0.date) }
-        customer.knockHistory = prospect.knockHistory.map {
-            Knock(date: $0.date, status: $0.status, latitude: $0.latitude, longitude: $0.longitude)
-        }
-        
-        for appt in prospect.appointments {
-            appt.prospect = nil // break old link
-            customer.appointments.append(appt)
-        }
-
-        // Insert new customer and delete old prospect
-        modelContext.insert(customer)
-        modelContext.delete(prospect)
-
-        do {
-            try modelContext.save()
-            DispatchQueue.main.async {
-                if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                   let root = scene.windows.first?.rootViewController {
-                    root.dismiss(animated: true)
-                }
-            }
-        } catch {
-            print("❌ Failed to convert prospect to customer:", error)
-        }
-    }
-    
-    /// This function is intended to log call activity for prospects
-    private func logCallNote() {
-        
-        let formatted = PhoneValidator.formatted(prospect.contactPhone)
-        
-        let content = "Called prospect at \(formatted) on \(Date().formatted(date: .abbreviated, time: .shortened))."
-
-        let note = Note(content: content, date: Date(), prospect: prospect)
-        prospect.notes.append(note)
-
-        try? modelContext.save()
-    }
-    
     /// Logs when an email is composed
     private func logEmailNote() {
         let content = "Composed email to \(prospect.contactEmail) on \(Date().formatted(date: .abbreviated, time: .shortened))."
@@ -251,45 +204,5 @@ struct ProspectActionsToolbar: View {
         prospect.notes.append(note)
         try? modelContext.save()
     }
-    
-    /// Logs when a phone number is added or changed
-    private func logPhoneChangeNote(old: String?, new: String) {
-        let oldNormalized = PhoneValidator.normalized(old)
-        let newNormalized = PhoneValidator.normalized(new)
-
-        // 🚫 Prevent logging if nothing actually changed
-        guard oldNormalized != newNormalized else {
-            return
-        }
-
-        let formattedNew = PhoneValidator.formatted(new)
-
-        let content: String
-        if !oldNormalized.isEmpty {
-            
-            let formattedOld = PhoneValidator.formatted(old ?? "")
-            
-            content = "Updated phone number from \(formattedOld) to \(formattedNew)."
-            
-        } else {
-            content = "Added phone number \(formattedNew)."
-        }
-
-        let note = Note(content: content, date: Date(), prospect: prospect)
-        prospect.notes.append(note)
-
-        try? modelContext.save()
-    }
-    
-    private func validatePhoneNumber() -> Bool {
-        if let error = PhoneValidator.validate(newPhone) {
-            phoneError = error
-            return false
-        } else {
-            phoneError = nil
-            return true
-        }
-    }
-
     
 }
