@@ -54,7 +54,7 @@ struct KnockStepperPopupView: View {
     @State private var tripDate: Date = .now
 
     @StateObject private var tripSearchVM = SearchCompleterViewModel()
-    @FocusState private var tripFocusedField: Field?   // uses the same Field enum as your popup
+    @FocusState private var tripFocusedField: TripField?
     
     @Query(sort: \Trip.date, order: .forward) private var trips: [Trip]
     
@@ -377,51 +377,41 @@ struct KnockStepperPopupView: View {
     
     private var tripStep: some View {
         VStack(alignment: .leading, spacing: 6) {
-            
-            // Header
+
             Text("Log Your Trip (optional)")
                 .font(.footnote.weight(.semibold))
                 .foregroundColor(.secondary)
-            
+
             Text("Next saves this trip. Skip won’t save it.")
                 .font(.caption2)
                 .foregroundColor(.secondary)
-            
+
             Divider()
-            
-            // Start address
-            TripAddressFieldView(
-                iconName: "circle",
-                placeholder: "Start Address",
+
+            TripAddressAutofillField(
+                icon: "circle",
                 iconColor: .blue,
-                addressText: $startAddress,
+                placeholder: "Start Address",
+                text: $startAddress,
                 focusedField: $tripFocusedField,
-                fieldType: .start,
+                field: .start,
                 searchVM: tripSearchVM
             )
-            
-            // End address (pre-filled to the tapped address)
-            TripAddressFieldView(
-                iconName: "mappin.circle.fill",
-                placeholder: "End Address",
+
+            TripAddressAutofillField(
+                icon: "mappin.circle.fill",
                 iconColor: .red,
-                addressText: $endAddress,
+                placeholder: "End Address",
+                text: $endAddress,
                 focusedField: $tripFocusedField,
-                fieldType: .end,
+                field: .end,
                 searchVM: tripSearchVM
             )
-            
+
             HStack(spacing: 6) {
-                
                 Image(systemName: "calendar").foregroundColor(.blue)
-                
-                DatePicker("Select Trip Date & Time", selection: $tripDate, displayedComponents: [.date, .hourAndMinute])
+                DatePicker("", selection: $tripDate, displayedComponents: [.date, .hourAndMinute])
                     .labelsHidden()
-                    .onChange(of: tripDate) { _, _ in
-                        KnockingFormHapticsController.shared.lightTap()
-                        KnockingFormSoundController.shared.playConfirmationSound()
-                        
-                    }
             }
         }
     }
@@ -582,4 +572,9 @@ struct KnockStepperPopupView: View {
         if parts.count >= 2 { return parts[0] + ", " + parts[1] }
         return full
     }
+}
+
+enum TripField: Hashable {
+    case start
+    case end
 }
