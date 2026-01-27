@@ -202,8 +202,8 @@ struct EmailActionSheet: View {
 
     private func sendBlankEmail() {
         let manager = EmailManager(context: context, modelContext: modelContext)
+        
         manager.sendBlank()
-        dismiss()
     }
 
     private func saveEmail() {

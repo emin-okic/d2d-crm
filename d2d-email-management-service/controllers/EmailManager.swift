@@ -59,6 +59,8 @@ final class EmailManager {
 
         context.appendNote(note)
         try? modelContext.save()
+        
+        // print("EMAIL COUNT NOW:", try? modelContext.fetch(FetchDescriptor<Email>()).count)
     }
 
     func sendBlank() {
