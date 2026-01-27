@@ -291,6 +291,7 @@ struct MapSearchView: View {
                 .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showConversionSheet) {
+                // TODO: Move out this code in the body to a function for creating customers
                 if let prospect = prospectToConvert {
                     CustomerCreateStepperView(
                         initialName: prospect.fullName,

@@ -19,9 +19,14 @@ final class Customer: ContactProtocol {
     var knockCount: Int
     var contactEmail: String
     var contactPhone: String
+    
     var notes: [Note]
+    
     var appointments: [Appointment]
+    
     var knockHistory: [Knock]
+    
+    var emailsSent: [Email]
     
     /// Stored coordinates for marker annotation generation
     var latitude: Double?
@@ -44,9 +49,14 @@ final class Customer: ContactProtocol {
         self.orderIndex = orderIndex
         self.contactEmail = ""
         self.contactPhone = ""
+        
         self.notes = []
+        
         self.appointments = []
+        
         self.knockHistory = []
+        
+        self.emailsSent = []
         
         self.latitude = nil
         self.longitude = nil

@@ -52,15 +52,31 @@ final class EmailManager {
 
         modelContext.insert(email)
 
+        // Append email to the recipient's emailsSent array
+        switch context.recipientType {
+        case .prospect:
+            let idToFind = context.id
+            let fetch = FetchDescriptor<Prospect>(predicate: #Predicate { $0.uuid == idToFind })
+            if let prospect = try? modelContext.fetch(fetch).first {
+                prospect.emailsSent.append(email)
+            }
+
+        case .customer:
+            let idToFind = context.id
+            let fetch = FetchDescriptor<Customer>(predicate: #Predicate { $0.uuid == idToFind })
+            if let customer = try? modelContext.fetch(fetch).first {
+                customer.emailsSent.append(email)
+            }
+        }
+
+        // Add a note about the email
         let note = Note(
             content: "Sent email: “\(subject)” on \(Date().formatted(date: .abbreviated, time: .shortened)).",
             date: Date()
         )
-
         context.appendNote(note)
+
         try? modelContext.save()
-        
-        // print("EMAIL COUNT NOW:", try? modelContext.fetch(FetchDescriptor<Email>()).count)
     }
 
     func sendBlank() {

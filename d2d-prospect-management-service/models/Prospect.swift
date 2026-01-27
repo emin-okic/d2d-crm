@@ -19,9 +19,14 @@ final class Prospect: ContactProtocol {
     var knockCount: Int
     var contactEmail: String
     var contactPhone: String
+    
     var notes: [Note]
+    
     var appointments: [Appointment]
+    
     var knockHistory: [Knock]
+    
+    var emailsSent: [Email]
 
     /// keep your list flag if you still use it elsewhere
     var list: String
@@ -50,9 +55,14 @@ final class Prospect: ContactProtocol {
         self.orderIndex = orderIndex
         self.contactEmail = ""
         self.contactPhone = ""
+        
         self.notes = []
+        
         self.appointments = []
+        
         self.knockHistory = []
+        
+        self.emailsSent = [] 
         
         self.latitude = nil
         self.longitude = nil

@@ -42,3 +42,21 @@ extension EmailContactContext {
         )
     }
 }
+
+extension EmailContactContext {
+    func lastEmailSent(modelContext: ModelContext) -> Email? {
+        switch recipientType {
+        case .prospect:
+            let fetch = FetchDescriptor<Prospect>(predicate: #Predicate { $0.uuid == id })
+            if let prospect = try? modelContext.fetch(fetch).first {
+                return prospect.emailsSent.last
+            }
+        case .customer:
+            let fetch = FetchDescriptor<Customer>(predicate: #Predicate { $0.uuid == id })
+            if let customer = try? modelContext.fetch(fetch).first {
+                return customer.emailsSent.last
+            }
+        }
+        return nil
+    }
+}
