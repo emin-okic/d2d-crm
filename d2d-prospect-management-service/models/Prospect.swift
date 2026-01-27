@@ -11,6 +11,9 @@ import CoreLocation
 
 @Model
 final class Prospect: ContactProtocol {
+    
+    var uuid: UUID
+    
     var fullName: String
     var address: String
     var knockCount: Int
@@ -38,6 +41,8 @@ final class Prospect: ContactProtocol {
          list: String = "Prospects",
          orderIndex: Int = 0
     ) {
+        self.uuid = UUID()
+        
         self.fullName = fullName
         self.address = address
         self.knockCount = count

@@ -39,19 +39,34 @@ struct EmailActionSheet: View {
 
     private let haptics = EmailManagerHapticsController.shared
     private let sounds = EmailManagerSoundController.shared
+    
+    @Query private var emails: [Email]
+
+    private var emailCount: Int {
+        emails.filter {
+            $0.recipientUUID == context.id &&
+            $0.recipientType == context.recipientType
+        }.count
+    }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
 
                 // Header
-                HStack(spacing: 10) {
-                    Image(systemName: "envelope.fill")
-                        .foregroundColor(.purple)
-                        .font(.title3)
+                VStack(spacing: 4) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "envelope.fill")
+                            .foregroundColor(.purple)
+                            .font(.title3)
 
-                    Text("Email")
-                        .font(.headline)
+                        Text("Email")
+                            .font(.headline)
+                    }
+
+                    Text("\(emailCount) emails sent")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
 
                 // Email Field
