@@ -59,9 +59,13 @@ struct PhoneActionSheet: View {
 
             Spacer()
 
-            // Horizontal buttons
+            // Horizontal buttons with haptics + sound
             HStack(spacing: 12) {
-                Button(action: onEdit) {
+                Button(action: {
+                    TelemarketingManagerHapticsController.shared.lightTap()
+                    TelemarketingManagerSoundController.shared.playSound1()
+                    onEdit()
+                }) {
                     Text("Edit")
                         .font(.subheadline)
                         .padding(.vertical, 8)
@@ -71,7 +75,11 @@ struct PhoneActionSheet: View {
                         .cornerRadius(10)
                 }
 
-                Button(action: onCall) {
+                Button(action: {
+                    TelemarketingManagerHapticsController.shared.successConfirmationTap()
+                    TelemarketingManagerSoundController.shared.playSound1()
+                    onCall()
+                }) {
                     Text("Call")
                         .font(.subheadline)
                         .padding(.vertical, 8)
@@ -81,6 +89,7 @@ struct PhoneActionSheet: View {
                         .cornerRadius(10)
                 }
             }
+            
         }
         .padding()
         .presentationDetents([.fraction(0.25)]) // smaller sheet
