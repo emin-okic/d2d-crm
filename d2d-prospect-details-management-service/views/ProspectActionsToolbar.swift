@@ -31,6 +31,10 @@ struct ProspectActionsToolbar: View {
     
     @State private var showEmailSheet = false
     
+    private var phoneCallController: PhoneCallController {
+        PhoneCallController(modelContext: modelContext)
+    }
+    
     init(prospect: Prospect, modelContext: ModelContext) {
         self._prospect = Bindable(prospect)
         self.customerController = CustomerController(modelContext: modelContext)
@@ -93,17 +97,13 @@ struct ProspectActionsToolbar: View {
 
         }
 
-        // Phone confirmation
         .sheet(isPresented: $showCallSheet) {
-            CallActionBottomSheet(
-                phone: PhoneValidator.formatted(prospect.contactPhone),
+            PhoneActionSheet(
+                context: .prospect(prospect),
                 onCall: {
-                    logCallNote()
-
-                    if let url = URL(string: "tel://\(prospect.contactPhone.filter(\.isNumber))") {
-                        UIApplication.shared.open(url)
-                    }
-
+                    phoneCallController.call(
+                        context: .prospect(prospect)
+                    )
                     showCallSheet = false
                 },
                 onEdit: {
