@@ -22,7 +22,14 @@ struct PhoneActionSheet: View {
 
             // Top toolbar with circular chevron
             HStack {
-                Button(action: { onCancel() }) {
+                Button(action: {
+                    
+                    // ✅ Haptic + sound
+                    TelemarketingManagerHapticsController.shared.lightTap()
+                    TelemarketingManagerSoundController.shared.playSound1()
+                    
+                    onCancel()
+                }) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.primary)
