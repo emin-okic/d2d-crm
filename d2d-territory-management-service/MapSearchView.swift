@@ -304,8 +304,16 @@ struct MapSearchView: View {
                         newCustomer.knockHistory = prospect.knockHistory
                         newCustomer.notes = prospect.notes
                         newCustomer.appointments = prospect.appointments
-                        newCustomer.emailsSent = prospect.emailsSent
                         
+                        newCustomer.phoneCalls = prospect.phoneCalls
+                        
+                        // ✅ update recipient info
+                        for call in newCustomer.phoneCalls {
+                            call.recipientUUID = newCustomer.uuid
+                            call.recipientType = .customer
+                        }
+                        
+                        newCustomer.emailsSent = prospect.emailsSent
                         
                         for email in newCustomer.emailsSent {
                             email.recipientUUID = newCustomer.uuid
