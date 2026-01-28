@@ -218,6 +218,15 @@ struct ProspectActionsToolbar: View {
             customer.appointments.append(appt)
         }
         
+        // Transfer phone calls back to prospect
+        customer.phoneCalls = prospect.phoneCalls
+        
+        // Update ownership metadata
+        for call in customer.phoneCalls {
+            call.recipientUUID = customer.uuid
+            call.recipientType = .customer
+        }
+        
         customer.emailsSent = prospect.emailsSent
         
         for email in customer.emailsSent {

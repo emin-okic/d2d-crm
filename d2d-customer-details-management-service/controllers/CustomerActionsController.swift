@@ -143,6 +143,9 @@ final class CustomerActionsController: ObservableObject {
         
         // ✅ Transfer emails BEFORE deleting customer
         transferEmailsToProspect(from: customer, to: prospect)
+        
+        // ✅ Transfer phone calls BEFORE deleting customer
+        transferPhoneCallsToProspect(from: customer, to: prospect)
 
         prospect.knockHistory.append(
             Knock(
@@ -167,6 +170,14 @@ final class CustomerActionsController: ObservableObject {
         for email in prospect.emailsSent {
             email.recipientUUID = prospect.uuid
             email.recipientType = .prospect
+        }
+    }
+    
+    private func transferPhoneCallsToProspect(from customer: Customer, to prospect: Prospect) {
+        prospect.phoneCalls = customer.phoneCalls
+        for call in prospect.phoneCalls {
+            call.recipientUUID = prospect.uuid
+            call.recipientType = .prospect
         }
     }
     
