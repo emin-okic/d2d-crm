@@ -304,6 +304,14 @@ struct MapSearchView: View {
                         newCustomer.knockHistory = prospect.knockHistory
                         newCustomer.notes = prospect.notes
                         newCustomer.appointments = prospect.appointments
+                        newCustomer.emailsSent = prospect.emailsSent
+                        
+                        
+                        for email in newCustomer.emailsSent {
+                            email.recipientUUID = newCustomer.uuid
+                            email.recipientType = .customer
+                        }
+                        
                         if newCustomer.contactPhone.isEmpty { newCustomer.contactPhone = prospect.contactPhone }
                         if newCustomer.contactEmail.isEmpty { newCustomer.contactEmail = prospect.contactEmail }
                         newCustomer.latitude = prospect.latitude
