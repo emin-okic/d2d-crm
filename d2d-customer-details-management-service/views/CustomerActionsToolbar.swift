@@ -102,7 +102,7 @@ struct CustomerActionsToolbar: View {
                     controller.showCallSheet = false
                 }
             )
-            .presentationDetents([.fraction(0.25)])
+            .presentationDetents([.fraction(0.35)])
             .presentationDragIndicator(.visible)
         }
 

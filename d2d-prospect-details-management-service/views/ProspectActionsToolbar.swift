@@ -117,33 +117,10 @@ struct ProspectActionsToolbar: View {
                     showCallSheet = false
                 }
             )
-            .presentationDetents([.fraction(0.25)])
+            .presentationDetents([.fraction(0.35)])
             .presentationDragIndicator(.visible)
         }
-
-        // Convert to Customer sheet using common stepper form
-        .sheet(isPresented: $showCreateSaleSheet) {
-            NavigationStack {
-                CustomerCreateStepperView(
-                    initialName: prospect.fullName,
-                    initialAddress: prospect.address,
-                    initialPhone: prospect.contactPhone,
-                    initialEmail: prospect.contactEmail,
-                    onComplete: { newCustomer in
-                        // Transfer notes, knocks, appointments
-                        transferProspectData(to: newCustomer)
-                        
-                        showCreateSaleSheet = false
-                    },
-                    onCancel: {
-                        showCreateSaleSheet = false
-                    }
-                )
-            }
-            .presentationDetents([.fraction(0.5)])      // Limit to 50% of the screen
-            .presentationDragIndicator(.visible)        // Show drag indicator
-        }
-
+        
         // Add phone sheet
         .sheet(isPresented: $showAddPhoneSheet) {
             AddPhoneBottomSheet(
@@ -171,6 +148,29 @@ struct ProspectActionsToolbar: View {
             )
             .presentationDetents([.fraction(0.25)])
             .presentationDragIndicator(.visible)
+        }
+
+        // Convert to Customer sheet using common stepper form
+        .sheet(isPresented: $showCreateSaleSheet) {
+            NavigationStack {
+                CustomerCreateStepperView(
+                    initialName: prospect.fullName,
+                    initialAddress: prospect.address,
+                    initialPhone: prospect.contactPhone,
+                    initialEmail: prospect.contactEmail,
+                    onComplete: { newCustomer in
+                        // Transfer notes, knocks, appointments
+                        transferProspectData(to: newCustomer)
+                        
+                        showCreateSaleSheet = false
+                    },
+                    onCancel: {
+                        showCreateSaleSheet = false
+                    }
+                )
+            }
+            .presentationDetents([.fraction(0.5)])      // Limit to 50% of the screen
+            .presentationDragIndicator(.visible)        // Show drag indicator
         }
         
         .sheet(isPresented: $showEmailSheet) {
