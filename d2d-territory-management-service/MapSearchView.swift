@@ -291,6 +291,7 @@ struct MapSearchView: View {
                 .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showConversionSheet) {
+                // TODO: Move out this code in the body to a function for creating customers
                 if let prospect = prospectToConvert {
                     CustomerCreateStepperView(
                         initialName: prospect.fullName,
@@ -303,6 +304,14 @@ struct MapSearchView: View {
                         newCustomer.knockHistory = prospect.knockHistory
                         newCustomer.notes = prospect.notes
                         newCustomer.appointments = prospect.appointments
+                        newCustomer.emailsSent = prospect.emailsSent
+                        
+                        
+                        for email in newCustomer.emailsSent {
+                            email.recipientUUID = newCustomer.uuid
+                            email.recipientType = .customer
+                        }
+                        
                         if newCustomer.contactPhone.isEmpty { newCustomer.contactPhone = prospect.contactPhone }
                         if newCustomer.contactEmail.isEmpty { newCustomer.contactEmail = prospect.contactEmail }
                         newCustomer.latitude = prospect.latitude
@@ -504,6 +513,19 @@ struct MapSearchView: View {
                 CustomerDetailsView(customer: customer)
             }
         }
+    }
+    
+    private func transferEmailsToProspect(from customer: Customer, to prospect: Prospect) {
+        
+        // Move email references
+        prospect.emailsSent = customer.emailsSent
+
+        // Update ownership metadata
+        for email in prospect.emailsSent {
+            email.recipientUUID = prospect.uuid
+            email.recipientType = .prospect
+        }
+        
     }
     
     private func handleMarkerTap(place: IdentifiablePlace, geo: GeometryProxy) {
@@ -976,6 +998,7 @@ struct MapSearchView: View {
     
     @MainActor
     private func convertCustomerToProspect(address: String) {
+        
         guard let customer = customers.first(where: {
             addressesMatch($0.address, address)
         }) else { return }
@@ -994,6 +1017,9 @@ struct MapSearchView: View {
         prospect.notes = customer.notes
         prospect.appointments = customer.appointments
         prospect.knockHistory = customer.knockHistory
+        
+        // ✅ 2.1 Transfer emails BACK to prospect
+        transferEmailsToProspect(from: customer, to: prospect)
         
         // 2.5 LOG THE STATE TRANSITION
         prospect.knockHistory.append(

@@ -11,14 +11,22 @@ import CoreLocation
 
 @Model
 final class Customer: ContactProtocol {
+    
+    var uuid: UUID
+    
     var fullName: String
     var address: String
     var knockCount: Int
     var contactEmail: String
     var contactPhone: String
+    
     var notes: [Note]
+    
     var appointments: [Appointment]
+    
     var knockHistory: [Knock]
+    
+    var emailsSent: [Email]
     
     /// Stored coordinates for marker annotation generation
     var latitude: Double?
@@ -32,15 +40,23 @@ final class Customer: ContactProtocol {
          count: Int = 0,
         orderIndex: Int = 0
     ) {
+        
+        self.uuid = UUID()
+        
         self.fullName = fullName
         self.address = address
         self.knockCount = count
         self.orderIndex = orderIndex
         self.contactEmail = ""
         self.contactPhone = ""
+        
         self.notes = []
+        
         self.appointments = []
+        
         self.knockHistory = []
+        
+        self.emailsSent = []
         
         self.latitude = nil
         self.longitude = nil

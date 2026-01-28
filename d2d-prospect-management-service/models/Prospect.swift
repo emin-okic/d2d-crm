@@ -11,14 +11,22 @@ import CoreLocation
 
 @Model
 final class Prospect: ContactProtocol {
+    
+    var uuid: UUID
+    
     var fullName: String
     var address: String
     var knockCount: Int
     var contactEmail: String
     var contactPhone: String
+    
     var notes: [Note]
+    
     var appointments: [Appointment]
+    
     var knockHistory: [Knock]
+    
+    var emailsSent: [Email]
 
     /// keep your list flag if you still use it elsewhere
     var list: String
@@ -38,6 +46,8 @@ final class Prospect: ContactProtocol {
          list: String = "Prospects",
          orderIndex: Int = 0
     ) {
+        self.uuid = UUID()
+        
         self.fullName = fullName
         self.address = address
         self.knockCount = count
@@ -45,9 +55,14 @@ final class Prospect: ContactProtocol {
         self.orderIndex = orderIndex
         self.contactEmail = ""
         self.contactPhone = ""
+        
         self.notes = []
+        
         self.appointments = []
+        
         self.knockHistory = []
+        
+        self.emailsSent = [] 
         
         self.latitude = nil
         self.longitude = nil
