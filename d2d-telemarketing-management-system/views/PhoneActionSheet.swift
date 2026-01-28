@@ -18,7 +18,7 @@ struct PhoneActionSheet: View {
     let onCancel: () -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
 
             // Top toolbar with back chevron
             HStack {
@@ -49,7 +49,8 @@ struct PhoneActionSheet: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                
+                Spacer()
 
                 Text("Total Calls: \(controller.totalCallsMade(for: context))")
                     .font(.footnote)
