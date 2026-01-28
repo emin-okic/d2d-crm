@@ -204,7 +204,10 @@ struct ProspectActionsToolbar: View {
     
     private func transferProspectData(to customer: Customer) {
         // Deep copy notes, knocks, appointments
-        customer.notes = prospect.notes.map { Note(content: $0.content, date: $0.date) }
+        customer.notes = prospect.notes.map {
+            Note(content: $0.content, date: $0.date)
+        }
+        
         customer.knockHistory = prospect.knockHistory.map {
             Knock(date: $0.date, status: $0.status, latitude: $0.latitude, longitude: $0.longitude)
         }
@@ -212,6 +215,13 @@ struct ProspectActionsToolbar: View {
         for appt in prospect.appointments {
             appt.prospect = nil // break old link
             customer.appointments.append(appt)
+        }
+        
+        customer.emailsSent = prospect.emailsSent
+        
+        for email in customer.emailsSent {
+            email.recipientUUID = customer.uuid
+            email.recipientType = .customer
         }
 
         // Insert new customer and delete old prospect
