@@ -19,15 +19,36 @@ struct PhoneActionSheet: View {
     var body: some View {
         VStack(spacing: 16) {
 
+            // Top toolbar with circular chevron
+            HStack {
+                Button(action: {
+                    onCancel()
+                }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .frame(width: 36, height: 36)
+                        .background(Color(.systemGray5))
+                        .clipShape(Circle())
+                }
+                Spacer()
+            }
+            .padding(.bottom, 4)
+
+            // Title & Phone number
             Text("Call \(context.displayName)?")
                 .font(.headline)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
 
             Text(PhoneValidator.formatted(context.getPhone()))
                 .font(.subheadline)
                 .foregroundColor(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
 
+            // Action buttons
             HStack(spacing: 12) {
-
                 Button("Edit Number") {
                     onEdit()
                 }
@@ -39,11 +60,9 @@ struct PhoneActionSheet: View {
                 .buttonStyle(.borderedProminent)
             }
 
-            Button("Cancel", role: .cancel) {
-                onCancel()
-            }
-            .padding(.top, 4)
+            Spacer()
         }
         .padding()
+        .frame(maxHeight: UIScreen.main.bounds.height * 0.25) // Fit into 25% detent
     }
 }
