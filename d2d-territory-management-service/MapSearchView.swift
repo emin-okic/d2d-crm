@@ -1029,6 +1029,15 @@ struct MapSearchView: View {
         // ✅ 2.1 Transfer emails BACK to prospect
         transferEmailsToProspect(from: customer, to: prospect)
         
+        // 2.2️⃣ Transfer phone calls back to prospect
+        prospect.phoneCalls = customer.phoneCalls
+        
+        // ✅ Update ownership metadata
+        for call in prospect.phoneCalls {
+            call.recipientUUID = prospect.uuid
+            call.recipientType = .prospect
+        }
+        
         // 2.5 LOG THE STATE TRANSITION
         prospect.knockHistory.append(
             Knock(
