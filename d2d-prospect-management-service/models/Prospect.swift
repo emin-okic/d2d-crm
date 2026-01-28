@@ -27,6 +27,8 @@ final class Prospect: ContactProtocol {
     var knockHistory: [Knock]
     
     var emailsSent: [Email]
+    
+    var phoneCalls: [PhoneCall]
 
     /// keep your list flag if you still use it elsewhere
     var list: String
@@ -62,7 +64,9 @@ final class Prospect: ContactProtocol {
         
         self.knockHistory = []
         
-        self.emailsSent = [] 
+        self.emailsSent = []
+        
+        self.phoneCalls = []
         
         self.latitude = nil
         self.longitude = nil

@@ -13,6 +13,10 @@ struct CustomerActionsToolbar: View {
     @StateObject private var controller: CustomerActionsController
     
     @State private var showEmailSheet = false
+    
+    private var phoneCallController: PhoneCallController {
+        PhoneCallController(modelContext: controller.modelContext)
+    }
 
     init(customer: Customer, onClose: (() -> Void)? = nil, modelContext: ModelContext) {
         _controller = StateObject(
@@ -79,13 +83,13 @@ struct CustomerActionsToolbar: View {
         }
         
         .sheet(isPresented: $controller.showCallSheet) {
-            CallActionBottomSheet(
-                phone: PhoneValidator.formatted(controller.customer.contactPhone),
+            PhoneActionSheet(
+                context: .customer(controller.customer),
+                controller: phoneCallController,
                 onCall: {
-                    controller.logCustomerCallNote()
-                    if let url = URL(string: "tel://\(controller.customer.contactPhone.filter(\.isNumber))") {
-                        UIApplication.shared.open(url)
-                    }
+                    phoneCallController.call(
+                        context: .customer(controller.customer)
+                    )
                     controller.showCallSheet = false
                 },
                 onEdit: {

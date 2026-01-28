@@ -28,6 +28,8 @@ final class Customer: ContactProtocol {
     
     var emailsSent: [Email]
     
+    var phoneCalls: [PhoneCall]
+    
     /// Stored coordinates for marker annotation generation
     var latitude: Double?
     var longitude: Double?
@@ -57,6 +59,8 @@ final class Customer: ContactProtocol {
         self.knockHistory = []
         
         self.emailsSent = []
+        
+        self.phoneCalls = []
         
         self.latitude = nil
         self.longitude = nil

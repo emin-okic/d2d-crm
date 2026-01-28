@@ -71,7 +71,8 @@ let sharedModelContainer: ModelContainer = {
         Note.self,
         Recording.self,
         EmailTemplate.self,
-        Email.self
+        Email.self,
+        PhoneCall.self
     ])
 
     // ⬇️ Explicitly opt OUT of CloudKit mirroring

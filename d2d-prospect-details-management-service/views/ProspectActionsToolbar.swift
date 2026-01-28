@@ -31,6 +31,10 @@ struct ProspectActionsToolbar: View {
     
     @State private var showEmailSheet = false
     
+    private var phoneCallController: PhoneCallController {
+        PhoneCallController(modelContext: modelContext)
+    }
+    
     init(prospect: Prospect, modelContext: ModelContext) {
         self._prospect = Bindable(prospect)
         self.customerController = CustomerController(modelContext: modelContext)
@@ -93,17 +97,14 @@ struct ProspectActionsToolbar: View {
 
         }
 
-        // Phone confirmation
         .sheet(isPresented: $showCallSheet) {
-            CallActionBottomSheet(
-                phone: PhoneValidator.formatted(prospect.contactPhone),
+            PhoneActionSheet(
+                context: .prospect(prospect),
+                controller: phoneCallController,
                 onCall: {
-                    logCallNote()
-
-                    if let url = URL(string: "tel://\(prospect.contactPhone.filter(\.isNumber))") {
-                        UIApplication.shared.open(url)
-                    }
-
+                    phoneCallController.call(
+                        context: .prospect(prospect)
+                    )
                     showCallSheet = false
                 },
                 onEdit: {
@@ -119,30 +120,7 @@ struct ProspectActionsToolbar: View {
             .presentationDetents([.fraction(0.25)])
             .presentationDragIndicator(.visible)
         }
-
-        // Convert to Customer sheet using common stepper form
-        .sheet(isPresented: $showCreateSaleSheet) {
-            NavigationStack {
-                CustomerCreateStepperView(
-                    initialName: prospect.fullName,
-                    initialAddress: prospect.address,
-                    initialPhone: prospect.contactPhone,
-                    initialEmail: prospect.contactEmail,
-                    onComplete: { newCustomer in
-                        // Transfer notes, knocks, appointments
-                        transferProspectData(to: newCustomer)
-                        
-                        showCreateSaleSheet = false
-                    },
-                    onCancel: {
-                        showCreateSaleSheet = false
-                    }
-                )
-            }
-            .presentationDetents([.fraction(0.5)])      // Limit to 50% of the screen
-            .presentationDragIndicator(.visible)        // Show drag indicator
-        }
-
+        
         // Add phone sheet
         .sheet(isPresented: $showAddPhoneSheet) {
             AddPhoneBottomSheet(
@@ -170,6 +148,29 @@ struct ProspectActionsToolbar: View {
             )
             .presentationDetents([.fraction(0.25)])
             .presentationDragIndicator(.visible)
+        }
+
+        // Convert to Customer sheet using common stepper form
+        .sheet(isPresented: $showCreateSaleSheet) {
+            NavigationStack {
+                CustomerCreateStepperView(
+                    initialName: prospect.fullName,
+                    initialAddress: prospect.address,
+                    initialPhone: prospect.contactPhone,
+                    initialEmail: prospect.contactEmail,
+                    onComplete: { newCustomer in
+                        // Transfer notes, knocks, appointments
+                        transferProspectData(to: newCustomer)
+                        
+                        showCreateSaleSheet = false
+                    },
+                    onCancel: {
+                        showCreateSaleSheet = false
+                    }
+                )
+            }
+            .presentationDetents([.fraction(0.5)])      // Limit to 50% of the screen
+            .presentationDragIndicator(.visible)        // Show drag indicator
         }
         
         .sheet(isPresented: $showEmailSheet) {
@@ -215,6 +216,15 @@ struct ProspectActionsToolbar: View {
         for appt in prospect.appointments {
             appt.prospect = nil // break old link
             customer.appointments.append(appt)
+        }
+        
+        // Transfer phone calls back to prospect
+        customer.phoneCalls = prospect.phoneCalls
+        
+        // Update ownership metadata
+        for call in customer.phoneCalls {
+            call.recipientUUID = customer.uuid
+            call.recipientType = .customer
         }
         
         customer.emailsSent = prospect.emailsSent

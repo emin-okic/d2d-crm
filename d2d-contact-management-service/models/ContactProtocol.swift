@@ -13,13 +13,29 @@ protocol ContactProtocol {
     var knockCount: Int { get set }
     var contactEmail: String { get set }
     var contactPhone: String { get set }
+    
     var notes: [Note] { get set }
     var appointments: [Appointment] { get set }
     var knockHistory: [Knock] { get set }
+    var phoneCalls: [PhoneCall] { get set }
 }
 
 extension ContactProtocol {
     var sortedKnocks: [Knock] {
         knockHistory.sorted(by: { $0.date > $1.date })
+    }
+}
+
+extension ContactProtocol {
+
+    var phoneCallCount: Int {
+        phoneCalls.count
+    }
+
+    var lastPhoneCallDate: Date? {
+        phoneCalls
+            .sorted(by: { $0.date > $1.date })
+            .first?
+            .date
     }
 }

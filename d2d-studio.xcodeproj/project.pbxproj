@@ -149,6 +149,11 @@
 			path = "d2d-territory-management-service";
 			sourceTree = "<group>";
 		};
+		C58377122F2A883700E2D62D /* d2d-telemarketing-management-system */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "d2d-telemarketing-management-system";
+			sourceTree = "<group>";
+		};
 		C591DBC02F00877B000C99BD /* d2d-contact-import-service */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "d2d-contact-import-service";
@@ -264,6 +269,7 @@
 				C510D6C72F0BA7ED00D7938E /* d2d-prospect-details-management-service */,
 				C51C3CC42E82FAA80081B571 /* d2d-customer-management-service */,
 				C510D6D62F0BAD6C00D7938E /* d2d-customer-details-management-service */,
+				C58377122F2A883700E2D62D /* d2d-telemarketing-management-system */,
 				C5138ED42F21A31800518910 /* d2d-email-management-service */,
 				C591DBC02F00877B000C99BD /* d2d-contact-import-service */,
 				C5B391272F0974E30061B04A /* d2d-contact-export-service */,
@@ -353,6 +359,7 @@
 				C55449012E5A104300677585 /* d2d-ad-engine-service */,
 				C55E795A2E450CB400D1EA0C /* d2d-activity-management-service */,
 				C56CD3852E1993CB00232EF7 /* d2d-territory-management-service */,
+				C58377122F2A883700E2D62D /* d2d-telemarketing-management-system */,
 				C591DBC02F00877B000C99BD /* d2d-contact-import-service */,
 				C59705F92E198214006C3B55 /* d2d-contact-management-service */,
 				C5B1B5652E3FC3A6004766E8 /* d2d-objections-manager-service */,

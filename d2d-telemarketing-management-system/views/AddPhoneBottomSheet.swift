@@ -27,7 +27,7 @@ struct AddPhoneBottomSheet: View {
     }
 
     private var primaryButtonTitle: String {
-        mode == .add ? "Add Number" : "Save Changes"
+        mode == .add ? "Add Number" : "Save"
     }
 
     var body: some View {
@@ -72,16 +72,35 @@ struct AddPhoneBottomSheet: View {
             }
 
             HStack(spacing: 12) {
-                Button("Cancel") {
+                Button(action: {
+                    TelemarketingManagerHapticsController.shared.lightTap()
+                    TelemarketingManagerSoundController.shared.playSound1()
                     onCancel()
+                }) {
+                    Text("Cancel")
+                        .font(.subheadline)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .background(Color(.systemGray5))
+                        .foregroundColor(.primary)
+                        .cornerRadius(10)
                 }
                 .frame(maxWidth: .infinity)
 
-                Button(primaryButtonTitle) {
+                Button(action: {
+                    TelemarketingManagerHapticsController.shared.successConfirmationTap()
+                    TelemarketingManagerSoundController.shared.playSound1()
                     onSave()
+                }) {
+                    Text(primaryButtonTitle)
+                        .font(.subheadline)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
                 }
                 .frame(maxWidth: .infinity)
-                .buttonStyle(.borderedProminent)
                 .disabled(
                     phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
                     error != nil
