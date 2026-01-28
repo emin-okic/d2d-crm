@@ -515,6 +515,19 @@ struct MapSearchView: View {
         }
     }
     
+    private func transferEmailsToProspect(from customer: Customer, to prospect: Prospect) {
+        
+        // Move email references
+        prospect.emailsSent = customer.emailsSent
+
+        // Update ownership metadata
+        for email in prospect.emailsSent {
+            email.recipientUUID = prospect.uuid
+            email.recipientType = .prospect
+        }
+        
+    }
+    
     private func handleMarkerTap(place: IdentifiablePlace, geo: GeometryProxy) {
         
         selectedPlaceID = place.id
@@ -985,6 +998,7 @@ struct MapSearchView: View {
     
     @MainActor
     private func convertCustomerToProspect(address: String) {
+        
         guard let customer = customers.first(where: {
             addressesMatch($0.address, address)
         }) else { return }
@@ -1003,6 +1017,9 @@ struct MapSearchView: View {
         prospect.notes = customer.notes
         prospect.appointments = customer.appointments
         prospect.knockHistory = customer.knockHistory
+        
+        // ✅ 2.1 Transfer emails BACK to prospect
+        transferEmailsToProspect(from: customer, to: prospect)
         
         // 2.5 LOG THE STATE TRANSITION
         prospect.knockHistory.append(
