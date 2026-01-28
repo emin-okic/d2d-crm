@@ -100,6 +100,7 @@ struct ProspectActionsToolbar: View {
         .sheet(isPresented: $showCallSheet) {
             PhoneActionSheet(
                 context: .prospect(prospect),
+                controller: phoneCallController,
                 onCall: {
                     phoneCallController.call(
                         context: .prospect(prospect)

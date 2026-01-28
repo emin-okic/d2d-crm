@@ -85,6 +85,7 @@ struct CustomerActionsToolbar: View {
         .sheet(isPresented: $controller.showCallSheet) {
             PhoneActionSheet(
                 context: .customer(controller.customer),
+                controller: phoneCallController,
                 onCall: {
                     phoneCallController.call(
                         context: .customer(controller.customer)

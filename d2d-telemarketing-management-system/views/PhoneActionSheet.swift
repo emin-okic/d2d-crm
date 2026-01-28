@@ -11,6 +11,7 @@ import PhoneNumberKit
 struct PhoneActionSheet: View {
 
     let context: PhoneActionContext
+    let controller: PhoneCallController
 
     let onCall: () -> Void
     let onEdit: () -> Void
@@ -21,9 +22,7 @@ struct PhoneActionSheet: View {
 
             // Top toolbar with circular chevron
             HStack {
-                Button(action: {
-                    onCancel()
-                }) {
+                Button(action: { onCancel() }) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.primary)
@@ -47,22 +46,23 @@ struct PhoneActionSheet: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
 
+            // Total calls made
+            Text("Total Calls Made: \(controller.totalCallsMade(for: context))")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
             // Action buttons
             HStack(spacing: 12) {
-                Button("Edit Number") {
-                    onEdit()
-                }
-                .buttonStyle(.bordered)
+                Button("Edit Number") { onEdit() }
+                    .buttonStyle(.bordered)
 
-                Button("Call") {
-                    onCall()
-                }
-                .buttonStyle(.borderedProminent)
+                Button("Call") { onCall() }
+                    .buttonStyle(.borderedProminent)
             }
 
             Spacer()
         }
         .padding()
-        .frame(maxHeight: UIScreen.main.bounds.height * 0.25) // Fit into 25% detent
+        .frame(maxHeight: UIScreen.main.bounds.height * 0.25)
     }
 }
