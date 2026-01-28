@@ -117,7 +117,7 @@ struct ProspectActionsToolbar: View {
                     showCallSheet = false
                 }
             )
-            .presentationDetents([.fraction(0.35)])
+            .presentationDetents([.fraction(0.25)])
             .presentationDragIndicator(.visible)
         }
         
