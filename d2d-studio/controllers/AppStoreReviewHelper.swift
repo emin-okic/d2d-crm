@@ -9,6 +9,7 @@
 import StoreKit
 import UIKit
 
+@MainActor
 enum AppStoreReviewHelper {
     /// Call this from a visible UI moment. If SKStoreReviewController
     /// decides not to show (quota), we deep-link to the review page.
