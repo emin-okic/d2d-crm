@@ -5,23 +5,26 @@
 //  Created by Emin Okic on 8/8/25.
 //
 
-
 import StoreKit
 import UIKit
 
 @MainActor
 enum AppStoreReviewHelper {
-    /// Call this from a visible UI moment. If SKStoreReviewController
-    /// decides not to show (quota), we deep-link to the review page.
+
+    /// Call this from a visible UI moment. If Apple throttles the prompt,
+    /// we fall back to opening the App Store review page.
     static func requestReviewOrOpenStore(appId: String) {
-        if let scene = UIApplication.shared.connectedScenes
+        guard let scene = UIApplication.shared.connectedScenes
             .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
-        {
-            // This may silently no-op if Apple throttles prompts.
-            SKStoreReviewController.requestReview(in: scene)
-        } else {
-            // No active scene? Fall back to deep link.
+        else {
             openWriteReviewPage(appId: appId)
+            return
+        }
+
+        if #available(iOS 18.0, *) {
+            AppStore.requestReview(in: scene)
+        } else {
+            SKStoreReviewController.requestReview(in: scene)
         }
     }
 
@@ -29,7 +32,7 @@ enum AppStoreReviewHelper {
     static func openWriteReviewPage(appId: String) {
         let urlStr = "itms-apps://itunes.apple.com/app/id\(appId)?action=write-review"
         if let url = URL(string: urlStr) {
-            UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            UIApplication.shared.open(url)
         }
     }
 }
