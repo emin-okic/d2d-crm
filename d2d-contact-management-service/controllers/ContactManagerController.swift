@@ -103,7 +103,7 @@ class ContactManagerController: ObservableObject {
 
             search.start { response, _ in
                 guard
-                    let coordinate = response?.mapItems.first?.placemark.coordinate
+                    let coordinate = response?.mapItems.first?.location.coordinate
                 else {
                     offset < maxAttempts ? tryOffset(offset + 1) : completion(nil, nil)
                     return
