@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 import CoreLocation
+import MapKit
 
 @MainActor
 class ContactManagerController: ObservableObject {
@@ -85,22 +86,30 @@ class ContactManagerController: ObservableObject {
         let streetRemainder = components.dropFirst().joined(separator: " ")
         let maxAttempts = 10
         let existingAddresses = existingProspects.map { $0.address.lowercased() }
-        let geocoder = CLGeocoder()
 
         func tryOffset(_ offset: Int) {
+            
             let newAddress = "\(baseNumber + offset) \(streetRemainder)"
 
             if existingAddresses.contains(newAddress.lowercased()) {
                 offset < maxAttempts ? tryOffset(offset + 1) : completion(nil, nil)
                 return
             }
+            
+            var request = MKLocalSearch.Request()
+            request.naturalLanguageQuery = newAddress
+            
+            let search = MKLocalSearch(request: request)
 
-            geocoder.geocodeAddressString(newAddress) { placemarks, _ in
-                guard let location = placemarks?.first?.location else {
+            search.start { response, _ in
+                guard
+                    let coordinate = response?.mapItems.first?.location.coordinate
+                else {
                     offset < maxAttempts ? tryOffset(offset + 1) : completion(nil, nil)
                     return
                 }
-                completion(newAddress, location.coordinate)
+                
+                completion(newAddress, coordinate)
             }
         }
 
