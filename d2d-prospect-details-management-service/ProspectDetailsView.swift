@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 import CoreLocation
-import Contacts
+@preconcurrency import Contacts
 import MapKit
 
 struct ProspectDetailsView: View {
