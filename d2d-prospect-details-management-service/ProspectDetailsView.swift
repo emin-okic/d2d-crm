@@ -335,7 +335,9 @@ struct ProspectDetailsView: View {
         let store = CNContactStore()
         store.requestAccess(for: .contacts) { granted, _ in
             guard granted else {
-                showExportFeedback("Contacts access denied.")
+                Task { @MainActor in
+                    showExportFeedback("Contacts access denied.")
+                }
                 return
             }
 
@@ -392,9 +394,15 @@ struct ProspectDetailsView: View {
                 ]
 
                 try store.execute(saveRequest)
-                showExportFeedback("Contact saved to Contacts.")
+                
+                Task { @MainActor in
+                    showExportFeedback("Contact saved to Contacts.")
+                }
+                
             } catch {
-                showExportFeedback("Failed to save contact.")
+                Task { @MainActor in
+                    showExportFeedback("Failed to save contact.")
+                }
             }
         }
     }
