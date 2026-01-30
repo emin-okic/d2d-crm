@@ -114,7 +114,9 @@ struct ProspectCreateStepperView: View {
                 VStack(spacing: 6) {
                     TextField("123 Main St", text: $address)
                         .focused($isAddressFocused)
-                        .onChange(of: address) { searchVM.updateQuery($0) }
+                        .onChange(of: address) {
+                            searchVM.updateQuery(address)
+                        }
 
                     if isAddressFocused && !searchVM.results.isEmpty {
                         VStack(spacing: 0) {
