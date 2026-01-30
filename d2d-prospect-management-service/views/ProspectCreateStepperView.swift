@@ -299,12 +299,20 @@ struct ProspectCreateStepperView: View {
         p.contactEmail = contactEmail
         p.contactPhone = contactPhone
 
-        CLGeocoder().geocodeAddressString(address) { placemarks, _ in
-            if let coord = placemarks?.first?.location?.coordinate {
-                p.latitude = coord.latitude
-                p.longitude = coord.longitude
+        var request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = address
+
+        let search = MKLocalSearch(request: request)
+        search.start { response, _ in
+            if let coordinate = response?.mapItems.first?.location.coordinate {
+                p.latitude = coordinate.latitude
+                p.longitude = coordinate.longitude
             }
-            DispatchQueue.main.async { onComplete(p) }
+
+            DispatchQueue.main.async {
+                onComplete(p)
+            }
         }
     }
+    
 }
