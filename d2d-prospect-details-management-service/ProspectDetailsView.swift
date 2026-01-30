@@ -8,7 +8,8 @@
 import SwiftUI
 import SwiftData
 import CoreLocation
-import Contacts
+@preconcurrency import Contacts
+import MapKit
 
 struct ProspectDetailsView: View {
     @Bindable var prospect: Prospect
@@ -332,13 +333,22 @@ struct ProspectDetailsView: View {
     
     private func exportToContacts() {
         let store = CNContactStore()
+        
+        // Capture immutable copies of prospect data for thread-safe use in the closure
+        let prospectFullName = prospect.fullName
+        let prospectAddress = prospect.address
+        let prospectPhone = prospect.contactPhone
+        let prospectEmail = prospect.contactEmail
+        
         store.requestAccess(for: .contacts) { granted, _ in
             guard granted else {
-                showExportFeedback("Contacts access denied.")
+                Task { @MainActor in
+                    showExportFeedback("Contacts access denied.")
+                }
                 return
             }
 
-            let predicate = CNContact.predicateForContacts(matchingName: prospect.fullName)
+            let predicate = CNContact.predicateForContacts(matchingName: prospectFullName)
             
             let keys: [CNKeyDescriptor] = [
                 CNContactGivenNameKey as CNKeyDescriptor,
@@ -351,7 +361,7 @@ struct ProspectDetailsView: View {
             do {
                 let matches = try store.unifiedContacts(matching: predicate, keysToFetch: keys)
                 let existing = matches.first {
-                    $0.postalAddresses.first?.value.street == prospect.address
+                    $0.postalAddresses.first?.value.street == prospectAddress
                 }
 
                 let contact: CNMutableContact
@@ -362,38 +372,44 @@ struct ProspectDetailsView: View {
                     saveRequest.update(contact)
                 } else {
                     contact = CNMutableContact()
-                    contact.givenName = prospect.fullName
+                    contact.givenName = prospectFullName
                     saveRequest.add(contact, toContainerWithIdentifier: nil)
                 }
 
-                if !prospect.contactPhone.isEmpty {
+                if !prospectPhone.isEmpty {
                     contact.phoneNumbers = [
                         CNLabeledValue(
                             label: CNLabelPhoneNumberMobile,
-                            value: CNPhoneNumber(stringValue: prospect.contactPhone)
+                            value: CNPhoneNumber(stringValue: prospectPhone)
                         )
                     ]
                 }
 
-                if !prospect.contactEmail.isEmpty {
+                if !prospectEmail.isEmpty {
                     contact.emailAddresses = [
                         CNLabeledValue(
                             label: CNLabelHome,
-                            value: NSString(string: prospect.contactEmail)
+                            value: NSString(string: prospectEmail)
                         )
                     ]
                 }
 
                 let postal = CNMutablePostalAddress()
-                postal.street = prospect.address
+                postal.street = prospectAddress
                 contact.postalAddresses = [
                     CNLabeledValue(label: CNLabelHome, value: postal)
                 ]
 
                 try store.execute(saveRequest)
-                showExportFeedback("Contact saved to Contacts.")
+                
+                Task { @MainActor in
+                    showExportFeedback("Contact saved to Contacts.")
+                }
+                
             } catch {
-                showExportFeedback("Failed to save contact.")
+                Task { @MainActor in
+                    showExportFeedback("Failed to save contact.")
+                }
             }
         }
     }
@@ -447,18 +463,22 @@ struct ProspectDetailsView: View {
             prospect.address = trimmedAddress
 
             // ✅ Geocode the new address to update latitude/longitude
-            CLGeocoder().geocodeAddressString(trimmedAddress) { placemarks, error in
-                if let coord = placemarks?.first?.location?.coordinate {
-                    prospect.latitude = coord.latitude
-                    prospect.longitude = coord.longitude
-                    print("📍 Updated prospect coordinates: \(coord.latitude), \(coord.longitude)")
+            let request = MKLocalSearch.Request()
+            request.naturalLanguageQuery = trimmedAddress
+
+            let search = MKLocalSearch(request: request)
+            search.start { response, error in
+                if let coordinate = response?.mapItems.first?.location.coordinate {
+                    prospect.latitude = coordinate.latitude
+                    prospect.longitude = coordinate.longitude
+                    print("📍 Updated prospect coordinates: \(coordinate.latitude), \(coordinate.longitude)")
                 } else {
                     print("❌ Failed to geocode address: \(error?.localizedDescription ?? "Unknown error")")
                 }
 
-                // Save prospect + notes after geocoding
                 controller.saveProspect(prospect, modelContext: modelContext)
             }
+            
         } else {
             // Save immediately if only the name changed
             controller.saveProspect(prospect, modelContext: modelContext)
