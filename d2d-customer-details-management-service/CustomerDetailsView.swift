@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 import MapKit
-import Contacts
+@preconcurrency import Contacts
 
 @available(iOS 18.0, *)
 struct CustomerDetailsView: View {
