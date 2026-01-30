@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 import CoreLocation
 import Contacts
+import MapKit
 
 struct ProspectDetailsView: View {
     @Bindable var prospect: Prospect
@@ -447,18 +448,22 @@ struct ProspectDetailsView: View {
             prospect.address = trimmedAddress
 
             // ✅ Geocode the new address to update latitude/longitude
-            CLGeocoder().geocodeAddressString(trimmedAddress) { placemarks, error in
-                if let coord = placemarks?.first?.location?.coordinate {
-                    prospect.latitude = coord.latitude
-                    prospect.longitude = coord.longitude
-                    print("📍 Updated prospect coordinates: \(coord.latitude), \(coord.longitude)")
+            let request = MKLocalSearch.Request()
+            request.naturalLanguageQuery = trimmedAddress
+
+            let search = MKLocalSearch(request: request)
+            search.start { response, error in
+                if let coordinate = response?.mapItems.first?.placemark.coordinate {
+                    prospect.latitude = coordinate.latitude
+                    prospect.longitude = coordinate.longitude
+                    print("📍 Updated prospect coordinates: \(coordinate.latitude), \(coordinate.longitude)")
                 } else {
                     print("❌ Failed to geocode address: \(error?.localizedDescription ?? "Unknown error")")
                 }
 
-                // Save prospect + notes after geocoding
                 controller.saveProspect(prospect, modelContext: modelContext)
             }
+            
         } else {
             // Save immediately if only the name changed
             controller.saveProspect(prospect, modelContext: modelContext)
