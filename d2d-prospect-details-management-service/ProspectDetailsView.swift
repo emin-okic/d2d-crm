@@ -333,6 +333,13 @@ struct ProspectDetailsView: View {
     
     private func exportToContacts() {
         let store = CNContactStore()
+        
+        // Capture immutable copies of prospect data for thread-safe use in the closure
+        let prospectFullName = prospect.fullName
+        let prospectAddress = prospect.address
+        let prospectPhone = prospect.contactPhone
+        let prospectEmail = prospect.contactEmail
+        
         store.requestAccess(for: .contacts) { granted, _ in
             guard granted else {
                 Task { @MainActor in
@@ -341,7 +348,7 @@ struct ProspectDetailsView: View {
                 return
             }
 
-            let predicate = CNContact.predicateForContacts(matchingName: prospect.fullName)
+            let predicate = CNContact.predicateForContacts(matchingName: prospectFullName)
             
             let keys: [CNKeyDescriptor] = [
                 CNContactGivenNameKey as CNKeyDescriptor,
@@ -354,7 +361,7 @@ struct ProspectDetailsView: View {
             do {
                 let matches = try store.unifiedContacts(matching: predicate, keysToFetch: keys)
                 let existing = matches.first {
-                    $0.postalAddresses.first?.value.street == prospect.address
+                    $0.postalAddresses.first?.value.street == prospectAddress
                 }
 
                 let contact: CNMutableContact
@@ -365,30 +372,30 @@ struct ProspectDetailsView: View {
                     saveRequest.update(contact)
                 } else {
                     contact = CNMutableContact()
-                    contact.givenName = prospect.fullName
+                    contact.givenName = prospectFullName
                     saveRequest.add(contact, toContainerWithIdentifier: nil)
                 }
 
-                if !prospect.contactPhone.isEmpty {
+                if !prospectPhone.isEmpty {
                     contact.phoneNumbers = [
                         CNLabeledValue(
                             label: CNLabelPhoneNumberMobile,
-                            value: CNPhoneNumber(stringValue: prospect.contactPhone)
+                            value: CNPhoneNumber(stringValue: prospectPhone)
                         )
                     ]
                 }
 
-                if !prospect.contactEmail.isEmpty {
+                if !prospectEmail.isEmpty {
                     contact.emailAddresses = [
                         CNLabeledValue(
                             label: CNLabelHome,
-                            value: NSString(string: prospect.contactEmail)
+                            value: NSString(string: prospectEmail)
                         )
                     ]
                 }
 
                 let postal = CNMutablePostalAddress()
-                postal.street = prospect.address
+                postal.street = prospectAddress
                 contact.postalAddresses = [
                     CNLabeledValue(label: CNLabelHome, value: postal)
                 ]
