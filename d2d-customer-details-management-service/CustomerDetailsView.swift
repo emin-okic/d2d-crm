@@ -437,25 +437,28 @@ struct CustomerDetailsView: View {
             changeNotes.append(note)
             customer.address = trimmedAddress
 
-            // ✅ Re-geocode address
-            CLGeocoder().geocodeAddressString(trimmedAddress) { placemarks, error in
-                if let coord = placemarks?.first?.location?.coordinate {
-                    customer.latitude = coord.latitude
-                    customer.longitude = coord.longitude
-
+            // Use iOS 26+ non-deprecated APIs
+            let request = MKLocalSearch.Request()
+            request.naturalLanguageQuery = trimmedAddress
+            let search = MKLocalSearch(request: request)
+            search.start { response, error in
+                
+                if let firstItem = response?.mapItems.first {
+                    let location = firstItem.location
+                    customer.latitude = location.coordinate.latitude
+                    customer.longitude = location.coordinate.longitude
+                    
                     print("📍 Updated customer coordinates:")
-                    print("   → Latitude: \(coord.latitude)")
-                    print("   → Longitude: \(coord.longitude)")
+                    print("   → Latitude: \(location.coordinate.latitude)")
+                    print("   → Longitude: \(location.coordinate.longitude)")
                 } else {
-                    print("❌ Failed to geocode customer address:")
-                    print("   → \(error?.localizedDescription ?? "Unknown error")")
+                    print("❌ Failed to geocode customer address: \(error?.localizedDescription ?? "Unknown error")")
                 }
 
                 // Save AFTER geocoding
                 saveCustomer(changeNotes: changeNotes)
             }
         } else {
-            // No address change → save immediately
             saveCustomer(changeNotes: changeNotes)
         }
 
