@@ -453,7 +453,7 @@ struct ProspectDetailsView: View {
 
             let search = MKLocalSearch(request: request)
             search.start { response, error in
-                if let coordinate = response?.mapItems.first?.placemark.coordinate {
+                if let coordinate = response?.mapItems.first?.location.coordinate {
                     prospect.latitude = coordinate.latitude
                     prospect.longitude = coordinate.longitude
                     print("📍 Updated prospect coordinates: \(coordinate.latitude), \(coordinate.longitude)")
