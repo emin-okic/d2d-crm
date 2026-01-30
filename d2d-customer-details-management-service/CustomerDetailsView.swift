@@ -310,13 +310,23 @@ struct CustomerDetailsView: View {
     
     private func exportToContacts() {
         let store = CNContactStore()
+        
+        // ✅ Capture immutable snapshots for thread-safe access
+        let customerFullName = customer.fullName
+        let customerAddress = customer.address
+        let customerPhone = customer.contactPhone
+        let customerEmail = customer.contactEmail
+        
         store.requestAccess(for: .contacts) { granted, _ in
             guard granted else {
-                showExportFeedback("Contacts access denied.")
+                Task { @MainActor in
+                    showExportFeedback("Contacts access denied.")
+                }
                 return
             }
 
-            let predicate = CNContact.predicateForContacts(matchingName: customer.fullName)
+            let predicate = CNContact.predicateForContacts(matchingName: customerFullName)
+            
             let keys: [CNKeyDescriptor] = [
                 CNContactGivenNameKey as CNKeyDescriptor,
                 CNContactFamilyNameKey as CNKeyDescriptor,
@@ -328,7 +338,7 @@ struct CustomerDetailsView: View {
             do {
                 let matches = try store.unifiedContacts(matching: predicate, keysToFetch: keys)
                 let existing = matches.first {
-                    $0.postalAddresses.first?.value.street == customer.address
+                    $0.postalAddresses.first?.value.street == customerAddress
                 }
 
                 let contact: CNMutableContact
@@ -339,38 +349,44 @@ struct CustomerDetailsView: View {
                     saveRequest.update(contact)
                 } else {
                     contact = CNMutableContact()
-                    contact.givenName = customer.fullName
+                    contact.givenName = customerFullName
                     saveRequest.add(contact, toContainerWithIdentifier: nil)
                 }
 
-                if !customer.contactPhone.isEmpty {
+                if !customerPhone.isEmpty {
                     contact.phoneNumbers = [
                         CNLabeledValue(
                             label: CNLabelPhoneNumberMobile,
-                            value: CNPhoneNumber(stringValue: customer.contactPhone)
+                            value: CNPhoneNumber(stringValue: customerPhone)
                         )
                     ]
                 }
 
-                if !customer.contactEmail.isEmpty {
+                if !customerEmail.isEmpty {
                     contact.emailAddresses = [
                         CNLabeledValue(
                             label: CNLabelHome,
-                            value: NSString(string: customer.contactEmail)
+                            value: NSString(string: customerEmail)
                         )
                     ]
                 }
 
                 let postal = CNMutablePostalAddress()
-                postal.street = customer.address
+                postal.street = customerAddress
                 contact.postalAddresses = [
                     CNLabeledValue(label: CNLabelHome, value: postal)
                 ]
 
                 try store.execute(saveRequest)
-                showExportFeedback("Contact saved to Contacts.")
+
+                Task { @MainActor in
+                    showExportFeedback("Contact saved to Contacts.")
+                }
+
             } catch {
-                showExportFeedback("Failed to save contact.")
+                Task { @MainActor in
+                    showExportFeedback("Failed to save contact.")
+                }
             }
         }
     }
