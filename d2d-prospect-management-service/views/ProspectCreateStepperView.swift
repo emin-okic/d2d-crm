@@ -159,7 +159,9 @@ struct ProspectCreateStepperView: View {
             labeledField("Phone (Optional)") {
                 TextField("555-123-4567", text: $contactPhone)
                     .keyboardType(.phonePad)
-                    .onChange(of: contactPhone) { _ in _ = validatePhoneNumber() }
+                    .onChange(of: contactPhone) {
+                        _ = validatePhoneNumber()
+                    }
             }
 
             if let phoneError = phoneError {
