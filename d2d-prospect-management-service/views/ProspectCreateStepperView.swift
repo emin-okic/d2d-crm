@@ -174,7 +174,9 @@ struct ProspectCreateStepperView: View {
                 TextField("name@email.com", text: $contactEmail)
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
-                    .onChange(of: contactEmail) { _ in _ = validateEmail() }
+                    .onChange(of: contactEmail) {
+                        _ = validateEmail()
+                    }
             }
 
             // Show error message
