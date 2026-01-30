@@ -136,48 +136,6 @@ class DatabaseController {
     
 }
 
-extension DatabaseController {
-
-    func geocodeAndSuggestNeighbor(
-        from customerAddress: String,
-        completion: @escaping (_ address: String?, _ coordinate: CLLocationCoordinate2D?) -> Void
-    ) {
-        let components = customerAddress.components(separatedBy: " ")
-        guard let first = components.first,
-              let baseNumber = Int(first) else {
-            completion(nil, nil)
-            return
-        }
-
-        let streetRemainder = components.dropFirst().joined(separator: " ")
-        let maxAttempts = 10
-        let existingAddresses = getAllProspects().map { $0.1.lowercased() }
-        let geocoder = CLGeocoder()
-
-        func tryOffset(_ offset: Int) {
-            let newAddress = "\(baseNumber + offset) \(streetRemainder)"
-
-            if existingAddresses.contains(newAddress.lowercased()) {
-                offset < maxAttempts ? tryOffset(offset + 1) : completion(nil, nil)
-                return
-            }
-
-            geocoder.geocodeAddressString(newAddress) { placemarks, _ in
-                guard
-                    let location = placemarks?.first?.location
-                else {
-                    offset < maxAttempts ? tryOffset(offset + 1) : completion(nil, nil)
-                    return
-                }
-
-                completion(newAddress, location.coordinate)
-            }
-        }
-
-        tryOffset(1)
-    }
-}
-
 extension String {
     var nilIfEmpty: String? {
         isEmpty ? nil : self
