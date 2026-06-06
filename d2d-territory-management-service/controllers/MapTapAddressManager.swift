@@ -8,17 +8,23 @@ import Foundation
 import MapKit
 import CoreLocation
 
+@MainActor
 class MapTapAddressManager: ObservableObject {
+    
     @Published var tappedAddress: String = ""
     @Published var tappedCoordinate: CLLocationCoordinate2D?
+    
     @Published var showAddPrompt: Bool = false
 
     func handleTap(at coordinate: CLLocationCoordinate2D) {
+        
         tappedCoordinate = coordinate
         reverseGeocode(coordinate)
+        
     }
 
     private func reverseGeocode(_ coordinate: CLLocationCoordinate2D) {
+        
         let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
         CLGeocoder().reverseGeocodeLocation(location) { [weak self] placemarks, error in
             guard let self = self else { return }
