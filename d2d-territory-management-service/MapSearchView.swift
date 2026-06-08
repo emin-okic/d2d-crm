@@ -43,6 +43,7 @@ struct MapSearchView: View {
     @Namespace private var animationNamespace
 
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var storeManager: StoreManager
 
     @State private var pendingRecordingFileName: String?
 
@@ -352,11 +353,17 @@ struct MapSearchView: View {
             //
             // inside body chain where you had the presenter & lifecycle hooks
             
-            // Add related modifiers
             .presentRotatingAdsCentered()
             .onAppear {
-                // 🔹 Show exactly one ad for this app session (centered). Will differ each launch.
-                AdEngine.shared.startSingleShot(inventory: AdDemoInventory.defaultAds)
+
+                guard !storeManager.adsRemoved else {
+                    AdEngine.shared.stop()
+                    return
+                }
+
+                AdEngine.shared.startSingleShot(
+                    inventory: AdDemoInventory.defaultAds
+                )
             }
             .onDisappear {
                 // No-op for single-shot, but keep if you want to explicitly clear.

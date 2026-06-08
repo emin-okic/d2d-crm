@@ -12,6 +12,8 @@ import Foundation
 @main
 struct d2d_studioApp: App {
     
+    @StateObject private var storeManager = StoreManager()
+    
     @State private var sessionId = UUID().uuidString
     
     @State private var deepLinkURL: URL?
@@ -20,8 +22,14 @@ struct d2d_studioApp: App {
         WindowGroup {
             
             RootView()
+                .environmentObject(storeManager)
                 .onOpenURL { url in handleDeepLink(url) }
                 .preferredColorScheme(.light)
+                .task {
+
+                    await storeManager.loadPurchases()
+
+                }
             
         }
         .modelContainer(sharedModelContainer)
