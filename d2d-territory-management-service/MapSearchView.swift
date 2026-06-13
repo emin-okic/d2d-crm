@@ -352,7 +352,7 @@ struct MapSearchView: View {
             //
             // inside body chain where you had the presenter & lifecycle hooks
             
-            // Add related modifiers
+            // Ad related modifiers
             .presentRotatingAdsCentered()
             .onAppear {
                 // 🔹 Show exactly one ad for this app session (centered). Will differ each launch.
@@ -361,6 +361,14 @@ struct MapSearchView: View {
             .onDisappear {
                 // No-op for single-shot, but keep if you want to explicitly clear.
                 AdEngine.shared.stop()
+            }
+            .onAppear {
+                Task {
+                    await AdEngine.shared.loadPurchases()
+                    AdEngine.shared.startSingleShot(
+                        inventory: AdDemoInventory.defaultAds
+                    )
+                }
             }
             
             // Search engine related modifiers
