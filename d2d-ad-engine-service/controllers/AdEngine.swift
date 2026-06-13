@@ -8,10 +8,13 @@
 import Foundation
 import Combine
 import UIKit
+import StoreKit
 
 @MainActor
 public final class AdEngine: ObservableObject {
+    
     public static let shared = AdEngine()
+    
     private init() {}
 
     @Published public private(set) var currentAd: Ad?
@@ -20,9 +23,66 @@ public final class AdEngine: ObservableObject {
 
     // Session gate: once closed (X or click), don't show again until next app launch
     private var sessionClosed = false
+    
+    @Published var adsRemoved = false
+    
+    private let removeAdsProductID = "com.d2dstudio.removeads"
+    
+    func loadPurchases() async {
+
+        for await result in Transaction.currentEntitlements {
+
+            guard case .verified(let transaction) = result else {
+
+                continue
+
+            }
+
+            if transaction.productID == removeAdsProductID {
+
+                adsRemoved = true
+
+                currentAd = nil
+
+            }
+
+        }
+
+    }
+    
+    func purchaseRemoveAds() async {
+        guard let product = try? await Product.products(
+            for: [removeAdsProductID]
+        ).first else {
+            return
+        }
+
+        let result = try? await product.purchase()
+
+        guard
+            case .success(let verification) = result,
+            case .verified(let transaction) = verification
+        else {
+            return
+        }
+
+        adsRemoved = true
+        currentAd = nil
+
+        await transaction.finish()
+    }
 
     // ===== NEW: one-shot startup API (no rotation) =====
     public func startSingleShot(inventory: [Ad]) {
+        
+        guard !adsRemoved else {
+
+            currentAd = nil
+
+            return
+
+        }
+        
         guard !sessionClosed else { return } // already dismissed/clicked this session
         self.inventory = inventory
 

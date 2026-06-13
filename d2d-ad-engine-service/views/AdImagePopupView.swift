@@ -21,9 +21,11 @@ public struct AdImagePopupView: View {
 
     public var body: some View {
         ZStack(alignment: .topTrailing) {
-            VStack(spacing: 0) {
+
+            VStack(spacing: 12) {
                 if let imageName = ad.imageName {
                     let tapAll = ad.tapEntireImage ?? true
+
                     Image(imageName)
                         .resizable()
                         .scaledToFit()
@@ -37,8 +39,22 @@ public struct AdImagePopupView: View {
                             openURL(ad.destination)
                         }
                 } else {
-                    AdPopupView(ad: ad, onDismiss: onDismiss, onClick: onClick)
+                    AdPopupView(
+                        ad: ad,
+                        onDismiss: onDismiss,
+                        onClick: onClick
+                    )
                 }
+
+                // 👇 Remove Ads button appears below the ad
+                if !AdEngine.shared.adsRemoved {
+                    RemoveAdsCTAView(isLoading: false) {
+                        Task {
+                            await AdEngine.shared.purchaseRemoveAds()
+                        }
+                    }
+                }
+                
             }
 
             // ✅ White X with depth (inner stroke + shadow) for light/white backgrounds

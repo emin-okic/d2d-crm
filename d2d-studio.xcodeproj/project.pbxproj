@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C50C757C2FDDB7FA00B8080D /* StoreKit.storekit in Resources */ = {isa = PBXBuildFile; fileRef = C50C757B2FDDB7FA00B8080D /* StoreKit.storekit */; };
+		C50C757D2FDDB7FA00B8080D /* StoreKit.storekit in Resources */ = {isa = PBXBuildFile; fileRef = C50C757B2FDDB7FA00B8080D /* StoreKit.storekit */; };
+		C50C757E2FDDB7FA00B8080D /* StoreKit.storekit in Resources */ = {isa = PBXBuildFile; fileRef = C50C757B2FDDB7FA00B8080D /* StoreKit.storekit */; };
 		C53F34042DE9E60900372BEE /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = C53F34032DE9E60900372BEE /* SQLite */; };
 		C5855D892DF073A700B479AE /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = C5855D882DF073A300B479AE /* .gitignore */; };
 		C5B3EE8A2F0B013700732B79 /* d2d-studio-TestPlan.xctestplan in Resources */ = {isa = PBXBuildFile; fileRef = C5B3EE892F0B013700732B79 /* d2d-studio-TestPlan.xctestplan */; };
@@ -69,6 +72,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C50C757B2FDDB7FA00B8080D /* StoreKit.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = StoreKit.storekit; sourceTree = "<group>"; };
 		C54048432DF4B32A00721D49 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		C5855D882DF073A300B479AE /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		C5B3EE7E2F0B002A00732B79 /* d2d-studioTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "d2d-studioTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -255,6 +259,7 @@
 		C5BE4B2B2DE7CC9E005C37B1 = {
 			isa = PBXGroup;
 			children = (
+				C50C757B2FDDB7FA00B8080D /* StoreKit.storekit */,
 				C5B3EE892F0B013700732B79 /* d2d-studio-TestPlan.xctestplan */,
 				C5E6A7362E2BEBCF00EC05F4 /* d2d-widget-serviceExtension.entitlements */,
 				C5CDA5B22E15A65300FD96B7 /* PRIVACYPOLICY.md */,
@@ -456,6 +461,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C50C757E2FDDB7FA00B8080D /* StoreKit.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -464,6 +470,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C5855D892DF073A700B479AE /* .gitignore in Resources */,
+				C50C757C2FDDB7FA00B8080D /* StoreKit.storekit in Resources */,
 				C5B3EE8A2F0B013700732B79 /* d2d-studio-TestPlan.xctestplan in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -472,6 +479,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C50C757D2FDDB7FA00B8080D /* StoreKit.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
