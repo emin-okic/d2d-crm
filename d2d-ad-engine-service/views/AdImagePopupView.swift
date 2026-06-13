@@ -48,19 +48,13 @@ public struct AdImagePopupView: View {
 
                 // 👇 Remove Ads button appears below the ad
                 if !AdEngine.shared.adsRemoved {
-                    Button {
+                    RemoveAdsCTAView(isLoading: false) {
                         Task {
                             await AdEngine.shared.purchaseRemoveAds()
                         }
-                    } label: {
-                        Label("$0.69", systemImage: "sparkles")
-                            .font(.footnote.weight(.semibold))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .clipShape(Capsule())
                 }
+                
             }
 
             // ✅ White X with depth (inner stroke + shadow) for light/white backgrounds
