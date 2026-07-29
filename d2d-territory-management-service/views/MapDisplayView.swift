@@ -40,6 +40,7 @@ struct MapDisplayView: UIViewRepresentable {
         
         mapView.delegate = context.coordinator
         context.coordinator.mapView = mapView
+        configureMapAppearance(mapView)
         
         mapView.setRegion(region, animated: false)
         mapView.isZoomEnabled = true
@@ -67,24 +68,38 @@ struct MapDisplayView: UIViewRepresentable {
         return mapView
     }
 
+    private func configureMapAppearance(_ mapView: MKMapView) {
+        if #available(iOS 16.0, *) {
+            let configuration = MKStandardMapConfiguration(elevationStyle: .realistic)
+            configuration.emphasisStyle = .muted
+            configuration.pointOfInterestFilter = .excludingAll
+            mapView.preferredConfiguration = configuration
+        } else {
+            mapView.mapType = .mutedStandard
+            mapView.pointOfInterestFilter = .excludingAll
+        }
+
+        mapView.showsBuildings = true
+        mapView.showsCompass = true
+        mapView.showsScale = false
+        mapView.isPitchEnabled = true
+
+        let camera = MKMapCamera(
+            lookingAtCenter: region.center,
+            fromDistance: 900,
+            pitch: 56,
+            heading: 0
+        )
+        mapView.setCamera(camera, animated: false)
+    }
+
     func updateUIView(_ mapView: MKMapView, context: Context) {
         
         // 🔄 Sync selected marker
         if context.coordinator.selectedPlaceID != selectedPlaceID {
             
-            context.coordinator.selectedPlaceID = selectedPlaceID
-            
-            for annotation in mapView.annotations {
-                
-                if let view = mapView.view(for: annotation) {
-                    
-                    for annotation in mapView.annotations {
-                        guard let view = mapView.view(for: annotation) else { continue }
-                        mapView.delegate?.mapView?(mapView, viewFor: annotation)
-                    }
-                    
-                }
-            }
+            context.coordinator.updateSelectedPlaceID(selectedPlaceID)
+            context.coordinator.refreshAllAnnotations(on: mapView)
             
         }
         

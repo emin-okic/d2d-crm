@@ -23,6 +23,8 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     var selectedPlaceID: UUID?
     
     private var activeRadiusOverlay: MKCircle?
+    private var activeRouteOverlay: MKPolyline?
+    private var currentZoomSizeBucket: Int?
     private let bulkAddRadius: CLLocationDistance = 35
     
     private var hasZoomedForActiveRadius = false
@@ -57,12 +59,28 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             }
     }
     
+    func updateSelectedPlaceID(_ id: UUID?) {
+        selectedPlaceID = id
+        guard id == nil else { return }
+        removeActiveRoute()
+    }
+    
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+        if let route = overlay as? MKPolyline {
+            let renderer = MKPolylineRenderer(polyline: route)
+            renderer.strokeColor = UIColor.white.withAlphaComponent(0.86)
+            renderer.lineWidth = 4
+            renderer.lineCap = .round
+            renderer.lineDashPattern = [2, 9]
+            return renderer
+        }
+
         if let circle = overlay as? MKCircle {
             let renderer = MKCircleRenderer(circle: circle)
-            renderer.strokeColor = UIColor.systemBlue.withAlphaComponent(0.7)
-            renderer.lineWidth = 2
-            renderer.fillColor = .clear
+            renderer.strokeColor = UIColor.systemMint.withAlphaComponent(0.82)
+            renderer.lineWidth = 3
+            renderer.lineDashPattern = [8, 7]
+            renderer.fillColor = UIColor.systemMint.withAlphaComponent(0.08)
             return renderer
         }
         return MKOverlayRenderer(overlay: overlay)
@@ -325,95 +343,95 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
 
         view.annotation = annotation
         view.canShowCallout = false
-        
-        // 🔒 HARD RESET (reuse-safe)
+        configureBuildingMarker(view, for: annotation)
+
+        return view
+    }
+
+    private func configureBuildingMarker(_ view: MKAnnotationView, for annotation: IdentifiableAnnotation) {
+        view.subviews.forEach { $0.removeFromSuperview() }
+        view.layer.sublayers?
+            .filter { $0.name == "selectionRing" }
+            .forEach { $0.removeFromSuperlayer() }
         view.layer.cornerRadius = 0
         view.layer.borderWidth = 0
         view.layer.borderColor = nil
-        view.layer.shadowOpacity = 0
         view.layer.removeAllAnimations()
         view.backgroundColor = .clear
+        view.image = nil
         
-        view.frame.size = CGSize(width: 36, height: 36)
+        let isSelected = annotation.place.id == selectedPlaceID
+        let size = markerSize(for: annotation.place, isSelected: isSelected, minimumSize: 50, selectedMinimumSize: 80)
+        view.bounds = CGRect(x: 0, y: 0, width: size, height: size)
+        view.centerOffset = CGPoint(x: 0, y: -size * 0.18)
 
-        // 🏢 Base building icon
+        let token = UIView(frame: view.bounds.insetBy(dx: isSelected ? 7 : 5, dy: isSelected ? 7 : 5))
+        token.backgroundColor = UIColor.systemIndigo
+        token.layer.cornerRadius = token.bounds.width / 2
+        token.layer.borderWidth = isSelected ? 2.5 : 2
+        token.layer.borderColor = UIColor.white.withAlphaComponent(0.92).cgColor
+        token.layer.shadowColor = UIColor.black.cgColor
+        token.layer.shadowOpacity = isSelected ? 0.48 : 0.38
+        token.layer.shadowRadius = isSelected ? 11 : 8
+        token.layer.shadowOffset = CGSize(width: 0, height: isSelected ? 7 : 5)
+
         let imageView = UIImageView(
             image: UIImage(systemName: "building.2.crop.circle.fill")?
-                .withTintColor(.systemGray, renderingMode: .alwaysOriginal)
+                .withTintColor(.white, renderingMode: .alwaysOriginal)
         )
-        imageView.frame = view.bounds
+        imageView.frame = token.bounds.insetBy(dx: token.bounds.width * 0.14, dy: token.bounds.height * 0.14)
         imageView.contentMode = .scaleAspectFit
-        view.addSubview(imageView)
+        token.addSubview(imageView)
+        view.addSubview(token)
 
-        // view.backgroundColor = .clear
-        view.layer.shadowOpacity = 0.25
-        view.layer.shadowRadius = 4
+        if isSelected {
+            applySelectionRing(to: view, size: size)
+        }
+
+        view.layer.shadowOpacity = 0
         
-        // 🔢 Unit count badge
         let count = annotation.place.unitCount
         if count > 1 {
-            let badgeSize: CGFloat = 16
+            let badgeSize = max(18, size * 0.26)
 
             let badge = UILabel()
             badge.text = "\(count)"
             badge.textColor = .white
-            badge.font = .boldSystemFont(ofSize: 10)
+            badge.font = .boldSystemFont(ofSize: max(10, badgeSize * 0.54))
             badge.textAlignment = .center
             badge.backgroundColor = .systemBlue
             badge.layer.cornerRadius = badgeSize / 2
             badge.layer.masksToBounds = true
 
             badge.frame = CGRect(
-                x: view.bounds.maxX - badgeSize + 2,
-                y: -2,
+                x: view.bounds.maxX - badgeSize + 1,
+                y: -1,
                 width: badgeSize,
                 height: badgeSize
             )
 
             view.addSubview(badge)
         }
-
-        return view
     }
 
     // MARK: - Helpers
 
     private func unqualifiedMarkerView(for annotation: IdentifiableAnnotation) -> MKAnnotationView {
         let id = "unqualifiedMarker"
-        let size: CGFloat = 30
-
         let view =
             mapView?.dequeueReusableAnnotationView(withIdentifier: id)
             ?? MKAnnotationView(annotation: annotation, reuseIdentifier: id)
 
         view.annotation = annotation
-        view.frame = CGRect(x: 0, y: 0, width: size, height: size)
-        view.layer.cornerRadius = size / 2
-        view.backgroundColor = .systemRed
-        view.image = nil
         view.canShowCallout = false
-
-        // 🔴 Remove old subviews safely (reuse-proof)
-        view.subviews.forEach { $0.removeFromSuperview() }
-
-        // ❌ Centered X using Auto Layout (bulletproof)
-        let xLabel = UILabel()
-        xLabel.translatesAutoresizingMaskIntoConstraints = false
-        xLabel.text = "✕"
-        xLabel.textColor = .white
-        xLabel.textAlignment = .center
-        xLabel.font = .boldSystemFont(ofSize: size * 0.65)
-
-        view.addSubview(xLabel)
-
-        NSLayoutConstraint.activate([
-            xLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            xLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
-        ])
-
-        // Optional contrast ring
-        view.layer.borderWidth = 2
-        view.layer.borderColor = UIColor.white.cgColor
+        let isSelected = annotation.place.id == selectedPlaceID
+        configurePropertyToken(
+            view,
+            for: annotation.place,
+            size: markerSize(for: annotation.place, isSelected: isSelected, minimumSize: 42, selectedMinimumSize: 66),
+            isSelected: isSelected,
+            symbolName: "xmark"
+        )
 
         return view
     }
@@ -477,11 +495,35 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         MapScreenHapticsController.shared.propertyAdded()
         MapScreenSoundController.shared.playPropertyAdded()
 
+        showActiveRoute(to: annotation.coordinate)
         refreshAllAnnotations(on: mapView)
     }
 
     func mapView(_ mapView: MKMapView, didDeselect view: MKAnnotationView) {
+        removeActiveRoute()
         refreshAllAnnotations(on: mapView)
+    }
+    
+    private func showActiveRoute(to destination: CLLocationCoordinate2D) {
+        guard let mapView else { return }
+        removeActiveRoute()
+
+        let start = userLocationManager.location?.coordinate ?? mapView.userLocation.coordinate
+        guard CLLocationCoordinate2DIsValid(start), start.latitude != 0 || start.longitude != 0 else { return }
+
+        let midpoint = CLLocationCoordinate2D(
+            latitude: (start.latitude + destination.latitude) / 2 + (destination.longitude - start.longitude) * 0.12,
+            longitude: (start.longitude + destination.longitude) / 2 - (destination.latitude - start.latitude) * 0.12
+        )
+        let route = MKPolyline(coordinates: [start, midpoint, destination], count: 3)
+        activeRouteOverlay = route
+        mapView.addOverlay(route, level: .aboveRoads)
+    }
+
+    private func removeActiveRoute() {
+        guard let mapView, let overlay = activeRouteOverlay else { return }
+        mapView.removeOverlay(overlay)
+        activeRouteOverlay = nil
     }
     
     // MARK: - Badge Helper
@@ -510,7 +552,7 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         view.addSubview(badge)
     }
     
-    private func refreshAllAnnotations(on mapView: MKMapView) {
+    func refreshAllAnnotations(on mapView: MKMapView) {
         for annotation in mapView.annotations {
             guard
                 let ann = annotation as? IdentifiableAnnotation,
@@ -522,91 +564,167 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     }
 
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+        let nextBucket = zoomSizeBucket(for: mapView)
+        if currentZoomSizeBucket != nextBucket {
+            currentZoomSizeBucket = nextBucket
+            refreshAllAnnotations(on: mapView)
+        }
+
         onRegionChange?(mapView.region)
     }
     
+    private func zoomScaleFactor() -> CGFloat {
+        guard let mapView else { return 1.0 }
+        let span = max(mapView.region.span.latitudeDelta, mapView.region.span.longitudeDelta)
+
+        switch span {
+        case ...0.002:
+            return 1.42
+        case ...0.006:
+            return 1.28
+        case ...0.015:
+            return 1.14
+        case ...0.04:
+            return 1.0
+        default:
+            return 0.9
+        }
+    }
+
+    private func zoomSizeBucket(for mapView: MKMapView) -> Int {
+        let span = max(mapView.region.span.latitudeDelta, mapView.region.span.longitudeDelta)
+
+        switch span {
+        case ...0.002:
+            return 4
+        case ...0.006:
+            return 3
+        case ...0.015:
+            return 2
+        case ...0.04:
+            return 1
+        default:
+            return 0
+        }
+    }
+
+    private func markerSize(
+        for place: IdentifiablePlace,
+        isSelected: Bool,
+        minimumSize: CGFloat? = nil,
+        selectedMinimumSize: CGFloat? = nil
+    ) -> CGFloat {
+        let base = place.list == "Customers" ? 60.0 : 42.0
+        let selectedBase = place.list == "Customers" ? 88.0 : 68.0
+        let rawSize = (isSelected ? selectedBase : base) * zoomScaleFactor()
+
+        if isSelected, let selectedMinimumSize {
+            return max(rawSize, selectedMinimumSize)
+        }
+
+        if let minimumSize {
+            return max(rawSize, minimumSize)
+        }
+
+        return rawSize
+    }
+    
     private func applySelectionRing(to view: MKAnnotationView, size: CGFloat) {
-        // Remove old ring if any
         view.layer.sublayers?
             .filter { $0.name == "selectionRing" }
             .forEach { $0.removeFromSuperlayer() }
 
-        let ringThickness: CGFloat = 3
-
-        // Ring exactly matches the marker bounds
+        let outerBounds = view.bounds.insetBy(dx: 2, dy: 2)
         let ringLayer = CAShapeLayer()
         ringLayer.name = "selectionRing"
         ringLayer.frame = view.bounds
-        ringLayer.path = UIBezierPath(ovalIn: view.bounds).cgPath
-        ringLayer.fillColor = UIColor.clear.cgColor
-        ringLayer.strokeColor = UIColor.white.cgColor
-        ringLayer.lineWidth = ringThickness
-
-        // Insert below the marker image
+        ringLayer.path = UIBezierPath(ovalIn: outerBounds).cgPath
+        ringLayer.fillColor = UIColor.systemMint.withAlphaComponent(0.15).cgColor
+        ringLayer.strokeColor = UIColor.white.withAlphaComponent(0.95).cgColor
+        ringLayer.lineWidth = 3
         view.layer.insertSublayer(ringLayer, at: 0)
+    }
+    
+    private func configurePropertyToken(
+        _ view: MKAnnotationView,
+        for place: IdentifiablePlace,
+        size: CGFloat,
+        isSelected: Bool,
+        symbolName: String? = nil
+    ) {
+        view.bounds = CGRect(x: 0, y: 0, width: size, height: size)
+        view.centerOffset = CGPoint(x: 0, y: -size * 0.18)
+        view.backgroundColor = .clear
+        view.image = nil
+        view.layer.cornerRadius = 0
+        view.layer.borderWidth = 0
+        view.layer.shadowOpacity = 0
+        view.layer.removeAllAnimations()
+        view.subviews.forEach { $0.removeFromSuperview() }
+        view.layer.sublayers?
+            .filter { $0.name == "selectionRing" }
+            .forEach { $0.removeFromSuperlayer() }
+
+        let fillColor = UIColor(place.markerColor)
+        let haloInset: CGFloat = isSelected ? 0 : 3
+        let halo = UIView(frame: view.bounds.insetBy(dx: haloInset, dy: haloInset))
+        halo.backgroundColor = fillColor.withAlphaComponent(isSelected ? 0.20 : 0.10)
+        halo.layer.cornerRadius = halo.bounds.width / 2
+        halo.layer.borderWidth = 1
+        halo.layer.borderColor = UIColor.white.withAlphaComponent(isSelected ? 0.35 : 0.18).cgColor
+        view.addSubview(halo)
+
+        let tokenInset: CGFloat = isSelected ? 7 : 5
+        let token = UIView(frame: view.bounds.insetBy(dx: tokenInset, dy: tokenInset))
+        token.backgroundColor = fillColor
+        token.layer.cornerRadius = token.bounds.width / 2
+        token.layer.borderWidth = isSelected ? 2.5 : 2
+        token.layer.borderColor = UIColor.white.withAlphaComponent(0.92).cgColor
+        token.layer.shadowColor = UIColor.black.cgColor
+        token.layer.shadowOpacity = isSelected ? 0.48 : 0.32
+        token.layer.shadowRadius = isSelected ? 10 : 7
+        token.layer.shadowOffset = CGSize(width: 0, height: isSelected ? 7 : 4)
+        view.addSubview(token)
+
+        let symbol = symbolName ?? (place.list == "Customers" ? "star.fill" : "house.fill")
+        let config = UIImage.SymbolConfiguration(pointSize: token.bounds.width * 0.64, weight: .semibold)
+        let icon = UIImageView(image: UIImage(systemName: symbol, withConfiguration: config))
+        icon.tintColor = .white
+        icon.contentMode = .scaleAspectFit
+        icon.frame = token.bounds.insetBy(dx: token.bounds.width * 0.14, dy: token.bounds.height * 0.14)
+        token.addSubview(icon)
+
+        if isSelected {
+            applySelectionRing(to: view, size: size)
+
+            let pulse = CABasicAnimation(keyPath: "transform.scale")
+            pulse.fromValue = 0.88
+            pulse.toValue = 1.0
+            pulse.duration = 0.2
+            view.layer.add(pulse, forKey: "selectPulse")
+        }
     }
     
     private func configure(
         _ view: MKAnnotationView,
         for annotation: IdentifiableAnnotation
     ) {
-        
-        // 🏢 Multi-unit markers NEVER get standard configuration
         if annotation.place.isMultiUnit {
+            configureBuildingMarker(view, for: annotation)
             return
         }
         
         let isSelected = annotation.place.id == selectedPlaceID
+        let size = markerSize(for: annotation.place, isSelected: isSelected)
 
-        let baseSize: CGFloat = annotation.place.list == "Customers" ? 56 : 28
-        let selectedSize: CGFloat = annotation.place.list == "Customers" ? 70 : 40
+        configurePropertyToken(
+            view,
+            for: annotation.place,
+            size: size,
+            isSelected: isSelected
+        )
 
-        let size: CGFloat = isSelected ? selectedSize : baseSize
-
-        // 🔧 Use bounds, not frame
-        view.bounds = CGRect(x: 0, y: 0, width: size, height: size)
-        view.layer.cornerRadius = size / 2
-
-        // Reset state (CRITICAL)
-        view.alpha = 1.0
-        view.layer.borderWidth = 0
-        view.layer.shadowOpacity = 0
-        view.layer.removeAllAnimations()
-
-        if annotation.place.list == "Customers" {
-            
-            let config = UIImage.SymbolConfiguration(pointSize: size * 0.5, weight: .regular)
-            view.image = UIImage(systemName: "star.circle.fill", withConfiguration: config)?
-                .withTintColor(.systemBlue, renderingMode: .alwaysOriginal)
-            
-            view.backgroundColor = .clear
-        } else {
-            view.image = nil
-            view.backgroundColor = UIColor(annotation.place.markerColor)
-        }
-
-        if isSelected {
-            
-            applySelectionRing(to: view, size: size)
-            
-            view.layer.shadowColor = UIColor.black.cgColor
-            view.layer.shadowOpacity = 0.4
-            view.layer.shadowRadius = 6
-
-            let pulse = CABasicAnimation(keyPath: "transform.scale")
-            pulse.fromValue = 0.85
-            pulse.toValue = 1.0
-            pulse.duration = 0.2
-            view.layer.add(pulse, forKey: "selectPulse")
-        } else {
-            
-            // Remove ring when not selected
-            view.layer.sublayers?
-                .filter { $0.name == "selectionRing" }
-                .forEach { $0.removeFromSuperlayer() }
-
-            view.alpha = selectedPlaceID == nil ? 1.0 : 0.45
-        }
+        view.alpha = selectedPlaceID == nil || isSelected ? 1.0 : 0.42
     }
     
 }
