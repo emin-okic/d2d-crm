@@ -88,7 +88,7 @@ struct ExportEmailGateView: View {
         
         let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        if let error = EmailValidator.validate(trimmed) {
+        if EmailValidator.validate(trimmed) != nil {
             
             showError = true
             

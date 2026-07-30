@@ -23,8 +23,7 @@ struct AppointmentsContainerView: View {
             AppointmentsSectionView(
                 isEditing: $isEditing,
                 selectedAppointments: $selectedAppointments,
-                filteredAppointments: $filteredAppointments,
-                maxScrollHeight: UIScreen.main.bounds.height * 0.5
+                filteredAppointments: $filteredAppointments
             )
             .padding()
         }

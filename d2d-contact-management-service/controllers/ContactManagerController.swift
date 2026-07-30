@@ -96,7 +96,7 @@ class ContactManagerController: ObservableObject {
                 return
             }
             
-            var request = MKLocalSearch.Request()
+            let request = MKLocalSearch.Request()
             request.naturalLanguageQuery = newAddress
             
             let search = MKLocalSearch(request: request)

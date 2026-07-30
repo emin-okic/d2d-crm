@@ -76,7 +76,7 @@ struct RootView: View {
                 followUpFilter = filter
             }
         }
-        .onChange(of: selectedTab) { newValue in
+        .onChange(of: selectedTab) { _, newValue in
             
             // ✅ Haptics + sound for tab switching
             RootViewHapticsController.shared.lightTap()

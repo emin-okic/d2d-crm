@@ -169,7 +169,7 @@ struct ProspectsSectionView: View {
         } message: { prospect in
             Text("Are you sure you want to delete \(prospect.fullName)? This action cannot be undone.")
         }
-        .onChange(of: selectedProspect) { newValue in
+        .onChange(of: selectedProspect) { _, newValue in
             guard newValue != nil else { return }
         }
     }

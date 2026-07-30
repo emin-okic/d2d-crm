@@ -17,8 +17,8 @@ enum TripDistanceHelper {
         }
 
         let request = MKDirections.Request()
-        request.source = MKMapItem(placemark: MKPlacemark(coordinate: start))
-        request.destination = MKMapItem(placemark: MKPlacemark(coordinate: end))
+        request.source = mapItem(for: start)
+        request.destination = mapItem(for: end)
         request.transportType = .automobile
 
         do {
@@ -35,15 +35,38 @@ enum TripDistanceHelper {
         return 0.0
     }
 
+    private static func mapItem(for coordinate: CLLocationCoordinate2D) -> MKMapItem {
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+
+        if #available(iOS 26.0, *) {
+            return MKMapItem(location: location, address: nil)
+        } else {
+            return MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
+        }
+    }
+
     private static func geocode(address: String) async -> CLLocationCoordinate2D? {
-        await withCheckedContinuation { continuation in
-            CLGeocoder().geocodeAddressString(address) { placemarks, error in
-                if let coordinate = placemarks?.first?.location?.coordinate {
-                    continuation.resume(returning: coordinate)
-                } else {
-                    print("❌ Geocoding failed for \(address): \(error?.localizedDescription ?? "Unknown error")")
-                    continuation.resume(returning: nil)
-                }
+        if #available(iOS 26.0, *) {
+            guard let request = MKGeocodingRequest(addressString: address) else {
+                return nil
+            }
+
+            do {
+                return try await request.mapItems.first?.location.coordinate
+            } catch {
+                print("❌ Geocoding failed for \(address): \(error.localizedDescription)")
+                return nil
+            }
+        } else {
+            do {
+                return try await CLGeocoder()
+                    .geocodeAddressString(address)
+                    .first?
+                    .location?
+                    .coordinate
+            } catch {
+                print("❌ Geocoding failed for \(address): \(error.localizedDescription)")
+                return nil
             }
         }
     }

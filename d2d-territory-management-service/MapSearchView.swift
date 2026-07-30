@@ -111,8 +111,7 @@ struct MapSearchView: View {
                         handleMapTap(at: coordinate)
                     },
                     onRegionChange: { newRegion in
-                        controller.region = newRegion
-                        if popupState != nil { popupState = nil }
+                        handleRegionChange(newRegion)
                     }
                 )
                 .frame(maxHeight: .infinity)
@@ -135,9 +134,9 @@ struct MapSearchView: View {
             }
             
             // This is for the prospect updating marker stuff
-            .onChange(of: prospects) { _ in updateMarkers() }
-            .onChange(of: customers) { _ in updateMarkers() }
-            .onChange(of: selectedList) { _ in updateMarkers() }
+            .onChange(of: prospects) { updateMarkers() }
+            .onChange(of: customers) { updateMarkers() }
+            .onChange(of: selectedList) { updateMarkers() }
             
             // Prospect Popup Stuff
             .sheet(item: $selectedUnitGroup) { group in
@@ -386,7 +385,7 @@ struct MapSearchView: View {
             }
             
             // Search engine related modifiers
-            .onChange(of: popupState) { newValue in
+            .onChange(of: popupState) { _, newValue in
                 // Close the search bar when a popup opens
                 if newValue != nil, isSearchExpanded {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -397,7 +396,7 @@ struct MapSearchView: View {
                 }
             }
            // Listen for search focus and close popup
-            .onChange(of: isSearchFocused) { focused in
+            .onChange(of: isSearchFocused) { _, focused in
                 if focused {
                     // Close any open popup when the search bar is tapped/focused
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -427,7 +426,7 @@ struct MapSearchView: View {
             controller.recenterToFitAllMarkers()
             
         }
-        .onChange(of: searchText) { searchVM.updateQuery($0) }
+        .onChange(of: searchText) { _, newValue in searchVM.updateQuery(newValue) }
         .onAppear {
             updateMarkers()
             prospectKnockingController = ProspectKnockActionController(modelContext: modelContext, controller: controller)
@@ -437,7 +436,7 @@ struct MapSearchView: View {
                 }
             
         }
-        .onChange(of: addressToCenter) { handleMapCenterChange(newAddress: $0) }
+        .onChange(of: addressToCenter) { _, newValue in handleMapCenterChange(newAddress: newValue) }
         .onTapGesture {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to:nil,from:nil,for:nil)
         }
@@ -544,6 +543,27 @@ struct MapSearchView: View {
                 CustomerDetailsView(customer: customer)
             }
         }
+    }
+
+    private func handleRegionChange(_ newRegion: MKCoordinateRegion) {
+        Task { @MainActor in
+            await Task.yield()
+
+            if !regionsMatch(controller.region, newRegion) {
+                controller.region = newRegion
+            }
+
+            if popupState != nil {
+                popupState = nil
+            }
+        }
+    }
+
+    private func regionsMatch(_ lhs: MKCoordinateRegion, _ rhs: MKCoordinateRegion) -> Bool {
+        abs(lhs.center.latitude - rhs.center.latitude) <= 0.0001 &&
+        abs(lhs.center.longitude - rhs.center.longitude) <= 0.0001 &&
+        abs(lhs.span.latitudeDelta - rhs.span.latitudeDelta) <= 0.0001 &&
+        abs(lhs.span.longitudeDelta - rhs.span.longitudeDelta) <= 0.0001
     }
     
     private func transferEmailsToProspect(from customer: Customer, to prospect: Prospect) {
@@ -1114,13 +1134,21 @@ struct MapSearchView: View {
         }
     }
 
+    private func displayAddress(for item: MKMapItem, fallback: String) -> String {
+        item.addressRepresentations?.fullAddress(includingRegion: false, singleLine: true)
+        ?? item.address?.fullAddress
+        ?? item.name
+        ?? fallback
+    }
+
     private func handleCompletionTap(_ result: MKLocalSearchCompletion) {
         
         let req = MKLocalSearch.Request(completion: result)
         
         MKLocalSearch(request: req).start { resp, _ in
             guard let item = resp?.mapItems.first else { return }
-            let addr = item.placemark.title ?? "\(item.placemark.name ?? ""), \(item.placemark.locality ?? "")"
+            let addr = displayAddress(for: item, fallback: result.title)
+            let coordinate = item.location.coordinate
 
             DispatchQueue.main.async {
                 searchText = addr
@@ -1130,7 +1158,7 @@ struct MapSearchView: View {
 
                 // Determine zoom: ~1 mile (1609 meters) or adjust based on your UX preference
                 let region = MKCoordinateRegion(
-                    center: item.placemark.coordinate,
+                    center: coordinate,
                     latitudinalMeters: 500,
                     longitudinalMeters: 500
                 )
@@ -1172,7 +1200,7 @@ struct MapSearchView: View {
                 }
                 // 3️⃣ Otherwise, add as new property
                 else {
-                    presentPendingAddProperty(address: addr, coordinate: item.placemark.coordinate)
+                    presentPendingAddProperty(address: addr, coordinate: coordinate)
                 }
             }
         }
@@ -1200,15 +1228,8 @@ struct MapSearchView: View {
                 return
             }
 
-            let address =
-                item.placemark.postalAddress
-                .map {
-                    CNPostalAddressFormatter()
-                        .string(from: $0)
-                        .replacingOccurrences(of: "\n", with: ", ")
-                }
-                ?? item.placemark.title
-                ?? query
+            let address = displayAddress(for: item, fallback: query)
+            let coordinate = item.location.coordinate
 
             searchText = ""
             searchVM.results = []
@@ -1220,7 +1241,7 @@ struct MapSearchView: View {
             // 📍 Move map
             withAnimation(.easeInOut(duration: 0.4)) {
                 controller.region = MKCoordinateRegion(
-                    center: item.placemark.coordinate,
+                    center: coordinate,
                     latitudinalMeters: 500,
                     longitudinalMeters: 500
                 )
@@ -1234,8 +1255,8 @@ struct MapSearchView: View {
                     for: IdentifiablePlace(
                         address: prospect.address,
                         location: CLLocationCoordinate2D(
-                            latitude: prospect.latitude ?? item.placemark.coordinate.latitude,
-                            longitude: prospect.longitude ?? item.placemark.coordinate.longitude
+                            latitude: prospect.latitude ?? coordinate.latitude,
+                            longitude: prospect.longitude ?? coordinate.longitude
                         ),
                         count: prospect.knockHistory.count,
                         list: prospect.list
@@ -1252,8 +1273,8 @@ struct MapSearchView: View {
                     for: IdentifiablePlace(
                         address: customer.address,
                         location: CLLocationCoordinate2D(
-                            latitude: customer.latitude ?? item.placemark.coordinate.latitude,
-                            longitude: customer.longitude ?? item.placemark.coordinate.longitude
+                            latitude: customer.latitude ?? coordinate.latitude,
+                            longitude: customer.longitude ?? coordinate.longitude
                         ),
                         count: customer.knockHistory.count,
                         list: "Customers"
@@ -1263,7 +1284,7 @@ struct MapSearchView: View {
             }
 
             // ➕ New property
-            presentPendingAddProperty(address: address, coordinate: item.placemark.coordinate)
+            presentPendingAddProperty(address: address, coordinate: coordinate)
         }
     }
 }

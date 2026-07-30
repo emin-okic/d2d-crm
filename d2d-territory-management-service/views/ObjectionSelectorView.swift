@@ -80,7 +80,7 @@ struct ObjectionSelectorView: View {
                 DispatchQueue.main.async { showAddObjection = true }
             }
         }
-        .onChange(of: options.count) { _ in
+        .onChange(of: options.count) {
             // If list becomes empty again (e.g., user deleted last), re-open Add
             if options.isEmpty && !showAddObjection {
                 showAddObjection = true

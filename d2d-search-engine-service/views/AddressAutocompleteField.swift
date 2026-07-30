@@ -21,7 +21,7 @@ struct AddressAutocompleteField: View {
             // 🧩 Standard white TextField – matches iOS form design
             TextField(placeholder, text: $addressText)
                 .focused($isFocused)
-                .onChange(of: addressText) { newValue in
+                .onChange(of: addressText) { _, newValue in
                     searchViewModel.updateQuery(newValue)
                 }
                 .textInputAutocapitalization(.words)

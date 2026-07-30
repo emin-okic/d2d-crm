@@ -28,7 +28,8 @@ struct ContactsImportView: UIViewControllerRepresentable {
         Coordinator(self)
     }
 
-    class Coordinator: NSObject, CNContactPickerDelegate {
+    @MainActor
+    class Coordinator: NSObject, @preconcurrency CNContactPickerDelegate {
         let parent: ContactsImportView
 
         init(_ parent: ContactsImportView) {

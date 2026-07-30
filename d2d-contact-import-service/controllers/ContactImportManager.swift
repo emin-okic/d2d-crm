@@ -9,7 +9,9 @@ import SwiftUI
 import SwiftData
 import Contacts
 import CoreLocation
+import MapKit
 
+@MainActor
 final class ContactImportManager: ObservableObject {
     let modelContext: ModelContext
     let prospects: [Prospect]
@@ -66,19 +68,45 @@ final class ContactImportManager: ObservableObject {
             newProspect.contactEmail = email
 
             // Geocode asynchronously
-            CLGeocoder().geocodeAddressString(addressString) { placemarks, _ in
-                if let coord = placemarks?.first?.location?.coordinate {
-                    newProspect.latitude = coord.latitude
-                    newProspect.longitude = coord.longitude
+            Task { @MainActor in
+                if let coordinate = await Self.coordinate(for: addressString) {
+                    newProspect.latitude = coordinate.latitude
+                    newProspect.longitude = coordinate.longitude
                 }
-                self.modelContext.insert(newProspect)
-                try? self.modelContext.save()
-                self.onSave()
+
+                modelContext.insert(newProspect)
+                try? modelContext.save()
+                onSave()
             }
 
             didAddAny = true
         }
 
         return (didAddAny, duplicateNames)
+    }
+
+    private static func coordinate(for addressString: String) async -> (latitude: Double, longitude: Double)? {
+        guard addressString != "No Address" else { return nil }
+
+        if #available(iOS 26.0, *) {
+            guard let request = MKGeocodingRequest(addressString: addressString) else { return nil }
+
+            do {
+                let mapItems = try await request.mapItems
+                guard let mapItem = mapItems.first else { return nil }
+                let coordinate = mapItem.location.coordinate
+                return (coordinate.latitude, coordinate.longitude)
+            } catch {
+                return nil
+            }
+        } else {
+            do {
+                let placemarks = try await CLGeocoder().geocodeAddressString(addressString)
+                guard let coordinate = placemarks.first?.location?.coordinate else { return nil }
+                return (coordinate.latitude, coordinate.longitude)
+            } catch {
+                return nil
+            }
+        }
     }
 }

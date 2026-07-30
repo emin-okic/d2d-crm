@@ -8,7 +8,7 @@
 import UIKit
 
 enum EmailComposer {
-    static func compose(
+    @MainActor static func compose(
         to recipient: String,
         subject: String,
         body: String

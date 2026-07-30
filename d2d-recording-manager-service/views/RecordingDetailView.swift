@@ -268,7 +268,9 @@ struct RecordingDetailView: View {
     func startTimer() {
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
-            currentTime = audioPlayer?.currentTime ?? 0
+            Task { @MainActor in
+                currentTime = audioPlayer?.currentTime ?? 0
+            }
         }
     }
 

@@ -26,7 +26,7 @@ class CustomerKnockActionController {
         customers: [Customer],
         onUpdateMarkers: () -> Void
     ) {
-        if let customer = customers.first(where: {
+        if customers.contains(where: {
             $0.address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
             address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         }) {
@@ -57,7 +57,7 @@ class CustomerKnockActionController {
             updatedCustomer = newCustomer
 
             _ = DatabaseController.shared.addCustomer(name: newCustomer.fullName, addr: newCustomer.address)
-            _ = DatabaseController.shared.addKnock(forCustomer: updatedCustomer)
+            DatabaseController.shared.addKnock(forCustomer: updatedCustomer)
         }
 
         controller.performSearch(query: address)

@@ -9,7 +9,7 @@ import Foundation
 import UIKit
 
 enum PhoneCaller {
-    static func call(_ phone: String) {
+    @MainActor static func call(_ phone: String) {
         let digits = phone.filter(\.isNumber)
         guard let url = URL(string: "tel://\(digits)") else { return }
         UIApplication.shared.open(url)

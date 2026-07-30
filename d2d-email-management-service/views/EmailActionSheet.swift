@@ -77,7 +77,7 @@ struct EmailActionSheet: View {
                     .padding()
                     .background(Color(.secondarySystemBackground))
                     .cornerRadius(14)
-                    .onChange(of: tempEmail) { _ in validateEmail() }
+                    .onChange(of: tempEmail) { validateEmail() }
 
                 if let emailError {
                     Text(emailError)

@@ -7,7 +7,7 @@
 
 import SwiftUI
 import SwiftData
-import EventKit
+@preconcurrency import EventKit
 
 struct AppointmentActionsToolbar: View {
 
@@ -195,15 +195,27 @@ struct AppointmentActionsToolbar: View {
     }
 
     private func addToCalendar() {
-        let store = EKEventStore()
-        store.requestAccess(to: .event) { granted, _ in
+        let eventTitle = appointment.title
+        let eventStartDate = appointment.date
+        let eventLocation = appointment.location
+
+        Task {
+            let store = EKEventStore()
+            let granted: Bool
+
+            if #available(iOS 17.0, *) {
+                granted = (try? await store.requestWriteOnlyAccessToEvents()) ?? false
+            } else {
+                granted = (try? await store.requestAccess(to: .event)) ?? false
+            }
+
             guard granted else { return }
 
             let event = EKEvent(eventStore: store)
-            event.title = appointment.title
-            event.startDate = appointment.date
-            event.endDate = appointment.date.addingTimeInterval(60 * 30)
-            event.location = appointment.location
+            event.title = eventTitle
+            event.startDate = eventStartDate
+            event.endDate = eventStartDate.addingTimeInterval(60 * 30)
+            event.location = eventLocation
             event.calendar = store.defaultCalendarForNewEvents
 
             try? store.save(event, span: .thisEvent)

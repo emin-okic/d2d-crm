@@ -140,7 +140,7 @@ struct CustomerCreateStepperView: View {
                 VStack(spacing: 6) {
                     TextField("123 Main St", text: $address)
                         .focused($isAddressFocused)
-                        .onChange(of: address) { searchVM.updateQuery($0) }
+                        .onChange(of: address) { _, newValue in searchVM.updateQuery(newValue) }
 
                     if isAddressFocused && !searchVM.results.isEmpty {
                         VStack(spacing: 0) {
@@ -183,7 +183,7 @@ struct CustomerCreateStepperView: View {
             labeledField("Phone (Optional)") {
                 TextField("555-123-4567", text: $contactPhone)
                     .keyboardType(.phonePad)
-                    .onChange(of: contactPhone) { _ in _ = validatePhoneNumber() }
+                    .onChange(of: contactPhone) { _, _ in _ = validatePhoneNumber() }
             }
 
             if let phoneError = phoneError {
@@ -196,7 +196,7 @@ struct CustomerCreateStepperView: View {
                 TextField("name@email.com", text: $contactEmail)
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
-                    .onChange(of: contactEmail) { _ in _ = validateEmail() }
+                    .onChange(of: contactEmail) { _, _ in _ = validateEmail() }
             }
 
             if let emailError = emailError {
@@ -294,7 +294,13 @@ struct CustomerCreateStepperView: View {
 
         do {
             let response = try await MKLocalSearch(request: request).start()
-            return response.mapItems.first?.placemark.coordinate
+            guard let mapItem = response.mapItems.first else { return nil }
+
+            if #available(iOS 26.0, *) {
+                return mapItem.location.coordinate
+            } else {
+                return mapItem.placemark.coordinate
+            }
         } catch {
             print("❌ Geocoding failed:", error)
             return nil

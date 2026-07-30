@@ -6,14 +6,24 @@
 //
 
 import Foundation
-import EventKit
+@preconcurrency import EventKit
 import SwiftUI
+
+private struct SendableEventStore: @unchecked Sendable {
+    let store: EKEventStore
+}
 
 final class CalendarHelper: ObservableObject {
 
-    func addToAppleCalendar(appointment: Appointment, completion: @escaping (Result<Void, Error>) -> Void) {
-        let store = EKEventStore()
-        store.requestAccess(to: .event) { granted, error in
+    func addToAppleCalendar(appointment: Appointment, completion: @escaping @Sendable (Result<Void, Error>) -> Void) {
+        let eventStore = SendableEventStore(store: EKEventStore())
+        let title = appointment.title
+        let startDate = appointment.date
+        let endDate = appointment.date.addingTimeInterval(60 * 30)
+        let location = appointment.location
+        let notes = appointment.notes.joined(separator: "\n")
+
+        @Sendable func handleAccess(granted: Bool, error: Error?) {
             if let error = error {
                 completion(.failure(error))
                 return
@@ -24,24 +34,35 @@ final class CalendarHelper: ObservableObject {
                 return
             }
 
-            let event = EKEvent(eventStore: store)
-            event.title = appointment.title
-            event.startDate = appointment.date
-            event.endDate = appointment.date.addingTimeInterval(60 * 30)
-            event.location = appointment.location
-            event.notes = appointment.notes.joined(separator: "\n")
-            event.calendar = store.defaultCalendarForNewEvents
+            let event = EKEvent(eventStore: eventStore.store)
+            event.title = title
+            event.startDate = startDate
+            event.endDate = endDate
+            event.location = location
+            event.notes = notes
+            event.calendar = eventStore.store.defaultCalendarForNewEvents
 
             do {
-                try store.save(event, span: .thisEvent)
+                try eventStore.store.save(event, span: .thisEvent)
                 completion(.success(()))
             } catch {
                 completion(.failure(error))
             }
         }
+
+        if #available(iOS 17.0, *) {
+            eventStore.store.requestFullAccessToEvents { granted, error in
+                handleAccess(granted: granted, error: error)
+            }
+        } else {
+            eventStore.store.requestAccess(to: .event) { granted, error in
+                handleAccess(granted: granted, error: error)
+            }
+        }
     }
 
 
+    @MainActor
     func addToGoogleCalendar(appointment: Appointment) {
         // Google Calendar expects UTC in this exact format: yyyyMMdd'T'HHmmss'Z'
         let formatter = DateFormatter()

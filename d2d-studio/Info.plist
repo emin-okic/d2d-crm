@@ -2,9 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSCameraUsageDescription</key>
-		<string>This app needs access to the camera to scan business cards.</string>
-	<key>CFBundleDocumentTypes</key>
+		<key>NSCameraUsageDescription</key>
+			<string>This app needs access to the camera to scan business cards.</string>
+		<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+			<string>This app needs access to create calendar events for appointments.</string>
+		<key>NSCalendarsUsageDescription</key>
+			<string>This app needs access to create calendar events for appointments.</string>
+		<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleTypeName</key>

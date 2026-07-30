@@ -183,7 +183,7 @@ struct AppointmentsSectionView: View {
         .onChange(of: filter) {
             UserDefaults.standard.set(filter.rawValue, forKey: filterKey)
         }
-        .onChange(of: filteredAppointmentsInternal) { newValue in
+        .onChange(of: filteredAppointmentsInternal) { _, newValue in
             filteredAppointments = newValue
         }
     }

@@ -6,60 +6,60 @@
 //
 import SwiftUI
 import MapKit
-import CoreLocation
 
 /// This class provides the UI for the snapshot needed in the new address popup view
 /// This class is used in the AddPropertyConfirmationSheet
 struct MapSnapshotView: View {
     let address: String
 
-    @State private var region = MKCoordinateRegion()
+    @State private var position = MapCameraPosition.region(MKCoordinateRegion())
     @State private var place: IdentifiablePlace?
 
     var body: some View {
-        Map(
-            coordinateRegion: $region,
-            annotationItems: place.map { [$0] } ?? []
-        ) { place in
-            MapAnnotation(coordinate: place.location) {
-                Image(systemName: "mappin.circle.fill")
-                    .font(.title)
-                    .foregroundColor(.red)
-                    .shadow(radius: 2)
-                    .offset(y: -12)
-
-                    // ✨ polish
-                    .scaleEffect(1.1)
-                    .transition(.scale.combined(with: .opacity))
-                    .animation(
-                        .spring(response: 0.4, dampingFraction: 0.7),
-                        value: place.id
-                    )
+        Map(position: $position) {
+            if let place {
+                Annotation("", coordinate: place.location, anchor: .bottom) {
+                    Image(systemName: "mappin.circle.fill")
+                        .font(.title)
+                        .foregroundColor(.red)
+                        .shadow(radius: 2)
+                        .scaleEffect(1.1)
+                        .transition(.scale.combined(with: .opacity))
+                        .animation(
+                            .spring(response: 0.4, dampingFraction: 0.7),
+                            value: place.id
+                        )
+                }
             }
         }
-        .onAppear {
-            geocode()
+        .task(id: address) {
+            await geocode()
         }
     }
 
-    private func geocode() {
-        CLGeocoder().geocodeAddressString(address) { placemarks, _ in
-            guard let coord = placemarks?.first?.location?.coordinate else { return }
+    @MainActor
+    private func geocode() async {
+        guard let request = MKGeocodingRequest(addressString: address) else { return }
 
-            DispatchQueue.main.async {
-                self.place = IdentifiablePlace(
-                    address: address,
-                    location: coord,
-                    count: 0,
-                    list: "Preview"
-                )
+        do {
+            guard let coord = try await request.mapItems.first?.location.coordinate else { return }
 
-                self.region = MKCoordinateRegion(
+            place = IdentifiablePlace(
+                address: address,
+                location: coord,
+                count: 0,
+                list: "Preview"
+            )
+
+            position = .region(
+                MKCoordinateRegion(
                     center: coord,
                     latitudinalMeters: 500,
                     longitudinalMeters: 500
                 )
-            }
+            )
+        } catch {
+            return
         }
     }
 }

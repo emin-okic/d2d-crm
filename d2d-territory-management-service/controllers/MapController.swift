@@ -113,28 +113,22 @@ class MapController: ObservableObject {
     /// - Parameter query: The address string to geocode.
     func performSearch(query: String) {
         let key = normalized(query)
-        let geocoder = CLGeocoder()
-        
-        geocoder.geocodeAddressString(query) { [weak self] placemarks, error in
+
+        Task { [weak self] in
             guard let self = self else { return }
-            guard let placemark = placemarks?.first,
-                  let location = placemark.location else {
-                return
+            guard let coordinate = await self.geocodedCoordinate(for: query) else { return }
+
+            if let existingIndex = self.markers.firstIndex(where: { self.normalized($0.address) == key }) {
+                self.markers[existingIndex].count += 1
+            } else {
+                let newPlace = IdentifiablePlace(
+                    address: query,
+                    location: coordinate,
+                    count: 1
+                )
+                self.markers.append(newPlace)
             }
-            
-            DispatchQueue.main.async {
-                if let existingIndex = self.markers.firstIndex(where: { self.normalized($0.address) == key }) {
-                    self.markers[existingIndex].count += 1
-                } else {
-                    let newPlace = IdentifiablePlace(
-                        address: query,
-                        location: location.coordinate,
-                        count: 1
-                    )
-                    self.markers.append(newPlace)
-                }
-                // self.updateRegionToFitAllMarkers()
-            }
+            // self.updateRegionToFitAllMarkers()
         }
     }
     
@@ -177,24 +171,18 @@ class MapController: ObservableObject {
     
     /// This is removable now
     private func geocodeAndAdd(address: String, count: Int, list: String) {
-        let geocoder = CLGeocoder()
-        geocoder.geocodeAddressString(address) { [weak self] placemarks, error in
+        Task { [weak self] in
             guard let self = self else { return }
-            guard let placemark = placemarks?.first,
-                  let location = placemark.location else {
-                return
-            }
+            guard let coordinate = await self.geocodedCoordinate(for: address) else { return }
 
-            DispatchQueue.main.async {
-                let newPlace = IdentifiablePlace(
-                    address: address,
-                    location: location.coordinate,
-                    count: count,
-                    list: list
-                )
-                self.markers.append(newPlace)
-                // self.updateRegionToFitAllMarkers()
-            }
+            let newPlace = IdentifiablePlace(
+                address: address,
+                location: coordinate,
+                count: count,
+                list: list
+            )
+            self.markers.append(newPlace)
+            // self.updateRegionToFitAllMarkers()
         }
     }
     
@@ -252,8 +240,6 @@ class MapController: ObservableObject {
         region = centeredRegion
     }
     
-    private let geocoder = CLGeocoder()
-
     func reverseGeocode(
         coordinate: CLLocationCoordinate2D
     ) async -> String? {
@@ -264,37 +250,73 @@ class MapController: ObservableObject {
         )
 
         do {
-            let placemarks = try await geocoder.reverseGeocodeLocation(location)
-            guard let placemark = placemarks.first else { return nil }
+            if #available(iOS 26.0, *) {
+                guard let request = MKReverseGeocodingRequest(location: location) else { return nil }
+                let mapItems = try await request.mapItems
+                guard let mapItem = mapItems.first else { return nil }
 
-            if let postal = placemark.postalAddress {
-                return CNPostalAddressFormatter()
-                    .string(from: postal)
-                    .replacingOccurrences(of: "\n", with: ", ")
+                return mapItem.addressRepresentations?.fullAddress(
+                    includingRegion: false,
+                    singleLine: true
+                ) ?? mapItem.address?.fullAddress ?? mapItem.name
+            } else {
+                let placemark = try await CLGeocoder().reverseGeocodeLocation(location).first
+                guard let placemark else { return nil }
+                return formattedAddress(from: placemark)
             }
-
-            if let name = placemark.name,
-               let street = placemark.thoroughfare {
-                return "\(name) \(street)"
-            }
-
-            let parts = [
-                placemark.subThoroughfare,
-                placemark.thoroughfare,
-                placemark.locality,
-                placemark.administrativeArea
-            ]
-
-            let address = parts
-                .compactMap { $0 }
-                .joined(separator: " ")
-
-            return address.isEmpty ? nil : address
-
         } catch {
             print("❌ Reverse geocode failed:", error)
             return nil
         }
+    }
+
+    private func geocodedCoordinate(for address: String) async -> CLLocationCoordinate2D? {
+        if #available(iOS 26.0, *) {
+            guard let request = MKGeocodingRequest(addressString: address) else { return nil }
+
+            do {
+                let mapItems = try await request.mapItems
+                return mapItems.first?.location.coordinate
+            } catch {
+                return nil
+            }
+        } else {
+            do {
+                return try await CLGeocoder()
+                    .geocodeAddressString(address)
+                    .first?
+                    .location?
+                    .coordinate
+            } catch {
+                return nil
+            }
+        }
+    }
+
+    private func formattedAddress(from placemark: CLPlacemark) -> String? {
+        if let postal = placemark.postalAddress {
+            return CNPostalAddressFormatter()
+                .string(from: postal)
+                .replacingOccurrences(of: "\n", with: ", ")
+        }
+
+        if let name = placemark.name,
+           let street = placemark.thoroughfare {
+            return "\(name) \(street)"
+        }
+
+        let parts = [
+            placemark.subThoroughfare,
+            placemark.thoroughfare,
+            placemark.locality,
+            placemark.administrativeArea
+        ]
+
+        let address = parts
+            .compactMap { $0 }
+            .joined(separator: " ")
+
+        return address.isEmpty ? nil : address
     }
     
     /// Snaps a given coordinate to the nearest road using a short MKDirections route.
@@ -307,16 +329,12 @@ class MapController: ObservableObject {
         // Tiny offset destination (~10m) to force route solving
         let offset = 0.00009
 
-        request.source = MKMapItem(
-            placemark: MKPlacemark(coordinate: coordinate)
-        )
+        request.source = mapItem(for: coordinate)
 
-        request.destination = MKMapItem(
-            placemark: MKPlacemark(
-                coordinate: CLLocationCoordinate2D(
-                    latitude: coordinate.latitude + offset,
-                    longitude: coordinate.longitude + offset
-                )
+        request.destination = mapItem(
+            for: CLLocationCoordinate2D(
+                latitude: coordinate.latitude + offset,
+                longitude: coordinate.longitude + offset
             )
         )
 
@@ -342,20 +360,27 @@ class MapController: ObservableObject {
         // Fallback: original coordinate
         return coordinate
     }
+
+    private func mapItem(for coordinate: CLLocationCoordinate2D) -> MKMapItem {
+        if #available(iOS 26.0, *) {
+            return MKMapItem(
+                location: CLLocation(
+                    latitude: coordinate.latitude,
+                    longitude: coordinate.longitude
+                ),
+                address: nil
+            )
+        } else {
+            return MKMapItem(
+                placemark: MKPlacemark(coordinate: coordinate)
+            )
+        }
+    }
     
 }
 
 extension MapController {
     func geocodeAddress(_ address: String) async -> CLLocationCoordinate2D? {
-        return await withCheckedContinuation { continuation in
-            let geocoder = CLGeocoder()
-            geocoder.geocodeAddressString(address) { placemarks, error in
-                if let coordinate = placemarks?.first?.location?.coordinate {
-                    continuation.resume(returning: coordinate)
-                } else {
-                    continuation.resume(returning: nil)
-                }
-            }
-        }
+        await geocodedCoordinate(for: address)
     }
 }
