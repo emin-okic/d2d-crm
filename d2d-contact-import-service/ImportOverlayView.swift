@@ -10,6 +10,7 @@ import SwiftUI
 import SwiftData
 import ContactsUI
 import CoreLocation
+import MapKit
 
 struct ImportOverlayView: View {
     @Binding var showingImportFromContacts: Bool
@@ -73,102 +74,104 @@ struct ImportOverlayView: View {
     var body: some View {
         
         if showingImportFromContacts {
-            VStack(spacing: 20) {
-                Capsule()
-                    .fill(Color.secondary.opacity(0.4))
-                    .frame(width: 36, height: 5)
-                    .padding(.top, 8)
+            GeometryReader { geometry in
+                VStack(spacing: 20) {
+                    Capsule()
+                        .fill(Color.secondary.opacity(0.4))
+                        .frame(width: 36, height: 5)
+                        .padding(.top, 8)
 
-                VStack(spacing: 6) {
-                    Text("Add Prospect")
-                        .font(.title3)
-                        .fontWeight(.semibold)
+                    VStack(spacing: 6) {
+                        Text("Add Prospect")
+                            .font(.title3)
+                            .fontWeight(.semibold)
 
-                    Text("Choose how you’d like to add a new prospect")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-
-                VStack(spacing: 12) {
-                    
-                    actionButton(
-                        title: "Import from Contacts",
-                        subtitle: "Select one or more contacts",
-                        systemImage: "person.crop.circle.badge.plus"
-                    ) {
-                        showContactsPicker = true
+                        Text("Choose how you’d like to add a new prospect")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
                     }
 
-                    actionButton(
-                        title: "Add Manually",
-                        subtitle: "Enter details yourself",
-                        systemImage: "square.and.pencil"
-                    ) {
+                    VStack(spacing: 12) {
+                        
+                        actionButton(
+                            title: "Import from Contacts",
+                            subtitle: "Select one or more contacts",
+                            systemImage: "person.crop.circle.badge.plus"
+                        ) {
+                            showContactsPicker = true
+                        }
+
+                        actionButton(
+                            title: "Add Manually",
+                            subtitle: "Enter details yourself",
+                            systemImage: "square.and.pencil"
+                        ) {
+                            showingImportFromContacts = false
+                            
+                            onAddManually()
+                        }
+                        
+                        actionButton(
+                            title: "Scan Business Card",
+                            subtitle: "Use your camera to add a prospect",
+                            systemImage: "camera.viewfinder"
+                        ) {
+                            showBusinessCardScanner = true
+                        }
+                    }
+                    
+                    Button("Cancel") {
+                        
+                        // Haptics + sound on option tap
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+                        
                         showingImportFromContacts = false
                         
-                        onAddManually()
                     }
-                    
-                    actionButton(
-                        title: "Scan Business Card",
-                        subtitle: "Use your camera to add a prospect",
-                        systemImage: "camera.viewfinder"
-                    ) {
-                        showBusinessCardScanner = true
-                    }
-                }
-                
-                Button("Cancel") {
-                    
-                    // Haptics + sound on option tap
-                    ContactScreenHapticsController.shared.lightTap()
-                    ContactScreenSoundController.shared.playSound1()
-                    
-                    showingImportFromContacts = false
-                    
-                }
-                .foregroundStyle(.secondary)
+                    .foregroundStyle(.secondary)
 
-                Spacer()
-            }
-            .padding()
-            .frame(maxWidth: 340, maxHeight: 400)
-            .background(.ultraThinMaterial)
-            .cornerRadius(16)
-            .shadow(radius: 8)
-            .position(
-                x: UIScreen.main.bounds.midX,
-                y: UIScreen.main.bounds.midY
-            )
-            .transition(.scale.combined(with: .opacity))
-            .zIndex(2000)
-            .sheet(isPresented: $showContactsPicker) {
-                ContactsImportView(
-                    onComplete: handleContactsImported,
-                    onCancel: { showContactsPicker = false }
+                    Spacer()
+                }
+                .padding()
+                .frame(maxWidth: 340, maxHeight: 400)
+                .background(.ultraThinMaterial)
+                .cornerRadius(16)
+                .shadow(radius: 8)
+                .position(
+                    x: geometry.size.width / 2,
+                    y: geometry.size.height / 2
                 )
-            }
-            .sheet(item: $scannedProspectDraft) { draft in
-                BusinessCardConfirmView(
-                    draft: draft,
-                    onConfirm: { confirmedDraft in
-                        saveProspect(confirmedDraft)
-                        scannedProspectDraft = nil
-                        showingImportFromContacts = false
-                    }
-                )
-            }
-            .sheet(isPresented: $showBusinessCardScanner) {
-                BusinessCardScannerView(
-                    onScanned: { draft in
-                        scannedProspectDraft = draft
-                        showBusinessCardScanner = false
-                    },
-                    onCancel: {
-                        showBusinessCardScanner = false
-                    }
-                )
+                .transition(.scale.combined(with: .opacity))
+                .zIndex(2000)
+                .sheet(isPresented: $showContactsPicker) {
+                    ContactsImportView(
+                        onComplete: handleContactsImported,
+                        onCancel: { showContactsPicker = false }
+                    )
+                }
+                .sheet(item: $scannedProspectDraft) { draft in
+                    BusinessCardConfirmView(
+                        draft: draft,
+                        onConfirm: { confirmedDraft in
+                            saveProspect(confirmedDraft)
+                            scannedProspectDraft = nil
+                            showingImportFromContacts = false
+                        }
+                    )
+                }
+                .sheet(isPresented: $showBusinessCardScanner) {
+                    BusinessCardScannerView(
+                        onScanned: { draft in
+                            scannedProspectDraft = draft
+                            showBusinessCardScanner = false
+                        },
+                        onCancel: {
+                            showBusinessCardScanner = false
+                        }
+                    )
+                }
             }
         }
     }
@@ -183,15 +186,40 @@ struct ImportOverlayView: View {
         prospect.contactPhone = draft.phone
         prospect.contactEmail = draft.email
 
-        CLGeocoder().geocodeAddressString(draft.address) { placemarks, _ in
-            if let coord = placemarks?.first?.location?.coordinate {
-                prospect.latitude = coord.latitude
-                prospect.longitude = coord.longitude
+        Task { @MainActor in
+            if let coordinate = await coordinate(for: draft.address) {
+                prospect.latitude = coordinate.latitude
+                prospect.longitude = coordinate.longitude
             }
 
             modelContext.insert(prospect)
             try? modelContext.save()
             onSave()
+        }
+    }
+
+    private func coordinate(for addressString: String) async -> (latitude: Double, longitude: Double)? {
+        guard addressString != "No Address" else { return nil }
+
+        if #available(iOS 26.0, *) {
+            guard let request = MKGeocodingRequest(addressString: addressString) else { return nil }
+
+            do {
+                let mapItems = try await request.mapItems
+                guard let mapItem = mapItems.first else { return nil }
+                let coordinate = mapItem.location.coordinate
+                return (coordinate.latitude, coordinate.longitude)
+            } catch {
+                return nil
+            }
+        } else {
+            do {
+                let placemarks = try await CLGeocoder().geocodeAddressString(addressString)
+                guard let coordinate = placemarks.first?.location?.coordinate else { return nil }
+                return (coordinate.latitude, coordinate.longitude)
+            } catch {
+                return nil
+            }
         }
     }
 

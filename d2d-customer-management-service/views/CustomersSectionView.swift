@@ -166,7 +166,7 @@ struct CustomersSectionView: View {
         } message: { customer in
             Text("Are you sure you want to delete \(customer.fullName)? This action cannot be undone.")
         }
-        .onChange(of: selectedCustomer) { newValue in
+        .onChange(of: selectedCustomer) { _, newValue in
             guard newValue != nil else { return }
         }
     }

@@ -74,7 +74,7 @@ struct BusinessCardScannerView: UIViewControllerRepresentable {
 extension BusinessCardScannerView.Coordinator:
     @preconcurrency VNDocumentCameraViewControllerDelegate {
 
-    func documentCameraViewController(
+    @MainActor func documentCameraViewController(
         _ controller: VNDocumentCameraViewController,
         didFinishWith scan: VNDocumentCameraScan
     ) {
@@ -89,7 +89,7 @@ extension BusinessCardScannerView.Coordinator:
         onScanned(draft)
     }
 
-    func documentCameraViewControllerDidCancel(
+    @MainActor func documentCameraViewControllerDidCancel(
         _ controller: VNDocumentCameraViewController
     ) {
         controller.dismiss(animated: true)

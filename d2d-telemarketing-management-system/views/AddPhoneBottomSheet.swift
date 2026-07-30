@@ -56,7 +56,7 @@ struct AddPhoneBottomSheet: View {
             .padding()
             .background(Color(.secondarySystemBackground))
             .cornerRadius(12)
-            .onChange(of: phone) { _ in
+            .onChange(of: phone) { _, _ in
                 // ✅ Live validation
                 if let errorMessage = PhoneValidator.validate(phone) {
                     error = errorMessage
