@@ -30,7 +30,9 @@ struct AddressInputField: View {
                     TextField("Enter address", text: $text)
                         .focused($focusedField, equals: field)
                         .padding(14)
-                        .onChange(of: text) { searchVM.updateQuery($0) }
+                        .onChange(of: text) { _, newValue in
+                            searchVM.updateQuery(newValue)
+                        }
                     
                     if focusedField == field && !searchVM.results.isEmpty {
                         VStack(spacing: 0) {

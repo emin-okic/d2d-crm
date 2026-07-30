@@ -105,7 +105,7 @@ private struct ReactiveWaveformView: View {
                     .animation(.easeOut(duration: 0.12), value: level)
             }
         }
-        .onChange(of: level) { _ in
+        .onChange(of: level) { _, _ in
             // tiny random jitter so bars don't move in perfect lockstep
             jitterSeed = CGFloat.random(in: 0...1)
         }

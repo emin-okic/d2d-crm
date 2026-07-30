@@ -71,8 +71,6 @@ struct TripsSectionView: View {
             return AnyView(YearlyMilesChartView(segments: segments)
                 .frame(maxWidth: .infinity)
                 .transition(.opacity.combined(with: .slide)))
-        default:
-            return AnyView(EmptyView())
         }
     }
 
