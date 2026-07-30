@@ -66,6 +66,7 @@ struct MapSearchView: View {
     @State private var pendingBulkAdd: PendingBulkAdd?
     
     @State private var selectedUnitGroup: UnitGroup?
+    @State private var selectedMultiContactState: MultiContactState?
     @State private var selectedProspect: Prospect?
     @State private var selectedCustomer: Customer?
     @State private var pendingSelectedContact: UnitContact? = nil
@@ -143,29 +144,29 @@ struct MapSearchView: View {
                 UnitSelectorPopupView(
                     baseAddress: group.base,
                     units: group.units,
-                    onSelect: { unit in
+                    onSelect: { unitGroup in
                         selectedUnitGroup = nil
-
-                        let place = IdentifiablePlace(
-                            address: unit.address,
-                            location: unit.coordinate ?? controller.region.center,
-                            count: unit.knockCount,
-                            unitCount: 1,
-                            contactCount: 1,
-                            list: unit.list,
-                            isUnqualified: unit.isUnqualified,
-                            isMultiUnit: false,
-                            showsMultiContact: false,
-                            selectedContact: unit     // 👈 CRITICAL
-                        )
-
-                        showPopup(for: place)
+                        openUnitContactGroup(unitGroup, baseAddress: group.base)
                     },
                     onClose: {
                         selectedUnitGroup = nil
                     }
                 )
                 .presentationDetents([.fraction(0.46)])
+                .presentationDragIndicator(.visible)
+            }
+            .sheet(item: $selectedMultiContactState) { state in
+                MultiContactPopupView(
+                    state: state,
+                    onSelect: { contact in
+                        selectedMultiContactState = nil
+                        showPopup(for: place(for: contact))
+                    },
+                    onClose: {
+                        selectedMultiContactState = nil
+                    }
+                )
+                .presentationDetents([.fraction(0.42)])
                 .presentationDragIndicator(.visible)
             }
             // This is for the contact popup display
@@ -542,7 +543,7 @@ struct MapSearchView: View {
         
         // 🔹 STEP for Apartment / multi-unit interception
         let parts = parseAddress(place.address)
-        let units = unitsForBaseAddress(parts.base)
+        let units = unitContactGroupsForBaseAddress(parts.base)
 
         if units.count > 1 {
             // ✅ Center map on the apartment complex itself
@@ -552,6 +553,19 @@ struct MapSearchView: View {
             
             // Show unit selector instead of prospect popup
             selectedUnitGroup = UnitGroup(base: parts.base, units: units)
+            return
+        }
+
+        if let unitGroup = units.first, unitGroup.contactCount > 1 {
+            withAnimation(.easeInOut(duration: 0.35)) {
+                controller.centerMapForPopup(coordinate: place.location)
+            }
+
+            selectedMultiContactState = MultiContactState(
+                baseAddress: parts.base,
+                unit: unitGroup.unit,
+                contacts: unitGroup.contacts
+            )
             return
         }
         
@@ -636,6 +650,40 @@ struct MapSearchView: View {
                 coordinator.refreshAllAnnotations(on: mapView)
             }
         }
+    }
+
+    private func openUnitContactGroup(_ unitGroup: UnitContactGroup, baseAddress: String) {
+        if unitGroup.contactCount > 1 {
+            DispatchQueue.main.async {
+                selectedMultiContactState = MultiContactState(
+                    baseAddress: baseAddress,
+                    unit: unitGroup.unit,
+                    contacts: unitGroup.contacts
+                )
+            }
+            return
+        }
+
+        guard let contact = unitGroup.primaryContact else { return }
+
+        DispatchQueue.main.async {
+            showPopup(for: place(for: contact))
+        }
+    }
+
+    private func place(for contact: UnitContact) -> IdentifiablePlace {
+        IdentifiablePlace(
+            address: contact.address,
+            location: contact.coordinate ?? controller.region.center,
+            count: contact.knockCount,
+            unitCount: 1,
+            contactCount: 1,
+            list: contact.list,
+            isUnqualified: contact.isUnqualified,
+            isMultiUnit: false,
+            showsMultiContact: false,
+            selectedContact: contact
+        )
     }
 
     @ViewBuilder
@@ -994,7 +1042,7 @@ struct MapSearchView: View {
         }
     }
     
-    private func unitsForBaseAddress(_ base: String) -> [UnitContact] {
+    private func unitContactGroupsForBaseAddress(_ base: String) -> [UnitContactGroup] {
 
         let prospectUnits = prospects
             .filter {
@@ -1008,7 +1056,42 @@ struct MapSearchView: View {
             }
             .map { UnitContact.customer($0) }
 
-        return prospectUnits + customerUnits
+        let contacts = prospectUnits + customerUnits
+        let grouped = Dictionary(grouping: contacts) { contact in
+            parseAddress(contact.address).unit
+        }
+
+        return grouped
+            .map { unit, contacts in
+                UnitContactGroup(unit: unit, contacts: sortedContacts(contacts))
+            }
+            .sorted { lhs, rhs in
+                unitSortKey(lhs.unit).localizedStandardCompare(unitSortKey(rhs.unit)) == .orderedAscending
+            }
+    }
+
+    private func sortedContacts(_ contacts: [UnitContact]) -> [UnitContact] {
+        contacts.sorted { lhs, rhs in
+            if lhs.isCustomer != rhs.isCustomer {
+                return lhs.isCustomer
+            }
+
+            return contactName(for: lhs).localizedStandardCompare(contactName(for: rhs)) == .orderedAscending
+        }
+    }
+
+    private func unitSortKey(_ unit: String?) -> String {
+        guard let unit else { return "0000" }
+        return unit
+    }
+
+    private func contactName(for contact: UnitContact) -> String {
+        switch contact {
+        case .prospect(let prospect):
+            return prospect.fullName
+        case .customer(let customer):
+            return customer.fullName
+        }
     }
     
     private func saveFollowUp(

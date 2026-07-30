@@ -65,9 +65,7 @@ class MapController: ObservableObject {
             // ---- Step 2: Decide marker type ----
             let contactCount = unitsDict.values.reduce(0) { $0 + $1.count }
             
-            let unitKeys = unitsDict.keys.compactMap { $0 }
-            
-            let unitCount = Set(unitKeys).count
+            let unitCount = unitsDict.keys.count
             
             let isMultiUnit = unitCount > 1
             
