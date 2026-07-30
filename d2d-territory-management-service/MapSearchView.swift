@@ -169,30 +169,20 @@ struct MapSearchView: View {
                 .presentationDragIndicator(.visible)
             }
             // This is for the contact popup display
-            .sheet(item: $popupState) { popup in
+            .sheet(item: $popupState, onDismiss: resetSelectedMapMarker) { popup in
                 ProspectPopupView(
                     place: popup.place,
                     isCustomer: popup.place.list == "Customers",
                     onClose: {
                         popupState = nil
-                        selectedPlaceID = nil
-                        
-                        // 🔑 Force MapKit to deselect the annotation
-                        if let mapView = MapDisplayView.cachedMapView {
-                            DispatchQueue.main.async {
-                                mapView.selectedAnnotations.forEach {
-                                    mapView.deselectAnnotation($0, animated: false)
-                                }
-                            }
-                        }
-                        
+                        resetSelectedMapMarker()
                     },
                     onOutcomeSelected: { outcome, fileName in
                         pendingAddress = popup.place.address
                         pendingSelectedContact = popup.place.selectedContact   // 👈 store it
                         isTappedAddressCustomer = popup.place.list == "Customers"
                         popupState = nil
-                        selectedPlaceID = nil
+                        resetSelectedMapMarker()
 
                         if outcome == "Follow Up Later" {
                             pendingRecordingFileName = fileName
@@ -659,6 +649,26 @@ struct MapSearchView: View {
         selectedPlaceID = nil
         pendingAddProperty = PendingAddProperty(address: address, coordinate: coordinate)
         controller.centerMapForNewProperty(coordinate: coordinate)
+    }
+
+    private func resetSelectedMapMarker() {
+        selectedPlaceID = nil
+
+        guard let mapView = MapDisplayView.cachedMapView else { return }
+
+        DispatchQueue.main.async {
+            if let coordinator = mapView.delegate as? MapDisplayCoordinator {
+                coordinator.updateSelectedPlaceID(nil)
+            }
+
+            mapView.selectedAnnotations.forEach {
+                mapView.deselectAnnotation($0, animated: false)
+            }
+
+            if let coordinator = mapView.delegate as? MapDisplayCoordinator {
+                coordinator.refreshAllAnnotations(on: mapView)
+            }
+        }
     }
     
     // For updating the markers
