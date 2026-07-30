@@ -16,8 +16,6 @@ struct ScorecardBar: View {
             DailySalesTrackerView()
 
         }
-        .cornerRadius(16)
-        .shadow(radius: 4)
         .padding(.top, 10)
         .frame(maxWidth: .infinity, alignment: .center)
         .zIndex(1)

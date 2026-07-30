@@ -59,13 +59,23 @@ struct DailySalesTrackerView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(Color.green.opacity(0.22), lineWidth: 1)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(.regularMaterial)
+                    .shadow(color: Color.black.opacity(0.18), radius: 16, x: 0, y: 10)
+                    .shadow(color: Color.green.opacity(0.16), radius: 8, x: 0, y: 3)
             )
-            .shadow(color: Color.green.opacity(0.12), radius: 8, x: 0, y: 4)
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [Color.white.opacity(0.55), Color.green.opacity(0.24)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
         }
         .buttonStyle(.plain)
         .sheet(isPresented: $showSheet) {
