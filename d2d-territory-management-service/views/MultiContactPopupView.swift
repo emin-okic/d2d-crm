@@ -1,43 +1,36 @@
 //
-//  UnitSelectorPopupView.swift
+//  MultiContactPopupView.swift
 //  d2d-studio
-//
-//  Created by Emin Okic on 12/27/25.
 //
 
 import SwiftUI
 
-struct UnitSelectorPopupView: View {
-    let baseAddress: String
-    let units: [UnitContactGroup]
-    let onSelect: (UnitContactGroup) -> Void
+struct MultiContactPopupView: View {
+    let state: MultiContactState
+    let onSelect: (UnitContact) -> Void
     let onClose: () -> Void
 
-    private var contactCount: Int {
-        units.reduce(0) { $0 + $1.contactCount }
-    }
-
     private var customerCount: Int {
-        units.reduce(0) { total, group in
-            total + group.contacts.filter(\.isCustomer).count
-        }
-    }
-
-    private var unqualifiedCount: Int {
-        units.reduce(0) { total, group in
-            total + group.contacts.filter(\.isUnqualified).count
-        }
+        state.contacts.filter(\.isCustomer).count
     }
 
     private var prospectCount: Int {
-        contactCount - customerCount
+        state.contacts.count - customerCount
+    }
+
+    private var title: String {
+        if let unit = state.unit {
+            return "Unit \(unit)"
+        }
+
+        return "Multiple Contacts"
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             header
             summaryRow
-            unitList
+            contactList
         }
         .padding(.horizontal, 18)
         .padding(.top, 12)
@@ -50,20 +43,20 @@ struct UnitSelectorPopupView: View {
         HStack(alignment: .top, spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color.indigo.opacity(0.14))
+                    .fill(Color.blue.opacity(0.14))
                     .frame(width: 48, height: 48)
 
-                Image(systemName: "building.2.fill")
+                Image(systemName: "person.2.fill")
                     .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(.indigo)
+                    .foregroundStyle(.blue)
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Multi-Unit Property")
+                Text(title)
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.indigo)
+                    .foregroundStyle(.blue)
 
-                Text(baseAddress)
+                Text(state.baseAddress)
                     .font(.headline.weight(.bold))
                     .foregroundStyle(.primary)
                     .lineLimit(2)
@@ -85,37 +78,27 @@ struct UnitSelectorPopupView: View {
     }
 
     private var summaryRow: some View {
-            HStack(spacing: 8) {
-                summaryTile(value: "\(units.count)", label: units.count == 1 ? "Unit" : "Units", systemName: "door.left.hand.open", tint: .indigo)
-            summaryTile(value: "\(contactCount)", label: contactCount == 1 ? "Contact" : "Contacts", systemName: "person.2.fill", tint: .blue)
-            summaryTile(value: "\(customerCount)", label: customerCount == 1 ? "Customer" : "Customers", systemName: "checkmark.seal.fill", tint: .green)
+        HStack(spacing: 8) {
+            summaryTile(value: "\(state.contacts.count)", label: state.contacts.count == 1 ? "Contact" : "Contacts", systemName: "person.2.fill", tint: .blue)
+            summaryTile(value: "\(prospectCount)", label: prospectCount == 1 ? "Prospect" : "Prospects", systemName: "person.crop.circle.badge.clock", tint: .indigo)
+            summaryTile(value: "\(customerCount)", label: customerCount == 1 ? "Customer" : "Customers", systemName: "star.fill", tint: .yellow)
         }
     }
 
-    private var unitList: some View {
+    private var contactList: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Select Unit")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                    .textCase(.uppercase)
-
-                Spacer()
-
-                if unqualifiedCount > 0 {
-                    Label("\(unqualifiedCount)", systemImage: "xmark.octagon.fill")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.red)
-                }
-            }
+            Text("Select Contact")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
 
             ScrollView {
                 LazyVStack(spacing: 8) {
-                    ForEach(units) { unit in
+                    ForEach(state.contacts) { contact in
                         Button {
-                            select(unit)
+                            select(contact)
                         } label: {
-                            unitRow(for: unit)
+                            contactRow(for: contact)
                         }
                         .buttonStyle(.plain)
                     }
@@ -126,36 +109,27 @@ struct UnitSelectorPopupView: View {
         }
     }
 
-    private func unitRow(for unit: UnitContactGroup) -> some View {
+    private func contactRow(for contact: UnitContact) -> some View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(statusColor(for: unit).opacity(0.12))
+                    .fill(statusColor(for: contact).opacity(0.12))
                     .frame(width: 38, height: 38)
 
-                Image(systemName: statusIcon(for: unit))
+                Image(systemName: statusIcon(for: contact))
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(statusColor(for: unit))
+                    .foregroundStyle(statusColor(for: contact))
             }
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 7) {
-                    Text(unitLabel(for: unit))
+                    Text(contactName(for: contact))
                         .font(.headline)
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.82)
 
-                    if unit.contactCount > 1 {
-                        Label("\(unit.contactCount)", systemImage: "person.2.fill")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.blue)
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 3)
-                            .background(Color.blue.opacity(0.1), in: Capsule())
-                    }
-
-                    if unit.hasCustomer {
+                    if contact.isCustomer {
                         Image(systemName: "star.fill")
                             .font(.caption.weight(.bold))
                             .foregroundStyle(.yellow)
@@ -164,7 +138,7 @@ struct UnitSelectorPopupView: View {
                     }
                 }
 
-                Text(unitSubtitle(for: unit))
+                Text(contactSubtitle(for: contact))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -207,10 +181,10 @@ struct UnitSelectorPopupView: View {
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
-    private func select(_ unit: UnitContactGroup) {
+    private func select(_ contact: UnitContact) {
         MapScreenHapticsController.shared.propertyAdded()
         MapScreenSoundController.shared.playPropertyAdded()
-        onSelect(unit)
+        onSelect(contact)
     }
 
     private func closePopup() {
@@ -219,13 +193,7 @@ struct UnitSelectorPopupView: View {
         onClose()
     }
 
-    private func unitLabel(for unit: UnitContactGroup) -> String {
-        if let unitNumber = unit.unit {
-            return "Unit \(unitNumber)"
-        }
-
-        guard let contact = unit.primaryContact else { return "Main" }
-
+    private func contactName(for contact: UnitContact) -> String {
         switch contact {
         case .prospect(let prospect):
             return prospect.fullName
@@ -234,42 +202,25 @@ struct UnitSelectorPopupView: View {
         }
     }
 
-    private func unitSubtitle(for unit: UnitContactGroup) -> String {
-        let contactSummary = unit.contactCount == 1 ? "1 contact" : "\(unit.contactCount) contacts"
-        let knockSummary = unit.knockCount == 1 ? "1 knock" : "\(unit.knockCount) knocks"
-
-        guard unit.contactCount == 1, let contact = unit.primaryContact else {
-            return "\(contactSummary) - \(knockSummary)"
-        }
-
-        let contactName: String
-        switch contact {
-        case .prospect(let prospect):
-            contactName = prospect.fullName
-        case .customer(let customer):
-            contactName = customer.fullName
-        }
-
-        return "\(contactName) - \(knockSummary)"
+    private func contactSubtitle(for contact: UnitContact) -> String {
+        let type = contact.isCustomer ? "Customer" : contact.isUnqualified ? "Unqualified prospect" : "Prospect"
+        let knocks = contact.knockCount == 1 ? "1 knock" : "\(contact.knockCount) knocks"
+        return "\(type) - \(knocks)"
     }
 
-    private func statusIcon(for unit: UnitContactGroup) -> String {
-        if unit.contactCount > 1 {
-            return "person.2.fill"
-        }
-
-        if unit.hasCustomer {
+    private func statusIcon(for contact: UnitContact) -> String {
+        if contact.isCustomer {
             return "star.fill"
         }
 
-        return unit.hasUnqualified ? "xmark.octagon.fill" : "person.crop.circle.badge.clock"
+        return contact.isUnqualified ? "xmark.octagon.fill" : "person.crop.circle.badge.clock"
     }
 
-    private func statusColor(for unit: UnitContactGroup) -> Color {
-        if unit.hasCustomer {
+    private func statusColor(for contact: UnitContact) -> Color {
+        if contact.isCustomer {
             return .green
         }
 
-        return unit.hasUnqualified ? .red : .blue
+        return contact.isUnqualified ? .red : .blue
     }
 }

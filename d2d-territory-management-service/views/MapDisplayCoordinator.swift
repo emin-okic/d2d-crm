@@ -353,6 +353,10 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             return buildingMarkerView(for: annotation)
         }
 
+        if annotation.place.showsMultiContact {
+            return multiContactMarkerView(for: annotation)
+        }
+
         // 🔴 If unqualified, use special view
         if annotation.place.isUnqualified {
             return unqualifiedMarkerView(for: annotation)
@@ -544,6 +548,47 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         return view
     }
 
+    private func multiContactMarkerView(for annotation: IdentifiableAnnotation) -> MKAnnotationView {
+        let id = "multiContactMarker"
+        let view = mapView?.dequeueReusableAnnotationView(withIdentifier: id)
+            ?? MKAnnotationView(annotation: annotation, reuseIdentifier: id)
+
+        view.annotation = annotation
+        view.canShowCallout = false
+        configureMultiContactMarker(view, for: annotation)
+
+        return view
+    }
+
+    private func configureMultiContactMarker(_ view: MKAnnotationView, for annotation: IdentifiableAnnotation) {
+        let isSelected = annotation.place.id == selectedPlaceID
+        let size = markerSize(
+            for: annotation.place,
+            isSelected: isSelected,
+            minimumSize: 48,
+            selectedMinimumSize: 74
+        )
+
+        configurePropertyToken(
+            view,
+            for: annotation.place,
+            size: size,
+            isSelected: isSelected,
+            symbolName: "person.2.fill"
+        )
+
+        addBadge(
+            to: view,
+            count: annotation.place.contactCount,
+            color: .systemBlue,
+            size: max(18, size * 0.28)
+        )
+
+        if annotation.place.list == "Customers" {
+            addCustomerStarBadge(to: view, size: max(17, size * 0.25))
+        }
+    }
+
     private func userLocationView(for mapView: MKMapView) -> MKAnnotationView? {
         let id = "userLocation"
         let view = mapView.dequeueReusableAnnotationView(withIdentifier: id)
@@ -718,6 +763,27 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         )
         view.addSubview(badge)
     }
+
+    private func addCustomerStarBadge(to view: MKAnnotationView, size: CGFloat) {
+        let badge = UIImageView(image: UIImage(systemName: "star.fill"))
+        badge.tintColor = .systemYellow
+        badge.contentMode = .scaleAspectFit
+        badge.backgroundColor = .white
+        badge.layer.cornerRadius = size / 2
+        badge.layer.borderWidth = 1.5
+        badge.layer.borderColor = UIColor.systemYellow.withAlphaComponent(0.85).cgColor
+        badge.layer.shadowColor = UIColor.black.cgColor
+        badge.layer.shadowOpacity = 0.16
+        badge.layer.shadowRadius = 3
+        badge.layer.shadowOffset = CGSize(width: 0, height: 1)
+        badge.frame = CGRect(
+            x: view.bounds.maxX - size + 1,
+            y: view.bounds.maxY - size + 1,
+            width: size,
+            height: size
+        )
+        view.addSubview(badge)
+    }
     
     func refreshAllAnnotations(on mapView: MKMapView) {
         for annotation in mapView.annotations {
@@ -887,6 +953,12 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
 
         if annotation.place.isMultiUnit {
             configureBuildingMarker(view, for: annotation)
+            return
+        }
+
+        if annotation.place.showsMultiContact {
+            configureMultiContactMarker(view, for: annotation)
+            view.alpha = selectedPlaceID == nil || annotation.place.id == selectedPlaceID ? 1.0 : 0.42
             return
         }
         
