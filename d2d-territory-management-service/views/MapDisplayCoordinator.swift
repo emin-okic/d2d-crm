@@ -140,10 +140,9 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
                     )
                 }
 
-        // 2️⃣ If NONE found → generate new properties
-        if properties.isEmpty {
-            properties = generateGrid(center: center, count: 6)
-        }
+        // 2️⃣ Always probe the area too. Existing markers are filtered later,
+        // so a partially filled circle can still surface nearby new addresses.
+        properties += generateGrid(center: center, count: 6)
 
         NotificationCenter.default.post(
             name: .didRequestBulkAdd,
