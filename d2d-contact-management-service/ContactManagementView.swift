@@ -180,7 +180,7 @@ struct ContactManagementView: View {
                     
                 }
             }
-            .onChange(of: selectedList) { newValue in
+            .onChange(of: selectedList) { _, newValue in
                 if newValue == "Prospects" {
                     Task {
                         await controller.fetchNextSuggestedNeighbor(

@@ -305,7 +305,7 @@ struct ProspectCreateStepperView: View {
         p.contactEmail = contactEmail
         p.contactPhone = contactPhone
 
-        var request = MKLocalSearch.Request()
+        let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = address
 
         let search = MKLocalSearch(request: request)
