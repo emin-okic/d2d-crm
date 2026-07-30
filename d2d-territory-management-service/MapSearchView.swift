@@ -110,8 +110,8 @@ struct MapSearchView: View {
                     onMapTapped: { coordinate in
                         handleMapTap(at: coordinate)
                     },
-                    onRegionChange: { newRegion in
-                        handleRegionChange(newRegion)
+                    onRegionChange: { newRegion, isUserDriven in
+                        handleRegionChange(newRegion, isUserDriven: isUserDriven)
                     }
                 )
                 .frame(maxHeight: .infinity)
@@ -545,7 +545,7 @@ struct MapSearchView: View {
         }
     }
 
-    private func handleRegionChange(_ newRegion: MKCoordinateRegion) {
+    private func handleRegionChange(_ newRegion: MKCoordinateRegion, isUserDriven: Bool) {
         Task { @MainActor in
             await Task.yield()
 
@@ -553,7 +553,7 @@ struct MapSearchView: View {
                 controller.region = newRegion
             }
 
-            if popupState != nil {
+            if isUserDriven, popupState != nil {
                 popupState = nil
             }
         }
@@ -603,13 +603,7 @@ struct MapSearchView: View {
             controller.centerMapForPopup(coordinate: place.location)
         }
         
-        // Keep ProspectPopupView behavior as-is
-        let state = PopupState(place: place)
-        popupState = nil
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-            popupState = state
-        }
+        presentPopup(for: place)
 
         if let mapView = MapDisplayView.cachedMapView {
             let raw = mapView.convert(place.location, toPointTo: mapView)
@@ -794,13 +788,12 @@ struct MapSearchView: View {
             controller.centerMapForPopup(coordinate: place.location)
         }
         
-        let state = PopupState(place: place)
-        popupState = nil
+        presentPopup(for: place)
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-            popupState = state
-        }
-        
+    }
+
+    private func presentPopup(for place: IdentifiablePlace) {
+        popupState = PopupState(place: place)
     }
     
     private func handleOutcome(_ status: String, recordingFileName: String?) {

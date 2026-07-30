@@ -18,12 +18,13 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
 
     var onMarkerTapped: (IdentifiablePlace) -> Void
     var onMapTapped: (CLLocationCoordinate2D) -> Void
-    var onRegionChange: ((MKCoordinateRegion) -> Void)?
+    var onRegionChange: ((MKCoordinateRegion, Bool) -> Void)?
     
     var selectedPlaceID: UUID?
     
     private var activeRadiusOverlay: MKCircle?
     private var currentZoomSizeBucket: Int?
+    private var isUserDrivenRegionChange = false
     private let bulkAddRadius: CLLocationDistance = 35
     
     private var hasZoomedForActiveRadius = false
@@ -34,7 +35,7 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         selectedPlaceID: UUID?,
         onMarkerTapped: @escaping (IdentifiablePlace) -> Void,
         onMapTapped: @escaping (CLLocationCoordinate2D) -> Void,
-        onRegionChange: ((MKCoordinateRegion) -> Void)? = nil
+        onRegionChange: ((MKCoordinateRegion, Bool) -> Void)? = nil
     ) {
         self.userLocationManager = userLocationManager
         self.selectedPlaceID = selectedPlaceID
@@ -624,6 +625,16 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         refreshAllAnnotations(on: mapView)
     }
 
+    func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
+        isUserDrivenRegionChange = mapView.gestureRecognizers?.contains {
+            $0.state == .began || $0.state == .changed
+        } == true
+    }
+
+    func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+        isUserDrivenRegionChange = false
+    }
+
     private func addMarkerSparkle(to view: MKAnnotationView) {
         let sparkleTag = 901
         view.viewWithTag(sparkleTag)?.removeFromSuperview()
@@ -727,8 +738,9 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         }
 
         let region = mapView.region
+        let isUserDriven = isUserDrivenRegionChange
         DispatchQueue.main.async { [onRegionChange] in
-            onRegionChange?(region)
+            onRegionChange?(region, isUserDriven)
         }
     }
     
