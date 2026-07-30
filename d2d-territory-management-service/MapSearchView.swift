@@ -81,13 +81,27 @@ struct MapSearchView: View {
         _controller = StateObject(wrappedValue: MapController(region: region.wrappedValue))
     }
 
+    private var mapMarkers: [IdentifiablePlace] {
+        guard let pendingAddProperty else { return controller.markers }
+
+        let previewMarker = IdentifiablePlace(
+            id: pendingAddProperty.id,
+            address: pendingAddProperty.address,
+            location: pendingAddProperty.coordinate,
+            count: 0,
+            list: "PendingProperty"
+        )
+
+        return controller.markers + [previewMarker]
+    }
+
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .topLeading) {
 
                 MapDisplayView(
                     region: $controller.region,
-                    markers: controller.markers,
+                    markers: mapMarkers,
                     selectedPlaceID: selectedPlaceID,
                     userLocationManager: userLocationManager,
                     onMarkerTapped: { place in
@@ -431,11 +445,14 @@ struct MapSearchView: View {
         .sheet(item: $pendingAddProperty) { item in
             AddPropertyConfirmationSheet(
                 address: item.address,
+                coordinate: item.coordinate,
                 onConfirm: {
+                    pendingAddProperty = nil
+
                     addProspectFromMapTap(
-                            address: item.address,
-                            coordinate: item.coordinate
-                        )
+                        address: item.address,
+                        coordinate: item.coordinate
+                    )
                     
                     
                     // 🏆 Reward haptic — feels like a win
@@ -443,14 +460,12 @@ struct MapSearchView: View {
                     
                     // 🏆 Haptic + sound = reward
                     MapScreenSoundController.shared.playPropertyAdded()
-                    
-                    pendingAddProperty = nil
                 },
                 onCancel: {
                     pendingAddProperty = nil
                 }
             )
-            .presentationDetents([.height(260)])
+            .presentationDetents([.height(250)])
             .presentationDragIndicator(.visible)
             .onAppear {
                 // ✨ Entry sound
@@ -589,9 +604,6 @@ struct MapSearchView: View {
     }
 
     private func handleMapTap(at coordinate: CLLocationCoordinate2D) {
-        // 🎯 Center map FIRST (same as marker tap)
-        controller.centerMapForNewProperty(coordinate: coordinate)
-        
         // 🎯 Haptic: instant response
         MapScreenHapticsController.shared.mapTap()
         
@@ -625,12 +637,14 @@ struct MapSearchView: View {
 
             guard !exists else { return }
 
-            // Prepare for adding a new prospect
-            pendingAddProperty = PendingAddProperty(
-                address: tapped,
-                coordinate: coordinate
-            )
+            presentPendingAddProperty(address: tapped, coordinate: coordinate)
         }
+    }
+
+    private func presentPendingAddProperty(address: String, coordinate: CLLocationCoordinate2D) {
+        selectedPlaceID = nil
+        pendingAddProperty = PendingAddProperty(address: address, coordinate: coordinate)
+        controller.centerMapForNewProperty(coordinate: coordinate)
     }
     
     // For updating the markers
@@ -1010,6 +1024,12 @@ struct MapSearchView: View {
                 list: "Prospects"
             )
         )
+
+        NotificationCenter.default.post(
+            name: .didAddPropertyMarker,
+            object: nil,
+            userInfo: ["location": CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)]
+        )
     }
     
     @MainActor
@@ -1152,10 +1172,7 @@ struct MapSearchView: View {
                 }
                 // 3️⃣ Otherwise, add as new property
                 else {
-                    pendingAddProperty = PendingAddProperty(
-                        address: addr,
-                        coordinate: item.placemark.coordinate
-                    )
+                    presentPendingAddProperty(address: addr, coordinate: item.placemark.coordinate)
                 }
             }
         }
@@ -1246,10 +1263,7 @@ struct MapSearchView: View {
             }
 
             // ➕ New property
-            pendingAddProperty = PendingAddProperty(
-                address: address,
-                coordinate: item.placemark.coordinate
-            )
+            presentPendingAddProperty(address: address, coordinate: item.placemark.coordinate)
         }
     }
 }

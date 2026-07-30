@@ -17,7 +17,7 @@ import MapKit
 struct IdentifiablePlace: Identifiable {
     
     /// Unique identifier for the marker.
-    let id = UUID()
+    let id: UUID
     
     /// The address associated with this place.
     let address: String
@@ -75,6 +75,7 @@ struct IdentifiablePlace: Identifiable {
     ///   - count: Optional initial knock count (defaults to `1`).
     ///   - list: The category of this place (e.g., "Customers", "Prospects").
     init(
+        id: UUID = UUID(),
         address: String,
         location: CLLocationCoordinate2D,
         count: Int = 1,
@@ -86,6 +87,7 @@ struct IdentifiablePlace: Identifiable {
         showsMultiContact: Bool = false,
         selectedContact: UnitContact? = nil
     ) {
+        self.id = id
         self.address = address
         self.location = location
         self.count = count
