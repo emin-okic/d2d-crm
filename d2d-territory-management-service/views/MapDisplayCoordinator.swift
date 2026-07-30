@@ -28,6 +28,7 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     private let bulkAddRadius: CLLocationDistance = 35
     
     private var hasZoomedForActiveRadius = false
+    private var pendingSparkleCoordinates: [CLLocationCoordinate2D] = []
 
     init(
         userLocationManager: UserLocationManager,
@@ -43,6 +44,13 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         self.onRegionChange = onRegionChange
         super.init()
 
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handlePropertyMarkerAdded(_:)),
+            name: .didAddPropertyMarker,
+            object: nil
+        )
+
         // 🔴 Live heading updates
         headingCancellable = userLocationManager.$heading
             .receive(on: RunLoop.main)
@@ -57,6 +65,24 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
 
                 cone.updateHeading(heading.trueHeading)
             }
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    @objc private func handlePropertyMarkerAdded(_ notification: Notification) {
+        guard let location = notification.userInfo?["location"] as? CLLocation else { return }
+
+        let coordinate = location.coordinate
+        pendingSparkleCoordinates.append(coordinate)
+        animateSparkleIfPossible(at: coordinate)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            self?.pendingSparkleCoordinates.removeAll { pending in
+                self?.coordinatesAreClose(pending, coordinate) == true
+            }
+        }
     }
     
     func updateSelectedPlaceID(_ id: UUID?) {
@@ -485,6 +511,39 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         return view
     }
 
+    func mapView(_ mapView: MKMapView, didAdd views: [MKAnnotationView]) {
+        for view in views {
+            guard let annotation = view.annotation as? IdentifiableAnnotation else { continue }
+
+            if pendingSparkleCoordinates.contains(where: { coordinatesAreClose($0, annotation.coordinate) }) {
+                pendingSparkleCoordinates.removeAll { coordinatesAreClose($0, annotation.coordinate) }
+                addMarkerSparkle(to: view)
+            }
+        }
+    }
+
+    private func animateSparkleIfPossible(at coordinate: CLLocationCoordinate2D) {
+        guard let mapView else { return }
+
+        for annotation in mapView.annotations {
+            guard
+                let placeAnnotation = annotation as? IdentifiableAnnotation,
+                coordinatesAreClose(placeAnnotation.coordinate, coordinate),
+                let view = mapView.view(for: placeAnnotation)
+            else { continue }
+
+            pendingSparkleCoordinates.removeAll { coordinatesAreClose($0, coordinate) }
+            addMarkerSparkle(to: view)
+            return
+        }
+    }
+
+    private func coordinatesAreClose(_ first: CLLocationCoordinate2D, _ second: CLLocationCoordinate2D) -> Bool {
+        let firstLocation = CLLocation(latitude: first.latitude, longitude: first.longitude)
+        let secondLocation = CLLocation(latitude: second.latitude, longitude: second.longitude)
+        return firstLocation.distance(from: secondLocation) < 4
+    }
+
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         guard let annotation = view.annotation as? IdentifiableAnnotation else { return }
 
@@ -524,6 +583,64 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         guard let mapView, let overlay = activeRouteOverlay else { return }
         mapView.removeOverlay(overlay)
         activeRouteOverlay = nil
+    }
+
+    private func addMarkerSparkle(to view: MKAnnotationView) {
+        let sparkleTag = 901
+        view.viewWithTag(sparkleTag)?.removeFromSuperview()
+
+        let sparkleSize = max(24, view.bounds.width * 0.42)
+        let sparkle = UIImageView(
+            image: UIImage(systemName: "sparkles")?
+                .withRenderingMode(.alwaysTemplate)
+        )
+        sparkle.tag = sparkleTag
+        sparkle.tintColor = .systemYellow
+        sparkle.contentMode = .scaleAspectFit
+        sparkle.frame = CGRect(
+            x: view.bounds.maxX - sparkleSize * 0.72,
+            y: -sparkleSize * 0.20,
+            width: sparkleSize,
+            height: sparkleSize
+        )
+        sparkle.layer.shadowColor = UIColor.white.cgColor
+        sparkle.layer.shadowOpacity = 0.9
+        sparkle.layer.shadowRadius = 6
+        sparkle.layer.shadowOffset = .zero
+        sparkle.alpha = 0
+        sparkle.transform = CGAffineTransform(scaleX: 0.35, y: 0.35).rotated(by: -0.35)
+        view.addSubview(sparkle)
+
+        let pop = CAKeyframeAnimation(keyPath: "transform.scale")
+        pop.values = [0.88, 1.16, 0.98, 1.0]
+        pop.keyTimes = [0, 0.42, 0.78, 1]
+        pop.duration = 0.42
+        pop.timingFunctions = [
+            CAMediaTimingFunction(name: .easeOut),
+            CAMediaTimingFunction(name: .easeInEaseOut),
+            CAMediaTimingFunction(name: .easeOut)
+        ]
+        view.layer.add(pop, forKey: "propertyAddedPop")
+
+        UIView.animateKeyframes(withDuration: 0.95, delay: 0, options: [.calculationModeCubic]) {
+            UIView.addKeyframe(withRelativeStartTime: 0.0, relativeDuration: 0.22) {
+                sparkle.alpha = 1
+                sparkle.transform = CGAffineTransform(scaleX: 1.25, y: 1.25).rotated(by: 0.18)
+            }
+
+            UIView.addKeyframe(withRelativeStartTime: 0.22, relativeDuration: 0.34) {
+                sparkle.transform = CGAffineTransform(scaleX: 0.92, y: 0.92).rotated(by: 0.52)
+            }
+
+            UIView.addKeyframe(withRelativeStartTime: 0.58, relativeDuration: 0.42) {
+                sparkle.alpha = 0
+                sparkle.transform = CGAffineTransform(scaleX: 1.7, y: 1.7).rotated(by: 0.9)
+            }
+        } completion: { _ in
+            DispatchQueue.main.async {
+                sparkle.removeFromSuperview()
+            }
+        }
     }
     
     // MARK: - Badge Helper
@@ -731,4 +848,5 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
 
 extension Notification.Name {
     static let didRequestBulkAdd = Notification.Name("didRequestBulkAdd")
+    static let didAddPropertyMarker = Notification.Name("didAddPropertyMarker")
 }

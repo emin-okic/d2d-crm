@@ -1010,6 +1010,12 @@ struct MapSearchView: View {
                 list: "Prospects"
             )
         )
+
+        NotificationCenter.default.post(
+            name: .didAddPropertyMarker,
+            object: nil,
+            userInfo: ["location": CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)]
+        )
     }
     
     @MainActor
