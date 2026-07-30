@@ -170,40 +170,7 @@ struct MapSearchView: View {
             }
             // This is for the contact popup display
             .sheet(item: $popupState, onDismiss: resetSelectedMapMarker) { popup in
-                ProspectPopupView(
-                    place: popup.place,
-                    isCustomer: popup.place.list == "Customers",
-                    onClose: {
-                        popupState = nil
-                        resetSelectedMapMarker()
-                    },
-                    onOutcomeSelected: { outcome, fileName in
-                        pendingAddress = popup.place.address
-                        pendingSelectedContact = popup.place.selectedContact   // 👈 store it
-                        isTappedAddressCustomer = popup.place.list == "Customers"
-                        popupState = nil
-                        resetSelectedMapMarker()
-
-                        if outcome == "Follow Up Later" {
-                            pendingRecordingFileName = fileName
-                            stepperState = .init(
-                                ctx: .init(
-                                    address: popup.place.address,
-                                    isCustomer: isTappedAddressCustomer,
-                                    prospect: nil
-                                )
-                            )
-                        } else {
-                            handleOutcome(outcome, recordingFileName: fileName)
-                        }
-                    },
-                    recordingModeEnabled: recordingModeEnabled,
-                    onViewDetails: {
-                        openDetails(for: popup.place)
-                    }
-                )
-                .presentationDetents([.fraction(0.5)])
-                .presentationDragIndicator(.visible)
+                popupSheet(for: popup)
             }
             .sheet(item: $stepperState) { state in
                 VStack {
@@ -668,6 +635,75 @@ struct MapSearchView: View {
             if let coordinator = mapView.delegate as? MapDisplayCoordinator {
                 coordinator.refreshAllAnnotations(on: mapView)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func popupSheet(for popup: PopupState) -> some View {
+        if popup.place.list == "Customers" {
+            customerPopupSheet(for: popup.place)
+        } else {
+            prospectPopupSheet(for: popup.place)
+        }
+    }
+
+    private func customerPopupSheet(for place: IdentifiablePlace) -> some View {
+        CustomerPopupView(
+            place: place,
+            onClose: {
+                popupState = nil
+                resetSelectedMapMarker()
+            },
+            onOutcomeSelected: { outcome, fileName in
+                handlePopupOutcome(for: place, outcome: outcome, fileName: fileName)
+            },
+            recordingModeEnabled: recordingModeEnabled,
+            onViewDetails: {
+                openDetails(for: place)
+            }
+        )
+        .presentationDetents([.fraction(0.34)])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func prospectPopupSheet(for place: IdentifiablePlace) -> some View {
+        ProspectPopupView(
+            place: place,
+            isCustomer: false,
+            onClose: {
+                popupState = nil
+                resetSelectedMapMarker()
+            },
+            onOutcomeSelected: { outcome, fileName in
+                handlePopupOutcome(for: place, outcome: outcome, fileName: fileName)
+            },
+            recordingModeEnabled: recordingModeEnabled,
+            onViewDetails: {
+                openDetails(for: place)
+            }
+        )
+        .presentationDetents([.fraction(0.5)])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func handlePopupOutcome(for place: IdentifiablePlace, outcome: String, fileName: String?) {
+        pendingAddress = place.address
+        pendingSelectedContact = place.selectedContact
+        isTappedAddressCustomer = place.list == "Customers"
+        popupState = nil
+        resetSelectedMapMarker()
+
+        if outcome == "Follow Up Later" {
+            pendingRecordingFileName = fileName
+            stepperState = .init(
+                ctx: .init(
+                    address: place.address,
+                    isCustomer: isTappedAddressCustomer,
+                    prospect: nil
+                )
+            )
+        } else {
+            handleOutcome(outcome, recordingFileName: fileName)
         }
     }
     
