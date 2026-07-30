@@ -18,13 +18,13 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
 
     var onMarkerTapped: (IdentifiablePlace) -> Void
     var onMapTapped: (CLLocationCoordinate2D) -> Void
-    var onRegionChange: ((MKCoordinateRegion) -> Void)?
+    var onRegionChange: ((MKCoordinateRegion, Bool) -> Void)?
     
     var selectedPlaceID: UUID?
     
     private var activeRadiusOverlay: MKCircle?
-    private var activeRouteOverlay: MKPolyline?
     private var currentZoomSizeBucket: Int?
+    private var isUserDrivenRegionChange = false
     private let bulkAddRadius: CLLocationDistance = 35
     
     private var hasZoomedForActiveRadius = false
@@ -35,7 +35,7 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         selectedPlaceID: UUID?,
         onMarkerTapped: @escaping (IdentifiablePlace) -> Void,
         onMapTapped: @escaping (CLLocationCoordinate2D) -> Void,
-        onRegionChange: ((MKCoordinateRegion) -> Void)? = nil
+        onRegionChange: ((MKCoordinateRegion, Bool) -> Void)? = nil
     ) {
         self.userLocationManager = userLocationManager
         self.selectedPlaceID = selectedPlaceID
@@ -87,8 +87,6 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     
     func updateSelectedPlaceID(_ id: UUID?) {
         selectedPlaceID = id
-        guard id == nil else { return }
-        removeActiveRoute()
     }
     
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
@@ -620,35 +618,21 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         MapScreenHapticsController.shared.propertyAdded()
         MapScreenSoundController.shared.playPropertyAdded()
 
-        showActiveRoute(to: annotation.coordinate)
         refreshAllAnnotations(on: mapView)
     }
 
     func mapView(_ mapView: MKMapView, didDeselect view: MKAnnotationView) {
-        removeActiveRoute()
         refreshAllAnnotations(on: mapView)
     }
-    
-    private func showActiveRoute(to destination: CLLocationCoordinate2D) {
-        guard let mapView else { return }
-        removeActiveRoute()
 
-        let start = userLocationManager.location?.coordinate ?? mapView.userLocation.coordinate
-        guard CLLocationCoordinate2DIsValid(start), start.latitude != 0 || start.longitude != 0 else { return }
-
-        let midpoint = CLLocationCoordinate2D(
-            latitude: (start.latitude + destination.latitude) / 2 + (destination.longitude - start.longitude) * 0.12,
-            longitude: (start.longitude + destination.longitude) / 2 - (destination.latitude - start.latitude) * 0.12
-        )
-        let route = MKPolyline(coordinates: [start, midpoint, destination], count: 3)
-        activeRouteOverlay = route
-        mapView.addOverlay(route, level: .aboveRoads)
+    func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
+        isUserDrivenRegionChange = mapView.gestureRecognizers?.contains {
+            $0.state == .began || $0.state == .changed
+        } == true
     }
 
-    private func removeActiveRoute() {
-        guard let mapView, let overlay = activeRouteOverlay else { return }
-        mapView.removeOverlay(overlay)
-        activeRouteOverlay = nil
+    func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+        isUserDrivenRegionChange = false
     }
 
     private func addMarkerSparkle(to view: MKAnnotationView) {
@@ -754,8 +738,9 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         }
 
         let region = mapView.region
+        let isUserDriven = isUserDrivenRegionChange
         DispatchQueue.main.async { [onRegionChange] in
-            onRegionChange?(region)
+            onRegionChange?(region, isUserDriven)
         }
     }
     

@@ -20,7 +20,7 @@ struct MapDisplayView: UIViewRepresentable {
     
     var onMarkerTapped: (IdentifiablePlace) -> Void
     var onMapTapped: (CLLocationCoordinate2D) -> Void
-    var onRegionChange: ((MKCoordinateRegion) -> Void)?      // NEW: notify region changes
+    var onRegionChange: ((MKCoordinateRegion, Bool) -> Void)?
 
     static var cachedMapView: MKMapView?
 
