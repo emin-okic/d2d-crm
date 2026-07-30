@@ -103,6 +103,7 @@ struct FloatingSearchAndMicButtons: View {
             QRCodeCardView(
                 isEditing: isEditingWidgets,
                 onBeginEditing: beginWidgetEditing,
+                onCancelEditing: cancelWidgetEditing,
                 onRemove: removeQRCodeWidget
             )
         } else {
@@ -207,6 +208,11 @@ struct FloatingSearchAndMicButtons: View {
         guard !isExpanded else { return }
         MapScreenHapticsController.shared.lightTap()
         isEditingWidgets = true
+    }
+
+    private func cancelWidgetEditing() {
+        MapScreenHapticsController.shared.lightTap()
+        isEditingWidgets = false
     }
 
     private func removeQRCodeWidget() {
