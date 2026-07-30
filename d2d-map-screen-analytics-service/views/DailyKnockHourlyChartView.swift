@@ -13,14 +13,17 @@ struct DailyKnockHourlyChartView: View {
 
     @Query private var allKnocks: [Knock]
 
-    private var hourlyBuckets: [HourlyKnockBucket] {
+    private var todaysKnocks: [Knock] {
         let calendar = Calendar.current
         let today = Date()
 
-        let todaysKnocks = allKnocks.filter {
+        return allKnocks.filter {
             calendar.isDate($0.date, inSameDayAs: today)
         }
+    }
 
+    private var hourlyBuckets: [HourlyKnockBucket] {
+        let calendar = Calendar.current
         let grouped = Dictionary(grouping: todaysKnocks) {
             calendar.component(.hour, from: $0.date)
         }
@@ -33,33 +36,226 @@ struct DailyKnockHourlyChartView: View {
         }
     }
 
+    private var activeBuckets: [HourlyKnockBucket] {
+        let currentHour = Calendar.current.component(.hour, from: Date())
+        return hourlyBuckets.filter { $0.hour <= currentHour }
+    }
+
+    private var totalKnocks: Int {
+        todaysKnocks.count
+    }
+
+    private var peakBucket: HourlyKnockBucket? {
+        hourlyBuckets.max { $0.count < $1.count }
+    }
+
+    private var peakCount: Int {
+        max(peakBucket?.count ?? 0, 1)
+    }
+
+    private var responseRate: Int {
+        guard !todaysKnocks.isEmpty else { return 0 }
+        let positiveCount = todaysKnocks.filter { knock in
+            let status = knock.status.lowercased()
+            return status.contains("answered") ||
+            status.contains("converted") ||
+            status.contains("sale") ||
+            status.contains("follow")
+        }.count
+
+        return Int((Double(positiveCount) / Double(todaysKnocks.count) * 100).rounded())
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                header
+                pulseChart
+                hourlyHeatStrip
+            }
+            .padding(18)
+        }
+        .background(Color(.systemGroupedBackground))
+    }
 
-            Text("Hourly Knock Progress")
-                .font(.headline)
+    private var header: some View {
+        HStack(alignment: .center, spacing: 16) {
+            ZStack {
+                Circle()
+                    .stroke(Color.orange.opacity(0.16), lineWidth: 12)
 
-            Chart(hourlyBuckets) { bucket in
-                BarMark(
+                Circle()
+                    .trim(from: 0, to: min(Double(totalKnocks) / Double(peakCount * 4), 1))
+                    .stroke(
+                        AngularGradient(colors: [.orange, .yellow, .orange], center: .center),
+                        style: StrokeStyle(lineWidth: 12, lineCap: .round)
+                    )
+                    .rotationEffect(.degrees(-90))
+
+                VStack(spacing: 0) {
+                    Text("\(totalKnocks)")
+                        .font(.system(size: 36, weight: .bold, design: .rounded))
+                        .contentTransition(.numericText())
+                    Text("today")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(width: 104, height: 104)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Hourly Knock Progress")
+                    .font(.title2.weight(.bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+
+                Text("Live pace across today")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 8) {
+                    metricChip("Peak", peakHourText, .orange)
+                    metricChip("Response", "\(responseRate)%", .green)
+                }
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+        )
+    }
+
+    private var pulseChart: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Knock rhythm")
+                    .font(.headline)
+
+                Spacer()
+
+                Text(Date().formatted(.dateTime.hour().minute()))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+
+            Chart(activeBuckets) { bucket in
+                AreaMark(
                     x: .value("Hour", bucket.hour),
                     y: .value("Knocks", bucket.count)
                 )
-                .cornerRadius(4)
+                .interpolationMethod(.catmullRom)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [Color.orange.opacity(0.34), Color.orange.opacity(0.04)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+
+                LineMark(
+                    x: .value("Hour", bucket.hour),
+                    y: .value("Knocks", bucket.count)
+                )
+                .interpolationMethod(.catmullRom)
+                .foregroundStyle(Color.orange)
+                .lineStyle(StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+
+                PointMark(
+                    x: .value("Hour", bucket.hour),
+                    y: .value("Knocks", bucket.count)
+                )
+                .symbolSize(bucket.count == peakCount && peakCount > 0 ? 96 : 42)
+                .foregroundStyle(bucket.count == peakCount && peakCount > 0 ? Color.orange : Color.blue.opacity(0.58))
             }
+            .chartXScale(domain: 0...23)
+            .chartYScale(domain: 0...max(peakCount + 1, 2))
             .chartXAxis {
-                AxisMarks(values: Array(stride(from: 0, through: 23, by: 3))) { value in
+                AxisMarks(values: Array(stride(from: 0, through: 23, by: 4))) { value in
+                    AxisGridLine().foregroundStyle(Color.secondary.opacity(0.10))
                     AxisValueLabel {
                         if let hour = value.as(Int.self) {
-                            Text("\(hour)")
+                            Text(hourLabel(for: hour))
                         }
                     }
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
                 }
             }
-            .chartYAxis {
-                AxisMarks(position: .leading)
-            }
-            .frame(height: 140)
+            .chartYAxis(.hidden)
+            .frame(height: 190)
         }
-        .padding()
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(Color(.systemBackground))
+        )
+    }
+
+    private var hourlyHeatStrip: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Hourly density")
+                .font(.headline)
+
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 5), count: 12), spacing: 5) {
+                ForEach(hourlyBuckets) { bucket in
+                    RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        .fill(heatColor(for: bucket.count))
+                        .frame(height: 28)
+                        .overlay {
+                            if bucket.count > 0 {
+                                Text("\(bucket.count)")
+                                    .font(.caption2.weight(.bold))
+                                    .foregroundStyle(.white)
+                            }
+                        }
+                        .accessibilityLabel("\(hourLabel(for: bucket.hour)), \(bucket.count) knocks")
+                }
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(Color(.systemBackground))
+        )
+    }
+
+    private var peakHourText: String {
+        guard let peakBucket, peakBucket.count > 0 else { return "--" }
+        return hourLabel(for: peakBucket.hour)
+    }
+
+    private func metricChip(_ title: String, _ value: String, _ color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(color.opacity(0.10)))
+    }
+
+    private func heatColor(for count: Int) -> Color {
+        guard count > 0 else { return Color.secondary.opacity(0.12) }
+        let intensity = min(Double(count) / Double(peakCount), 1)
+        return Color.orange.opacity(0.32 + (0.68 * intensity))
+    }
+
+    private func hourLabel(for hour: Int) -> String {
+        if hour == 0 { return "12a" }
+        if hour < 12 { return "\(hour)a" }
+        if hour == 12 { return "12p" }
+        return "\(hour - 12)p"
     }
 }

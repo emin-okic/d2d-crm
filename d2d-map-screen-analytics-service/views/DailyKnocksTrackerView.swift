@@ -58,7 +58,8 @@ struct DailyKnocksTrackerView: View {
         .buttonStyle(.plain)
         .sheet(isPresented: $showSheet) {
             DailyKnockHourlyChartView()
-                .presentationDetents([.fraction(0.25)])
+                .presentationDetents([.fraction(0.78), .large])
+                .presentationContentInteraction(.scrolls)
                 .presentationDragIndicator(.visible)
         }
     }
