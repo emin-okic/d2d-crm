@@ -87,7 +87,7 @@ enum RoutePlannerController {
             currentCoord = s
         } else {
             let first = remaining.removeFirst()
-            currentCoord = first.placemark.coordinate
+            currentCoord = first.location.coordinate
             route.append(first)
         }
 
@@ -95,7 +95,7 @@ enum RoutePlannerController {
             let nextIndex = nearestIndex(from: currentCoord, in: remaining)
             let next = remaining.remove(at: nextIndex)
             route.append(next)
-            currentCoord = next.placemark.coordinate
+            currentCoord = next.location.coordinate
         }
         return route
     }
@@ -106,8 +106,7 @@ enum RoutePlannerController {
         let here = CLLocation(latitude: coord.latitude, longitude: coord.longitude)
 
         for (i, item) in items.enumerated() {
-            let there = CLLocation(latitude: item.placemark.coordinate.latitude, longitude: item.placemark.coordinate.longitude)
-            let d = here.distance(from: there)
+            let d = here.distance(from: item.location)
             if d < bestDist {
                 bestDist = d
                 bestIdx = i
@@ -116,6 +115,7 @@ enum RoutePlannerController {
         return bestIdx
     }
 
+    @MainActor
     private static func openInAppleMaps(start: MKMapItem?, orderedStops: [MKMapItem]) {
         guard !orderedStops.isEmpty else { return }
 
@@ -138,6 +138,7 @@ enum RoutePlannerController {
         }
 
         // Try maps:// first (launches the app directly); fall back to http://
+        @MainActor
         func tryOpen(_ raw: String) -> Bool {
             guard let url = URL(string: raw) else { return false }
             UIApplication.shared.open(url, options: [:], completionHandler: nil)
@@ -150,6 +151,7 @@ enum RoutePlannerController {
         }
     }
     
+    @MainActor
     private static func openAppleMapsMultiStop(addresses: [String]) {
         // Build: maps://?dirflg=d&saddr=Current+Location&daddr=addr1&daddr=addr2&...
         // (Multiple daddr params are supported by Apple Maps.)
@@ -166,6 +168,7 @@ enum RoutePlannerController {
         }
 
         // Try native scheme first; fall back to HTTP if needed (Simulator quirks, etc.)
+        @MainActor
         func open(_ raw: String) {
             if let u = URL(string: raw) {
                 UIApplication.shared.open(u, options: [:], completionHandler: nil)
@@ -176,45 +179,23 @@ enum RoutePlannerController {
         // Fallback if the first doesn't trigger for some environments
         if url.hasPrefix("maps://") {
             let httpURL = url.replacingOccurrences(of: "maps://", with: "http://maps.apple.com/")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { open(httpURL) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                Task { @MainActor in
+                    open(httpURL)
+                }
+            }
         }
     }
 
     private static func readableAddress(for item: MKMapItem?, fallback: String) -> String {
-        guard let item = item else { return fallback }
-        let pm = item.placemark
-        if let name = pm.name, !name.isEmpty { return name }
-        // Simple join for common parts
-        let parts = [pm.subThoroughfare, pm.thoroughfare, pm.locality, pm.administrativeArea]
-            .compactMap { $0 }
-            .filter { !$0.isEmpty }
-        return parts.isEmpty ? fallback : parts.joined(separator: " ")
-    }
-
-    @MainActor
-    private static func geocode(_ addresses: [String]) async -> [CLPlacemark] {
-        await withTaskGroup(of: CLPlacemark?.self) { group in
-            for addr in addresses {
-                group.addTask { @Sendable in
-                    do {
-                        // Create a NEW geocoder inside the task
-                        let geocoder = CLGeocoder()
-                        let results = try await geocoder.geocodeAddressString(addr)
-                        return results.first
-                    } catch {
-                        print("❌ Geocode failed for \(addr): \(error.localizedDescription)")
-                        return nil
-                    }
-                }
-            }
-
-            var output: [CLPlacemark] = []
-            for await pm in group {
-                if let pm { output.append(pm) }
-            }
-            return output
+        guard let item else { return fallback }
+        if let name = item.name, !name.isEmpty { return name }
+        if let address = item.addressRepresentations?.fullAddress(includingRegion: true, singleLine: true), !address.isEmpty {
+            return address
         }
+        return fallback
     }
+
 }
 
 /// Simple ordered set preserving insertion.

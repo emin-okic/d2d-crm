@@ -22,18 +22,11 @@ struct RouteMapView: UIViewRepresentable {
 
     func updateUIView(_ mapView: MKMapView, context: Context) {
         Task {
-            let geocoder = CLGeocoder()
             do {
-                let startPlacemarks = try await geocoder.geocodeAddressString(startAddress)
-                let endPlacemarks = try await geocoder.geocodeAddressString(endAddress)
-
-                guard let startLocation = startPlacemarks.first?.location,
-                      let endLocation = endPlacemarks.first?.location else {
+                guard let startItem = try await mapItem(for: startAddress),
+                      let endItem = try await mapItem(for: endAddress) else {
                     return
                 }
-
-                let startItem = MKMapItem(placemark: MKPlacemark(coordinate: startLocation.coordinate))
-                let endItem = MKMapItem(placemark: MKPlacemark(coordinate: endLocation.coordinate))
 
                 let request = MKDirections.Request()
                 request.source = startItem
@@ -56,6 +49,14 @@ struct RouteMapView: UIViewRepresentable {
                 print("Map route error: \(error.localizedDescription)")
             }
         }
+    }
+
+    private func mapItem(for address: String) async throws -> MKMapItem? {
+        guard let request = MKGeocodingRequest(addressString: address) else {
+            return nil
+        }
+
+        return try await request.mapItems.first
     }
 
     class Coordinator: NSObject, MKMapViewDelegate {

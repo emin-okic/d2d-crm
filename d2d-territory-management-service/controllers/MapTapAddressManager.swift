@@ -24,18 +24,19 @@ class MapTapAddressManager: ObservableObject {
     }
 
     private func reverseGeocode(_ coordinate: CLLocationCoordinate2D) {
-        
         let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-        CLGeocoder().reverseGeocodeLocation(location) { [weak self] placemarks, error in
-            guard let self = self else { return }
-            if let placemark = placemarks?.first {
-                let addr = [placemark.subThoroughfare,
-                            placemark.thoroughfare,
-                            placemark.locality].compactMap { $0 }.joined(separator: " ")
-                DispatchQueue.main.async {
-                    self.tappedAddress = addr
-                    self.showAddPrompt = true
-                }
+
+        Task { [weak self] in
+            guard let request = MKReverseGeocodingRequest(location: location),
+                  let mapItem = try? await request.mapItems.first,
+                  let address = mapItem.address?.shortAddress
+                    ?? mapItem.addressRepresentations?.fullAddress(includingRegion: false, singleLine: true) else {
+                return
+            }
+
+            await MainActor.run {
+                self?.tappedAddress = address
+                self?.showAddPrompt = true
             }
         }
     }

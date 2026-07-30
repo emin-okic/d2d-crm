@@ -31,7 +31,7 @@ struct TripAddressAutofillField: View {
                     .focused(focusedField, equals: field)
                     .textInputAutocapitalization(.words)
                     .autocorrectionDisabled()
-                    .onChange(of: text) { newValue in
+                    .onChange(of: text) { _, newValue in
                         searchVM.updateQuery(newValue)
                     }
             }

@@ -18,19 +18,15 @@ class TripsController {
         let request = MKDirections.Request()
         request.transportType = .automobile
 
-        let geocoder = CLGeocoder()
         do {
-            let startPlacemarks = try await geocoder.geocodeAddressString(from)
-            let endPlacemarks = try await geocoder.geocodeAddressString(to)
-
-            guard let startPlacemark = startPlacemarks.first,
-                  let endPlacemark = endPlacemarks.first else {
-                print("❌ Missing placemarks")
+            guard let startMapItem = try await mapItem(for: from),
+                  let endMapItem = try await mapItem(for: to) else {
+                print("❌ Missing map items")
                 return 0.0
             }
 
-            request.source = MKMapItem(placemark: MKPlacemark(placemark: startPlacemark))
-            request.destination = MKMapItem(placemark: MKPlacemark(placemark: endPlacemark))
+            request.source = startMapItem
+            request.destination = endMapItem
 
             let directions = MKDirections(request: request)
             let response = try await directions.calculate()
@@ -54,7 +50,6 @@ class TripsController {
         guard !stops.isEmpty else { return 0.0 }
 
         var legs: [(MKMapItem, MKMapItem)] = []
-        var previous: MKMapItem? = start ?? stops.first
 
         // If start supplied and different than first stop, start->first; else first->second ...
         if let startItem = start {
@@ -81,12 +76,32 @@ class TripsController {
                 if let r = resp.routes.first { totalMeters += r.distance }
             } catch {
                 // Fallback: straight-line if routing fails for a leg
-                let a = src.placemark.coordinate, b = dst.placemark.coordinate
-                let d = CLLocation(latitude: a.latitude, longitude: a.longitude)
-                    .distance(from: CLLocation(latitude: b.latitude, longitude: b.longitude))
-                totalMeters += d
+                let startLocation: CLLocation
+                let endLocation: CLLocation
+                if #available(iOS 26.0, *) {
+                    startLocation = src.location
+                    endLocation = dst.location
+                } else {
+                    startLocation = src.placemark.location ?? CLLocation(latitude: src.placemark.coordinate.latitude, longitude: src.placemark.coordinate.longitude)
+                    endLocation = dst.placemark.location ?? CLLocation(latitude: dst.placemark.coordinate.latitude, longitude: dst.placemark.coordinate.longitude)
+                }
+                totalMeters += startLocation.distance(from: endLocation)
             }
         }
         return totalMeters / 1609.34
+    }
+
+    private func mapItem(for address: String) async throws -> MKMapItem? {
+        if #available(iOS 26.0, *) {
+            guard let request = MKGeocodingRequest(addressString: address) else {
+                return nil
+            }
+            return try await request.mapItems.first
+        } else {
+            let geocoder = CLGeocoder()
+            return try await geocoder.geocodeAddressString(address).first.map {
+                MKMapItem(placemark: MKPlacemark(placemark: $0))
+            }
+        }
     }
 }

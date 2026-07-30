@@ -6,7 +6,11 @@
 //
 import SwiftUI
 import SwiftData
-import EventKit
+@preconcurrency import EventKit
+
+private struct AppointmentDetailsEventStore: @unchecked Sendable {
+    let store: EKEventStore
+}
 
 struct AppointmentDetailsView: View {
     @Environment(\.dismiss) private var dismiss
@@ -178,47 +182,64 @@ struct AppointmentDetailsView: View {
     }
     
     private func addAppointmentToCalendar(_ appointment: Appointment) {
-        let store = EKEventStore()
+        let eventStore = AppointmentDetailsEventStore(store: EKEventStore())
+        let title = appointment.title
+        let startDate = appointment.date
+        let endDate = appointment.date.addingTimeInterval(60 * 30)
+        let location = appointment.location
+        let notes = appointment.notes.joined(separator: "\n")
 
-        store.requestAccess(to: .event) { granted, error in
+        let showCalendarFeedback: @Sendable (String) -> Void = { message in
+            Task { @MainActor in
+                showFeedback(message)
+            }
+        }
+
+        let handleAccess: @Sendable (Bool, Error?) -> Void = { granted, error in
             if let error = error {
-                showFeedback("Calendar access error: \(error.localizedDescription)")
+                showCalendarFeedback("Calendar access error: \(error.localizedDescription)")
                 return
             }
 
             if granted {
-                let predicate = store.predicateForEvents(
-                    withStart: appointment.date.addingTimeInterval(-60),
-                    end: appointment.date.addingTimeInterval(60),
+                let predicate = eventStore.store.predicateForEvents(
+                    withStart: startDate.addingTimeInterval(-60),
+                    end: startDate.addingTimeInterval(60),
                     calendars: nil
                 )
 
-                let existing = store.events(matching: predicate).first {
-                    $0.title == appointment.title && $0.location == appointment.location
+                let existing = eventStore.store.events(matching: predicate).first {
+                    $0.title == title && $0.location == location
                 }
 
                 if existing != nil {
-                    showFeedback("Already exists in calendar.")
+                    showCalendarFeedback("Already exists in calendar.")
                     return
                 }
 
-                let event = EKEvent(eventStore: store)
-                event.title = appointment.title
-                event.startDate = appointment.date
-                event.endDate = appointment.date.addingTimeInterval(60 * 30)
-                event.notes = appointment.notes.joined(separator: "\n")
-                event.location = appointment.location
-                event.calendar = store.defaultCalendarForNewEvents
+                let event = EKEvent(eventStore: eventStore.store)
+                event.title = title
+                event.startDate = startDate
+                event.endDate = endDate
+                event.notes = notes
+                event.location = location
+                event.calendar = eventStore.store.defaultCalendarForNewEvents
 
                 do {
-                    try store.save(event, span: .thisEvent)
-                    showFeedback("Successfully added to calendar!")
+                    try eventStore.store.save(event, span: .thisEvent)
+                    showCalendarFeedback("Successfully added to calendar!")
                 } catch {
-                    showFeedback("Failed to save event: \(error.localizedDescription)")
+                    showCalendarFeedback("Failed to save event: \(error.localizedDescription)")
                 }
             } else {
-                showFeedback("Calendar access denied. Enable in Settings.")
+                showCalendarFeedback("Calendar access denied. Enable in Settings.")
             }
+        }
+
+        if #available(iOS 17.0, *) {
+            eventStore.store.requestFullAccessToEvents(completion: handleAccess)
+        } else {
+            eventStore.store.requestAccess(to: .event, completion: handleAccess)
         }
     }
 

@@ -159,7 +159,7 @@ struct FollowUpAssistantView: View {
                     UserDefaults.standard.set(deepLinkFilter.rawValue, forKey: "lastSelectedAppointmentFilter")
                 }
             }
-            .onChange(of: deepLinkFilter) { _ in
+            .onChange(of: deepLinkFilter) {
                 deepLinkFilter = nil
             }
             .onAppear {

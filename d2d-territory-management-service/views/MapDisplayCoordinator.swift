@@ -753,7 +753,10 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             refreshAllAnnotations(on: mapView)
         }
 
-        onRegionChange?(mapView.region)
+        let region = mapView.region
+        DispatchQueue.main.async { [onRegionChange] in
+            onRegionChange?(region)
+        }
     }
     
     private func zoomScaleFactor() -> CGFloat {
