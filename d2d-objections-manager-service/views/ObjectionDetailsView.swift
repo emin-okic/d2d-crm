@@ -33,7 +33,7 @@ struct ObjectionDetailsView: View {
                     ) {
                         Stepper("", value: $objection.timesHeard, in: 0...10_000)
                             .labelsHidden()
-                            .onChange(of: objection.timesHeard) { _ in
+                            .onChange(of: objection.timesHeard) {
                                 // Haptics + sound when counter changes
                                 ObjectionManagerHapticsController.shared.screenTap()
                                 ObjectionManagerSoundController.shared.playActionSound()

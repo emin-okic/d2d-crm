@@ -29,7 +29,9 @@ struct TripAddressFieldView: View {
                     .foregroundColor(iconColor)
                 TextField(placeholder, text: $addressText)
                     .focused(focusedField, equals: fieldType)
-                    .onChange(of: addressText) { searchVM.updateQuery($0) }
+                    .onChange(of: addressText) { _, newValue in
+                        searchVM.updateQuery(newValue)
+                    }
             }
 
             if focusedField.wrappedValue == fieldType && !searchVM.results.isEmpty {

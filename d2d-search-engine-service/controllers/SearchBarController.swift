@@ -18,7 +18,7 @@ enum SearchBarController {
 
         do {
             let response = try await search.start()
-            return response.mapItems.first?.placemark.title ?? completion.title
+            return response.mapItems.first.map { displayAddress(for: $0, fallback: completion.title) } ?? completion.title
         } catch {
             print("❌ Error resolving address: \(error.localizedDescription)")
             return nil
@@ -49,13 +49,21 @@ enum SearchBarController {
         from completion: MKLocalSearchCompletion,
         onResolved: @escaping (String) -> Void
     ) {
-        let request = MKLocalSearch.Request(completion: completion)
-        MKLocalSearch(request: request).start { response, _ in
-            guard let item = response?.mapItems.first else { return }
-            let selectedAddress = item.placemark.title ?? completion.title
-            DispatchQueue.main.async {
-                onResolved(selectedAddress)
-            }
+        Task { @MainActor in
+            guard let selectedAddress = await resolveAddress(from: completion) else { return }
+            onResolved(selectedAddress)
         }
+    }
+
+    private static func displayAddress(for mapItem: MKMapItem, fallback: String) -> String {
+        if let fullAddress = mapItem.addressRepresentations?.fullAddress(includingRegion: true, singleLine: true) {
+            return fullAddress
+        }
+
+        if let fullAddress = mapItem.address?.fullAddress {
+            return fullAddress.replacingOccurrences(of: "\n", with: ", ")
+        }
+
+        return mapItem.name ?? fallback
     }
 }

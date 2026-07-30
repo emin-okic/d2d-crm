@@ -351,8 +351,10 @@ struct RecordingsView: View {
             // start UI tick + level polling
             tickTimer?.invalidate()
             tickTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { _ in
-                nowTick = Date()                   // 👈 forces body update for timer
-                level = recorder.currentLevel()    // 👈 pull mic level
+                Task { @MainActor in
+                    nowTick = Date()                   // 👈 forces body update for timer
+                    level = recorder.currentLevel()    // 👈 pull mic level
+                }
             }
             RunLoop.current.add(tickTimer!, forMode: .common)
         }
