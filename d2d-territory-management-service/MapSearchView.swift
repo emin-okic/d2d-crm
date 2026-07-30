@@ -165,7 +165,7 @@ struct MapSearchView: View {
                         selectedUnitGroup = nil
                     }
                 )
-                .presentationDetents([.fraction(0.5)])
+                .presentationDetents([.fraction(0.46)])
                 .presentationDragIndicator(.visible)
             }
             // This is for the contact popup display
