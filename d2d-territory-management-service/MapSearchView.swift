@@ -444,9 +444,9 @@ struct MapSearchView: View {
 
                 for prop in bulk.properties {
 
-                    let snapped = await controller.snapToNearestRoad(coordinate: prop.coordinate)
-
-                    let address = await controller.reverseGeocode(coordinate: snapped) ?? "Unknown Address"
+                    guard let address = await controller.reverseGeocode(coordinate: prop.coordinate) else {
+                        continue
+                    }
 
                     let normalized = address.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -460,7 +460,9 @@ struct MapSearchView: View {
                     // Skip if duplicate inside this bulk
                     guard !existsGlobally, !seenAddresses.contains(normalized) else { continue }
 
-                    resolved.append(PendingAddProperty(address: address, coordinate: snapped))
+                    let propertyCoordinate = await controller.geocodeAddress(address) ?? prop.coordinate
+
+                    resolved.append(PendingAddProperty(address: address, coordinate: propertyCoordinate))
                     seenAddresses.insert(normalized)
                 }
 
