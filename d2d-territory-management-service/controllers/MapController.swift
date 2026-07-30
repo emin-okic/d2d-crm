@@ -228,33 +228,28 @@ class MapController: ObservableObject {
     func centerMapForNewProperty(coordinate: CLLocationCoordinate2D) {
         guard let mapView = MapDisplayView.cachedMapView else { return }
 
-        // Convert map coordinate → screen point
+        let sheetHeight: CGFloat = 250
+        let visibleHeight = max(mapView.bounds.height - sheetHeight, 1)
+        let previewRegion = MKCoordinateRegion(
+            center: coordinate,
+            latitudinalMeters: 180,
+            longitudinalMeters: 180
+        )
+
+        mapView.setRegion(previewRegion, animated: false)
+
         let point = mapView.convert(coordinate, toPointTo: mapView)
-
-        // Visible height minus detented sheet (~260)
-        let sheetHeight: CGFloat = 260
-        let visibleHeight = mapView.bounds.height - sheetHeight
-
-        // Target Y = vertical center of visible map area
         let targetY = visibleHeight / 2
-
-        // Calculate vertical delta in screen space
         let deltaY = point.y - targetY
-
-        // Convert that delta back into map coordinates
-        let offsetPoint = CGPoint(
-            x: point.x,
-            y: point.y + deltaY
-        )
-
+        let offsetPoint = CGPoint(x: point.x, y: point.y + deltaY)
         let offsetCoordinate = mapView.convert(offsetPoint, toCoordinateFrom: mapView)
-
-        let region = MKCoordinateRegion(
+        let centeredRegion = MKCoordinateRegion(
             center: offsetCoordinate,
-            span: mapView.region.span
+            span: previewRegion.span
         )
 
-        mapView.setRegion(region, animated: true)
+        mapView.setRegion(centeredRegion, animated: true)
+        region = centeredRegion
     }
     
     private let geocoder = CLGeocoder()

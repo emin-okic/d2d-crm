@@ -345,6 +345,10 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         }
 
         guard let annotation = annotation as? IdentifiableAnnotation else { return nil }
+
+        if annotation.place.list == "PendingProperty" {
+            return pendingPropertyMarkerView(for: annotation)
+        }
         
         // 🏢 Multi-unit ALWAYS wins
         if annotation.place.isMultiUnit {
@@ -377,7 +381,7 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     private func configureBuildingMarker(_ view: MKAnnotationView, for annotation: IdentifiableAnnotation) {
         view.subviews.forEach { $0.removeFromSuperview() }
         view.layer.sublayers?
-            .filter { $0.name == "selectionRing" }
+            .filter { $0.name == "selectionRing" || $0.name == "pendingPropertyGuide" }
             .forEach { $0.removeFromSuperlayer() }
         view.layer.cornerRadius = 0
         view.layer.borderWidth = 0
@@ -441,6 +445,68 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     }
 
     // MARK: - Helpers
+
+    private func pendingPropertyMarkerView(for annotation: IdentifiableAnnotation) -> MKAnnotationView {
+        let id = "pendingPropertyMarker"
+        let view = mapView?.dequeueReusableAnnotationView(withIdentifier: id)
+            ?? MKAnnotationView(annotation: annotation, reuseIdentifier: id)
+
+        view.annotation = annotation
+        view.canShowCallout = false
+        configurePendingPropertyMarker(view)
+
+        return view
+    }
+
+    private func configurePendingPropertyMarker(_ view: MKAnnotationView) {
+        view.subviews.forEach { $0.removeFromSuperview() }
+        view.layer.sublayers?
+            .filter { $0.name == "selectionRing" || $0.name == "pendingPropertyGuide" }
+            .forEach { $0.removeFromSuperlayer() }
+        view.layer.removeAllAnimations()
+        view.backgroundColor = .clear
+        view.image = nil
+        view.layer.shadowOpacity = 0
+        view.bounds = CGRect(x: 0, y: 0, width: 62, height: 92)
+        view.centerOffset = CGPoint(x: 0, y: -46)
+
+        let guideLayer = CAShapeLayer()
+        guideLayer.name = "pendingPropertyGuide"
+        guideLayer.strokeColor = UIColor.systemRed.withAlphaComponent(0.9).cgColor
+        guideLayer.lineWidth = 2.5
+        guideLayer.lineDashPattern = [3, 5]
+        guideLayer.lineCap = .round
+        let guidePath = UIBezierPath()
+        guidePath.move(to: CGPoint(x: view.bounds.midX, y: 42))
+        guidePath.addLine(to: CGPoint(x: view.bounds.midX, y: 84))
+        guideLayer.path = guidePath.cgPath
+        view.layer.addSublayer(guideLayer)
+
+        let targetDot = UIView(frame: CGRect(x: view.bounds.midX - 5, y: 80, width: 10, height: 10))
+        targetDot.backgroundColor = .systemRed
+        targetDot.layer.cornerRadius = 5
+        targetDot.layer.borderWidth = 2
+        targetDot.layer.borderColor = UIColor.white.cgColor
+        view.addSubview(targetDot)
+
+        let pin = UIImageView(image: UIImage(systemName: "mappin.circle.fill"))
+        pin.tintColor = .systemRed
+        pin.contentMode = .scaleAspectFit
+        pin.frame = CGRect(x: 10, y: 0, width: 42, height: 42)
+        pin.layer.shadowColor = UIColor.black.cgColor
+        pin.layer.shadowOpacity = 0.3
+        pin.layer.shadowRadius = 7
+        pin.layer.shadowOffset = CGSize(width: 0, height: 4)
+        view.addSubview(pin)
+
+        let pulse = CABasicAnimation(keyPath: "transform.scale")
+        pulse.fromValue = 0.92
+        pulse.toValue = 1.06
+        pulse.duration = 0.7
+        pulse.autoreverses = true
+        pulse.repeatCount = .infinity
+        pin.layer.add(pulse, forKey: "pendingPinPulse")
+    }
 
     private func unqualifiedMarkerView(for annotation: IdentifiableAnnotation) -> MKAnnotationView {
         let id = "unqualifiedMarker"
@@ -826,6 +892,11 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         _ view: MKAnnotationView,
         for annotation: IdentifiableAnnotation
     ) {
+        if annotation.place.list == "PendingProperty" {
+            configurePendingPropertyMarker(view)
+            return
+        }
+
         if annotation.place.isMultiUnit {
             configureBuildingMarker(view, for: annotation)
             return
