@@ -140,7 +140,7 @@ struct MapSearchView: View {
             .onChange(of: selectedList) { updateMarkers() }
             
             // Prospect Popup Stuff
-            .sheet(item: $selectedUnitGroup) { group in
+            .sheet(item: $selectedUnitGroup, onDismiss: resetSelectedMapMarker) { group in
                 UnitSelectorPopupView(
                     baseAddress: group.base,
                     units: group.units,
@@ -150,12 +150,14 @@ struct MapSearchView: View {
                     },
                     onClose: {
                         selectedUnitGroup = nil
+                        resetSelectedMapMarker()
                     }
                 )
                 .presentationDetents([.fraction(0.46)])
+                .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.46)))
                 .presentationDragIndicator(.visible)
             }
-            .sheet(item: $selectedMultiContactState) { state in
+            .sheet(item: $selectedMultiContactState, onDismiss: resetSelectedMapMarker) { state in
                 MultiContactPopupView(
                     state: state,
                     onSelect: { contact in
@@ -164,9 +166,11 @@ struct MapSearchView: View {
                     },
                     onClose: {
                         selectedMultiContactState = nil
+                        resetSelectedMapMarker()
                     }
                 )
                 .presentationDetents([.fraction(0.42)])
+                .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.42)))
                 .presentationDragIndicator(.visible)
             }
             // This is for the contact popup display
@@ -591,6 +595,10 @@ struct MapSearchView: View {
     private func handleMapTap(at coordinate: CLLocationCoordinate2D) {
         // 🎯 Haptic: instant response
         MapScreenHapticsController.shared.mapTap()
+
+        if dismissActiveMapPopup() {
+            return
+        }
         
         // Deselect any currently selected marker
         selectedPlaceID = nil
@@ -652,6 +660,18 @@ struct MapSearchView: View {
         }
     }
 
+    private func dismissActiveMapPopup() -> Bool {
+        guard popupState != nil || selectedUnitGroup != nil || selectedMultiContactState != nil else {
+            return false
+        }
+
+        popupState = nil
+        selectedUnitGroup = nil
+        selectedMultiContactState = nil
+        resetSelectedMapMarker()
+        return true
+    }
+
     private func openUnitContactGroup(_ unitGroup: UnitContactGroup, baseAddress: String) {
         if unitGroup.contactCount > 1 {
             DispatchQueue.main.async {
@@ -711,6 +731,7 @@ struct MapSearchView: View {
             }
         )
         .presentationDetents([.fraction(0.34)])
+        .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.34)))
         .presentationDragIndicator(.visible)
     }
 
@@ -731,6 +752,7 @@ struct MapSearchView: View {
             }
         )
         .presentationDetents([.fraction(0.5)])
+        .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.5)))
         .presentationDragIndicator(.visible)
     }
 
