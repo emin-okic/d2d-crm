@@ -94,7 +94,7 @@ struct CustomerProgressBarView: View {
                 // Initialize to the correct tier
                 setTier(for: current)
             }
-            .onChange(of: current) { newValue in
+            .onChange(of: current) { _, newValue in
                 if newValue == displayedNext {   // ✅ Only fire when exactly hitting milestone
                     if let idx = breakpoints.firstIndex(of: displayedNext),
                        idx + 1 < breakpoints.count {

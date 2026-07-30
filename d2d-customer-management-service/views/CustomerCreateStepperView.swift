@@ -294,7 +294,13 @@ struct CustomerCreateStepperView: View {
 
         do {
             let response = try await MKLocalSearch(request: request).start()
-            return response.mapItems.first?.placemark.coordinate
+            guard let mapItem = response.mapItems.first else { return nil }
+
+            if #available(iOS 26.0, *) {
+                return mapItem.location.coordinate
+            } else {
+                return mapItem.placemark.coordinate
+            }
         } catch {
             print("❌ Geocoding failed:", error)
             return nil
