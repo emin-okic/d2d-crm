@@ -34,31 +34,29 @@ struct ExpandableSearchView: View {
                         viewModel: viewModel,
                         onSubmit: {
                             onSubmit()
-                            searchText = ""
+                            resetSearchState()
                             withAnimation { isExpanded = false }
                         },
                         onSelectResult: {
                             onSelectResult($0)
+                            resetSearchState()
                             
                             // Collapse search bar
                             withAnimation(.easeInOut(duration: 0.2)) {
                                 isExpanded = false
                                 isFocused = false
-                                searchText = ""
                             }
                         },
                         onCancel: {
+                            resetSearchState()
                             withAnimation {
                                 isExpanded = false
-                                searchText = ""
                             }
                         }
                     )
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 30)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .matchedGeometryEffect(id: "search", in: animationNamespace)
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                    .transition(.move(edge: .leading).combined(with: .opacity))
                 } else {
                     Button {
                         
@@ -84,5 +82,10 @@ struct ExpandableSearchView: View {
                 }
             }
         }
+    }
+
+    private func resetSearchState() {
+        searchText = ""
+        viewModel.clear()
     }
 }

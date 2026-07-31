@@ -17,48 +17,71 @@ struct SearchBarView: View {
     @ObservedObject var viewModel: SearchCompleterViewModel
     var onSubmit: () -> Void
     var onSelectResult: (MKLocalSearchCompletion) -> Void
-    
+
     var onCancel: () -> Void
 
     var body: some View {
-        VStack(spacing: 8) {
-            
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.gray)
-
-                TextField("Enter a knock here…", text: $searchText, onCommit: {
-                    onSubmit()
-                })
-                .focused($isFocused)
-                .foregroundColor(.primary)
-                .autocapitalization(.words)
-                .submitLabel(.done)
-
-                // ⬅️ Add cancel button here
-                Button(action: {
-                    onCancel()
-                }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.gray)
-                        .font(.title3)
-                }
-                .padding(.leading, 6)
-            }
-            .padding(10)
-            .background(.ultraThinMaterial)
-            .cornerRadius(10)
-            .shadow(radius: 3, x: 0, y: 2)
-            .padding(.horizontal)
+        VStack(alignment: .leading, spacing: 10) {
+            searchField
 
             SearchSuggestionsListView(
                 isVisible: isFocused,
                 results: viewModel.results,
                 onSelect: onSelectResult
             )
-            
         }
-        .padding(.bottom, 2)
-        .animation(.easeInOut(duration: 0.25), value: viewModel.results.count)
+        .padding(10)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.white.opacity(0.34), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.18), radius: 18, x: 0, y: 10)
+        .animation(.easeInOut(duration: 0.22), value: viewModel.results.count)
+    }
+
+    private var searchField: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "building.2.crop.circle")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.blue)
+                .frame(width: 34, height: 34)
+                .background(Color.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+            TextField("Search properties or addresses", text: $searchText, onCommit: {
+                onSubmit()
+            })
+            .focused($isFocused)
+            .font(.subheadline.weight(.medium))
+            .foregroundColor(.primary)
+            .textInputAutocapitalization(.words)
+            .submitLabel(.search)
+
+            Button(action: cancelOrClearSearch) {
+                Image(systemName: searchText.isEmpty ? "xmark" : "xmark.circle.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.secondary)
+                    .frame(width: 30, height: 30)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.leading, 8)
+        .padding(.trailing, 6)
+        .padding(.vertical, 7)
+        .background(Color(.systemBackground).opacity(0.92), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+        )
+    }
+
+    private func cancelOrClearSearch() {
+        if searchText.isEmpty {
+            onCancel()
+        } else {
+            searchText = ""
+            viewModel.clear()
+        }
     }
 }

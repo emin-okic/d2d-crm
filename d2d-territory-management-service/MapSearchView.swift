@@ -1297,9 +1297,7 @@ struct MapSearchView: View {
             let coordinate = item.location.coordinate
 
             DispatchQueue.main.async {
-                searchText = addr
-                searchVM.results = []
-                isSearchFocused = false
+                clearMapSearchState()
                 pendingAddress = addr
 
                 // Determine zoom: ~1 mile (1609 meters) or adjust based on your UX preference
@@ -1366,8 +1364,16 @@ struct MapSearchView: View {
         return na.contains(nb) || nb.contains(na)
     }
 
+    private func clearMapSearchState() {
+        searchText = ""
+        searchVM.clear()
+        isSearchFocused = false
+        isSearchExpanded = false
+    }
+
     private func submitSearch() {
         let query = searchText
+        clearMapSearchState()
 
         Task { @MainActor in
             guard let item = await SearchBarController.resolveFreeformSearch(query: query) else {
@@ -1377,10 +1383,7 @@ struct MapSearchView: View {
             let address = displayAddress(for: item, fallback: query)
             let coordinate = item.location.coordinate
 
-            searchText = ""
-            searchVM.results = []
-            isSearchFocused = false
-            isSearchExpanded = false
+            clearMapSearchState()
 
             pendingAddress = address
 
