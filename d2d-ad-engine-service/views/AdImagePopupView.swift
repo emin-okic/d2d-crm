@@ -12,6 +12,7 @@ public struct AdImagePopupView: View {
     let onDismiss: () -> Void
     let onClick: (Ad) -> Void
     @Environment(\.openURL) private var openURL
+    @ObservedObject private var engine = AdEngine.shared
 
     public init(ad: Ad, onDismiss: @escaping () -> Void, onClick: @escaping (Ad) -> Void) {
         self.ad = ad
@@ -45,10 +46,10 @@ public struct AdImagePopupView: View {
 
                 adCreative
 
-                if !AdEngine.shared.adsRemoved {
-                    RemoveAdsCTAView(isLoading: false) {
+                if !engine.adsRemoved {
+                    RemoveAdsCTAView(isLoading: engine.removeAdsPurchaseState.isLoading) {
                         Task {
-                            await AdEngine.shared.purchaseRemoveAds()
+                            await engine.purchaseRemoveAds()
                         }
                     }
                     .padding(.horizontal, 10)
@@ -64,7 +65,24 @@ public struct AdImagePopupView: View {
 
             closeButton
         }
-        .onAppear { AdEngine.shared.notify(.impression, ad: ad) }
+        .onAppear { engine.notify(.impression, ad: ad) }
+        .alert(
+            "Purchase Unavailable",
+            isPresented: Binding(
+                get: { engine.purchaseErrorMessage != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        engine.clearPurchaseError()
+                    }
+                }
+            )
+        ) {
+            Button("OK", role: .cancel) {
+                engine.clearPurchaseError()
+            }
+        } message: {
+            Text(engine.purchaseErrorMessage ?? "The purchase could not be started.")
+        }
         .frame(maxWidth: 360)
         .padding(.horizontal, 16)
     }
