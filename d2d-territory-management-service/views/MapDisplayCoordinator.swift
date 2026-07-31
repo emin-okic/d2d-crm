@@ -670,13 +670,30 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     }
 
     func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
-        isUserDrivenRegionChange = mapView.gestureRecognizers?.contains {
-            $0.state == .began || $0.state == .changed
-        } == true
+        isUserDrivenRegionChange = containsActiveUserGesture(in: mapView)
     }
 
     func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+        isUserDrivenRegionChange = isUserDrivenRegionChange || containsActiveUserGesture(in: mapView)
+        onRegionChange?(mapView.region, isUserDrivenRegionChange)
         isUserDrivenRegionChange = false
+    }
+
+    private func containsActiveUserGesture(in view: UIView) -> Bool {
+        if view.gestureRecognizers?.contains(where: isActiveUserGesture) == true {
+            return true
+        }
+
+        return view.subviews.contains { containsActiveUserGesture(in: $0) }
+    }
+
+    private func isActiveUserGesture(_ gesture: UIGestureRecognizer) -> Bool {
+        switch gesture.state {
+        case .began, .changed, .ended:
+            return true
+        default:
+            return false
+        }
     }
 
     private func addMarkerSparkle(to view: MKAnnotationView) {

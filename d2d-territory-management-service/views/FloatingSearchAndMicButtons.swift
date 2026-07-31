@@ -21,6 +21,9 @@ struct FloatingSearchAndMicButtons: View {
     
     var userLocationManager: UserLocationManager
     var mapController: MapController
+    var isShowingPreviousRegionButton: Bool = false
+    var onNavigateToUserLocation: () -> Void = {}
+    var onRevertToPreviousRegion: () -> Void = {}
     
     @AppStorage("mapQRCodeWidgetVisible") private var isQRCodeWidgetVisible: Bool = true
     @State private var isEditingWidgets: Bool = false
@@ -53,17 +56,24 @@ struct FloatingSearchAndMicButtons: View {
                                 Button {
                                     MapScreenHapticsController.shared.lightTap()
                                     MapScreenSoundController.shared.playPropertyOpen()
-                                    if let loc = userLocationManager.location {
-                                        mapController.region.center = loc.coordinate
+                                    if isShowingPreviousRegionButton {
+                                        onRevertToPreviousRegion()
+                                    } else {
+                                        onNavigateToUserLocation()
                                     }
                                 } label: {
-                                    Image(systemName: "location.fill")
+                                    Image(systemName: isShowingPreviousRegionButton ? "arrow.uturn.backward" : "location.fill")
                                         .foregroundColor(.white)
                                         .frame(width: floatingButtonSize, height: floatingButtonSize)
                                         .background(Circle().fill(Color.blue))
                                         .shadow(radius: 4)
                                 }
                                 .transition(.opacity)
+                                .accessibilityLabel(
+                                    isShowingPreviousRegionButton
+                                    ? "Return to Previous Map View"
+                                    : "Navigate to Current Location"
+                                )
 
                                 ExpandableSearchView(
                                     searchText: $searchText,
