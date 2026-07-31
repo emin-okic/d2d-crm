@@ -24,13 +24,28 @@ class SearchCompleterViewModel: NSObject, ObservableObject, MKLocalSearchComplet
     }
 
     func updateQuery(_ query: String) {
-        completer.queryFragment = query
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if trimmedQuery.isEmpty {
+            clear()
+        } else {
+            completer.queryFragment = query
+        }
+    }
+
+    func clear() {
+        completer.queryFragment = ""
+        results = []
     }
 
     nonisolated func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
         // Delegate callback is nonisolated → marshal to MainActor
         Task { @MainActor in
-            self.results = self.completer.results
+            if self.completer.queryFragment.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                self.results = []
+            } else {
+                self.results = self.completer.results
+            }
         }
     }
 

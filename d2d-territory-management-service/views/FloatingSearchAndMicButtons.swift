@@ -33,12 +33,23 @@ struct FloatingSearchAndMicButtons: View {
             Spacer()
             
             ZStack(alignment: .bottomTrailing) {
-                // 🔹 Toolbar glass + search
-                HStack {
-                    MapScreenToolbarLiquidGlass {
-                        VStack(spacing: 10) {
-
-                            if !isExpanded {
+                HStack(alignment: .bottom) {
+                    if isExpanded {
+                        ExpandableSearchView(
+                            searchText: $searchText,
+                            isExpanded: $isExpanded,
+                            isFocused: $isFocused,
+                            viewModel: viewModel,
+                            animationNamespace: animationNamespace,
+                            onSubmit: onSubmit,
+                            onSelectResult: onSelectResult
+                        )
+                        .frame(maxWidth: 420, alignment: .leading)
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 20)
+                    } else {
+                        MapScreenToolbarLiquidGlass {
+                            VStack(spacing: 10) {
                                 Button {
                                     MapScreenHapticsController.shared.lightTap()
                                     MapScreenSoundController.shared.playPropertyOpen()
@@ -53,23 +64,23 @@ struct FloatingSearchAndMicButtons: View {
                                         .shadow(radius: 4)
                                 }
                                 .transition(.opacity)
-                            }
 
-                            ExpandableSearchView(
-                                searchText: $searchText,
-                                isExpanded: $isExpanded,
-                                isFocused: $isFocused,
-                                viewModel: viewModel,
-                                animationNamespace: animationNamespace,
-                                onSubmit: onSubmit,
-                                onSelectResult: onSelectResult
-                            )
+                                ExpandableSearchView(
+                                    searchText: $searchText,
+                                    isExpanded: $isExpanded,
+                                    isFocused: $isFocused,
+                                    viewModel: viewModel,
+                                    animationNamespace: animationNamespace,
+                                    onSubmit: onSubmit,
+                                    onSelectResult: onSelectResult
+                                )
+                            }
                         }
+                        .onLongPressGesture(minimumDuration: 0.5) {
+                            beginWidgetEditing()
+                        }
+                        .padding(.bottom, 10)
                     }
-                    .onLongPressGesture(minimumDuration: 0.5) {
-                        beginWidgetEditing()
-                    }
-                    .padding(.bottom, 10)
 
                     Spacer()
                 }
