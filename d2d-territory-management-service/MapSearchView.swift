@@ -60,6 +60,7 @@ struct MapSearchView: View {
     @State private var pendingAddProperty: PendingAddProperty?
     
     @StateObject private var userLocationManager = UserLocationManager()
+    @State private var previousRegionBeforeUserLocationJump: MKCoordinateRegion?
     
     @State private var selectedPlaceID: UUID? = nil
     
@@ -129,7 +130,10 @@ struct MapSearchView: View {
                     onSubmit: { submitSearch() },
                     onSelectResult: { handleCompletionTap($0) },
                     userLocationManager: userLocationManager,
-                    mapController: controller
+                    mapController: controller,
+                    isShowingPreviousRegionButton: previousRegionBeforeUserLocationJump != nil,
+                    onNavigateToUserLocation: navigateToUserLocation,
+                    onRevertToPreviousRegion: revertToPreviousRegion
                 )
                 
             }
@@ -517,10 +521,28 @@ struct MapSearchView: View {
                 controller.region = newRegion
             }
 
-            if isUserDriven, popupState != nil {
-                popupState = nil
+            if isUserDriven {
+                previousRegionBeforeUserLocationJump = nil
+
+                if popupState != nil {
+                    popupState = nil
+                }
             }
         }
+    }
+
+    private func navigateToUserLocation() {
+        guard let location = userLocationManager.location else { return }
+
+        previousRegionBeforeUserLocationJump = controller.region
+        controller.region.center = location.coordinate
+    }
+
+    private func revertToPreviousRegion() {
+        guard let previousRegion = previousRegionBeforeUserLocationJump else { return }
+
+        controller.region = previousRegion
+        previousRegionBeforeUserLocationJump = nil
     }
 
     private func regionsMatch(_ lhs: MKCoordinateRegion, _ rhs: MKCoordinateRegion) -> Bool {
