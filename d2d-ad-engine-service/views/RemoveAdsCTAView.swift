@@ -13,54 +13,72 @@ struct RemoveAdsCTAView: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 10) {
-
-                Image(systemName: "sparkles")
-                    .font(.system(size: 12, weight: .semibold))
+            HStack(spacing: 12) {
+                Image(systemName: "nosign")
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(.white)
-                    .padding(8)
+                    .frame(width: 34, height: 34)
                     .background(
                         LinearGradient(
-                            colors: [.purple, .pink],
+                            colors: [Color(red: 0.08, green: 0.44, blue: 0.92), Color(red: 0.02, green: 0.65, blue: 0.58)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
-                        )
+                        ),
+                        in: RoundedRectangle(cornerRadius: 9, style: .continuous)
                     )
-                    .clipShape(Circle())
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text("Remove Ads Forever")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(.primary)
+                        .lineLimit(1)
 
-                    Text("One-time unlock • $0.69")
-                        .font(.system(size: 11))
+                    Text("One-time unlock · $0.69")
+                        .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
 
-                Spacer()
+                Spacer(minLength: 10)
 
-                if isLoading {
-                    ProgressView()
-                        .scaleEffect(0.7)
-                } else {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                }
+                trailingAccessory
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.vertical, 11)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color(.secondarySystemBackground))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.black.opacity(0.06), lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.05), radius: 10, y: 4)
+                    .fill(Color(.systemBackground).opacity(0.92))
             )
+            .overlay {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(.primary.opacity(0.08), lineWidth: 1)
+            }
+            .shadow(color: .black.opacity(0.08), radius: 12, y: 6)
         }
         .buttonStyle(.plain)
+        .disabled(isLoading)
+        .accessibilityLabel(Text("Remove Ads Forever, one-time unlock, $0.69"))
+    }
+
+    @ViewBuilder
+    private var trailingAccessory: some View {
+        if isLoading {
+            ProgressView()
+                .controlSize(.small)
+        } else {
+            Text("Unlock")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 12)
+                .frame(height: 30)
+                .background(
+                    LinearGradient(
+                        colors: [Color(red: 0.08, green: 0.44, blue: 0.92), Color(red: 0.02, green: 0.65, blue: 0.58)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ),
+                    in: Capsule()
+                )
+        }
     }
 }
