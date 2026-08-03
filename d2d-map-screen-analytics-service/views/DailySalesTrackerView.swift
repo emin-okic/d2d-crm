@@ -13,6 +13,9 @@ struct DailySalesTrackerView: View {
     @Query private var allKnocks: [Knock]
     @State private var showSheet = false
 
+    var isExpanded: Bool = false
+    var isCustomizationActive: Bool = false
+
     private var todayKnocks: [Knock] {
         let calendar = Calendar.current
         let today = Date()
@@ -28,6 +31,7 @@ struct DailySalesTrackerView: View {
 
     var body: some View {
         Button {
+            guard !isCustomizationActive else { return }
             
             // ✅ Haptics
             MapScreenHapticsController.shared.lightTap()
@@ -38,27 +42,30 @@ struct DailySalesTrackerView: View {
             showSheet = true
             
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: isExpanded ? 16 : 12) {
                 Image(systemName: "checkmark.seal.fill")
-                    .font(.system(size: 19, weight: .semibold))
+                    .font(.system(size: isExpanded ? 24 : 19, weight: .semibold))
                     .foregroundStyle(.green)
-                    .frame(width: 36, height: 36)
+                    .frame(width: isExpanded ? 50 : 36, height: isExpanded ? 50 : 36)
                     .background(Circle().fill(Color.green.opacity(0.14)))
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: isExpanded ? 4 : 2) {
                     Text("Today's Sales")
-                        .font(.caption)
+                        .font(isExpanded ? .subheadline : .caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
 
                     Text("\(todaySalesCount)")
-                        .font(.title2.weight(.bold))
+                        .font(isExpanded ? .largeTitle.weight(.bold) : .title2.weight(.bold))
                         .foregroundStyle(.primary)
                         .contentTransition(.numericText())
                 }
+
+                Spacer(minLength: 0)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .padding(.horizontal, isExpanded ? 18 : 16)
+            .padding(.vertical, isExpanded ? 14 : 10)
+            .frame(maxWidth: isExpanded ? .infinity : nil, minHeight: isExpanded ? 88 : nil, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .fill(.regularMaterial)

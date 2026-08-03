@@ -77,37 +77,10 @@ struct CustomerDetailsView: View {
                 .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
                 
                 Section {
-                    HStack(spacing: 12) {
-                        CustomerDetailsScorecard(
-                            title: "Meetings",
-                            value: "\(customer.appointments.filter { $0.date >= Date() }.count)",
-                            icon: "calendar.badge.clock",
-                            color: .blue
-                        ) {
-                            
-                            // ✅ Play haptic + sound when opening knocking history
-                            ContactScreenHapticsController.shared.lightTap()
-                            ContactScreenSoundController.shared.playSound1()
-                            
-                            showAppointmentsSheet = true
-                            
-                        }
-
-                        CustomerDetailsScorecard(
-                            title: "Knocks",
-                            value: "\(customer.knockHistory.count)",
-                            icon: "hand.tap.fill",
-                            color: .orange
-                        ) {
-                            
-                            // ✅ Play haptic + sound when opening knocking history
-                            ContactScreenHapticsController.shared.lightTap()
-                            ContactScreenSoundController.shared.playSound1()
-                            
-                            showKnocksSheet = true
-                        }
-                    }
-                    .padding(.horizontal, 10)
+                    DetailsScorecardCustomizationView(
+                        storagePrefix: "customerDetails",
+                        items: customerScorecardItems
+                    )
                 }
                 .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
                 .listRowBackground(Color.clear)
@@ -308,6 +281,35 @@ struct CustomerDetailsView: View {
         }
     }
     
+    private var customerScorecardItems: [DetailsScorecardItem] {
+        [
+            DetailsScorecardItem(
+                kind: .meetings,
+                title: "Meetings",
+                value: "\(customer.appointments.filter { $0.date >= Date() }.count)",
+                icon: "calendar.badge.clock",
+                color: .blue,
+                action: {
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    showAppointmentsSheet = true
+                }
+            ),
+            DetailsScorecardItem(
+                kind: .knocks,
+                title: "Knocks",
+                value: "\(customer.knockHistory.count)",
+                icon: "hand.tap.fill",
+                color: .orange,
+                action: {
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    showKnocksSheet = true
+                }
+            )
+        ]
+    }
+
     private func exportToContacts() {
         let store = CNContactStore()
         

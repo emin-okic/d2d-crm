@@ -69,37 +69,10 @@ struct ProspectDetailsView: View {
                 .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
                 
                 Section {
-                    HStack(spacing: 12) {
-                        ProspectScorecard(
-                            title: "Meetings",
-                            value: "\(prospect.appointments.filter { $0.date >= Date() }.count)",
-                            icon: "calendar.badge.clock",
-                            color: .blue
-                        ) {
-                            
-                            // ✅ Play haptic + sound when opening knocking history
-                            ContactScreenHapticsController.shared.lightTap()
-                            ContactScreenSoundController.shared.playSound1()
-                            
-                            showAppointmentsSheet = true
-                            
-                        }
-
-                        ProspectScorecard(
-                            title: "Knocks",
-                            value: "\(prospect.knockHistory.count)",
-                            icon: "hand.tap.fill",
-                            color: .orange
-                        ) {
-                            
-                            // ✅ Play haptic + sound when opening knocking history
-                            ContactScreenHapticsController.shared.lightTap()
-                            ContactScreenSoundController.shared.playSound1()
-                            
-                            showKnocksSheet = true
-                        }
-                    }
-                    .padding(.horizontal, 10) // ← give horizontal breathing room
+                    DetailsScorecardCustomizationView(
+                        storagePrefix: "prospectDetails",
+                        items: prospectScorecardItems
+                    )
                 }
                 .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
                 .listRowBackground(Color.clear)
@@ -331,6 +304,35 @@ struct ProspectDetailsView: View {
         }
     }
     
+    private var prospectScorecardItems: [DetailsScorecardItem] {
+        [
+            DetailsScorecardItem(
+                kind: .meetings,
+                title: "Meetings",
+                value: "\(prospect.appointments.filter { $0.date >= Date() }.count)",
+                icon: "calendar.badge.clock",
+                color: .blue,
+                action: {
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    showAppointmentsSheet = true
+                }
+            ),
+            DetailsScorecardItem(
+                kind: .knocks,
+                title: "Knocks",
+                value: "\(prospect.knockHistory.count)",
+                icon: "hand.tap.fill",
+                color: .orange,
+                action: {
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    showKnocksSheet = true
+                }
+            )
+        ]
+    }
+
     private func exportToContacts() {
         let store = CNContactStore()
         
