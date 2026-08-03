@@ -14,6 +14,8 @@ struct DailyKnocksTrackerView: View {
     
     @State private var showSheet = false
 
+    var isExpanded: Bool = false
+
     private var todayKnockCount: Int {
         let calendar = Calendar.current
         let today = Date()
@@ -34,27 +36,30 @@ struct DailyKnocksTrackerView: View {
             
             showSheet = true
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: isExpanded ? 16 : 12) {
                 Image(systemName: "door.left.hand.open")
-                    .font(.system(size: 19, weight: .semibold))
+                    .font(.system(size: isExpanded ? 24 : 19, weight: .semibold))
                     .foregroundStyle(.blue)
-                    .frame(width: 36, height: 36)
+                    .frame(width: isExpanded ? 50 : 36, height: isExpanded ? 50 : 36)
                     .background(Circle().fill(Color.blue.opacity(0.14)))
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: isExpanded ? 4 : 2) {
                     Text("Today's Knocks")
-                        .font(.caption)
+                        .font(isExpanded ? .subheadline : .caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
 
                     Text("\(todayKnockCount)")
-                        .font(.title2.weight(.bold))
+                        .font(isExpanded ? .largeTitle.weight(.bold) : .title2.weight(.bold))
                         .foregroundStyle(.primary)
                         .contentTransition(.numericText())
                 }
+
+                Spacer(minLength: 0)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .padding(.horizontal, isExpanded ? 18 : 16)
+            .padding(.vertical, isExpanded ? 14 : 10)
+            .frame(maxWidth: isExpanded ? .infinity : nil, minHeight: isExpanded ? 88 : nil, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .fill(.regularMaterial)
