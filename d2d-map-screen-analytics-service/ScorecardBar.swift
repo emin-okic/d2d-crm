@@ -19,12 +19,17 @@ struct ScorecardBar: View {
 
     var body: some View {
         VStack(spacing: 10) {
-            if visibleDefinitions.isEmpty {
+            if visibleDefinitions.isEmpty && isShowingRestoreTargets == false {
                 emptyScorecardRestoreZone
                     .transition(.opacity)
             } else {
                 scorecardGrid
                     .transition(.scale(scale: 0.98).combined(with: .opacity))
+            }
+
+            if isShowingRestoreTargets {
+                selectorPanel
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
         .padding(.horizontal, 16)
@@ -86,24 +91,17 @@ struct ScorecardBar: View {
 
     private func editControls(for definition: MapScorecardDefinition) -> some View {
         HStack(spacing: 6) {
-            if hiddenDefinitions.isEmpty == false {
-                Menu {
-                    ForEach(hiddenDefinitions) { hiddenDefinition in
-                        Button {
-                            restore(hiddenDefinition)
-                        } label: {
-                            Label(hiddenDefinition.title, systemImage: hiddenDefinition.icon)
-                        }
-                    }
-                } label: {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 22, weight: .semibold))
-                        .symbolRenderingMode(.palette)
-                        .foregroundStyle(.white, .blue)
-                        .frame(width: 30, height: 30)
-                }
-                .accessibilityLabel("Add Map Scorecard")
+            Button {
+                showSelector()
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 30, height: 30)
+                    .background(Color.blue, in: Circle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Choose Map Scorecards")
 
             Button {
                 requestRemovalConfirmation(for: definition)
@@ -172,35 +170,15 @@ struct ScorecardBar: View {
     }
 
     private var emptyScorecardRestoreZone: some View {
-        Group {
-            if isShowingRestoreTargets {
-                restoreChooserCard
-                    .transition(.scale(scale: 0.98).combined(with: .opacity))
-            } else {
-                Color.clear
-                    .frame(height: 96)
-                    .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle())
-                    .highPriorityGesture(
-                        LongPressGesture(minimumDuration: 0.5)
-                            .onEnded { _ in
-                                requestRestoreTargets()
-                            }
-                    )
-                    .accessibilityLabel("Show Scorecard Restore Options")
-            }
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private var restoreChooserCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        Button {
+            showSelector()
+        } label: {
             HStack(spacing: 10) {
                 Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 22, weight: .semibold))
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(.blue)
-                    .frame(width: 40, height: 40)
-                    .background(Color.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .frame(width: 38, height: 38)
+                    .background(Color.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
                 Text("Choose scorecards")
                     .font(.subheadline.weight(.semibold))
@@ -208,67 +186,34 @@ struct ScorecardBar: View {
                     .lineLimit(1)
 
                 Spacer(minLength: 0)
-            }
-
-            restoreTargetGrid(for: hiddenDefinitions.isEmpty ? MapScorecardDefinition.allCases : hiddenDefinitions)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, minHeight: 118, alignment: .leading)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color.blue.opacity(0.24), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.16), radius: 14, x: 0, y: 8)
-    }
-
-    private func restoreTargetGrid(for definitions: [MapScorecardDefinition]) -> some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(minimum: 0), spacing: 10), count: 2), spacing: 10) {
-            ForEach(definitions) { definition in
-                restoreTarget(for: definition)
-            }
-        }
-    }
-
-    private func restoreTarget(for definition: MapScorecardDefinition) -> some View {
-        Button {
-            restore(definition)
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: definition.icon)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(definition.color)
-                    .frame(width: 24, height: 24)
-                    .background(definition.color.opacity(0.12), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-
-                Text(definition.title)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
-
-                Spacer(minLength: 0)
 
                 Image(systemName: "plus")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(.white)
-                    .frame(width: 22, height: 22)
-                    .background(definition.color, in: Circle())
+                    .frame(width: 26, height: 26)
+                    .background(Color.blue, in: Circle())
             }
-            .padding(.horizontal, 10)
-            .frame(maxWidth: .infinity)
-            .frame(height: 46)
-            .background(definition.color.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .padding(12)
+            .frame(maxWidth: 430, minHeight: 72, alignment: .leading)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(
-                        definition.color,
-                        style: StrokeStyle(lineWidth: 1.6, dash: [6, 5])
-                    )
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color.white.opacity(0.35), lineWidth: 1)
             )
+            .shadow(color: Color.black.opacity(0.16), radius: 14, x: 0, y: 8)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Add \(definition.title) Scorecard")
+        .accessibilityLabel("Choose Map Scorecards")
+    }
+
+    private var selectorPanel: some View {
+        MapScorecardSelectorView(
+            definitions: MapScorecardDefinition.allCases,
+            selectedIDs: Set(selectedIDs),
+            onToggle: toggleSelection,
+            onRestoreDefaults: restoreDefaultSelection,
+            onClose: closeSelector
+        )
     }
 
     private var gridColumns: [GridItem] {
@@ -278,11 +223,6 @@ struct ScorecardBar: View {
 
     private var visibleDefinitions: [MapScorecardDefinition] {
         selectedIDs.compactMap { MapScorecardDefinition.definition(for: $0) }
-    }
-
-    private var hiddenDefinitions: [MapScorecardDefinition] {
-        let selected = Set(selectedIDs)
-        return MapScorecardDefinition.allCases.filter { selected.contains($0.id) == false }
     }
 
     private var selectedIDs: [String] {
@@ -336,24 +276,35 @@ struct ScorecardBar: View {
         updateCustomizationState()
     }
 
-    private func requestRestoreTargets() {
+    private func showSelector() {
         MapScreenHapticsController.shared.lightTap()
+        editingScorecard = nil
+        confirmingRemoval = nil
         isShowingRestoreTargets = true
         updateCustomizationState()
     }
 
-    private func restore(_ definition: MapScorecardDefinition) {
+    private func closeSelector() {
         MapScreenHapticsController.shared.lightTap()
-        MapScreenSoundController.shared.playPropertyOpen()
-
-        var nextSelection = visibleDefinitions.filter { $0.id != definition.id }
-        nextSelection.append(definition)
-        setSelection(nextSelection)
-
-        editingScorecard = nil
-        confirmingRemoval = nil
         isShowingRestoreTargets = false
         updateCustomizationState()
+    }
+
+    private func toggleSelection(_ definition: MapScorecardDefinition) {
+        MapScreenHapticsController.shared.lightTap()
+
+        if selectedIDs.contains(definition.id) {
+            setSelection(visibleDefinitions.filter { $0.id != definition.id })
+        } else {
+            MapScreenSoundController.shared.playPropertyOpen()
+            setSelection(visibleDefinitions + [definition])
+        }
+    }
+
+    private func restoreDefaultSelection() {
+        MapScreenHapticsController.shared.lightTap()
+        MapScreenSoundController.shared.playPropertyOpen()
+        setSelection(MapScorecardDefinition.defaultSelection)
     }
 
     private func setSelection(_ definitions: [MapScorecardDefinition]) {
