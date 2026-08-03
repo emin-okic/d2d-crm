@@ -114,11 +114,11 @@ struct ScorecardBar: View {
             Button {
                 showSelector()
             } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(.white)
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 22, weight: .semibold))
+                    .symbolRenderingMode(.palette)
+                    .foregroundStyle(.white, .blue)
                     .frame(width: 30, height: 30)
-                    .background(Color.blue, in: Circle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Choose Map Scorecards")
