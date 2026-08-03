@@ -63,6 +63,7 @@ struct MapSearchView: View {
     @State private var previousRegionBeforeUserLocationJump: MKCoordinateRegion?
     
     @State private var selectedPlaceID: UUID? = nil
+    @State private var isCustomizingMapScorecards = false
     
     @State private var pendingBulkAdd: PendingBulkAdd?
     
@@ -119,7 +120,7 @@ struct MapSearchView: View {
                 .frame(maxHeight: .infinity)
                 .edgesIgnoringSafeArea(.horizontal)
 
-                ScorecardBar()
+                ScorecardBar(isCustomizingScorecards: $isCustomizingMapScorecards)
 
                 FloatingSearchAndMicButtons(
                     searchText: $searchText,
@@ -617,6 +618,8 @@ struct MapSearchView: View {
     }
 
     private func handleMapTap(at coordinate: CLLocationCoordinate2D) {
+        guard !isCustomizingMapScorecards else { return }
+
         // 🎯 Haptic: instant response
         MapScreenHapticsController.shared.mapTap()
 

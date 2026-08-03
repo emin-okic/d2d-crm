@@ -14,6 +14,7 @@ struct DailySalesTrackerView: View {
     @State private var showSheet = false
 
     var isExpanded: Bool = false
+    var isCustomizationActive: Bool = false
 
     private var todayKnocks: [Knock] {
         let calendar = Calendar.current
@@ -30,6 +31,7 @@ struct DailySalesTrackerView: View {
 
     var body: some View {
         Button {
+            guard !isCustomizationActive else { return }
             
             // ✅ Haptics
             MapScreenHapticsController.shared.lightTap()

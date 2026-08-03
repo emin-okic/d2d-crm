@@ -7,10 +7,13 @@
 import SwiftUI
 
 struct ScorecardBar: View {
+    @Binding var isCustomizingScorecards: Bool
+
     @AppStorage("mapScorecardKnocksVisible") private var isKnocksVisible: Bool = true
     @AppStorage("mapScorecardSalesVisible") private var isSalesVisible: Bool = true
 
     @State private var editingScorecard: MapScorecardKind?
+    @State private var confirmingRemoval: MapScorecardKind?
     @State private var isShowingRestoreTargets = false
 
     private enum MapScorecardKind: String, Identifiable, CaseIterable {
@@ -90,36 +93,47 @@ struct ScorecardBar: View {
                 }
                 .overlay(alignment: .topTrailing) {
                     if editingScorecard == kind {
-                        Button {
-                            hide(kind)
-                        } label: {
-                            Image(systemName: "minus.circle.fill")
-                                .font(.system(size: 22, weight: .semibold))
-                                .symbolRenderingMode(.palette)
-                                .foregroundStyle(.white, .red)
-                                .frame(width: 30, height: 30)
+                        HStack(spacing: 6) {
+                            if visibleKinds.count == 1, let hiddenKind = hiddenKinds.first {
+                                Button {
+                                    restore(hiddenKind)
+                                } label: {
+                                    Image(systemName: "plus.circle.fill")
+                                        .font(.system(size: 22, weight: .semibold))
+                                        .symbolRenderingMode(.palette)
+                                        .foregroundStyle(.white, hiddenKind.color)
+                                        .frame(width: 30, height: 30)
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("Add \(hiddenKind.title) Scorecard")
+                            }
+
+                            Button {
+                                requestRemovalConfirmation(for: kind)
+                            } label: {
+                                Image(systemName: "minus.circle.fill")
+                                    .font(.system(size: 22, weight: .semibold))
+                                    .symbolRenderingMode(.palette)
+                                    .foregroundStyle(.white, .red)
+                                    .frame(width: 30, height: 30)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Remove \(kind.title) Scorecard")
                         }
-                        .buttonStyle(.plain)
                         .padding(6)
-                        .accessibilityLabel("Remove \(kind.title) Scorecard")
                     }
                 }
                 .contentShape(Rectangle())
-                .simultaneousGesture(
+                .highPriorityGesture(
                     LongPressGesture(minimumDuration: 0.5)
                         .onEnded { _ in
                             beginEditing(kind)
                         }
                 )
 
-            if editingScorecard == kind {
+            if confirmingRemoval == kind {
                 removePrompt(for: kind)
                     .transition(.move(edge: .top).combined(with: .opacity))
-
-                if hiddenKinds.isEmpty == false {
-                    restoreTargetRow(for: hiddenKinds)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
             }
         }
     }
@@ -128,9 +142,15 @@ struct ScorecardBar: View {
     private func scorecard(for kind: MapScorecardKind) -> some View {
         switch kind {
         case .knocks:
-            DailyKnocksTrackerView(isExpanded: visibleKinds.count == 1)
+            DailyKnocksTrackerView(
+                isExpanded: visibleKinds.count == 1,
+                isCustomizationActive: isCustomizingScorecards
+            )
         case .sales:
-            DailySalesTrackerView(isExpanded: visibleKinds.count == 1)
+            DailySalesTrackerView(
+                isExpanded: visibleKinds.count == 1,
+                isCustomizationActive: isCustomizingScorecards
+            )
         }
     }
 
@@ -196,7 +216,7 @@ struct ScorecardBar: View {
                     .frame(height: 96)
                     .frame(maxWidth: .infinity)
                     .contentShape(Rectangle())
-                    .simultaneousGesture(
+                    .highPriorityGesture(
                         LongPressGesture(minimumDuration: 0.5)
                             .onEnded { _ in
                                 requestRestoreTargets()
@@ -246,14 +266,17 @@ struct ScorecardBar: View {
         .frame(maxWidth: .infinity)
     }
 
+
     private func restoreTarget(for kind: MapScorecardKind) -> some View {
         Button {
             restore(kind)
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: kind.icon)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(kind.color)
+                    .frame(width: 24, height: 24)
+                    .background(kind.color.opacity(0.12), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
 
                 Text(kind.title)
                     .font(.caption.weight(.semibold))
@@ -261,14 +284,18 @@ struct ScorecardBar: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
 
-                Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(kind.color)
+                Spacer(minLength: 0)
+
+                Image(systemName: "plus")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 22, height: 22)
+                    .background(kind.color, in: Circle())
             }
             .padding(.horizontal, 10)
             .frame(maxWidth: .infinity)
             .frame(height: 46)
-            .background(kind.color.opacity(0.06), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .background(kind.color.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .stroke(
@@ -301,12 +328,22 @@ struct ScorecardBar: View {
     private func beginEditing(_ kind: MapScorecardKind) {
         MapScreenHapticsController.shared.lightTap()
         editingScorecard = kind
+        confirmingRemoval = nil
         isShowingRestoreTargets = false
+        updateCustomizationState()
+    }
+
+    private func requestRemovalConfirmation(for kind: MapScorecardKind) {
+        MapScreenHapticsController.shared.lightTap()
+        confirmingRemoval = kind
+        updateCustomizationState()
     }
 
     private func cancelEditing() {
         MapScreenHapticsController.shared.lightTap()
         editingScorecard = nil
+        confirmingRemoval = nil
+        updateCustomizationState()
     }
 
     private func hide(_ kind: MapScorecardKind) {
@@ -318,11 +355,14 @@ struct ScorecardBar: View {
             isSalesVisible = false
         }
         editingScorecard = nil
+        confirmingRemoval = nil
+        updateCustomizationState()
     }
 
     private func requestRestoreTargets() {
         MapScreenHapticsController.shared.lightTap()
         isShowingRestoreTargets = true
+        updateCustomizationState()
     }
 
     private func restore(_ kind: MapScorecardKind) {
@@ -334,6 +374,13 @@ struct ScorecardBar: View {
         case .sales:
             isSalesVisible = true
         }
+        editingScorecard = nil
+        confirmingRemoval = nil
         isShowingRestoreTargets = false
+        updateCustomizationState()
+    }
+
+    private func updateCustomizationState() {
+        isCustomizingScorecards = editingScorecard != nil || confirmingRemoval != nil || isShowingRestoreTargets
     }
 }
