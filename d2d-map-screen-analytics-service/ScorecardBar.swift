@@ -50,8 +50,8 @@ struct ScorecardBar: View {
     var body: some View {
         VStack(spacing: 10) {
             if visibleKinds.isEmpty {
-                restoreBanner
-                    .transition(.move(edge: .top).combined(with: .opacity))
+                emptyScorecardRestoreZone
+                    .transition(.opacity)
             } else {
                 scorecardStack
                     .transition(.scale(scale: 0.98).combined(with: .opacity))
@@ -186,38 +186,55 @@ struct ScorecardBar: View {
         .shadow(color: Color.black.opacity(0.18), radius: 12, x: 0, y: 6)
     }
 
-    private var restoreBanner: some View {
-        VStack(spacing: 10) {
-            Button {
-                requestRestoreTargets()
-            } label: {
-                Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 28, weight: .semibold))
-                    .foregroundStyle(.blue)
-                    .frame(width: 54, height: 54)
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(Color.blue.opacity(0.24), lineWidth: 1)
-                    )
-                    .shadow(color: Color.black.opacity(0.16), radius: 12, x: 0, y: 7)
-            }
-            .buttonStyle(.plain)
-            .contentShape(Rectangle())
-            .simultaneousGesture(
-                LongPressGesture(minimumDuration: 0.5)
-                    .onEnded { _ in
-                        requestRestoreTargets()
-                    }
-            )
-            .accessibilityLabel("Add Scorecards")
-
+    private var emptyScorecardRestoreZone: some View {
+        Group {
             if isShowingRestoreTargets {
-                restoreTargetRow(for: MapScorecardKind.allCases)
-                    .transition(.move(edge: .top).combined(with: .opacity))
+                restoreChooserCard
+                    .transition(.scale(scale: 0.98).combined(with: .opacity))
+            } else {
+                Color.clear
+                    .frame(height: 96)
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
+                    .simultaneousGesture(
+                        LongPressGesture(minimumDuration: 0.5)
+                            .onEnded { _ in
+                                requestRestoreTargets()
+                            }
+                    )
+                    .accessibilityLabel("Show Scorecard Restore Options")
             }
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private var restoreChooserCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(.blue)
+                    .frame(width: 40, height: 40)
+                    .background(Color.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                Text("Choose first scorecard")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                Spacer(minLength: 0)
+            }
+
+            restoreTargetRow(for: MapScorecardKind.allCases)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 118, alignment: .leading)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.blue.opacity(0.24), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.16), radius: 14, x: 0, y: 8)
     }
 
     private func restoreTargetRow(for kinds: [MapScorecardKind]) -> some View {
