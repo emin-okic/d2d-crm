@@ -10,6 +10,7 @@ import SwiftUI
 struct MapScorecardSelectorView: View {
     let definitions: [MapScorecardDefinition]
     let selectedIDs: Set<String>
+    let maxSelectionCount: Int
     let onToggle: (MapScorecardDefinition) -> Void
     let onRestoreDefaults: () -> Void
     let onClose: () -> Void
@@ -25,9 +26,11 @@ struct MapScorecardSelectorView: View {
 
             LazyVGrid(columns: columns, spacing: 10) {
                 ForEach(definitions) { definition in
+                    let isSelected = selectedIDs.contains(definition.id)
                     MapScorecardSelectorTile(
                         definition: definition,
-                        isSelected: selectedIDs.contains(definition.id),
+                        isSelected: isSelected,
+                        isDisabled: isSelectionFull && isSelected == false,
                         onToggle: {
                             onToggle(definition)
                         }
@@ -61,7 +64,7 @@ struct MapScorecardSelectorView: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
 
-                Text("\(selectedIDs.count) active")
+                Text("\(selectedIDs.count) of \(maxSelectionCount) active")
                     .font(.caption2.weight(.medium))
                     .foregroundStyle(.secondary)
             }
@@ -80,6 +83,10 @@ struct MapScorecardSelectorView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Close Scorecard Selector")
         }
+    }
+
+    private var isSelectionFull: Bool {
+        selectedIDs.count >= maxSelectionCount
     }
 
     private var footer: some View {
@@ -118,6 +125,7 @@ struct MapScorecardSelectorView: View {
 private struct MapScorecardSelectorTile: View {
     let definition: MapScorecardDefinition
     let isSelected: Bool
+    let isDisabled: Bool
     let onToggle: () -> Void
 
     var body: some View {
@@ -134,9 +142,9 @@ private struct MapScorecardSelectorTile: View {
 
                     Spacer(minLength: 0)
 
-                    Image(systemName: isSelected ? "checkmark.circle.fill" : "plus.circle")
+                    Image(systemName: statusIcon)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(isSelected ? definition.color : .secondary)
+                        .foregroundStyle(statusColor)
                         .frame(width: 22, height: 22)
                 }
 
@@ -162,11 +170,29 @@ private struct MapScorecardSelectorTile: View {
             )
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(isSelected ? "Remove" : "Add") \(definition.title) Scorecard")
+        .disabled(isDisabled)
+        .opacity(isDisabled ? 0.48 : 1)
+        .accessibilityLabel(accessibilityLabel)
+    }
+
+    private var statusIcon: String {
+        if isSelected { return "checkmark.circle.fill" }
+        return isDisabled ? "lock.circle" : "plus.circle"
+    }
+
+    private var statusColor: Color {
+        if isSelected { return definition.color }
+        return isDisabled ? .secondary.opacity(0.72) : .secondary
     }
 
     private var tileBackground: Color {
-        isSelected ? definition.color.opacity(0.12) : Color(.secondarySystemBackground).opacity(0.82)
+        if isSelected { return definition.color.opacity(0.12) }
+        return Color(.secondarySystemBackground).opacity(isDisabled ? 0.52 : 0.82)
+    }
+
+    private var accessibilityLabel: String {
+        if isDisabled { return "Maximum Scorecards Reached" }
+        return "\(isSelected ? "Remove" : "Add") \(definition.title) Scorecard"
     }
 }
 

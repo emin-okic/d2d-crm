@@ -17,6 +17,8 @@ struct ScorecardBar: View {
     @State private var confirmingRemoval: MapScorecardDefinition?
     @State private var isShowingRestoreTargets = false
 
+    private let maxScorecardCount = 4
+
     var body: some View {
         VStack(spacing: 10) {
             if visibleDefinitions.isEmpty && isShowingRestoreTargets == false {
@@ -43,20 +45,38 @@ struct ScorecardBar: View {
     }
 
     private var scorecardGrid: some View {
-        LazyVGrid(columns: gridColumns, spacing: 12) {
-            ForEach(visibleDefinitions) { definition in
-                scorecardSlot(for: definition)
-                    .frame(maxWidth: .infinity)
+        Group {
+            if visibleDefinitions.count == 3 {
+                VStack(spacing: 12) {
+                    HStack(spacing: 12) {
+                        ForEach(visibleDefinitions.prefix(2)) { definition in
+                            scorecardSlot(for: definition, isExpanded: false)
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+
+                    if let bannerDefinition = visibleDefinitions.last {
+                        scorecardSlot(for: bannerDefinition, isExpanded: true)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+            } else {
+                LazyVGrid(columns: gridColumns, spacing: 12) {
+                    ForEach(visibleDefinitions) { definition in
+                        scorecardSlot(for: definition, isExpanded: visibleDefinitions.count == 1)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
             }
         }
         .frame(maxWidth: visibleDefinitions.count == 1 ? .infinity : 420, alignment: .center)
     }
 
-    private func scorecardSlot(for definition: MapScorecardDefinition) -> some View {
+    private func scorecardSlot(for definition: MapScorecardDefinition, isExpanded: Bool) -> some View {
         VStack(spacing: 8) {
             MapAnalyticsTrackerView(
                 definition: definition,
-                isExpanded: visibleDefinitions.count == 1,
+                isExpanded: isExpanded,
                 isCustomizationActive: isCustomizingScorecards
             )
             .overlay {
@@ -210,6 +230,7 @@ struct ScorecardBar: View {
         MapScorecardSelectorView(
             definitions: MapScorecardDefinition.allCases,
             selectedIDs: Set(selectedIDs),
+            maxSelectionCount: maxScorecardCount,
             onToggle: toggleSelection,
             onRestoreDefaults: restoreDefaultSelection,
             onClose: closeSelector
@@ -296,6 +317,7 @@ struct ScorecardBar: View {
         if selectedIDs.contains(definition.id) {
             setSelection(visibleDefinitions.filter { $0.id != definition.id })
         } else {
+            guard visibleDefinitions.count < maxScorecardCount else { return }
             MapScreenSoundController.shared.playPropertyOpen()
             setSelection(visibleDefinitions + [definition])
         }
