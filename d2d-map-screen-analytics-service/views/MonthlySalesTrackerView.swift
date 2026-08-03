@@ -1,19 +1,19 @@
 //
-//  DailySalesTrackerView.swift
+//  MonthlySalesTrackerView.swift
 //  d2d-studio
 //
-//  Created by Emin Okic on 12/27/25.
+//  Created by Codex on 8/2/26.
 //
 
 import SwiftUI
 
-struct DailySalesTrackerView: View {
+struct MonthlySalesTrackerView: View {
     var isExpanded: Bool = false
     var isCustomizationActive: Bool = false
 
     var body: some View {
         MapAnalyticsTrackerView(
-            definition: MapScorecardDefinition(metric: .sales, period: .daily),
+            definition: MapScorecardDefinition(metric: .sales, period: .monthly),
             isExpanded: isExpanded,
             isCustomizationActive: isCustomizationActive
         )
