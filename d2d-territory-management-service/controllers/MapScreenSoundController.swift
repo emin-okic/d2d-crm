@@ -24,4 +24,24 @@ final class MapScreenSoundController {
     func playPropertyAdded() {
         AudioServicesPlaySystemSound(1104) // rewarding success tap
     }
+
+    func playScorecardSelectorOpen() {
+        AudioServicesPlaySystemSound(1104)
+    }
+
+    func playScorecardSelectorClose() {
+        AudioServicesPlaySystemSound(1157)
+    }
+
+    func playScorecardAdded() {
+        AudioServicesPlaySystemSound(1104)
+    }
+
+    func playScorecardRemoved() {
+        AudioServicesPlaySystemSound(1155)
+    }
+
+    func playScorecardLimitReached() {
+        AudioServicesPlaySystemSound(1053)
+    }
 }

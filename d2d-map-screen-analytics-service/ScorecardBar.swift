@@ -232,6 +232,7 @@ struct ScorecardBar: View {
             selectedIDs: Set(selectedIDs),
             maxSelectionCount: maxScorecardCount,
             onToggle: toggleSelection,
+            onLimitReached: signalScorecardLimitReached,
             onRestoreDefaults: restoreDefaultSelection,
             onClose: closeSelector
         )
@@ -270,6 +271,7 @@ struct ScorecardBar: View {
 
     private func beginEditing(_ definition: MapScorecardDefinition) {
         MapScreenHapticsController.shared.lightTap()
+        MapScreenSoundController.shared.playScorecardSelectorOpen()
         editingScorecard = definition
         confirmingRemoval = nil
         isShowingRestoreTargets = false
@@ -278,12 +280,14 @@ struct ScorecardBar: View {
 
     private func requestRemovalConfirmation(for definition: MapScorecardDefinition) {
         MapScreenHapticsController.shared.lightTap()
+        MapScreenSoundController.shared.playScorecardSelectorOpen()
         confirmingRemoval = definition
         updateCustomizationState()
     }
 
     private func cancelEditing() {
         MapScreenHapticsController.shared.lightTap()
+        MapScreenSoundController.shared.playScorecardSelectorClose()
         editingScorecard = nil
         confirmingRemoval = nil
         updateCustomizationState()
@@ -291,6 +295,7 @@ struct ScorecardBar: View {
 
     private func hide(_ definition: MapScorecardDefinition) {
         MapScreenHapticsController.shared.lightTap()
+        MapScreenSoundController.shared.playScorecardRemoved()
         setSelection(visibleDefinitions.filter { $0.id != definition.id })
         editingScorecard = nil
         confirmingRemoval = nil
@@ -299,6 +304,7 @@ struct ScorecardBar: View {
 
     private func showSelector() {
         MapScreenHapticsController.shared.lightTap()
+        MapScreenSoundController.shared.playScorecardSelectorOpen()
         editingScorecard = nil
         confirmingRemoval = nil
         isShowingRestoreTargets = true
@@ -307,6 +313,7 @@ struct ScorecardBar: View {
 
     private func closeSelector() {
         MapScreenHapticsController.shared.lightTap()
+        MapScreenSoundController.shared.playScorecardSelectorClose()
         isShowingRestoreTargets = false
         updateCustomizationState()
     }
@@ -315,17 +322,26 @@ struct ScorecardBar: View {
         MapScreenHapticsController.shared.lightTap()
 
         if selectedIDs.contains(definition.id) {
+            MapScreenSoundController.shared.playScorecardRemoved()
             setSelection(visibleDefinitions.filter { $0.id != definition.id })
         } else {
-            guard visibleDefinitions.count < maxScorecardCount else { return }
-            MapScreenSoundController.shared.playPropertyOpen()
+            guard visibleDefinitions.count < maxScorecardCount else {
+                signalScorecardLimitReached()
+                return
+            }
+            MapScreenSoundController.shared.playScorecardAdded()
             setSelection(visibleDefinitions + [definition])
         }
     }
 
+    private func signalScorecardLimitReached() {
+        MapScreenHapticsController.shared.bulkAddConfirmed()
+        MapScreenSoundController.shared.playScorecardLimitReached()
+    }
+
     private func restoreDefaultSelection() {
         MapScreenHapticsController.shared.lightTap()
-        MapScreenSoundController.shared.playPropertyOpen()
+        MapScreenSoundController.shared.playScorecardAdded()
         setSelection(MapScorecardDefinition.defaultSelection)
     }
 

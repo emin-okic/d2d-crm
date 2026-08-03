@@ -12,6 +12,7 @@ struct MapScorecardSelectorView: View {
     let selectedIDs: Set<String>
     let maxSelectionCount: Int
     let onToggle: (MapScorecardDefinition) -> Void
+    let onLimitReached: () -> Void
     let onRestoreDefaults: () -> Void
     let onClose: () -> Void
 
@@ -33,7 +34,8 @@ struct MapScorecardSelectorView: View {
                         isDisabled: isSelectionFull && isSelected == false,
                         onToggle: {
                             onToggle(definition)
-                        }
+                        },
+                        onLimitReached: onLimitReached
                     )
                 }
             }
@@ -127,10 +129,15 @@ private struct MapScorecardSelectorTile: View {
     let isSelected: Bool
     let isDisabled: Bool
     let onToggle: () -> Void
+    let onLimitReached: () -> Void
 
     var body: some View {
         Button {
-            onToggle()
+            if isDisabled {
+                onLimitReached()
+            } else {
+                onToggle()
+            }
         } label: {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .top, spacing: 6) {
@@ -170,7 +177,6 @@ private struct MapScorecardSelectorTile: View {
             )
         }
         .buttonStyle(.plain)
-        .disabled(isDisabled)
         .opacity(isDisabled ? 0.48 : 1)
         .accessibilityLabel(accessibilityLabel)
     }
