@@ -9,54 +9,21 @@ import SwiftUI
 struct ScorecardBar: View {
     @Binding var isCustomizingScorecards: Bool
 
-    @AppStorage("mapScorecardKnocksVisible") private var isKnocksVisible: Bool = true
-    @AppStorage("mapScorecardSalesVisible") private var isSalesVisible: Bool = true
+    @AppStorage("mapScorecardSelectionIDs") private var selectedScorecardIDs: String = ""
+    @AppStorage("mapScorecardKnocksVisible") private var legacyKnocksVisible: Bool = true
+    @AppStorage("mapScorecardSalesVisible") private var legacySalesVisible: Bool = true
 
-    @State private var editingScorecard: MapScorecardKind?
-    @State private var confirmingRemoval: MapScorecardKind?
+    @State private var editingScorecard: MapScorecardDefinition?
+    @State private var confirmingRemoval: MapScorecardDefinition?
     @State private var isShowingRestoreTargets = false
-
-    private enum MapScorecardKind: String, Identifiable, CaseIterable {
-        case knocks
-        case sales
-
-        var id: String { rawValue }
-
-        var title: String {
-            switch self {
-            case .knocks:
-                "Today's Knocks"
-            case .sales:
-                "Today's Sales"
-            }
-        }
-
-        var icon: String {
-            switch self {
-            case .knocks:
-                "door.left.hand.open"
-            case .sales:
-                "checkmark.seal.fill"
-            }
-        }
-
-        var color: Color {
-            switch self {
-            case .knocks:
-                .blue
-            case .sales:
-                .green
-            }
-        }
-    }
 
     var body: some View {
         VStack(spacing: 10) {
-            if visibleKinds.isEmpty {
+            if visibleDefinitions.isEmpty {
                 emptyScorecardRestoreZone
                     .transition(.opacity)
             } else {
-                scorecardStack
+                scorecardGrid
                     .transition(.scale(scale: 0.98).combined(with: .opacity))
             }
         }
@@ -64,97 +31,95 @@ struct ScorecardBar: View {
         .padding(.top, 10)
         .frame(maxWidth: .infinity, alignment: .top)
         .zIndex(1)
-        .animation(.spring(response: 0.32, dampingFraction: 0.82), value: visibleKinds.map(\.id))
+        .onAppear(perform: initializeSelectionIfNeeded)
+        .animation(.spring(response: 0.32, dampingFraction: 0.82), value: visibleDefinitions.map(\.id))
         .animation(.spring(response: 0.24, dampingFraction: 0.8), value: editingScorecard?.id)
         .animation(.spring(response: 0.24, dampingFraction: 0.8), value: isShowingRestoreTargets)
     }
 
-    private var scorecardStack: some View {
-        HStack(alignment: .top, spacing: 12) {
-            ForEach(visibleKinds) { kind in
-                scorecardSlot(for: kind)
-                    .frame(maxWidth: visibleKinds.count == 1 ? .infinity : 190)
+    private var scorecardGrid: some View {
+        LazyVGrid(columns: gridColumns, spacing: 12) {
+            ForEach(visibleDefinitions) { definition in
+                scorecardSlot(for: definition)
+                    .frame(maxWidth: .infinity)
             }
         }
-        .frame(maxWidth: visibleKinds.count == 1 ? .infinity : 420, alignment: .center)
+        .frame(maxWidth: visibleDefinitions.count == 1 ? .infinity : 420, alignment: .center)
     }
 
-    private func scorecardSlot(for kind: MapScorecardKind) -> some View {
+    private func scorecardSlot(for definition: MapScorecardDefinition) -> some View {
         VStack(spacing: 8) {
-            scorecard(for: kind)
-                .overlay {
-                    if editingScorecard == kind {
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(
-                                Color.red,
-                                style: StrokeStyle(lineWidth: 2, dash: [7, 5])
-                            )
-                    }
+            MapAnalyticsTrackerView(
+                definition: definition,
+                isExpanded: visibleDefinitions.count == 1,
+                isCustomizationActive: isCustomizingScorecards
+            )
+            .overlay {
+                if editingScorecard == definition {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(
+                            Color.red,
+                            style: StrokeStyle(lineWidth: 2, dash: [7, 5])
+                        )
                 }
-                .overlay(alignment: .topTrailing) {
-                    if editingScorecard == kind {
-                        HStack(spacing: 6) {
-                            if visibleKinds.count == 1, let hiddenKind = hiddenKinds.first {
-                                Button {
-                                    restore(hiddenKind)
-                                } label: {
-                                    Image(systemName: "plus.circle.fill")
-                                        .font(.system(size: 22, weight: .semibold))
-                                        .symbolRenderingMode(.palette)
-                                        .foregroundStyle(.white, hiddenKind.color)
-                                        .frame(width: 30, height: 30)
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel("Add \(hiddenKind.title) Scorecard")
-                            }
-
-                            Button {
-                                requestRemovalConfirmation(for: kind)
-                            } label: {
-                                Image(systemName: "minus.circle.fill")
-                                    .font(.system(size: 22, weight: .semibold))
-                                    .symbolRenderingMode(.palette)
-                                    .foregroundStyle(.white, .red)
-                                    .frame(width: 30, height: 30)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Remove \(kind.title) Scorecard")
-                        }
+            }
+            .overlay(alignment: .topTrailing) {
+                if editingScorecard == definition {
+                    editControls(for: definition)
                         .padding(6)
-                    }
                 }
-                .contentShape(Rectangle())
-                .highPriorityGesture(
-                    LongPressGesture(minimumDuration: 0.5)
-                        .onEnded { _ in
-                            beginEditing(kind)
-                        }
-                )
+            }
+            .contentShape(Rectangle())
+            .highPriorityGesture(
+                LongPressGesture(minimumDuration: 0.5)
+                    .onEnded { _ in
+                        beginEditing(definition)
+                    }
+            )
 
-            if confirmingRemoval == kind {
-                removePrompt(for: kind)
+            if confirmingRemoval == definition {
+                removePrompt(for: definition)
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
     }
 
-    @ViewBuilder
-    private func scorecard(for kind: MapScorecardKind) -> some View {
-        switch kind {
-        case .knocks:
-            DailyKnocksTrackerView(
-                isExpanded: visibleKinds.count == 1,
-                isCustomizationActive: isCustomizingScorecards
-            )
-        case .sales:
-            DailySalesTrackerView(
-                isExpanded: visibleKinds.count == 1,
-                isCustomizationActive: isCustomizingScorecards
-            )
+    private func editControls(for definition: MapScorecardDefinition) -> some View {
+        HStack(spacing: 6) {
+            if hiddenDefinitions.isEmpty == false {
+                Menu {
+                    ForEach(hiddenDefinitions) { hiddenDefinition in
+                        Button {
+                            restore(hiddenDefinition)
+                        } label: {
+                            Label(hiddenDefinition.title, systemImage: hiddenDefinition.icon)
+                        }
+                    }
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 22, weight: .semibold))
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(.white, .blue)
+                        .frame(width: 30, height: 30)
+                }
+                .accessibilityLabel("Add Map Scorecard")
+            }
+
+            Button {
+                requestRemovalConfirmation(for: definition)
+            } label: {
+                Image(systemName: "minus.circle.fill")
+                    .font(.system(size: 22, weight: .semibold))
+                    .symbolRenderingMode(.palette)
+                    .foregroundStyle(.white, .red)
+                    .frame(width: 30, height: 30)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Remove \(definition.title) Scorecard")
         }
     }
 
-    private func removePrompt(for kind: MapScorecardKind) -> some View {
+    private func removePrompt(for definition: MapScorecardDefinition) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .center, spacing: 8) {
                 Image(systemName: "minus.circle")
@@ -163,7 +128,7 @@ struct ScorecardBar: View {
                     .frame(width: 30, height: 30)
                     .background(Color.red.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
-                Text("Remove \(kind.title)")
+                Text("Remove \(definition.title)")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
@@ -184,7 +149,7 @@ struct ScorecardBar: View {
                 .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
                 Button {
-                    hide(kind)
+                    hide(definition)
                 } label: {
                     Text("Remove")
                         .font(.caption.weight(.semibold))
@@ -197,7 +162,7 @@ struct ScorecardBar: View {
             }
         }
         .padding(12)
-        .frame(maxWidth: visibleKinds.count == 1 ? .infinity : 190)
+        .frame(maxWidth: visibleDefinitions.count == 1 ? .infinity : 190)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -237,7 +202,7 @@ struct ScorecardBar: View {
                     .frame(width: 40, height: 40)
                     .background(Color.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
-                Text("Choose first scorecard")
+                Text("Choose scorecards")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
@@ -245,7 +210,7 @@ struct ScorecardBar: View {
                 Spacer(minLength: 0)
             }
 
-            restoreTargetRow(for: MapScorecardKind.allCases)
+            restoreTargetGrid(for: hiddenDefinitions.isEmpty ? MapScorecardDefinition.allCases : hiddenDefinitions)
         }
         .padding(14)
         .frame(maxWidth: .infinity, minHeight: 118, alignment: .leading)
@@ -257,28 +222,26 @@ struct ScorecardBar: View {
         .shadow(color: Color.black.opacity(0.16), radius: 14, x: 0, y: 8)
     }
 
-    private func restoreTargetRow(for kinds: [MapScorecardKind]) -> some View {
-        HStack(spacing: 10) {
-            ForEach(kinds) { kind in
-                restoreTarget(for: kind)
+    private func restoreTargetGrid(for definitions: [MapScorecardDefinition]) -> some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(minimum: 0), spacing: 10), count: 2), spacing: 10) {
+            ForEach(definitions) { definition in
+                restoreTarget(for: definition)
             }
         }
-        .frame(maxWidth: .infinity)
     }
 
-
-    private func restoreTarget(for kind: MapScorecardKind) -> some View {
+    private func restoreTarget(for definition: MapScorecardDefinition) -> some View {
         Button {
-            restore(kind)
+            restore(definition)
         } label: {
             HStack(spacing: 8) {
-                Image(systemName: kind.icon)
+                Image(systemName: definition.icon)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(kind.color)
+                    .foregroundStyle(definition.color)
                     .frame(width: 24, height: 24)
-                    .background(kind.color.opacity(0.12), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    .background(definition.color.opacity(0.12), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
 
-                Text(kind.title)
+                Text(definition.title)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
@@ -290,52 +253,71 @@ struct ScorecardBar: View {
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(.white)
                     .frame(width: 22, height: 22)
-                    .background(kind.color, in: Circle())
+                    .background(definition.color, in: Circle())
             }
             .padding(.horizontal, 10)
             .frame(maxWidth: .infinity)
             .frame(height: 46)
-            .background(kind.color.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .background(definition.color.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .stroke(
-                        kind.color,
+                        definition.color,
                         style: StrokeStyle(lineWidth: 1.6, dash: [6, 5])
                     )
             )
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Add \(kind.title) Scorecard")
+        .accessibilityLabel("Add \(definition.title) Scorecard")
     }
 
-    private var visibleKinds: [MapScorecardKind] {
-        MapScorecardKind.allCases.filter { isVisible($0) }
+    private var gridColumns: [GridItem] {
+        let count = visibleDefinitions.count == 1 ? 1 : 2
+        return Array(repeating: GridItem(.flexible(minimum: 0), spacing: 12), count: count)
     }
 
-    private var hiddenKinds: [MapScorecardKind] {
-        MapScorecardKind.allCases.filter { !isVisible($0) }
+    private var visibleDefinitions: [MapScorecardDefinition] {
+        selectedIDs.compactMap { MapScorecardDefinition.definition(for: $0) }
     }
 
-    private func isVisible(_ kind: MapScorecardKind) -> Bool {
-        switch kind {
-        case .knocks:
-            isKnocksVisible
-        case .sales:
-            isSalesVisible
+    private var hiddenDefinitions: [MapScorecardDefinition] {
+        let selected = Set(selectedIDs)
+        return MapScorecardDefinition.allCases.filter { selected.contains($0.id) == false }
+    }
+
+    private var selectedIDs: [String] {
+        selectedScorecardIDs
+            .split(separator: ",")
+            .map(String.init)
+            .filter { MapScorecardDefinition.definition(for: $0) != nil }
+    }
+
+    private func initializeSelectionIfNeeded() {
+        guard selectedScorecardIDs.isEmpty else { return }
+
+        let migratedSelection = MapScorecardDefinition.defaultSelection.filter { definition in
+            switch definition.metric {
+            case .knocks:
+                legacyKnocksVisible
+            case .sales:
+                legacySalesVisible
+            }
         }
+
+        setSelection(migratedSelection.isEmpty ? MapScorecardDefinition.defaultSelection : migratedSelection)
     }
 
-    private func beginEditing(_ kind: MapScorecardKind) {
+    private func beginEditing(_ definition: MapScorecardDefinition) {
         MapScreenHapticsController.shared.lightTap()
-        editingScorecard = kind
+        editingScorecard = definition
         confirmingRemoval = nil
         isShowingRestoreTargets = false
         updateCustomizationState()
     }
 
-    private func requestRemovalConfirmation(for kind: MapScorecardKind) {
+    private func requestRemovalConfirmation(for definition: MapScorecardDefinition) {
         MapScreenHapticsController.shared.lightTap()
-        confirmingRemoval = kind
+        confirmingRemoval = definition
         updateCustomizationState()
     }
 
@@ -346,14 +328,9 @@ struct ScorecardBar: View {
         updateCustomizationState()
     }
 
-    private func hide(_ kind: MapScorecardKind) {
+    private func hide(_ definition: MapScorecardDefinition) {
         MapScreenHapticsController.shared.lightTap()
-        switch kind {
-        case .knocks:
-            isKnocksVisible = false
-        case .sales:
-            isSalesVisible = false
-        }
+        setSelection(visibleDefinitions.filter { $0.id != definition.id })
         editingScorecard = nil
         confirmingRemoval = nil
         updateCustomizationState()
@@ -365,19 +342,22 @@ struct ScorecardBar: View {
         updateCustomizationState()
     }
 
-    private func restore(_ kind: MapScorecardKind) {
+    private func restore(_ definition: MapScorecardDefinition) {
         MapScreenHapticsController.shared.lightTap()
         MapScreenSoundController.shared.playPropertyOpen()
-        switch kind {
-        case .knocks:
-            isKnocksVisible = true
-        case .sales:
-            isSalesVisible = true
-        }
+
+        var nextSelection = visibleDefinitions.filter { $0.id != definition.id }
+        nextSelection.append(definition)
+        setSelection(nextSelection)
+
         editingScorecard = nil
         confirmingRemoval = nil
         isShowingRestoreTargets = false
         updateCustomizationState()
+    }
+
+    private func setSelection(_ definitions: [MapScorecardDefinition]) {
+        selectedScorecardIDs = definitions.map(\.id).joined(separator: ",")
     }
 
     private func updateCustomizationState() {
