@@ -15,6 +15,10 @@ struct KnockStreakSummary {
     let lastKnockDate: Date?
     let days: [KnockStreakDay]
 
+    var displayedCurrentStreak: Int {
+        max(currentStreak, 1)
+    }
+
     var isAtRiskToday: Bool {
         currentStreak > 2 && knockedToday == false
     }
@@ -24,7 +28,7 @@ struct KnockStreakSummary {
             return currentStreak == 1 ? "Started today" : "Protected today"
         }
 
-        guard currentStreak > 0 else { return "No active streak" }
+        guard currentStreak > 0 else { return "Ready to start" }
         return "At risk today"
     }
 }

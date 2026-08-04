@@ -18,7 +18,7 @@ struct MapAnalyticsTrackerView: View {
 
     private var count: Int {
         if definition.metric == .streak {
-            return KnockStreakCalculator.summary(from: allKnocks).currentStreak
+            return KnockStreakCalculator.summary(from: allKnocks).displayedCurrentStreak
         }
 
         return MapAnalyticsCalculator.totalCount(from: allKnocks, for: definition)

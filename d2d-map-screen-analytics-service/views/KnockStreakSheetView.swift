@@ -39,7 +39,7 @@ struct KnockStreakSheetView: View {
                     .stroke(Color.orange.opacity(0.16), lineWidth: 12)
 
                 Circle()
-                    .trim(from: 0, to: min(Double(summary.currentStreak) / 7, 1))
+                    .trim(from: 0, to: min(Double(summary.displayedCurrentStreak) / 7, 1))
                     .stroke(
                         AngularGradient(colors: [.orange, .yellow, .orange], center: .center),
                         style: StrokeStyle(lineWidth: 12, lineCap: .round)
@@ -47,11 +47,11 @@ struct KnockStreakSheetView: View {
                     .rotationEffect(.degrees(-90))
 
                 VStack(spacing: 0) {
-                    Text("\(summary.currentStreak)")
+                    Text("\(summary.displayedCurrentStreak)")
                         .font(.system(size: 36, weight: .bold, design: .rounded))
                         .contentTransition(.numericText())
 
-                    Text(summary.currentStreak == 1 ? "day" : "days")
+                    Text(summary.displayedCurrentStreak == 1 ? "day" : "days")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                 }
@@ -86,7 +86,7 @@ struct KnockStreakSheetView: View {
 
     private var statsGrid: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
-            statTile("Current", "\(summary.currentStreak)", "flame.fill", .orange)
+            statTile("Current", "\(summary.displayedCurrentStreak)", "flame.fill", .orange)
             statTile("Best", "\(summary.longestStreak)", "trophy.fill", .purple)
             statTile("Active", "\(summary.totalActiveDays)", "calendar", .blue)
         }
