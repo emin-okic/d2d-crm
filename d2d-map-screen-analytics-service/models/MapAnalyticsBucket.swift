@@ -111,6 +111,8 @@ enum MapAnalyticsCalculator {
             true
         case .sales:
             isSale(knock)
+        case .streak:
+            true
         }
     }
 

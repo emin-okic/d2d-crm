@@ -51,6 +51,8 @@ struct MapAnalyticsChartView: View {
             return Int((Double(positiveCount) / Double(scopedAllKnocks.count) * 100).rounded())
         case .sales:
             return Int((Double(totalCount) / Double(scopedAllKnocks.count) * 100).rounded())
+        case .streak:
+            return 0
         }
     }
 
@@ -245,6 +247,10 @@ struct MapAnalyticsChartView: View {
                 Image(systemName: count > 1 ? "checkmark.seal.fill" : "checkmark")
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(.white)
+            case .streak:
+                Image(systemName: "flame.fill")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.white)
             }
         }
     }
@@ -255,6 +261,8 @@ struct MapAnalyticsChartView: View {
             "\(definition.period.titlePrefix) Knock Progress"
         case .sales:
             "\(definition.period.titlePrefix) Sales Progress"
+        case .streak:
+            "Knock Streak"
         }
     }
 
@@ -264,6 +272,8 @@ struct MapAnalyticsChartView: View {
             "Pace and response quality across \(definition.period.chartScopeText)"
         case .sales:
             "Closed deals and conversion pace for \(definition.period.chartScopeText)"
+        case .streak:
+            "Consecutive days with at least one knock"
         }
     }
 
@@ -273,6 +283,8 @@ struct MapAnalyticsChartView: View {
             definition.period == .daily ? "Knock rhythm" : "Knock trend"
         case .sales:
             "Sales momentum"
+        case .streak:
+            "Streak momentum"
         }
     }
 
@@ -282,6 +294,8 @@ struct MapAnalyticsChartView: View {
             Date().formatted(.dateTime.month().day())
         case .sales:
             "\(scopedAllKnocks.count) knocks"
+        case .streak:
+            Date().formatted(.dateTime.month().day())
         }
     }
 
@@ -291,6 +305,8 @@ struct MapAnalyticsChartView: View {
             "Response"
         case .sales:
             "Conversion"
+        case .streak:
+            "Current"
         }
     }
 
@@ -300,6 +316,8 @@ struct MapAnalyticsChartView: View {
             definition.period == .daily ? "Peak" : "Best Day"
         case .sales:
             definition.period == .daily ? "Peak Close" : "Best Day"
+        case .streak:
+            "Best Day"
         }
     }
 
@@ -314,6 +332,8 @@ struct MapAnalyticsChartView: View {
             definition.period == .daily ? "Hourly density" : "Daily density"
         case .sales:
             definition.period == .daily ? "Close density" : "Close distribution"
+        case .streak:
+            "Streak density"
         }
     }
 
@@ -334,6 +354,8 @@ struct MapAnalyticsChartView: View {
             min(Double(totalCount) / Double(peakCount * max(activeBuckets.count, 1)), 1)
         case .sales:
             min(Double(rate) / 100, 1)
+        case .streak:
+            min(Double(totalCount) / 7, 1)
         }
     }
 
@@ -343,6 +365,8 @@ struct MapAnalyticsChartView: View {
             [.blue, .cyan, .blue]
         case .sales:
             [.green, .mint, .yellow, .green]
+        case .streak:
+            [.orange, .yellow, .orange]
         }
     }
 

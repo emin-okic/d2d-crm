@@ -17,7 +17,11 @@ struct MapAnalyticsTrackerView: View {
     @State private var showSheet = false
 
     private var count: Int {
-        MapAnalyticsCalculator.totalCount(from: allKnocks, for: definition)
+        if definition.metric == .streak {
+            return KnockStreakCalculator.summary(from: allKnocks).displayedCurrentStreak
+        }
+
+        return MapAnalyticsCalculator.totalCount(from: allKnocks, for: definition)
     }
 
     var body: some View {
@@ -73,10 +77,17 @@ struct MapAnalyticsTrackerView: View {
         }
         .buttonStyle(.plain)
         .sheet(isPresented: $showSheet) {
-            MapAnalyticsChartView(definition: definition)
-                .presentationDetents([.fraction(0.78), .large])
-                .presentationContentInteraction(.scrolls)
-                .presentationDragIndicator(.visible)
+            if definition.metric == .streak {
+                KnockStreakSheetView()
+                    .presentationDetents([.fraction(0.78), .large])
+                    .presentationContentInteraction(.scrolls)
+                    .presentationDragIndicator(.visible)
+            } else {
+                MapAnalyticsChartView(definition: definition)
+                    .presentationDetents([.fraction(0.78), .large])
+                    .presentationContentInteraction(.scrolls)
+                    .presentationDragIndicator(.visible)
+            }
         }
     }
 }
