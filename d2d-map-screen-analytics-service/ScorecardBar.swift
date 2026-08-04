@@ -263,6 +263,8 @@ struct ScorecardBar: View {
                 legacyKnocksVisible
             case .sales:
                 legacySalesVisible
+            case .streak:
+                true
             }
         }
 

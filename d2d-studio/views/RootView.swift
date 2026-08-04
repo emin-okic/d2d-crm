@@ -19,6 +19,8 @@ struct RootView: View {
     /// The model context environment for managing SwiftData operations.
     @Environment(\.modelContext) private var modelContext
 
+    @Query private var allKnocks: [Knock]
+
     /// The region displayed on the map, initially centered on San Francisco.
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
@@ -67,6 +69,12 @@ struct RootView: View {
                 Label("Pipeline", systemImage: "calendar")
             }
             .tag(2)
+        }
+        .task {
+            StreakNotificationController.shared.refreshSchedule(for: allKnocks)
+        }
+        .onChange(of: allKnocks.map(\.date)) { _, _ in
+            StreakNotificationController.shared.refreshSchedule(for: allKnocks)
         }
         .onReceive(NotificationCenter.default.publisher(for: .openFollowUpAssistant)) { notification in
             selectedTab = 2 // Pipeline tab

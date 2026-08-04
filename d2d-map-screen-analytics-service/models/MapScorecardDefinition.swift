@@ -10,6 +10,7 @@ import SwiftUI
 enum MapScorecardMetric: String, CaseIterable {
     case knocks
     case sales
+    case streak
 
     var noun: String {
         switch self {
@@ -17,6 +18,8 @@ enum MapScorecardMetric: String, CaseIterable {
             "Knocks"
         case .sales:
             "Sales"
+        case .streak:
+            "Streak"
         }
     }
 
@@ -26,6 +29,8 @@ enum MapScorecardMetric: String, CaseIterable {
             "knocks"
         case .sales:
             "closed"
+        case .streak:
+            "days"
         }
     }
 
@@ -35,6 +40,8 @@ enum MapScorecardMetric: String, CaseIterable {
             "door.left.hand.open"
         case .sales:
             "checkmark.seal.fill"
+        case .streak:
+            "flame.fill"
         }
     }
 
@@ -44,6 +51,8 @@ enum MapScorecardMetric: String, CaseIterable {
             .blue
         case .sales:
             .green
+        case .streak:
+            .orange
         }
     }
 }
@@ -94,13 +103,16 @@ struct MapScorecardDefinition: Identifiable, Hashable, CaseIterable {
     let period: MapScorecardPeriod
 
     var id: String { "\(period.rawValue).\(metric.rawValue)" }
-    var title: String { "\(period.titlePrefix) \(metric.noun)" }
+    var title: String {
+        metric == .streak ? "Knock Streak" : "\(period.titlePrefix) \(metric.noun)"
+    }
     var icon: String { metric.icon }
     var color: Color { metric.color }
 
     static let allCases: [MapScorecardDefinition] = [
         .init(metric: .knocks, period: .daily),
         .init(metric: .sales, period: .daily),
+        .init(metric: .streak, period: .daily),
         .init(metric: .knocks, period: .weekly),
         .init(metric: .sales, period: .weekly),
         .init(metric: .knocks, period: .monthly),
