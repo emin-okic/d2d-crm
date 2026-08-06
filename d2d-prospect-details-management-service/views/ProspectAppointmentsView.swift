@@ -122,9 +122,7 @@ struct ProspectAppointmentsView: View {
             }
         }
         .sheet(isPresented: $controller.showAppointmentSheet) {
-            NavigationStack {
-                ScheduleAppointmentView(prospect: prospect)
-            }
+            ScheduleAppointmentView(prospect: prospect)
         }
         .sheet(item: $controller.selectedAppointmentDetails) { appt in
             AppointmentDetailsView(appointment: appt)

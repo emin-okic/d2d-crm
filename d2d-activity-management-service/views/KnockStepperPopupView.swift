@@ -28,7 +28,7 @@ struct KnockStepperPopupView: View {
     let logTrip: (_ start: String, _ end: String, _ date: Date) -> Void
 
     // Control
-    var onClose: () -> Void
+    var onClose: (_ completed: Bool) -> Void
 
     // State
     @State private var stepSequence: [KnockStep] = []
@@ -44,6 +44,7 @@ struct KnockStepperPopupView: View {
     // Follow-up state
     @State private var followUpDate: Date = Calendar.current.date(byAdding: .day, value: 3, to: .now) ?? .now
     @State private var didScheduleFollowUp = false
+    @State private var suppressNextFollowUpDateFeedback = false
 
     // Note state
     @State private var noteText: String = ""
@@ -62,6 +63,32 @@ struct KnockStepperPopupView: View {
         stepSequence.indices.contains(stepIndex) ? stepSequence[stepIndex] : nil
     }
 
+    private var popupHeight: CGFloat {
+        switch currentStep {
+        case .objection:
+            374
+        case .scheduleFollowUp:
+            340
+        case .trip:
+            380
+        default:
+            304
+        }
+    }
+
+    private var contentHeight: CGFloat {
+        switch currentStep {
+        case .objection:
+            244
+        case .scheduleFollowUp:
+            210
+        case .trip:
+            250
+        default:
+            154
+        }
+    }
+
     var body: some View {
       VStack(spacing: 8) {                     // was 14
         // Header
@@ -75,7 +102,7 @@ struct KnockStepperPopupView: View {
             Button {
               KnockingFormHapticsController.shared.lightTap()
               KnockingFormSoundController.shared.playConfirmationSound()
-              onClose()
+              onClose(false)
             } label: {
               Image(systemName: "xmark.circle.fill")
                 .foregroundColor(.secondary)
@@ -89,7 +116,8 @@ struct KnockStepperPopupView: View {
 
         // Content
         Group { contentForCurrentStep() }
-          .frame(width: 256, height: 160)     // tight content box inside 280 card
+          .frame(maxWidth: .infinity)
+          .frame(height: contentHeight)
           .clipped()
 
           // Nav buttons
@@ -111,12 +139,13 @@ struct KnockStepperPopupView: View {
             if currentStep != .done {
               if isCurrentStepSatisfied(currentStep) {
                   Button("Next") {
-                      
-                      KnockingFormHapticsController.shared.mediumTap()
-                      KnockingFormSoundController.shared.playConfirmationSound()
-                      
-                      goNext()
-                      
+                      if currentStep == .scheduleFollowUp {
+                          goNext()
+                      } else {
+                          KnockingFormHapticsController.shared.mediumTap()
+                          KnockingFormSoundController.shared.playConfirmationSound()
+                          goNext()
+                      }
                   }
                   .buttonStyle(.borderedProminent)
               } else {
@@ -125,15 +154,19 @@ struct KnockStepperPopupView: View {
             }
           }
       }
-      .padding(8)                              // was 14
-      .background(.ultraThinMaterial)
-      .cornerRadius(14)                        // slightly smaller
-      .shadow(radius: 6)                       // lighter shadow
-      .frame(width: 280, height: 280)          // ⬅️ hard clamp
+      .padding(.horizontal, 18)
+      .padding(.top, 12)
+      .padding(.bottom, 14)
+      .frame(maxWidth: .infinity)
+      .frame(height: popupHeight, alignment: .top)
+      .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+      .overlay(
+          RoundedRectangle(cornerRadius: 18, style: .continuous)
+              .stroke(Color.primary.opacity(0.10), lineWidth: 1)
+      )
       .onAppear { configureSteps() }
       .onAppear {
         chosenOutcome = initialOutcome
-        workingProspect = saveKnock(initialOutcome)
         injectRequiredSteps(for: initialOutcome)
         endAddress = context.address
       }
@@ -144,27 +177,17 @@ struct KnockStepperPopupView: View {
       guard let step = currentStep else { return }
 
       if step == .trip {
-        // no trip save here
-        stepSequence = [.done]
-        stepIndex = 0
-
-        if didScheduleFollowUp {
-          DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            onClose()
-          }
-        } else {
-          closeAfterDone()
-        }
+        _ = committedWorkingProspect()
+        closeAfterCompletion()
         return
       }
 
       if stepIndex + 1 < stepSequence.count { stepIndex += 1 }
     }
     
-    private func closeAfterDone() {
-      // brief peek at the finished screen
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
-        onClose()
+    private func closeAfterCompletion() {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        onClose(true)
       }
     }
 
@@ -198,170 +221,254 @@ struct KnockStepperPopupView: View {
             HStack(spacing: 12) {
                 quickButton("house.slash.fill", "Not Home") {
                     chosenOutcome = .wasntHome
-                    workingProspect = saveKnock(.wasntHome)
-                    // proceed immediately
                 }
                 if !context.isCustomer {
                     quickButton("checkmark.seal.fill", "Sale") {
                         chosenOutcome = .convertedToSale
-                        workingProspect = saveKnock(.convertedToSale)
-                        // step sequence will inject convert step
                     }
                 }
                 quickButton("calendar.badge.clock", "Follow-Up") {
                     chosenOutcome = .followUpLater
-                    workingProspect = saveKnock(.followUpLater)
-                    // step sequence will inject objection + schedule steps
                 }
             }
         }
     }
 
     private var objectionStep: some View {
-      VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 14) {
+            stepHeader(
+                icon: "questionmark.bubble.fill",
+                color: .orange,
+                title: "Log Objection",
+                subtitle: "Choose the reason that best matches this follow-up."
+            )
 
-        Text("Why didn’t they buy?")
-          .font(.footnote.weight(.semibold))
+            if objectionOptions.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "tray")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundColor(.secondary)
 
-        Text("Pick the closest match. Add one if it’s new.")
-          .font(.caption2)
-          .foregroundColor(.secondary)
+                    Text("No objections saved")
+                        .font(.subheadline.weight(.semibold))
 
-        if objectionOptions.isEmpty {
-          VStack(spacing: 6) {
-            Text("No objections yet")
-              .font(.caption)
+                    Button {
+                        KnockingFormHapticsController.shared.lightTap()
+                        KnockingFormSoundController.shared.playConfirmationSound()
+                        showAddObjection = true
+                    } label: {
+                        Label("Add Objection", systemImage: "plus")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 42)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundColor(.white)
+                    .background(Color.blue, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            } else {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 8) {
+                        ForEach(objectionOptions) { obj in
+                            objectionRow(obj)
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+                .scrollIndicators(.hidden)
 
-            Button {
-                
-                KnockingFormHapticsController.shared.lightTap()
-                KnockingFormSoundController.shared.playConfirmationSound()
-                
-                showAddObjection = true
-                
-            } label: {
-              Label("Add Objection", systemImage: "plus")
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-          }
-          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        } else {
-          ScrollView {
-            LazyVStack(alignment: .leading, spacing: 6) {
-              ForEach(objectionOptions) { obj in
                 Button {
-                    
                     KnockingFormHapticsController.shared.lightTap()
                     KnockingFormSoundController.shared.playConfirmationSound()
-                    
-                    selectedObjection = obj
-                    incrementObjection(obj)
-                    
+                    showAddObjection = true
                 } label: {
-                  HStack(spacing: 6) {
-                    Image(systemName: selectedObjection == obj ? "checkmark.circle.fill" : "circle")
-                      .foregroundColor(selectedObjection == obj ? .blue : .secondary)
-                    Text(obj.text)
-                      .font(.caption)
-                      .lineLimit(1)
-                    Spacer()
-                  }
+                    Label("Add new objection", systemImage: "plus")
+                        .font(.caption.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 36)
                 }
                 .buttonStyle(.plain)
-              }
+                .foregroundColor(.blue)
+                .background(Color.blue.opacity(0.10), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
-          }
-          .padding(.bottom, 5)
-            
-            Button {
-                
-                KnockingFormHapticsController.shared.lightTap()
-                KnockingFormSoundController.shared.playConfirmationSound()
-                
-                showAddObjection = true
-                
-            } label: {
-              Label("Add new objection", systemImage: "plus")
-                .font(.caption2)
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            
         }
-      }
+    }
+
+    private func stepHeader(icon: String, color: Color, title: String, subtitle: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(color)
+                .frame(width: 38, height: 38)
+                .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+            }
+
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func objectionRow(_ objection: Objection) -> some View {
+        let isSelected = selectedObjection == objection
+
+        return Button {
+            KnockingFormHapticsController.shared.lightTap()
+            KnockingFormSoundController.shared.playConfirmationSound()
+            selectedObjection = objection
+            incrementObjection(objection)
+        } label: {
+            HStack(alignment: .center, spacing: 12) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(isSelected ? .blue : .secondary)
+                    .frame(width: 24, height: 24)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(objection.text)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(.primary)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.84)
+
+                    Text("Heard \(objection.timesHeard) times")
+                        .font(.caption2.weight(.medium))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                isSelected ? Color.blue.opacity(0.10) : Color(.secondarySystemGroupedBackground).opacity(0.86),
+                in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(isSelected ? Color.blue.opacity(0.55) : Color.primary.opacity(0.05), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     private var followUpStep: some View {
-      VStack(alignment: .leading, spacing: 6) {
-          
-          Text("Schedule Follow-Up")
-              .font(.footnote.weight(.semibold))
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "calendar.badge.clock")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.blue)
+                    .frame(width: 38, height: 38)
+                    .background(Color.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
 
-          Text("Pick a return date. Next will book it.")
-              .font(.caption2)
-              .foregroundColor(.secondary)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Schedule Follow-Up")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(.primary)
 
-          // Quick date row
-          HStack(spacing: 6) {
-              quickDateChip("Tomorrow", days: 1)
-              quickDateChip("Next Week", days: 7)
-              quickDateChip("30 Days", days: 30)
-          }
-          
-          Divider()
+                    Text(shortAddress(context.address))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.82)
+                }
 
-          HStack(spacing: 6) {
-              
-              Image(systemName: "calendar").foregroundColor(.blue)
-              
-              DatePicker("", selection: $followUpDate, displayedComponents: [.date, .hourAndMinute])
-                  .labelsHidden()
-                  .onChange(of: followUpDate) { _, _ in
-                      KnockingFormHapticsController.shared.lightTap()
-                      KnockingFormSoundController.shared.playConfirmationSound()
-                  }
+                Spacer(minLength: 0)
+
+                Text(followUpDate.formatted(.dateTime.month(.abbreviated).day()))
+                    .font(.caption2.weight(.bold))
+                    .foregroundColor(.blue)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(Color.blue.opacity(0.10), in: Capsule())
+            }
+
+            Divider()
+
+            HStack(spacing: 10) {
+                Image(systemName: "clock")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.indigo)
+                    .frame(width: 32, height: 32)
+                    .background(Color.indigo.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+                DatePicker("Follow-up date", selection: $followUpDate, displayedComponents: [.date, .hourAndMinute])
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .onChange(of: followUpDate) { _, _ in
+                        if suppressNextFollowUpDateFeedback {
+                            suppressNextFollowUpDateFeedback = false
+                            return
+                        }
+
+                        KnockingFormHapticsController.shared.lightTap()
+                        KnockingFormSoundController.shared.playConfirmationSound()
+                    }
+            }
+
+            HStack(spacing: 8) {
+                quickDateChip("Tomorrow", days: 1)
+                quickDateChip("Next Week", days: 7)
+                quickDateChip("30 Days", days: 30)
+            }
+
+            Text("Next books the follow-up and prepares a note.")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .lineLimit(2)
         }
-        .padding(5)
-      }
+        .padding(.horizontal, 2)
     }
-    
+
     @ViewBuilder
     private func quickDateChip(_ title: String, days: Int) -> some View {
         Button {
-            
             KnockingFormHapticsController.shared.lightTap()
             KnockingFormSoundController.shared.playConfirmationSound()
-            
-            if let target = Calendar.current.date(byAdding: .day, value: days, to: Date()) {
-                
-                let comps = Calendar.current.dateComponents([.hour, .minute], from: followUpDate)
-                
-                followUpDate = Calendar.current.date(
-                    bySettingHour: comps.hour ?? 9,
-                    minute: comps.minute ?? 0,
-                    second: 0,
-                    of: target
-                ) ?? target
-            }
+            suppressNextFollowUpDateFeedback = true
+            setFollowUpQuickDate(days: days)
         } label: {
             Text(title)
-                .font(.caption2.weight(.medium))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color(.secondarySystemBackground))
-                )
+                .font(.caption.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+                .frame(maxWidth: .infinity)
+                .frame(height: 34)
+                .background(Color.blue.opacity(0.10), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
         .buttonStyle(.plain)
+        .foregroundColor(.blue)
+    }
+
+    private func setFollowUpQuickDate(days: Int) {
+        guard let target = Calendar.current.date(byAdding: .day, value: days, to: Date()) else { return }
+        let comps = Calendar.current.dateComponents([.hour, .minute], from: followUpDate)
+        followUpDate = Calendar.current.date(
+            bySettingHour: comps.hour ?? 9,
+            minute: comps.minute ?? 0,
+            second: 0,
+            of: target
+        ) ?? target
     }
 
     private var convertStep: some View {
         VStack(spacing: 8) {
             Text("Convert to Customer").font(.subheadline).foregroundColor(.secondary)
             Button("Open Conversion Form") {
-                if let p = workingProspect { convertToCustomer(p) { /* no-op */ } }
+                KnockingFormHapticsController.shared.mediumTap()
+                KnockingFormSoundController.shared.playConfirmationSound()
+                if let p = committedWorkingProspect() { convertToCustomer(p) { /* no-op */ } }
             }
             .buttonStyle(.borderedProminent)
         }
@@ -376,44 +483,81 @@ struct KnockStepperPopupView: View {
     }
     
     private var tripStep: some View {
-        VStack(alignment: .leading, spacing: 6) {
-
-            Text("Log Your Trip (optional)")
-                .font(.footnote.weight(.semibold))
-                .foregroundColor(.secondary)
-
-            Text("Next saves this trip. Skip won’t save it.")
-                .font(.caption2)
-                .foregroundColor(.secondary)
+        VStack(alignment: .leading, spacing: 14) {
+            stepHeader(
+                icon: "point.topleft.down.curvedto.point.bottomright.up.fill",
+                color: .purple,
+                title: "Log Trip",
+                subtitle: "Optional mileage tracking for this route. Skip leaves trip history unchanged."
+            )
 
             Divider()
 
-            TripAddressAutofillField(
-                icon: "circle",
-                iconColor: .blue,
-                placeholder: "Start Address",
-                text: $startAddress,
-                focusedField: $tripFocusedField,
-                field: .start,
-                searchVM: tripSearchVM
-            )
+            VStack(alignment: .leading, spacing: 10) {
+                tripAddressRow(
+                    icon: "circle.fill",
+                    iconColor: .blue,
+                    placeholder: "Start address",
+                    text: $startAddress,
+                    field: .start
+                )
 
-            TripAddressAutofillField(
-                icon: "mappin.circle.fill",
-                iconColor: .red,
-                placeholder: "End Address",
-                text: $endAddress,
-                focusedField: $tripFocusedField,
-                field: .end,
-                searchVM: tripSearchVM
-            )
+                tripAddressRow(
+                    icon: "mappin.circle.fill",
+                    iconColor: .red,
+                    placeholder: "End address",
+                    text: $endAddress,
+                    field: .end
+                )
 
-            HStack(spacing: 6) {
-                Image(systemName: "calendar").foregroundColor(.blue)
-                DatePicker("", selection: $tripDate, displayedComponents: [.date, .hourAndMinute])
-                    .labelsHidden()
+                HStack(spacing: 10) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.indigo)
+                        .frame(width: 32, height: 32)
+                        .background(Color.indigo.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+                    DatePicker("Trip date", selection: $tripDate, displayedComponents: [.date, .hourAndMinute])
+                        .labelsHidden()
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .onChange(of: tripDate) { _, _ in
+                            KnockingFormHapticsController.shared.lightTap()
+                            KnockingFormSoundController.shared.playConfirmationSound()
+                        }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(Color(.secondarySystemGroupedBackground).opacity(0.86), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
         }
+    }
+
+    private func tripAddressRow(
+        icon: String,
+        iconColor: Color,
+        placeholder: String,
+        text: Binding<String>,
+        field: TripField
+    ) -> some View {
+        HStack(spacing: 10) {
+            TripAddressAutofillField(
+                icon: icon,
+                iconColor: iconColor,
+                placeholder: placeholder,
+                text: text,
+                focusedField: $tripFocusedField,
+                field: field,
+                searchVM: tripSearchVM
+            )
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemGroupedBackground).opacity(0.86), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.primary.opacity(0.05), lineWidth: 1)
+        )
     }
 
     private var doneStep: some View {
@@ -443,7 +587,9 @@ struct KnockStepperPopupView: View {
     private func goNext() {
         guard let step = currentStep else { return }
 
-        if step == .scheduleFollowUp, let p = workingProspect {
+        if step == .scheduleFollowUp, let p = committedWorkingProspect() {
+            KnockingFormHapticsController.shared.successFeedbackConfirmation()
+            KnockingFormSoundController.shared.playConfirmationSound()
             saveFollowUp(p, followUpDate)
             didScheduleFollowUp = true
 
@@ -454,12 +600,13 @@ struct KnockStepperPopupView: View {
             )
         }
         
-        if step == .note, let p = workingProspect,
+        if step == .note, let p = committedWorkingProspect(),
            !noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             addNote(p, noteText)
         }
         
         if step == .trip {
+          _ = committedWorkingProspect()
           let end = endAddress.isEmpty ? context.address : endAddress
 
             // Calculate miles before logging
@@ -469,24 +616,24 @@ struct KnockStepperPopupView: View {
             }
 
 
-          stepSequence = [.done]
-          stepIndex = 0
-
-          if didScheduleFollowUp {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-              onClose()                          // confetti path: close a bit later
-            }
-          } else {
-            closeAfterDone()                     // quick close when no confetti
-          }
+          closeAfterCompletion()
           return
         }
 
         if stepIndex + 1 < stepSequence.count { stepIndex += 1 }
     }
 
+    private func committedWorkingProspect() -> Prospect? {
+        if let workingProspect { return workingProspect }
+        guard let chosenOutcome else { return nil }
+
+        let prospect = saveKnock(chosenOutcome)
+        workingProspect = prospect
+        return prospect
+    }
+
     private func configureSteps() {
-        // Base sequence already set: [.outcome, .note, .trip, .done]
+        // Base sequence already set: [.outcome, .note, .trip]
         // After choosing outcome, we'll splice required steps in place.
     }
     
@@ -503,6 +650,8 @@ struct KnockStepperPopupView: View {
 
     private func quickButton(_ system: String, _ label: String, _ action: @escaping () -> Void) -> some View {
         Button(action: {
+            KnockingFormHapticsController.shared.lightTap()
+            KnockingFormSoundController.shared.playConfirmationSound()
             action()
             injectRequiredStepsIfNeeded()
         }) {
@@ -527,16 +676,16 @@ struct KnockStepperPopupView: View {
         switch outcome {
             
         case .wasntHome:
-            stepSequence += [.note, .trip, .done]
+            stepSequence += [.note, .trip]
             
         case .convertedToSale:
-            stepSequence += [.convertToCustomer, .note, .trip, .done]
+            stepSequence += [.convertToCustomer, .note, .trip]
             
         case .followUpLater:
-            stepSequence += [.objection, .scheduleFollowUp, .note, .trip, .done]
+            stepSequence += [.objection, .scheduleFollowUp, .note, .trip]
             
         case .unqualified:
-            stepSequence += [.note, .trip, .done]
+            stepSequence += [.note, .trip]
             
         }
     }
@@ -546,16 +695,16 @@ struct KnockStepperPopupView: View {
         switch outcome {
             
         case .wasntHome:
-            stepSequence = [.note, .trip, .done]
+            stepSequence = [.note, .trip]
             
         case .convertedToSale:
-            stepSequence = [.convertToCustomer, .note, .trip, .done]
+            stepSequence = [.convertToCustomer, .note, .trip]
             
         case .followUpLater:
-            stepSequence = [.objection, .scheduleFollowUp, .note, .trip, .done]
+            stepSequence = [.objection, .scheduleFollowUp, .note, .trip]
             
         case .unqualified:
-            stepSequence = [.note, .trip, .done]
+            stepSequence = [.note, .trip]
             
         }
         

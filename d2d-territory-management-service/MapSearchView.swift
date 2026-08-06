@@ -56,6 +56,7 @@ struct MapSearchView: View {
     @State private var stepperState: KnockStepperState? = nil
     
     @State private var showConfetti = false
+    @State private var followUpScheduledConfirmation: FollowUpScheduledConfirmation?
     
     @State private var pendingAddProperty: PendingAddProperty?
     
@@ -183,9 +184,7 @@ struct MapSearchView: View {
                 popupSheet(for: popup)
             }
             .sheet(item: $stepperState) { state in
-                VStack {
-                    Spacer() // push content to center vertically
-                    KnockStepperPopupView(
+                KnockStepperPopupView(
                         context: state.ctx,
                         objections: objections,
                         saveKnock: { outcome in
@@ -257,17 +256,17 @@ struct MapSearchView: View {
                             modelContext.insert(trip)
                             try? modelContext.save()
                         },
-                        onClose: {
+                        onClose: { completed in
+                            let completedAddress = state.ctx.address
                             stepperState = nil
-                            withAnimation { showConfetti = true }
+                            guard completed else { return }
+                            showFollowUpScheduledConfirmation(for: completedAddress, in: geo)
                         }
-                    )
-                    .frame(width: 280, height: 280)
-                    .cornerRadius(16)
-                    .shadow(radius: 8)
-                    Spacer() // push content to center vertically
-                }
-                .presentationDetents([.fraction(0.45)])
+                )
+                .padding(.horizontal, 12)
+                .padding(.top, 8)
+                .presentationDetents([.height(400), .large])
+                .presentationBackgroundInteraction(.enabled(upThrough: .height(400)))
                 .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showConversionSheet) {
@@ -372,7 +371,7 @@ struct MapSearchView: View {
                 }
             }
             
-            // Confetti for finishing a follow up
+            // Confetti for conversion and property flows.
             if showConfetti {
                 ConfettiBurstView()
                     .ignoresSafeArea()
@@ -382,6 +381,21 @@ struct MapSearchView: View {
                         // Auto dismiss after a few seconds
                         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                             withAnimation { showConfetti = false }
+                        }
+                    }
+            }
+
+            if let confirmation = followUpScheduledConfirmation {
+                FollowUpScheduledMapConfirmationView(address: confirmation.address)
+                    .position(confirmation.position)
+                    .allowsHitTesting(false)
+                    .transition(.scale(scale: 0.86).combined(with: .opacity))
+                    .zIndex(5001)
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
+                            withAnimation(.easeOut(duration: 0.22)) {
+                                followUpScheduledConfirmation = nil
+                            }
                         }
                     }
             }
@@ -906,12 +920,15 @@ struct MapSearchView: View {
                         modelContext.insert(trip)
                         try? modelContext.save()
                     },
-                    onClose: {
+                    onClose: { completed in
+                        let completedAddress = s.ctx.address
                         stepperState = nil
-                        withAnimation { showConfetti = true }
+                        guard completed else { return }
+                        showFollowUpScheduledConfirmation(for: completedAddress, in: geo)
                     }
                 )
-                .frame(width: 280, height: 280)
+                .padding(.horizontal, 12)
+                .frame(width: geo.size.width, height: 400, alignment: .top)
                 .position(
                     x: geo.size.width / 2,
                     y: geo.size.height * 0.42
@@ -1389,6 +1406,52 @@ struct MapSearchView: View {
         return na.contains(nb) || nb.contains(na)
     }
 
+    private func showFollowUpScheduledConfirmation(for address: String, in geo: GeometryProxy) {
+        let position = followUpConfirmationPosition(for: address, in: geo)
+
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
+            followUpScheduledConfirmation = FollowUpScheduledConfirmation(
+                address: address,
+                position: position
+            )
+        }
+    }
+
+    private func followUpConfirmationPosition(for address: String, in geo: GeometryProxy) -> CGPoint {
+        if let mapView = MapDisplayView.cachedMapView,
+           let marker = mapMarkers.first(where: { addressesMatch($0.address, address) }) {
+            let raw = mapView.convert(marker.location, toPointTo: mapView)
+            return clampedMapConfirmationPosition(
+                CGPoint(x: raw.x, y: raw.y - 72),
+                in: geo
+            )
+        }
+
+        if let popupScreenPosition {
+            return clampedMapConfirmationPosition(
+                CGPoint(x: popupScreenPosition.x, y: popupScreenPosition.y - 36),
+                in: geo
+            )
+        }
+
+        return CGPoint(
+            x: geo.size.width / 2,
+            y: min(max(geo.size.height * 0.32, 120), geo.size.height - 260)
+        )
+    }
+
+    private func clampedMapConfirmationPosition(_ point: CGPoint, in geo: GeometryProxy) -> CGPoint {
+        let halfWidth: CGFloat = 118
+        let halfHeight: CGFloat = 72
+        let minX = halfWidth + 12
+        let maxX = max(minX, geo.size.width - halfWidth - 12)
+        let minY = halfHeight + 24
+        let maxY = max(minY, geo.size.height - halfHeight - 220)
+        let x = min(max(point.x, minX), maxX)
+        let y = min(max(point.y, minY), maxY)
+        return CGPoint(x: x, y: y)
+    }
+
     private func clearMapSearchState() {
         searchText = ""
         searchVM.clear()
@@ -1460,5 +1523,69 @@ struct MapSearchView: View {
             // ➕ New property
             presentPendingAddProperty(address: address, coordinate: coordinate)
         }
+    }
+}
+
+private struct FollowUpScheduledConfirmation: Identifiable {
+    let id = UUID()
+    let address: String
+    let position: CGPoint
+}
+
+private struct FollowUpScheduledMapConfirmationView: View {
+    let address: String
+
+    @State private var isPulsing = false
+
+    var body: some View {
+        VStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .stroke(Color.teal.opacity(isPulsing ? 0 : 0.38), lineWidth: 2)
+                    .frame(width: isPulsing ? 108 : 40, height: isPulsing ? 108 : 40)
+
+                Circle()
+                    .fill(Color.teal.opacity(0.16))
+                    .frame(width: 48, height: 48)
+
+                Image(systemName: "calendar.badge.checkmark")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundColor(.teal)
+            }
+            .frame(width: 110, height: 72)
+
+            VStack(spacing: 2) {
+                Text("Follow-up scheduled")
+                    .font(.caption.weight(.bold))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+
+                Text(shortAddress(address))
+                    .font(.caption2.weight(.medium))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .frame(width: 236)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color.teal.opacity(0.34), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.14), radius: 16, x: 0, y: 8)
+        .onAppear {
+            withAnimation(.easeOut(duration: 1.05).repeatCount(2, autoreverses: false)) {
+                isPulsing = true
+            }
+        }
+    }
+
+    private func shortAddress(_ full: String) -> String {
+        let parts = full.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }
+        if parts.count >= 2 { return parts[0] + ", " + parts[1] }
+        return full
     }
 }
