@@ -53,6 +53,7 @@ struct KnockStepperPopupView: View {
     @State private var startAddress: String = ""
     @State private var endAddress: String = ""
     @State private var tripDate: Date = .now
+    @State private var didLogTrip = false
 
     @StateObject private var tripSearchVM = SearchCompleterViewModel()
     @FocusState private var tripFocusedField: TripField?
@@ -71,6 +72,8 @@ struct KnockStepperPopupView: View {
             340
         case .trip:
             380
+        case .done:
+            560
         default:
             304
         }
@@ -84,6 +87,8 @@ struct KnockStepperPopupView: View {
             210
         case .trip:
             250
+        case .done:
+            430
         default:
             154
         }
@@ -178,7 +183,7 @@ struct KnockStepperPopupView: View {
 
       if step == .trip {
         _ = committedWorkingProspect()
-        closeAfterCompletion()
+        goToConfirmation()
         return
       }
 
@@ -189,6 +194,14 @@ struct KnockStepperPopupView: View {
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
         onClose(true)
       }
+    }
+
+    private func goToConfirmation() {
+        if let doneIndex = stepSequence.firstIndex(of: .done) {
+            stepIndex = doneIndex
+        } else {
+            closeAfterCompletion()
+        }
     }
 
     // MARK: - Step Content
@@ -561,10 +574,102 @@ struct KnockStepperPopupView: View {
     }
 
     private var doneStep: some View {
-        VStack(spacing: 10) {
-            Image(systemName: "checkmark.circle.fill").font(.system(size: 36))
-            Text("Knock logged").font(.headline)
+        VStack(alignment: .leading, spacing: 14) {
+            stepHeader(
+                icon: "calendar.badge.checkmark",
+                color: .teal,
+                title: "Confirm Follow-Up",
+                subtitle: "Review the scheduled return before closing this form."
+            )
+
+            VStack(alignment: .leading, spacing: 10) {
+                confirmationRow(
+                    icon: "mappin.and.ellipse",
+                    color: .blue,
+                    title: "Address",
+                    value: shortAddress(context.address)
+                )
+
+                confirmationRow(
+                    icon: "calendar",
+                    color: .teal,
+                    title: "Scheduled",
+                    value: followUpDate.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().hour().minute())
+                )
+
+                confirmationRow(
+                    icon: "questionmark.bubble",
+                    color: .orange,
+                    title: "Objection",
+                    value: selectedObjection?.text ?? "No objection selected"
+                )
+
+                confirmationRow(
+                    icon: "point.topleft.down.curvedto.point.bottomright.up.fill",
+                    color: .purple,
+                    title: "Trip",
+                    value: didLogTrip ? "Trip logged for this follow-up." : "Trip skipped."
+                )
+            }
+
+            if !noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label("Note prepared", systemImage: "note.text")
+                        .font(.caption.weight(.semibold))
+                        .foregroundColor(.secondary)
+
+                    Text(noteText)
+                        .font(.caption)
+                        .foregroundColor(.primary)
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.88)
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.secondarySystemGroupedBackground).opacity(0.86), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+
+            Button {
+                KnockingFormHapticsController.shared.successFeedbackConfirmation()
+                KnockingFormSoundController.shared.playConfirmationSound()
+                closeAfterCompletion()
+            } label: {
+                Label("Finish", systemImage: "checkmark.circle.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
+            }
+            .buttonStyle(.plain)
+            .foregroundColor(.white)
+            .background(Color.teal, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
+    }
+
+    private func confirmationRow(icon: String, color: Color, title: String, value: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(color)
+                .frame(width: 30, height: 30)
+                .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.secondary)
+
+                Text(value)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(.primary)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.86)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemGroupedBackground).opacity(0.86), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
     // MARK: - Helpers
@@ -608,6 +713,7 @@ struct KnockStepperPopupView: View {
         if step == .trip {
           _ = committedWorkingProspect()
           let end = endAddress.isEmpty ? context.address : endAddress
+          didLogTrip = true
 
             // Calculate miles before logging
             Task {
@@ -616,7 +722,7 @@ struct KnockStepperPopupView: View {
             }
 
 
-          closeAfterCompletion()
+          goToConfirmation()
           return
         }
 
@@ -676,16 +782,16 @@ struct KnockStepperPopupView: View {
         switch outcome {
             
         case .wasntHome:
-            stepSequence += [.note, .trip]
+            stepSequence += [.note, .trip, .done]
             
         case .convertedToSale:
-            stepSequence += [.convertToCustomer, .note, .trip]
+            stepSequence += [.convertToCustomer, .note, .trip, .done]
             
         case .followUpLater:
-            stepSequence += [.objection, .scheduleFollowUp, .note, .trip]
+            stepSequence += [.objection, .scheduleFollowUp, .note, .trip, .done]
             
         case .unqualified:
-            stepSequence += [.note, .trip]
+            stepSequence += [.note, .trip, .done]
             
         }
     }
@@ -695,16 +801,16 @@ struct KnockStepperPopupView: View {
         switch outcome {
             
         case .wasntHome:
-            stepSequence = [.note, .trip]
+            stepSequence = [.note, .trip, .done]
             
         case .convertedToSale:
-            stepSequence = [.convertToCustomer, .note, .trip]
+            stepSequence = [.convertToCustomer, .note, .trip, .done]
             
         case .followUpLater:
-            stepSequence = [.objection, .scheduleFollowUp, .note, .trip]
+            stepSequence = [.objection, .scheduleFollowUp, .note, .trip, .done]
             
         case .unqualified:
-            stepSequence = [.note, .trip]
+            stepSequence = [.note, .trip, .done]
             
         }
         

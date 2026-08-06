@@ -265,8 +265,8 @@ struct MapSearchView: View {
                 )
                 .padding(.horizontal, 12)
                 .padding(.top, 8)
-                .presentationDetents([.height(400), .large])
-                .presentationBackgroundInteraction(.enabled(upThrough: .height(400)))
+                .presentationDetents([.fraction(0.75), .large])
+                .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.75)))
                 .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showConversionSheet) {
@@ -928,10 +928,10 @@ struct MapSearchView: View {
                     }
                 )
                 .padding(.horizontal, 12)
-                .frame(width: geo.size.width, height: 400, alignment: .top)
+                .frame(width: geo.size.width, height: geo.size.height * 0.75, alignment: .top)
                 .position(
                     x: geo.size.width / 2,
-                    y: geo.size.height * 0.42
+                    y: geo.size.height * 0.58
                 )
                 .transition(.scale.combined(with: .opacity))
                 .zIndex(1000)
