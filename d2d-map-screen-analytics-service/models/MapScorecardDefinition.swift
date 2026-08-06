@@ -106,6 +106,24 @@ struct MapScorecardDefinition: Identifiable, Hashable, CaseIterable {
     var title: String {
         metric == .streak ? "Knock Streak" : "\(period.titlePrefix) \(metric.noun)"
     }
+    var description: String {
+        switch (metric, period) {
+        case (.knocks, .daily):
+            "Track the doors you hit today and keep the route moving."
+        case (.sales, .daily):
+            "Keep today's closes front and center while you work the map."
+        case (.streak, _):
+            "Show your active knocking streak and protect the run."
+        case (.knocks, .weekly):
+            "Watch weekly activity build across every territory pass."
+        case (.sales, .weekly):
+            "Measure weekly wins without leaving the map."
+        case (.knocks, .monthly):
+            "See month-to-date knocking volume at a glance."
+        case (.sales, .monthly):
+            "Keep your monthly close count visible during planning."
+        }
+    }
     var icon: String { metric.icon }
     var color: Color { metric.color }
 
