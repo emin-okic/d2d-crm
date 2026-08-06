@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 enum ContactBusinessCardKind {
     case prospect(Prospect)
@@ -82,6 +83,15 @@ enum ContactBusinessCardKind {
             return customer.emailsSent.count
         }
     }
+
+    var phoneContext: PhoneActionContext {
+        switch self {
+        case .prospect(let prospect):
+            return .prospect(prospect)
+        case .customer(let customer):
+            return .customer(customer)
+        }
+    }
 }
 
 struct ContactBusinessCardView: View {
@@ -89,6 +99,17 @@ struct ContactBusinessCardView: View {
     let onOpenDetails: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var showCallSheet = false
+    @State private var showAddPhoneSheet = false
+    @State private var newPhone = ""
+    @State private var phoneError: String?
+    @State private var originalPhone: String?
+
+    private var phoneCallController: PhoneCallController {
+        PhoneCallController(modelContext: modelContext)
+    }
 
     private var hasPhone: Bool {
         !contact.contactPhone.filter(\.isNumber).isEmpty
@@ -159,8 +180,9 @@ struct ContactBusinessCardView: View {
             HStack(spacing: 10) {
                 ContactCardAvailabilityPill(
                     systemImage: "phone.fill",
-                    text: hasPhone ? PhoneValidator.formatted(contact.contactPhone) : "No phone",
-                    isAvailable: hasPhone
+                    text: hasPhone ? PhoneValidator.formatted(contact.contactPhone) : "Add phone",
+                    isAvailable: hasPhone,
+                    action: handlePhoneTapped
                 )
 
                 ContactCardAvailabilityPill(
@@ -186,6 +208,101 @@ struct ContactBusinessCardView: View {
         .padding(.top, 24)
         .padding(.horizontal, 22)
         .padding(.bottom, 22)
+        .sheet(isPresented: $showCallSheet) {
+            PhoneActionSheet(
+                context: contact.phoneContext,
+                controller: phoneCallController,
+                onCall: {
+                    phoneCallController.call(context: contact.phoneContext)
+                    showCallSheet = false
+                },
+                onEdit: {
+                    originalPhone = contact.contactPhone
+                    newPhone = contact.contactPhone
+                    phoneError = nil
+                    showCallSheet = false
+                    showAddPhoneSheet = true
+                },
+                onCancel: {
+                    showCallSheet = false
+                }
+            )
+            .presentationDetents([.fraction(0.36)])
+            .presentationDragIndicator(.hidden)
+        }
+        .sheet(isPresented: $showAddPhoneSheet) {
+            AddPhoneBottomSheet(
+                mode: originalPhone == nil ? .add : .edit,
+                phone: $newPhone,
+                error: $phoneError,
+                onSave: savePhoneAndShowCallSheet,
+                onCancel: {
+                    showAddPhoneSheet = false
+                }
+            )
+            .presentationDetents([.fraction(0.42)])
+            .presentationDragIndicator(.hidden)
+        }
+    }
+
+    private func handlePhoneTapped() {
+        ContactScreenHapticsController.shared.lightTap()
+        ContactScreenSoundController.shared.playSound1()
+
+        if hasPhone {
+            showCallSheet = true
+        } else {
+            originalPhone = nil
+            newPhone = ""
+            phoneError = nil
+            showAddPhoneSheet = true
+        }
+    }
+
+    private func savePhoneAndShowCallSheet() {
+        guard validatePhoneNumber() else { return }
+
+        let previous = originalPhone
+        contact.phoneContext.setPhone(newPhone)
+        try? modelContext.save()
+
+        logPhoneChangeNote(old: previous, new: newPhone)
+        showAddPhoneSheet = false
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            showCallSheet = true
+        }
+    }
+
+    private func validatePhoneNumber() -> Bool {
+        if let error = PhoneValidator.validate(newPhone) {
+            phoneError = error
+            return false
+        }
+
+        phoneError = nil
+        return true
+    }
+
+    private func logPhoneChangeNote(old: String?, new: String) {
+        let oldNormalized = PhoneValidator.normalized(old)
+        let newNormalized = PhoneValidator.normalized(new)
+
+        guard oldNormalized != newNormalized else { return }
+
+        let formattedNew = PhoneValidator.formatted(new)
+        let content = oldNormalized.isEmpty
+            ? "Added phone number \(formattedNew)."
+            : "Updated phone number from \(PhoneValidator.formatted(old ?? "")) to \(formattedNew)."
+
+        switch contact {
+        case .prospect(let prospect):
+            prospect.notes.append(Note(content: content, date: Date(), prospect: prospect))
+        case .customer(let customer):
+            customer.notes.append(Note(content: content, date: Date()))
+        }
+
+        try? modelContext.save()
     }
 
     private func trimmed(_ value: String) -> String {
@@ -234,8 +351,23 @@ private struct ContactCardAvailabilityPill: View {
     let systemImage: String
     let text: String
     let isAvailable: Bool
+    var action: (() -> Void)? = nil
 
     var body: some View {
+        Group {
+            if let action {
+                Button(action: action) {
+                    content
+                }
+                .buttonStyle(.plain)
+            } else {
+                content
+            }
+        }
+        .accessibilityLabel(text)
+    }
+
+    private var content: some View {
         Label(text, systemImage: systemImage)
             .font(.caption.weight(.semibold))
             .foregroundStyle(isAvailable ? .primary : .secondary)

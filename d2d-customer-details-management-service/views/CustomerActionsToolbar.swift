@@ -102,8 +102,8 @@ struct CustomerActionsToolbar: View {
                     controller.showCallSheet = false
                 }
             )
-            .presentationDetents([.fraction(0.25)])
-            .presentationDragIndicator(.visible)
+            .presentationDetents([.fraction(0.36)])
+            .presentationDragIndicator(.hidden)
         }
 
         .sheet(isPresented: $controller.showAddPhoneSheet) {
@@ -118,20 +118,19 @@ struct CustomerActionsToolbar: View {
                         try? controller.modelContext.save()
 
                         controller.logCustomerPhoneChangeNote(old: previous, new: controller.newPhone)
-
-                        if let url = URL(string: "tel://\(controller.newPhone.filter(\.isNumber))") {
-                            UIApplication.shared.open(url)
-                        }
-
                         controller.showAddPhoneSheet = false
+
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                            controller.showCallSheet = true
+                        }
                     }
                 },
                 onCancel: {
                     controller.showAddPhoneSheet = false
                 }
             )
-            .presentationDetents([.fraction(0.25)])
-            .presentationDragIndicator(.visible)
+            .presentationDetents([.fraction(0.42)])
+            .presentationDragIndicator(.hidden)
         }
         
         .confirmationDialog(

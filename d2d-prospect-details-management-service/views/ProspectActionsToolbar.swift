@@ -117,8 +117,8 @@ struct ProspectActionsToolbar: View {
                     showCallSheet = false
                 }
             )
-            .presentationDetents([.fraction(0.25)])
-            .presentationDragIndicator(.visible)
+            .presentationDetents([.fraction(0.36)])
+            .presentationDragIndicator(.hidden)
         }
         
         // Add phone sheet
@@ -134,20 +134,19 @@ struct ProspectActionsToolbar: View {
                         try? modelContext.save()
 
                         logPhoneChangeNote(old: previous, new: newPhone)
-
-                        if let url = URL(string: "tel://\(newPhone.filter(\.isNumber))") {
-                            UIApplication.shared.open(url)
-                        }
-
                         showAddPhoneSheet = false
+
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                            showCallSheet = true
+                        }
                     }
                 },
                 onCancel: {
                     showAddPhoneSheet = false
                 }
             )
-            .presentationDetents([.fraction(0.25)])
-            .presentationDragIndicator(.visible)
+            .presentationDetents([.fraction(0.42)])
+            .presentationDragIndicator(.hidden)
         }
 
         // Convert to Customer sheet using common stepper form
