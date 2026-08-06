@@ -20,6 +20,7 @@ struct CustomersSectionView: View {
     
     @State private var showDeleteConfirmation: Bool = false
     @State private var customerToDelete: Customer?
+    @State private var selectedCustomerDetails: Customer?
 
     private let rowHeight: CGFloat = 88
 
@@ -142,6 +143,16 @@ struct CustomersSectionView: View {
             }
         }
         .sheet(item: $selectedCustomer) { c in
+            ContactBusinessCardView(contact: .customer(c)) {
+                selectedCustomer = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                    selectedCustomerDetails = c
+                }
+            }
+            .presentationDetents([.fraction(0.5), .medium])
+            .presentationDragIndicator(.hidden)
+        }
+        .sheet(item: $selectedCustomerDetails) { c in
             NavigationStack {
                 CustomerDetailsView(customer: c)
                     .navigationBarTitleDisplayMode(.inline)

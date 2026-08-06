@@ -10,56 +10,45 @@ import SwiftData
 
 struct ProspectRowView: View {
     let prospect: Prospect
-    private let minRowHeight: CGFloat = 96   // a touch taller for breathing room
+    private let minRowHeight: CGFloat = 68
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(prospect.fullName)
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                Image(systemName: "person.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.blue)
+                    .frame(width: 22)
 
-            Text(prospect.address)
-                .font(.subheadline)
-                .foregroundColor(.gray)
-
-            if !prospect.contactPhone.isEmpty {
-                Text("📞 \(formatPhoneNumber(prospect.contactPhone))")
-                    .font(.subheadline)
-                    .foregroundColor(.blue)
+                Text(prospect.fullName.isEmpty ? "Unnamed prospect" : prospect.fullName)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
                     .lineLimit(1)
             }
 
-            if !prospect.contactEmail.isEmpty {
-                Text("✉️ \(prospect.contactEmail)")
-                    .font(.subheadline)
-                    .foregroundColor(.blue)
-                    .lineLimit(1)
-            }
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "mappin.and.ellipse")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 22)
+                    .padding(.top, 1)
 
-            if !prospect.sortedKnocks.isEmpty {
-                KnockDotsView(knocks: prospect.sortedKnocks)
+                Text(prospect.address.isEmpty ? "No address" : prospect.address)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
             }
         }
-        .padding(15)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .frame(maxWidth: .infinity, minHeight: minRowHeight, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemGray6))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color(.systemGray4), lineWidth: 1) // subtle border
-                )
-                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(.separator).opacity(0.35), lineWidth: 0.5)
         )
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .contentShape(Rectangle())
-    }
-
-    private func formatPhoneNumber(_ raw: String) -> String {
-        let digits = raw.filter { $0.isNumber }
-        if digits.count == 10 {
-            return "\(digits.prefix(3))-\(digits.dropFirst(3).prefix(3))-\(digits.suffix(4))"
-        }
-        return raw
     }
 }

@@ -18,6 +18,7 @@ struct ProspectsSectionView: View {
     
     @State private var showDeleteConfirmation: Bool = false
     @State private var prospectToDelete: Prospect?
+    @State private var selectedProspectDetails: Prospect?
 
     // From parent
     let containerHeight: CGFloat
@@ -145,6 +146,16 @@ struct ProspectsSectionView: View {
         }
         .frame(height: tableAreaHeight)
         .sheet(item: $selectedProspect) { p in
+            ContactBusinessCardView(contact: .prospect(p)) {
+                selectedProspect = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                    selectedProspectDetails = p
+                }
+            }
+            .presentationDetents([.fraction(0.5), .medium])
+            .presentationDragIndicator(.hidden)
+        }
+        .sheet(item: $selectedProspectDetails) { p in
             NavigationStack {
                 ProspectDetailsView(prospect: p)
                     .navigationBarTitleDisplayMode(.inline)
