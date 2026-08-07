@@ -190,7 +190,7 @@ struct TripsSectionView: View {
         }
         .sheet(item: $selectedTrip) { trip in
             TripDetailsView(trip: trip)
-                .presentationDetents([.fraction(0.75)])
+                .presentationDetents([.fraction(0.82)])
                 .presentationDragIndicator(.visible)
         }
         // NEW: bulk delete confirmation
