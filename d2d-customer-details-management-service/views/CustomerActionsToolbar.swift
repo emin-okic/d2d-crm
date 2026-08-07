@@ -29,43 +29,41 @@ struct CustomerActionsToolbar: View {
     }
 
     var body: some View {
-        ZStack {
-            HStack(spacing: 32) {
-                Spacer()
+        Button {
+            ContactScreenHapticsController.shared.successConfirmationTap()
+            ContactScreenSoundController.shared.playSound1()
+            controller.confirmCustomerLost()
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "person.crop.circle.badge.xmark")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(.red)
+                    .frame(width: 44, height: 44)
+                    .background(Color.red.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
 
-                ContactDetailsActionButton(icon: "phone.fill", title: "Call", color: .blue) {
-                    
-                    // ✅ Haptic + sound
-                    ContactScreenHapticsController.shared.successConfirmationTap()
-                    ContactScreenSoundController.shared.playSound1()
-                    
-                    controller.callTapped()
-                }
-
-                ContactDetailsActionButton(icon: "envelope.fill", title: "Email", color: .purple) {
-                    
-                    // ✅ Haptic + sound
-                    ContactScreenHapticsController.shared.successConfirmationTap()
-                    ContactScreenSoundController.shared.playSound1()
-                    
-                    showEmailSheet = true
-                }
-
-                ContactDetailsActionButton(icon: "person.crop.circle.badge.xmark", title: "Sale Lost", color: .red) {
-                    
-                    // ✅ Haptic + sound
-                    ContactScreenHapticsController.shared.successConfirmationTap()
-                    ContactScreenSoundController.shared.playSound1()
-                    
-                    controller.confirmCustomerLost()
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Mark Sale Lost")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(.primary)
+                    Text("Move this customer back into prospect follow-up.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer()
+
+                Image(systemName: "arrow.uturn.backward.circle.fill")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.red)
             }
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, alignment: .center)
-
+            .padding(14)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.red.opacity(0.24), lineWidth: 1)
+            )
         }
+        .buttonStyle(.plain)
 
         .confirmationDialog("Call \(PhoneValidator.formatted(controller.customer.contactPhone))?",
                             isPresented: $controller.showCallConfirmation,

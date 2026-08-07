@@ -69,45 +69,45 @@ struct ProspectDetailsView: View {
                 .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
                 
                 Section {
-                    DetailsScorecardCustomizationView(
-                        storagePrefix: "prospectDetails",
-                        items: prospectScorecardItems
+                    ContactDetailsBusinessCardView(
+                        contact: .prospect(prospect),
+                        editableName: $tempFullName,
+                        editableAddress: $tempAddress,
+                        isAddressFocused: $isAddressFieldFocused,
+                        searchViewModel: searchViewModel,
+                        onMeetingsTapped: {
+                            showAppointmentsSheet = true
+                        },
+                        onKnocksTapped: {
+                            showKnocksSheet = true
+                        }
                     )
                 }
-                .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
+                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 6, trailing: 0))
                 .listRowBackground(Color.clear)
                 
-                // Prospect info
-                Section() {
-                    TextField("Full Name", text: $tempFullName)
-                    
-                    // Address with autocomplete
-                    AddressAutocompleteField(
-                        addressText: $tempAddress,
-                        isFocused: $isAddressFieldFocused,
-                        searchViewModel: searchViewModel
-                    )
-                }
-                
-                // ✅ Actions Toolbar (unchanged)
                 Section {
                     ProspectActionsToolbar(
                         prospect: prospect,
                         modelContext: modelContext
                     )
                 }
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
+                .listRowBackground(Color.clear)
                 
             }
-            
-            // Bottom floating buttons
-            ProspectFloatingActionsView(
-                onDeleteTapped: {
-                    showDeleteConfirmation = true
-                },
-                onNotesTapped: {
-                    controller.showNotesSheet = true
-                }
-            )
+            .safeAreaInset(edge: .bottom) {
+                ProspectFloatingActionsView(
+                    onDeleteTapped: {
+                        showDeleteConfirmation = true
+                    },
+                    onNotesTapped: {
+                        controller.showNotesSheet = true
+                    }
+                )
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+            }
             .sheet(isPresented: $showDeleteConfirmation) {
                 
                 DeleteProspectSheet(
@@ -124,7 +124,6 @@ struct ProspectDetailsView: View {
                     ContactScreenSoundController.shared.playSound1()
                 }
             }
-
             .sheet(isPresented: $controller.showNotesSheet) {
                 ProspectNotesScreen(prospect: prospect)
             }
@@ -304,35 +303,6 @@ struct ProspectDetailsView: View {
         }
     }
     
-    private var prospectScorecardItems: [DetailsScorecardItem] {
-        [
-            DetailsScorecardItem(
-                kind: .meetings,
-                title: "Meetings",
-                value: "\(prospect.appointments.filter { $0.date >= Date() }.count)",
-                icon: "calendar.badge.clock",
-                color: .blue,
-                action: {
-                    ContactScreenHapticsController.shared.lightTap()
-                    ContactScreenSoundController.shared.playSound1()
-                    showAppointmentsSheet = true
-                }
-            ),
-            DetailsScorecardItem(
-                kind: .knocks,
-                title: "Knocks",
-                value: "\(prospect.knockHistory.count)",
-                icon: "hand.tap.fill",
-                color: .orange,
-                action: {
-                    ContactScreenHapticsController.shared.lightTap()
-                    ContactScreenSoundController.shared.playSound1()
-                    showKnocksSheet = true
-                }
-            )
-        ]
-    }
-
     private func exportToContacts() {
         let store = CNContactStore()
         

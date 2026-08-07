@@ -77,26 +77,23 @@ struct CustomerDetailsView: View {
                 .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
                 
                 Section {
-                    DetailsScorecardCustomizationView(
-                        storagePrefix: "customerDetails",
-                        items: customerScorecardItems
+                    ContactDetailsBusinessCardView(
+                        contact: .customer(customer),
+                        editableName: $tempFullName,
+                        editableAddress: $tempAddress,
+                        isAddressFocused: $isAddressFieldFocused,
+                        searchViewModel: searchViewModel,
+                        onMeetingsTapped: {
+                            showAppointmentsSheet = true
+                        },
+                        onKnocksTapped: {
+                            showKnocksSheet = true
+                        }
                     )
                 }
-                .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
+                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 6, trailing: 0))
                 .listRowBackground(Color.clear)
                 
-                Section() {
-                    TextField("Full Name", text: $tempFullName)
-                    
-                    // 👇 Autocomplete-enabled address field
-                    AddressAutocompleteField(
-                        addressText: $tempAddress,
-                        isFocused: $isAddressFieldFocused,
-                        searchViewModel: searchViewModel
-                    )
-                }
-                
-                // ✅ Actions Toolbar
                 Section {
                     CustomerActionsToolbar(
                         customer: customer,
@@ -104,10 +101,12 @@ struct CustomerDetailsView: View {
                         modelContext: modelContext
                     )
                 }
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
+                .listRowBackground(Color.clear)
                 
             }
-            
-            CustomerFloatingActionsView(
+            .safeAreaInset(edge: .bottom) {
+                CustomerFloatingActionsView(
                 onDeleteTapped: {
                     
                     // Haptic + Sound for Trash button
@@ -126,8 +125,10 @@ struct CustomerDetailsView: View {
                     showNotesSheet = true
                     
                 }
-            )
-            
+                )
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+            }
             .ignoresSafeArea(.keyboard, edges: .bottom)
             .sheet(isPresented: $showNotesSheet) {
                 
@@ -281,35 +282,6 @@ struct CustomerDetailsView: View {
         }
     }
     
-    private var customerScorecardItems: [DetailsScorecardItem] {
-        [
-            DetailsScorecardItem(
-                kind: .meetings,
-                title: "Meetings",
-                value: "\(customer.appointments.filter { $0.date >= Date() }.count)",
-                icon: "calendar.badge.clock",
-                color: .blue,
-                action: {
-                    ContactScreenHapticsController.shared.lightTap()
-                    ContactScreenSoundController.shared.playSound1()
-                    showAppointmentsSheet = true
-                }
-            ),
-            DetailsScorecardItem(
-                kind: .knocks,
-                title: "Knocks",
-                value: "\(customer.knockHistory.count)",
-                icon: "hand.tap.fill",
-                color: .orange,
-                action: {
-                    ContactScreenHapticsController.shared.lightTap()
-                    ContactScreenSoundController.shared.playSound1()
-                    showKnocksSheet = true
-                }
-            )
-        ]
-    }
-
     private func exportToContacts() {
         let store = CNContactStore()
         
