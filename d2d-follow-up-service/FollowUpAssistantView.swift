@@ -109,19 +109,12 @@ struct FollowUpAssistantView: View {
                                 }
                                 .buttonStyle(.plain)
                                 
-                                Button {
+                                TripManagerScorecardView(
+                                    title: "Trips Today",
+                                    count: dailyTrips
+                                ) {
                                     showTripsSheet = true
-                                } label: {
-                                    TripManagerScorecardView(
-                                        title: "Trips Today",
-                                        count: dailyTrips
-                                    ) {
-                                        // ✅ Haptics + sound already handled inside the scorecard
-                                        showTripsSheet = true
-                                    }
-                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.horizontal, 20)
