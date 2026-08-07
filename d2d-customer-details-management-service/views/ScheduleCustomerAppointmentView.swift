@@ -26,7 +26,8 @@ struct ScheduleCustomerAppointmentView: View {
                 clientName: customer.fullName,
                 date: date,
                 type: type,
-                notes: customer.notes.map { $0.content }
+                notes: customer.notes.map { $0.content },
+                customer: customer
             )
 
             customer.appointments.append(appointment)

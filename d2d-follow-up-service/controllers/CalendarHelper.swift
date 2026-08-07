@@ -21,7 +21,7 @@ final class CalendarHelper: ObservableObject {
         let startDate = appointment.date
         let endDate = appointment.date.addingTimeInterval(60 * 30)
         let location = appointment.location
-        let notes = appointment.notes.joined(separator: "\n")
+        let notes = calendarNotes(for: appointment)
 
         @Sendable func handleAccess(granted: Bool, error: Error?) {
             if let error = error {
@@ -74,7 +74,7 @@ final class CalendarHelper: ObservableObject {
 
         let title = appointment.title.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         let location = appointment.location.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        let details = appointment.notes.joined(separator: "\n").addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let details = calendarNotes(for: appointment).addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
 
         let urlString = """
         https://calendar.google.com/calendar/render?action=TEMPLATE&text=\(title)&dates=\(startUTC)/\(endUTC)&details=\(details)&location=\(location)&sf=true&output=xml
@@ -83,6 +83,21 @@ final class CalendarHelper: ObservableObject {
         if let url = URL(string: urlString), UIApplication.shared.canOpenURL(url) {
             UIApplication.shared.open(url)
         }
+    }
+
+    private func calendarNotes(for appointment: Appointment) -> String {
+        let contextNotes = appointment.notes.joined(separator: "\n")
+        let meetingNotes = appointment.meetingNotes.joined(separator: "\n")
+
+        if contextNotes.isEmpty {
+            return meetingNotes
+        }
+
+        if meetingNotes.isEmpty {
+            return contextNotes
+        }
+
+        return "\(contextNotes)\n\nMeeting Notes:\n\(meetingNotes)"
     }
 
     private func iso8601String(for date: Date) -> String {
