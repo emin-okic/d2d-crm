@@ -41,60 +41,44 @@ struct ProspectActionsToolbar: View {
     }
 
     var body: some View {
-        ZStack {
-            HStack(spacing: 24) {
-                
-                // Phone
-                ContactDetailsActionButton(
-                    icon: "phone.fill",
-                    title: "Call",
-                    color: .blue
-                ) {
-                    
-                    // ✅ Haptic + sound
+        Group {
+            if prospect.list == "Prospects" {
+                Button {
                     ContactScreenHapticsController.shared.successConfirmationTap()
                     ContactScreenSoundController.shared.playSound1()
-                    
-                    if prospect.contactPhone.isEmpty {
-                        // Set the original phone number to nil for note taking purposes
-                        originalPhone = nil
-                        showAddPhoneSheet = true
-                    } else {
-                        showCallSheet = true
+                    showCreateSaleSheet = true
+                } label: {
+                    HStack(spacing: 14) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundStyle(.green)
+                            .frame(width: 44, height: 44)
+                            .background(Color.green.opacity(0.14), in: RoundedRectangle(cornerRadius: 8))
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Convert to Customer")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(.primary)
+                            Text("Move this prospect into the customer pipeline.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "arrow.right.circle.fill")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(.green)
                     }
+                    .padding(14)
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.green.opacity(0.28), lineWidth: 1)
+                    )
                 }
-
-                ContactDetailsActionButton(
-                    icon: "envelope.fill",
-                    title: "Email",
-                    color: .purple
-                ) {
-                    ContactScreenHapticsController.shared.successConfirmationTap()
-                    ContactScreenSoundController.shared.playSound1()
-                    
-                    showEmailSheet = true
-                    
-                }
-
-                if prospect.list == "Prospects" {
-                    ContactDetailsActionButton(
-                        icon: "checkmark.seal.fill",
-                        title: "Convert",
-                        color: .green
-                    ) {
-                        
-                        // ✅ Haptic + sound
-                        ContactScreenHapticsController.shared.successConfirmationTap()
-                        ContactScreenSoundController.shared.playSound1()
-                        
-                        showCreateSaleSheet = true
-                    }
-                }
-
+                .buttonStyle(.plain)
             }
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, alignment: .center)
-
         }
 
         .sheet(isPresented: $showCallSheet) {

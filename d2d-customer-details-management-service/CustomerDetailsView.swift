@@ -79,24 +79,25 @@ struct CustomerDetailsView: View {
                 Section {
                     DetailsScorecardCustomizationView(
                         storagePrefix: "customerDetails",
+                        title: "Activity Snapshot",
                         items: customerScorecardItems
                     )
                 }
-                .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
+                .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 6, trailing: 0))
                 .listRowBackground(Color.clear)
                 
-                Section() {
-                    TextField("Full Name", text: $tempFullName)
-                    
-                    // 👇 Autocomplete-enabled address field
-                    AddressAutocompleteField(
-                        addressText: $tempAddress,
-                        isFocused: $isAddressFieldFocused,
+                Section {
+                    ContactDetailsBusinessCardView(
+                        contact: .customer(customer),
+                        editableName: $tempFullName,
+                        editableAddress: $tempAddress,
+                        isAddressFocused: $isAddressFieldFocused,
                         searchViewModel: searchViewModel
                     )
                 }
+                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                .listRowBackground(Color.clear)
                 
-                // ✅ Actions Toolbar
                 Section {
                     CustomerActionsToolbar(
                         customer: customer,
@@ -104,6 +105,8 @@ struct CustomerDetailsView: View {
                         modelContext: modelContext
                     )
                 }
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
+                .listRowBackground(Color.clear)
                 
             }
             

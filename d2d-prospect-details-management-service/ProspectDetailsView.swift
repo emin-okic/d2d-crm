@@ -71,31 +71,33 @@ struct ProspectDetailsView: View {
                 Section {
                     DetailsScorecardCustomizationView(
                         storagePrefix: "prospectDetails",
+                        title: "Activity Snapshot",
                         items: prospectScorecardItems
                     )
                 }
-                .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
+                .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 6, trailing: 0))
                 .listRowBackground(Color.clear)
                 
-                // Prospect info
-                Section() {
-                    TextField("Full Name", text: $tempFullName)
-                    
-                    // Address with autocomplete
-                    AddressAutocompleteField(
-                        addressText: $tempAddress,
-                        isFocused: $isAddressFieldFocused,
+                Section {
+                    ContactDetailsBusinessCardView(
+                        contact: .prospect(prospect),
+                        editableName: $tempFullName,
+                        editableAddress: $tempAddress,
+                        isAddressFocused: $isAddressFieldFocused,
                         searchViewModel: searchViewModel
                     )
                 }
+                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                .listRowBackground(Color.clear)
                 
-                // ✅ Actions Toolbar (unchanged)
                 Section {
                     ProspectActionsToolbar(
                         prospect: prospect,
                         modelContext: modelContext
                     )
                 }
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
+                .listRowBackground(Color.clear)
                 
             }
             
