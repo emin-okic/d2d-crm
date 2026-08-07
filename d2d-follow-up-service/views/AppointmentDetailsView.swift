@@ -16,6 +16,7 @@ struct AppointmentDetailsView: View {
 
     @State private var showRescheduleSheet = false
     @State private var newDate: Date = Date()
+    @State private var isGeneratingSummary = false
 
     private var notesController: AppointmentNotesController {
         AppointmentNotesController(modelContext: context)
@@ -26,10 +27,14 @@ struct AppointmentDetailsView: View {
     }
 
     private var isCompletionButtonDisabled: Bool {
-        appointment.isClosed && canReopenAppointment == false
+        isGeneratingSummary || (appointment.isClosed && canReopenAppointment == false)
     }
 
     private var completionButtonTitle: String {
+        if isGeneratingSummary {
+            return "Summarizing Notes"
+        }
+
         if canReopenAppointment {
             return "Reopen Meeting"
         }
@@ -38,6 +43,10 @@ struct AppointmentDetailsView: View {
     }
 
     private var completionButtonIcon: String {
+        if isGeneratingSummary {
+            return "sparkles"
+        }
+
         if canReopenAppointment {
             return "arrow.uturn.backward"
         }
@@ -119,7 +128,9 @@ struct AppointmentDetailsView: View {
                 .presentationDragIndicator(.visible)
             }
             .onAppear {
-                notesController.closePastAppointmentIfNeeded(appointment)
+                Task {
+                    await notesController.closePastAppointmentIfNeeded(appointment)
+                }
             }
         }
     }
@@ -212,7 +223,11 @@ struct AppointmentDetailsView: View {
             if canReopenAppointment {
                 notesController.reopenIfAllowed(appointment)
             } else {
-                notesController.completeIfNeeded(appointment)
+                isGeneratingSummary = true
+                Task {
+                    await notesController.completeIfNeeded(appointment)
+                    isGeneratingSummary = false
+                }
             }
         } label: {
             Label(completionButtonTitle, systemImage: completionButtonIcon)
