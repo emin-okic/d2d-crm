@@ -21,6 +21,38 @@ struct AppointmentDetailsView: View {
         AppointmentNotesController(modelContext: context)
     }
 
+    private var canReopenAppointment: Bool {
+        appointment.canReopen()
+    }
+
+    private var isCompletionButtonDisabled: Bool {
+        appointment.isClosed && canReopenAppointment == false
+    }
+
+    private var completionButtonTitle: String {
+        if canReopenAppointment {
+            return "Reopen Meeting"
+        }
+
+        return appointment.isClosed ? "Meeting Done" : "Confirm Meeting Done"
+    }
+
+    private var completionButtonIcon: String {
+        if canReopenAppointment {
+            return "arrow.uturn.backward"
+        }
+
+        return appointment.isClosed ? "checkmark.circle.fill" : "checkmark"
+    }
+
+    private var completionButtonColor: Color {
+        if isCompletionButtonDisabled {
+            return Color(.systemGray5)
+        }
+
+        return canReopenAppointment ? .orange : .blue
+    }
+
     var body: some View {
         NavigationStack {
             GeometryReader { geo in
@@ -176,9 +208,14 @@ struct AppointmentDetailsView: View {
         Button {
             FollowUpScreenHapticsController.shared.successConfirmationTap()
             FollowUpScreenSoundController.shared.playSound1()
-            notesController.completeIfNeeded(appointment)
+
+            if canReopenAppointment {
+                notesController.reopenIfAllowed(appointment)
+            } else {
+                notesController.completeIfNeeded(appointment)
+            }
         } label: {
-            Label(appointment.isClosed ? "Meeting Done" : "Confirm Meeting Done", systemImage: appointment.isClosed ? "checkmark.circle.fill" : "checkmark")
+            Label(completionButtonTitle, systemImage: completionButtonIcon)
                 .font(.headline)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
@@ -186,9 +223,9 @@ struct AppointmentDetailsView: View {
                 .frame(height: 50)
         }
         .buttonStyle(.plain)
-        .foregroundColor(appointment.isClosed ? .secondary : .white)
-        .background(appointment.isClosed ? Color(.systemGray5) : Color.blue, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .disabled(appointment.isClosed)
+        .foregroundColor(isCompletionButtonDisabled ? .secondary : .white)
+        .background(completionButtonColor, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .disabled(isCompletionButtonDisabled)
     }
 
     private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {

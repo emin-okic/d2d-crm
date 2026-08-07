@@ -15,17 +15,16 @@ struct CustomerAppointmentsView: View {
     @State private var filter: AppointmentFilter = .upcoming
 
     private var filteredAppointments: [Appointment] {
-        let cal = Calendar.current
         let now = Date()
 
         switch filter {
         case .upcoming:
             return customer.appointments
-                .filter { $0.date >= cal.startOfDay(for: now) }
+                .filter { $0.isUpcomingBucket(now: now) }
                 .sorted { $0.date < $1.date }
         case .past:
             return customer.appointments
-                .filter { $0.date < cal.startOfDay(for: now) }
+                .filter { $0.isPastBucket(now: now) }
                 .sorted { $0.date > $1.date }
         default:
             return []

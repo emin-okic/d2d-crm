@@ -70,4 +70,16 @@ extension Appointment {
     var isClosed: Bool {
         isCompleted || isPastDue
     }
+
+    func isUpcomingBucket(now: Date = Date()) -> Bool {
+        isCompleted == false && date >= now
+    }
+
+    func isPastBucket(now: Date = Date()) -> Bool {
+        isCompleted || date < now
+    }
+
+    func canReopen(now: Date = Date()) -> Bool {
+        isCompleted && date >= now
+    }
 }

@@ -28,8 +28,8 @@ struct AppointmentsSectionView: View {
 
     private var now: Date { Date() }
 
-    private var upcomingCount: Int { appointments.filter { $0.date >= now }.count }
-    private var pastCount: Int { appointments.filter { $0.date <  now }.count }
+    private var upcomingCount: Int { appointments.filter { $0.isUpcomingBucket(now: now) }.count }
+    private var pastCount: Int { appointments.filter { $0.isPastBucket(now: now) }.count }
     
     @Binding var filteredAppointments: [Appointment]
 
@@ -40,15 +40,15 @@ struct AppointmentsSectionView: View {
         switch filter {
         case .today:
             return appointments
-                .filter { calendar.isDate($0.date, inSameDayAs: now) }
+                .filter { calendar.isDate($0.date, inSameDayAs: now) && $0.isUpcomingBucket(now: now) }
                 .sorted { $0.date < $1.date }
         case .upcoming:
             return appointments
-                .filter { $0.date >= now && !calendar.isDateInToday($0.date) }
+                .filter { $0.isUpcomingBucket(now: now) && !calendar.isDateInToday($0.date) }
                 .sorted { $0.date < $1.date }
         case .past:
             return appointments
-                .filter { $0.date < now && !calendar.isDateInToday($0.date) }
+                .filter { $0.isPastBucket(now: now) }
                 .sorted { $0.date > $1.date }
         }
     }
@@ -69,10 +69,10 @@ struct AppointmentsSectionView: View {
                         let calendar = Calendar.current
                         let now = Date()
                         Text(filter == .today
-                             ? "\(appointments.filter { calendar.isDate($0.date, inSameDayAs: now) }.count) Today's Appointments"
+                             ? "\(appointments.filter { calendar.isDate($0.date, inSameDayAs: now) && $0.isUpcomingBucket(now: now) }.count) Today's Appointments"
                              : filter == .upcoming
-                             ? "\(appointments.filter { $0.date >= now && !calendar.isDateInToday($0.date) }.count) Upcoming Appointments"
-                             : "\(appointments.filter { $0.date < now && !calendar.isDateInToday($0.date) }.count) Past Appointments")
+                             ? "\(appointments.filter { $0.isUpcomingBucket(now: now) && !calendar.isDateInToday($0.date) }.count) Upcoming Appointments"
+                             : "\(appointments.filter { $0.isPastBucket(now: now) }.count) Past Appointments")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }

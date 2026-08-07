@@ -35,6 +35,17 @@ struct AppointmentNotesController {
         completeIfNeeded(appointment, at: appointment.completedAt ?? appointment.date)
     }
 
+    func reopenIfAllowed(_ appointment: Appointment, now: Date = Date()) {
+        guard appointment.canReopen(now: now) else { return }
+
+        removeSummaryFromContactNotesIfNeeded(for: appointment)
+        appointment.isCompleted = false
+        appointment.completedAt = nil
+        appointment.meetingSummary = nil
+        appointment.summaryAddedAt = nil
+        try? modelContext.save()
+    }
+
     private func addSummaryToContactNotesIfNeeded(for appointment: Appointment, completedAt: Date) {
         guard appointment.summaryAddedAt == nil else { return }
 
@@ -49,6 +60,22 @@ struct AppointmentNotesController {
         } else if let customer = appointment.customer {
             customer.notes.append(contactNote)
         }
+    }
+
+    private func removeSummaryFromContactNotesIfNeeded(for appointment: Appointment) {
+        guard let summary = appointment.meetingSummary else { return }
+
+        if let prospect = appointment.prospect {
+            removeSummary(summary, from: &prospect.notes)
+        } else if let customer = appointment.customer {
+            removeSummary(summary, from: &customer.notes)
+        }
+    }
+
+    private func removeSummary(_ summary: String, from notes: inout [Note]) {
+        let matchingNotes = notes.filter { $0.content == summary }
+        notes.removeAll { $0.content == summary }
+        matchingNotes.forEach { modelContext.delete($0) }
     }
 
     static func summary(for appointment: Appointment, completedAt: Date) -> String {
