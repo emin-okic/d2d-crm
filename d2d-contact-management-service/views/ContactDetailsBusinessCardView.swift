@@ -69,6 +69,13 @@ enum ContactDetailsBusinessCardKind {
         }
     }
 
+    var meetingCount: Int {
+        switch self {
+        case .prospect(let prospect): prospect.appointments.filter { $0.date >= Date() }.count
+        case .customer(let customer): customer.appointments.filter { $0.date >= Date() }.count
+        }
+    }
+
     var phoneContext: PhoneActionContext {
         switch self {
         case .prospect(let prospect): .prospect(prospect)
@@ -91,6 +98,8 @@ struct ContactDetailsBusinessCardView: View {
     @Binding var editableAddress: String
     @FocusState.Binding var isAddressFocused: Bool
     @ObservedObject var searchViewModel: SearchCompleterViewModel
+    let onMeetingsTapped: () -> Void
+    let onKnocksTapped: () -> Void
 
     @Environment(\.modelContext) private var modelContext
     @State private var isEditingName = false
@@ -270,10 +279,39 @@ struct ContactDetailsBusinessCardView: View {
     }
 
     private var metricGrid: some View {
-        HStack(spacing: 10) {
-            ContactDetailsMetricTile(title: "Knocks", value: contact.knockCount, systemImage: "hand.tap.fill", tint: .green)
-            ContactDetailsMetricTile(title: "Calls", value: contact.callCount, systemImage: "phone.fill", tint: .blue)
-            ContactDetailsMetricTile(title: "Emails", value: contact.emailCount, systemImage: "envelope.fill", tint: .purple)
+        LazyVGrid(
+            columns: Array(repeating: GridItem(.flexible(minimum: 0), spacing: 10), count: 2),
+            spacing: 10
+        ) {
+            ContactDetailsMetricTile(
+                title: "Meetings",
+                value: contact.meetingCount,
+                systemImage: "calendar.badge.clock",
+                tint: .blue,
+                action: openMeetings
+            )
+
+            ContactDetailsMetricTile(
+                title: "Knocks",
+                value: contact.knockCount,
+                systemImage: "hand.tap.fill",
+                tint: .green,
+                action: openKnocks
+            )
+
+            ContactDetailsMetricTile(
+                title: "Calls",
+                value: contact.callCount,
+                systemImage: "phone.fill",
+                tint: .indigo
+            )
+
+            ContactDetailsMetricTile(
+                title: "Emails",
+                value: contact.emailCount,
+                systemImage: "envelope.fill",
+                tint: .purple
+            )
         }
     }
 
@@ -338,6 +376,18 @@ struct ContactDetailsBusinessCardView: View {
         }
         .padding(12)
         .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    private func openMeetings() {
+        ContactScreenHapticsController.shared.lightTap()
+        ContactScreenSoundController.shared.playSound1()
+        onMeetingsTapped()
+    }
+
+    private func openKnocks() {
+        ContactScreenHapticsController.shared.lightTap()
+        ContactScreenSoundController.shared.playSound1()
+        onKnocksTapped()
     }
 
     private func handlePhoneTapped() {
@@ -408,14 +458,38 @@ private struct ContactDetailsMetricTile: View {
     let value: Int
     let systemImage: String
     let tint: Color
+    var action: (() -> Void)? = nil
 
     var body: some View {
+        Group {
+            if let action {
+                Button(action: action) {
+                    content
+                }
+                .buttonStyle(.plain)
+            } else {
+                content
+            }
+        }
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Image(systemName: systemImage)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(tint)
-                .frame(width: 30, height: 30)
-                .background(tint.opacity(0.14), in: Circle())
+            HStack {
+                Image(systemName: systemImage)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(tint)
+                    .frame(width: 30, height: 30)
+                    .background(tint.opacity(0.14), in: Circle())
+
+                Spacer()
+
+                if action != nil {
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                }
+            }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(value)")

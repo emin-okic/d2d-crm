@@ -12,40 +12,25 @@ struct CustomerFloatingActionsView: View {
     let onNotesTapped: () -> Void
 
     var body: some View {
-        VStack {
-            Spacer()
-
-            HStack {
-                // Align to left
-                LiquidGlassToolbarBackground {
-                    VStack(spacing: 16) {
-                        // Notes button above trash
-                        Button(action: onNotesTapped) {
-                            Image(systemName: "note.text")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                                .frame(width: 50, height: 50)
-                                .background(Circle().fill(Color.blue))
-                                .shadow(radius: 5)
-                        }
-
-                        // Trash button
-                        Button(action: onDeleteTapped) {
-                            Image(systemName: "trash.fill")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                                .frame(width: 50, height: 50)
-                                .background(Circle().fill(Color.red))
-                                .shadow(radius: 5)
-                        }
-                    }
+        LiquidGlassToolbarBackground {
+            HStack(spacing: 12) {
+                Button(action: onNotesTapped) {
+                    Label("Notes", systemImage: "note.text")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
                 }
-                .padding(.bottom, 16)
-                .padding(.leading, 16) // bottom-left corner
+                .buttonStyle(.borderedProminent)
 
-                Spacer() // push to left
+                Button(role: .destructive, action: onDeleteTapped) {
+                    Label("Delete", systemImage: "trash.fill")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                }
+                .buttonStyle(.bordered)
             }
+            .padding(10)
         }
-        .ignoresSafeArea(.keyboard, edges: .bottom)
     }
 }

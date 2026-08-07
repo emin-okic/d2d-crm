@@ -12,58 +12,33 @@ struct ProspectFloatingActionsView: View {
     let onNotesTapped: () -> Void
 
     var body: some View {
-        VStack {
-            Spacer()
-
-            HStack {
-                // Align to left
-                LiquidGlassToolbarBackground {
-                    
-                    VStack(spacing: 16) {
-                        
-                        // Notes button above trash
-                        Button(action: {
-                            
-                            // ✅ Haptic + sound feedback
-                            ContactScreenHapticsController.shared.successConfirmationTap()
-                            ContactScreenSoundController.shared.playSound1()
-                            
-                            // Original action
-                            onNotesTapped()
-                        }) {
-                            Image(systemName: "note.text")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                                .frame(width: 50, height: 50)
-                                .background(Circle().fill(Color.blue))
-                                .shadow(radius: 5)
-                        }
-
-                        // Trash button
-                        Button(action: {
-                            
-                            // ✅ Haptic + sound feedback
-                            ContactScreenHapticsController.shared.successConfirmationTap()
-                            ContactScreenSoundController.shared.playSound1()
-                            
-                            // Original action
-                            onDeleteTapped()
-                        }) {
-                            Image(systemName: "trash.fill")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                                .frame(width: 50, height: 50)
-                                .background(Circle().fill(Color.red))
-                                .shadow(radius: 5)
-                        }
-                    }
+        LiquidGlassToolbarBackground {
+            HStack(spacing: 12) {
+                Button(action: {
+                    ContactScreenHapticsController.shared.successConfirmationTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    onNotesTapped()
+                }) {
+                    Label("Notes", systemImage: "note.text")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
                 }
-                .padding(.bottom, 16)
-                .padding(.leading, 16) // align to left
+                .buttonStyle(.borderedProminent)
 
-                Spacer() // push it to left
+                Button(role: .destructive, action: {
+                    ContactScreenHapticsController.shared.successConfirmationTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    onDeleteTapped()
+                }) {
+                    Label("Delete", systemImage: "trash.fill")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                }
+                .buttonStyle(.bordered)
             }
+            .padding(10)
         }
-        .ignoresSafeArea(.keyboard, edges: .bottom)
     }
 }
