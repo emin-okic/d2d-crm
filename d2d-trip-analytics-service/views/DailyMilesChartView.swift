@@ -9,56 +9,74 @@ import SwiftUI
 
 struct DailyMilesChartView: View {
     let segments: [DailyMilesSegment]
-    
-    // Fixed chart height
-    private let chartHeight: CGFloat = 100
-    
+
+    private let chartHeight: CGFloat = 112
+    private let barWidth: CGFloat = 28
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Total miles headline
+        VStack(alignment: .center, spacing: 14) {
             let total = segments.reduce(0) { $0 + $1.miles }
-            Text("Total miles today: \(total, specifier: "%.1f")")
-                .font(.headline)
-                .bold()
-            
-            // Horizontal bars
-            HStack(spacing: 12) {
+
+            VStack(spacing: 2) {
+                Text("Today")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.secondary)
+
+                Text("\(total, specifier: "%.1f") miles")
+                    .font(.title3.weight(.bold))
+                    .monospacedDigit()
+            }
+            .frame(maxWidth: .infinity)
+
+            HStack(alignment: .bottom, spacing: 18) {
                 let maxMiles = segments.map { $0.miles }.max() ?? 1
                 ForEach(segments, id: \.period) { segment in
-                    VStack {
+                    VStack(spacing: 8) {
+                        Text("\(segment.miles, specifier: "%.1f")")
+                            .font(.caption2.weight(.semibold))
+                            .monospacedDigit()
+                            .foregroundColor(.secondary)
+
                         ZStack(alignment: .bottom) {
                             Capsule()
-                                .fill(Color.gray.opacity(0.2))
-                                .frame(width: 20, height: chartHeight)
-                            
+                                .fill(Color(.tertiarySystemFill))
+                                .frame(width: barWidth, height: chartHeight)
+
                             Capsule()
                                 .fill(color(for: segment.period))
                                 .frame(
-                                    width: 20,
+                                    width: barWidth,
                                     height: normalizedHeight(for: segment.miles, maxMiles: maxMiles)
                                 )
                         }
-                        Text(segment.period.prefix(1)) // M, A, E
-                            .font(.caption2)
+
+                        Text(segment.period)
+                            .font(.caption2.weight(.medium))
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
+                    .frame(maxWidth: .infinity)
                 }
             }
+            .frame(maxWidth: .infinity)
         }
-        .padding()
+        .padding(.horizontal, 18)
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(Color(.secondarySystemBackground))
         )
         .padding(.horizontal)
     }
-    
+
     func normalizedHeight(for miles: Double, maxMiles: Double) -> CGFloat {
-        // Prevent division by zero
         guard maxMiles > 0 else { return 0 }
-        // Scale proportionally within chartHeight
-        return CGFloat(miles / maxMiles) * chartHeight
+        guard miles > 0 else { return 4 }
+        return max(8, CGFloat(miles / maxMiles) * chartHeight)
     }
-    
+
     func color(for period: String) -> Color {
         switch period {
         case "Morning": return .blue
