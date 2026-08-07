@@ -10,54 +10,62 @@ import SwiftUI
 struct RecordingsScorecardView: View {
     let unlocked: Bool
     let count: Int
-    let action: () -> Void   // ✅ Add action parameter
+    let action: () -> Void
+
+    private var accentColor: Color {
+        unlocked ? .blue : .gray
+    }
 
     var body: some View {
         Button {
-            // ✅ Play haptic + sound before calling the action
             FollowUpScreenHapticsController.shared.lightTap()
             FollowUpScreenSoundController.shared.playSound1()
-            
             action()
         } label: {
             HStack(spacing: 12) {
-                
                 Image(systemName: unlocked ? "mic.fill" : "lock.fill")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(unlocked ? .blue : .gray)
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(accentColor)
+                    .frame(width: 36, height: 36)
+                    .background(Circle().fill(accentColor.opacity(0.14)))
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(unlocked ? "Recordings" : "Recording Studio")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
-                    
-                    if unlocked {
-                        Text("\(count)")
-                            .font(.title3)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primary)
-                            .lineLimit(1)
-                    } else {
-                        Text("Locked")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                            .lineLimit(1)
-                    }
+                        .minimumScaleFactor(0.72)
+
+                    Text(unlocked ? "\(count)" : "Locked")
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(unlocked ? .primary : accentColor)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.82)
+                        .contentTransition(.numericText())
                 }
 
-                Spacer()
+                Spacer(minLength: 0)
             }
-            .padding(.horizontal, 14)
+            .padding(.horizontal, 16)
             .padding(.vertical, 10)
-            .frame(maxWidth: .infinity, maxHeight: 72)
-            .background(.ultraThinMaterial)
-            .cornerRadius(16)
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(unlocked ? Color.clear : Color.gray.opacity(0.25), lineWidth: 1)
+            .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(.regularMaterial)
+                    .shadow(color: Color.black.opacity(0.18), radius: 16, x: 0, y: 10)
+                    .shadow(color: accentColor.opacity(0.14), radius: 8, x: 0, y: 3)
             )
-            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [Color.white.opacity(0.55), accentColor.opacity(0.22)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
         }
         .buttonStyle(.plain)
     }
