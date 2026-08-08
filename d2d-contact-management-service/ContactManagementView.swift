@@ -134,7 +134,9 @@ struct ContactManagementView: View {
                         showingAddProspect = true
                     },
                     showDuplicateToast: $showDuplicateToast,
-                    duplicateNames: $duplicateNames
+                    duplicateNames: $duplicateNames,
+                    selectedProspect: $selectedProspect,
+                    selectedCustomer: $selectedCustomer
                 )
             )
             .overlay(
