@@ -1176,7 +1176,8 @@ struct MapSearchView: View {
                 clientName: customer.fullName,
                 date: date,
                 type: "Follow-Up",
-                notes: customer.notes.map { $0.content }
+                notes: customer.notes.map { $0.content },
+                customer: customer
             )
 
             customer.appointments.append(appt)

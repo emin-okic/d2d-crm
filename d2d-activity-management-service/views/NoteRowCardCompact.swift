@@ -36,9 +36,9 @@ struct NoteRowCardCompact: View {
                 }
 
                 Text(attributed(content))
-                    .font(.subheadline) // smaller
+                    .font(.subheadline)
                     .foregroundStyle(.primary)
-                    .lineLimit(3)       // ⬅️ keep rows tidy
+                    .fixedSize(horizontal: false, vertical: true)
                     .textSelection(.enabled)
             }
             .padding(8)
