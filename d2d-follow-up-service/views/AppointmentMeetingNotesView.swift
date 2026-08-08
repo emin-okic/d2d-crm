@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct AppointmentMeetingNotesView: View {
     let appointment: Appointment
@@ -76,8 +77,14 @@ struct AppointmentMeetingNotesView: View {
                         Text(note)
                             .font(.caption)
                             .foregroundStyle(.primary)
-                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .textSelection(.enabled)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .contextMenu {
+                                Button("Copy") {
+                                    UIPasteboard.general.string = note
+                                }
+                            }
                     }
                 }
             }
