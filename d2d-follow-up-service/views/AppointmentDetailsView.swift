@@ -173,10 +173,7 @@ struct AppointmentDetailsView: View {
         card {
             VStack(alignment: .leading, spacing: isCompact ? 8 : 10) {
                 labeledField("Client") {
-                    Text(appointment.clientName)
-                        .font(.subheadline.weight(.semibold))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.82)
+                    contactDetailsLink
                 }
 
                 labeledField("Location") {
@@ -187,6 +184,61 @@ struct AppointmentDetailsView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private var contactDetailsLink: some View {
+        if let prospect = appointment.prospect {
+            NavigationLink {
+                ProspectDetailsView(prospect: prospect)
+                    .navigationBarBackButtonHidden(true)
+            } label: {
+                contactLinkLabel(contactTypeTitle: "Prospect")
+            }
+            .simultaneousGesture(TapGesture().onEnded(playContactOpenFeedback))
+            .buttonStyle(.plain)
+        } else if let customer = appointment.customer {
+            NavigationLink {
+                CustomerDetailsView(customer: customer)
+                    .navigationBarBackButtonHidden(true)
+            } label: {
+                contactLinkLabel(contactTypeTitle: "Customer")
+            }
+            .simultaneousGesture(TapGesture().onEnded(playContactOpenFeedback))
+            .buttonStyle(.plain)
+        } else {
+            Text(appointment.clientName)
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+        }
+    }
+
+    private func contactLinkLabel(contactTypeTitle: String) -> some View {
+        HStack(spacing: 10) {
+            Text(appointment.clientName)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+
+            Text(contactTypeTitle)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.blue)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.blue.opacity(0.1), in: Capsule())
+
+            Spacer(minLength: 0)
+
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(10)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .contentShape(Rectangle())
+        .accessibilityLabel("Open \(contactTypeTitle) details for \(appointment.clientName)")
     }
 
     private var contextNotesCard: some View {
@@ -261,5 +313,10 @@ struct AppointmentDetailsView: View {
                 .foregroundColor(.secondary)
             content()
         }
+    }
+
+    private func playContactOpenFeedback() {
+        FollowUpScreenHapticsController.shared.lightTap()
+        FollowUpScreenSoundController.shared.playSound1()
     }
 }
