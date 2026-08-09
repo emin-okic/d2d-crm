@@ -22,13 +22,15 @@ struct ImportOverlayView: View {
     let customers: [Customer]
     let modelContext: ModelContext
     let onSave: () -> Void
+    let onOpenDuplicateProspect: (Prospect) -> Void
+    let onOpenDuplicateCustomer: (Customer) -> Void
     
     let onAddManually: () -> Void
 
     @State private var showContactsPicker = false
     
     @State private var showBusinessCardScanner = false
-    @State private var scannedProspectDraft: ProspectDraft?
+    @State private var businessCardReview: BusinessCardReview?
     
     @StateObject private var importManager: ContactImportManager
     
@@ -45,6 +47,8 @@ struct ImportOverlayView: View {
         customers: [Customer],
         modelContext: ModelContext,
         onSave: @escaping () -> Void,
+        onOpenDuplicateProspect: @escaping (Prospect) -> Void,
+        onOpenDuplicateCustomer: @escaping (Customer) -> Void,
         onAddManually: @escaping () -> Void,
         showDuplicateToast: Binding<Bool>,
         duplicateNames: Binding<[String]>
@@ -57,6 +61,8 @@ struct ImportOverlayView: View {
         self.customers = customers
         self.modelContext = modelContext
         self.onSave = onSave
+        self.onOpenDuplicateProspect = onOpenDuplicateProspect
+        self.onOpenDuplicateCustomer = onOpenDuplicateCustomer
         self.onAddManually = onAddManually
 
         // ✅ Initialize StateObject here
@@ -151,12 +157,23 @@ struct ImportOverlayView: View {
                         onCancel: { showContactsPicker = false }
                     )
                 }
-                .sheet(item: $scannedProspectDraft) { draft in
+                .sheet(item: $businessCardReview) { review in
                     BusinessCardConfirmView(
-                        draft: draft,
+                        draft: review.draft,
+                        duplicate: review.duplicate,
                         onConfirm: { confirmedDraft in
                             saveProspect(confirmedDraft)
-                            scannedProspectDraft = nil
+                            businessCardReview = nil
+                            showingImportFromContacts = false
+                        },
+                        onUpdateExisting: { duplicate, fields in
+                            updateExistingContact(duplicate, with: review.draft, fields: fields)
+                            businessCardReview = nil
+                            showingImportFromContacts = false
+                        },
+                        onOpenExisting: { duplicate in
+                            openExistingContact(duplicate)
+                            businessCardReview = nil
                             showingImportFromContacts = false
                         }
                     )
@@ -164,8 +181,14 @@ struct ImportOverlayView: View {
                 .sheet(isPresented: $showBusinessCardScanner) {
                     BusinessCardScannerView(
                         onScanned: { draft in
-                            scannedProspectDraft = draft
                             showBusinessCardScanner = false
+                            let review = BusinessCardReview(
+                                draft: draft,
+                                duplicate: findDuplicate(for: draft)
+                            )
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                                businessCardReview = review
+                            }
                         },
                         onCancel: {
                             showBusinessCardScanner = false
@@ -176,6 +199,180 @@ struct ImportOverlayView: View {
         }
     }
     
+    private func findDuplicate(for draft: ProspectDraft) -> BusinessCardDuplicateCandidate? {
+        let currentProspects = (try? modelContext.fetch(FetchDescriptor<Prospect>())) ?? prospects
+        let currentCustomers = (try? modelContext.fetch(FetchDescriptor<Customer>())) ?? customers
+
+        if let prospect = currentProspects.first(where: { isDuplicate(draft, of: $0) }) {
+            return BusinessCardDuplicateCandidate(prospect: prospect)
+        }
+
+        if let customer = currentCustomers.first(where: { isDuplicate(draft, of: $0) }) {
+            return BusinessCardDuplicateCandidate(customer: customer)
+        }
+
+        return nil
+    }
+
+    private func isDuplicate(_ draft: ProspectDraft, of contact: any ContactProtocol) -> Bool {
+        let draftName = normalizedText(draft.fullName)
+        let contactName = normalizedText(contact.fullName)
+        if isUsableName(draftName), isUsableName(contactName), draftName == contactName {
+            return true
+        }
+
+        let draftAddress = normalizedText(draft.address)
+        let contactAddress = normalizedText(contact.address)
+        if isUsableAddress(draftAddress), isUsableAddress(contactAddress), draftAddress == contactAddress {
+            return true
+        }
+
+        let draftEmail = normalizedEmail(draft.email)
+        let contactEmail = normalizedEmail(contact.contactEmail)
+        if !draftEmail.isEmpty, !contactEmail.isEmpty, draftEmail == contactEmail {
+            return true
+        }
+
+        let draftPhone = digitsOnly(draft.phone)
+        let contactPhone = digitsOnly(contact.contactPhone)
+        if phoneNumbersMatch(draftPhone, contactPhone) {
+            return true
+        }
+
+        return false
+    }
+
+    private func updateExistingContact(
+        _ duplicate: BusinessCardDuplicateCandidate,
+        with draft: ProspectDraft,
+        fields: Set<BusinessCardMergeField>
+    ) {
+        switch duplicate.type {
+        case .prospect:
+            guard let prospect = duplicate.prospect else { return }
+            let changeNotes = apply(draft, to: prospect, fields: fields)
+            appendBusinessCardMergeNotes(changeNotes, to: prospect)
+        case .customer:
+            guard let customer = duplicate.customer else { return }
+            let changeNotes = apply(draft, to: customer, fields: fields)
+            appendBusinessCardMergeNotes(changeNotes, to: customer)
+        }
+
+        try? modelContext.save()
+        onSave()
+    }
+
+    private func apply(_ draft: ProspectDraft, to contact: any ContactProtocol, fields: Set<BusinessCardMergeField>) -> [String] {
+        var contact = contact
+        var changeNotes: [String] = []
+
+        if fields.contains(.name), !draft.fullName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let oldValue = contact.fullName
+            if oldValue != draft.fullName {
+                contact.fullName = draft.fullName
+                changeNotes.append(changeNote(fieldName: "Name", oldValue: oldValue, newValue: draft.fullName))
+            }
+        }
+        if fields.contains(.email), !draft.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let oldValue = contact.contactEmail
+            if oldValue != draft.email {
+                contact.contactEmail = draft.email
+                changeNotes.append(changeNote(fieldName: "Email", oldValue: oldValue, newValue: draft.email))
+            }
+        }
+        if fields.contains(.phone), !draft.phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let oldValue = contact.contactPhone
+            if oldValue != draft.phone {
+                contact.contactPhone = draft.phone
+                changeNotes.append(changeNote(fieldName: "Phone", oldValue: oldValue, newValue: draft.phone))
+            }
+        }
+        if fields.contains(.address), isUsableAddress(normalizedText(draft.address)) {
+            let oldValue = contact.address
+            if oldValue != draft.address {
+                contact.address = draft.address
+                changeNotes.append(changeNote(fieldName: "Address", oldValue: oldValue, newValue: draft.address))
+            }
+        }
+
+        return changeNotes
+    }
+
+    private func appendBusinessCardMergeNotes(_ changeNotes: [String], to prospect: Prospect) {
+        for content in changeNotes {
+            prospect.notes.append(Note(content: content, date: Date(), prospect: prospect))
+        }
+    }
+
+    private func appendBusinessCardMergeNotes(_ changeNotes: [String], to customer: Customer) {
+        for content in changeNotes {
+            customer.notes.append(Note(content: content, date: Date()))
+        }
+    }
+
+    private func changeNote(fieldName: String, oldValue: String, newValue: String) -> String {
+        "Business card scan updated \(fieldName.lowercased()) from \(displayValueForNote(oldValue)) to \(displayValueForNote(newValue))."
+    }
+
+    private func displayValueForNote(_ value: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "Not set" : trimmed
+    }
+
+    private func openExistingContact(_ duplicate: BusinessCardDuplicateCandidate) {
+        switch duplicate.type {
+        case .prospect:
+            guard let prospect = duplicate.prospect else { return }
+            selectedList = "Prospects"
+            DispatchQueue.main.async {
+                onOpenDuplicateProspect(prospect)
+            }
+        case .customer:
+            guard let customer = duplicate.customer else { return }
+            selectedList = "Customers"
+            DispatchQueue.main.async {
+                onOpenDuplicateCustomer(customer)
+            }
+        }
+    }
+
+    private func normalizedEmail(_ value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    private func normalizedText(_ value: String) -> String {
+        let folded = value
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+            .lowercased()
+
+        let scalars = folded.unicodeScalars.map { scalar in
+            CharacterSet.alphanumerics.contains(scalar) ? Character(scalar) : " "
+        }
+
+        return String(scalars)
+            .split(whereSeparator: { $0.isWhitespace })
+            .joined(separator: " ")
+    }
+
+    private func isUsableName(_ value: String) -> Bool {
+        !value.isEmpty && value != "unknown" && value.split(separator: " ").count >= 2
+    }
+
+    private func isUsableAddress(_ value: String) -> Bool {
+        !value.isEmpty && value != "no address" && value != "noaddress"
+    }
+
+    private func digitsOnly(_ value: String) -> String {
+        value.filter(\.isNumber)
+    }
+
+    private func phoneNumbersMatch(_ lhs: String, _ rhs: String) -> Bool {
+        guard lhs.count >= 7, rhs.count >= 7 else { return false }
+        if lhs == rhs { return true }
+
+        return lhs.suffix(7) == rhs.suffix(7)
+    }
+
     private func saveProspect(_ draft: ProspectDraft) {
         let prospect = Prospect(
             fullName: draft.fullName,
