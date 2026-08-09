@@ -250,31 +250,73 @@ struct ImportOverlayView: View {
         switch duplicate.type {
         case .prospect:
             guard let prospect = duplicate.prospect else { return }
-            apply(draft, to: prospect, fields: fields)
+            let changeNotes = apply(draft, to: prospect, fields: fields)
+            appendBusinessCardMergeNotes(changeNotes, to: prospect)
         case .customer:
             guard let customer = duplicate.customer else { return }
-            apply(draft, to: customer, fields: fields)
+            let changeNotes = apply(draft, to: customer, fields: fields)
+            appendBusinessCardMergeNotes(changeNotes, to: customer)
         }
 
         try? modelContext.save()
         onSave()
     }
 
-    private func apply(_ draft: ProspectDraft, to contact: any ContactProtocol, fields: Set<BusinessCardMergeField>) {
+    private func apply(_ draft: ProspectDraft, to contact: any ContactProtocol, fields: Set<BusinessCardMergeField>) -> [String] {
         var contact = contact
+        var changeNotes: [String] = []
 
         if fields.contains(.name), !draft.fullName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            contact.fullName = draft.fullName
+            let oldValue = contact.fullName
+            if oldValue != draft.fullName {
+                contact.fullName = draft.fullName
+                changeNotes.append(changeNote(fieldName: "Name", oldValue: oldValue, newValue: draft.fullName))
+            }
         }
         if fields.contains(.email), !draft.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            contact.contactEmail = draft.email
+            let oldValue = contact.contactEmail
+            if oldValue != draft.email {
+                contact.contactEmail = draft.email
+                changeNotes.append(changeNote(fieldName: "Email", oldValue: oldValue, newValue: draft.email))
+            }
         }
         if fields.contains(.phone), !draft.phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            contact.contactPhone = draft.phone
+            let oldValue = contact.contactPhone
+            if oldValue != draft.phone {
+                contact.contactPhone = draft.phone
+                changeNotes.append(changeNote(fieldName: "Phone", oldValue: oldValue, newValue: draft.phone))
+            }
         }
         if fields.contains(.address), isUsableAddress(normalizedText(draft.address)) {
-            contact.address = draft.address
+            let oldValue = contact.address
+            if oldValue != draft.address {
+                contact.address = draft.address
+                changeNotes.append(changeNote(fieldName: "Address", oldValue: oldValue, newValue: draft.address))
+            }
         }
+
+        return changeNotes
+    }
+
+    private func appendBusinessCardMergeNotes(_ changeNotes: [String], to prospect: Prospect) {
+        for content in changeNotes {
+            prospect.notes.append(Note(content: content, date: Date(), prospect: prospect))
+        }
+    }
+
+    private func appendBusinessCardMergeNotes(_ changeNotes: [String], to customer: Customer) {
+        for content in changeNotes {
+            customer.notes.append(Note(content: content, date: Date()))
+        }
+    }
+
+    private func changeNote(fieldName: String, oldValue: String, newValue: String) -> String {
+        "Business card scan updated \(fieldName.lowercased()) from \(displayValueForNote(oldValue)) to \(displayValueForNote(newValue))."
+    }
+
+    private func displayValueForNote(_ value: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "Not set" : trimmed
     }
 
     private func openExistingContact(_ duplicate: BusinessCardDuplicateCandidate) {
