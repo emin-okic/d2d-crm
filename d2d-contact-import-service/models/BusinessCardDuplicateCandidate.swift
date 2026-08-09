@@ -10,6 +10,12 @@ enum BusinessCardDuplicateContactType {
     case customer
 }
 
+struct BusinessCardReview: Identifiable {
+    let id = UUID()
+    let draft: ProspectDraft
+    let duplicate: BusinessCardDuplicateCandidate?
+}
+
 struct BusinessCardDuplicateCandidate: Identifiable {
     let id = UUID()
     let type: BusinessCardDuplicateContactType
@@ -100,7 +106,8 @@ enum BusinessCardMergeField: String, CaseIterable, Identifiable {
         case .name:
             return value.lowercased() != "unknown" && value.split(separator: " ").count >= 2
         case .address:
-            return value.lowercased() != "no address"
+            let normalizedValue = value.lowercased().replacingOccurrences(of: " ", with: "")
+            return normalizedValue != "noaddress"
         case .email, .phone:
             return true
         }

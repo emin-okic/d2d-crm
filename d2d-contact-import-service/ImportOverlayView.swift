@@ -30,8 +30,7 @@ struct ImportOverlayView: View {
     @State private var showContactsPicker = false
     
     @State private var showBusinessCardScanner = false
-    @State private var scannedProspectDraft: ProspectDraft?
-    @State private var businessCardDuplicate: BusinessCardDuplicateCandidate?
+    @State private var businessCardReview: BusinessCardReview?
     
     @StateObject private var importManager: ContactImportManager
     
@@ -158,26 +157,23 @@ struct ImportOverlayView: View {
                         onCancel: { showContactsPicker = false }
                     )
                 }
-                .sheet(item: $scannedProspectDraft) { draft in
+                .sheet(item: $businessCardReview) { review in
                     BusinessCardConfirmView(
-                        draft: draft,
-                        duplicate: businessCardDuplicate,
+                        draft: review.draft,
+                        duplicate: review.duplicate,
                         onConfirm: { confirmedDraft in
                             saveProspect(confirmedDraft)
-                            scannedProspectDraft = nil
-                            businessCardDuplicate = nil
+                            businessCardReview = nil
                             showingImportFromContacts = false
                         },
                         onUpdateExisting: { duplicate, fields in
-                            updateExistingContact(duplicate, with: draft, fields: fields)
-                            scannedProspectDraft = nil
-                            businessCardDuplicate = nil
+                            updateExistingContact(duplicate, with: review.draft, fields: fields)
+                            businessCardReview = nil
                             showingImportFromContacts = false
                         },
                         onOpenExisting: { duplicate in
                             openExistingContact(duplicate)
-                            scannedProspectDraft = nil
-                            businessCardDuplicate = nil
+                            businessCardReview = nil
                             showingImportFromContacts = false
                         }
                     )
@@ -185,9 +181,14 @@ struct ImportOverlayView: View {
                 .sheet(isPresented: $showBusinessCardScanner) {
                     BusinessCardScannerView(
                         onScanned: { draft in
-                            businessCardDuplicate = findDuplicate(for: draft)
-                            scannedProspectDraft = draft
                             showBusinessCardScanner = false
+                            let review = BusinessCardReview(
+                                draft: draft,
+                                duplicate: findDuplicate(for: draft)
+                            )
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                                businessCardReview = review
+                            }
                         },
                         onCancel: {
                             showBusinessCardScanner = false
@@ -199,11 +200,14 @@ struct ImportOverlayView: View {
     }
     
     private func findDuplicate(for draft: ProspectDraft) -> BusinessCardDuplicateCandidate? {
-        if let prospect = prospects.first(where: { isDuplicate(draft, of: $0) }) {
+        let currentProspects = (try? modelContext.fetch(FetchDescriptor<Prospect>())) ?? prospects
+        let currentCustomers = (try? modelContext.fetch(FetchDescriptor<Customer>())) ?? customers
+
+        if let prospect = currentProspects.first(where: { isDuplicate(draft, of: $0) }) {
             return BusinessCardDuplicateCandidate(prospect: prospect)
         }
 
-        if let customer = customers.first(where: { isDuplicate(draft, of: $0) }) {
+        if let customer = currentCustomers.first(where: { isDuplicate(draft, of: $0) }) {
             return BusinessCardDuplicateCandidate(customer: customer)
         }
 
@@ -211,32 +215,31 @@ struct ImportOverlayView: View {
     }
 
     private func isDuplicate(_ draft: ProspectDraft, of contact: any ContactProtocol) -> Bool {
+        let draftName = normalizedText(draft.fullName)
+        let contactName = normalizedText(contact.fullName)
+        if isUsableName(draftName), isUsableName(contactName), draftName == contactName {
+            return true
+        }
+
+        let draftAddress = normalizedText(draft.address)
+        let contactAddress = normalizedText(contact.address)
+        if isUsableAddress(draftAddress), isUsableAddress(contactAddress), draftAddress == contactAddress {
+            return true
+        }
+
         let draftEmail = normalizedEmail(draft.email)
         let contactEmail = normalizedEmail(contact.contactEmail)
-        if !draftEmail.isEmpty && draftEmail == contactEmail {
+        if !draftEmail.isEmpty, !contactEmail.isEmpty, draftEmail == contactEmail {
             return true
         }
 
         let draftPhone = digitsOnly(draft.phone)
         let contactPhone = digitsOnly(contact.contactPhone)
-        if draftPhone.count >= 7 && draftPhone == contactPhone {
+        if phoneNumbersMatch(draftPhone, contactPhone) {
             return true
         }
 
-        let draftName = normalizedText(draft.fullName)
-        let contactName = normalizedText(contact.fullName)
-        guard isUsableName(draftName), draftName == contactName else {
-            return false
-        }
-
-        let draftAddress = normalizedText(draft.address)
-        let contactAddress = normalizedText(contact.address)
-
-        if isUsableAddress(draftAddress), draftAddress == contactAddress {
-            return true
-        }
-
-        return !isUsableAddress(draftAddress)
+        return false
     }
 
     private func updateExistingContact(
@@ -296,7 +299,17 @@ struct ImportOverlayView: View {
     }
 
     private func normalizedText(_ value: String) -> String {
-        value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let folded = value
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+            .lowercased()
+
+        let scalars = folded.unicodeScalars.map { scalar in
+            CharacterSet.alphanumerics.contains(scalar) ? Character(scalar) : " "
+        }
+
+        return String(scalars)
+            .split(whereSeparator: { $0.isWhitespace })
+            .joined(separator: " ")
     }
 
     private func isUsableName(_ value: String) -> Bool {
@@ -304,11 +317,18 @@ struct ImportOverlayView: View {
     }
 
     private func isUsableAddress(_ value: String) -> Bool {
-        !value.isEmpty && value != "no address"
+        !value.isEmpty && value != "no address" && value != "noaddress"
     }
 
     private func digitsOnly(_ value: String) -> String {
         value.filter(\.isNumber)
+    }
+
+    private func phoneNumbersMatch(_ lhs: String, _ rhs: String) -> Bool {
+        guard lhs.count >= 7, rhs.count >= 7 else { return false }
+        if lhs == rhs { return true }
+
+        return lhs.suffix(7) == rhs.suffix(7)
     }
 
     private func saveProspect(_ draft: ProspectDraft) {
