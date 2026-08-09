@@ -341,14 +341,6 @@ struct MapSearchView: View {
                 // No-op for single-shot, but keep if you want to explicitly clear.
                 AdEngine.shared.stop()
             }
-            .onAppear {
-                Task {
-                    await AdEngine.shared.loadPurchases()
-                    AdEngine.shared.startSingleShot(
-                        inventory: AdDemoInventory.defaultAds
-                    )
-                }
-            }
             
             // Search engine related modifiers
             .onChange(of: popupState) { _, newValue in

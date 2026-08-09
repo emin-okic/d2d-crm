@@ -12,7 +12,6 @@ public struct AdImagePopupView: View {
     let onDismiss: () -> Void
     let onClick: (Ad) -> Void
     @Environment(\.openURL) private var openURL
-    @ObservedObject private var engine = AdEngine.shared
 
     public init(ad: Ad, onDismiss: @escaping () -> Void, onClick: @escaping (Ad) -> Void) {
         self.ad = ad
@@ -41,20 +40,12 @@ public struct AdImagePopupView: View {
 
                     Spacer(minLength: 12)
                 }
-                .padding(.horizontal, 12)
+                .padding(.leading, 12)
+                .padding(.trailing, 48)
                 .padding(.top, 12)
 
                 adCreative
-
-                if !engine.adsRemoved {
-                    RemoveAdsCTAView(isLoading: engine.removeAdsPurchaseState.isLoading) {
-                        Task {
-                            await engine.purchaseRemoveAds()
-                        }
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.bottom, 10)
-                }
+                    .padding(.bottom, 12)
             }
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay {
@@ -65,24 +56,7 @@ public struct AdImagePopupView: View {
 
             closeButton
         }
-        .onAppear { engine.notify(.impression, ad: ad) }
-        .alert(
-            "Purchase Unavailable",
-            isPresented: Binding(
-                get: { engine.purchaseErrorMessage != nil },
-                set: { isPresented in
-                    if !isPresented {
-                        engine.clearPurchaseError()
-                    }
-                }
-            )
-        ) {
-            Button("OK", role: .cancel) {
-                engine.clearPurchaseError()
-            }
-        } message: {
-            Text(engine.purchaseErrorMessage ?? "The purchase could not be started.")
-        }
+        .onAppear { AdEngine.shared.notify(.impression, ad: ad) }
         .frame(maxWidth: 360)
         .padding(.horizontal, 16)
     }
