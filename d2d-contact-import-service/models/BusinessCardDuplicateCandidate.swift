@@ -125,4 +125,38 @@ enum BusinessCardMergeField: String, CaseIterable, Identifiable {
             return duplicate.address
         }
     }
+
+    func hasSameValue(draft: ProspectDraft, duplicate: BusinessCardDuplicateCandidate) -> Bool {
+        let newValue = value(from: draft)
+        let existingValue = existingValue(from: duplicate)
+
+        switch self {
+        case .name, .address:
+            return normalizedText(newValue) == normalizedText(existingValue)
+        case .email:
+            return newValue.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ==
+                existingValue.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        case .phone:
+            let newDigits = newValue.filter(\.isNumber)
+            let existingDigits = existingValue.filter(\.isNumber)
+            guard !newDigits.isEmpty, !existingDigits.isEmpty else {
+                return newDigits == existingDigits
+            }
+            return newDigits == existingDigits || newDigits.suffix(7) == existingDigits.suffix(7)
+        }
+    }
+
+    private func normalizedText(_ value: String) -> String {
+        let folded = value
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+            .lowercased()
+
+        let scalars = folded.unicodeScalars.map { scalar in
+            CharacterSet.alphanumerics.contains(scalar) ? Character(scalar) : " "
+        }
+
+        return String(scalars)
+            .split(whereSeparator: { $0.isWhitespace })
+            .joined(separator: " ")
+    }
 }

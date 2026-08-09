@@ -15,7 +15,7 @@ struct BusinessCardConfirmView: View {
     let onOpenExisting: (BusinessCardDuplicateCandidate) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @State private var isPickingMergeFields = false
+    @State private var duplicateStep: DuplicateStep = .review
     @State private var selectedMergeFields: Set<BusinessCardMergeField> = []
 
     init(
@@ -37,25 +37,53 @@ struct BusinessCardConfirmView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     if let duplicate {
-                        duplicateContent(duplicate)
+                        switch duplicateStep {
+                        case .review:
+                            duplicateReviewContent(duplicate)
+                        case .replaceFields:
+                            replaceFieldsContent(duplicate)
+                        }
                     } else {
                         uniqueContent
                     }
                 }
                 .padding(20)
+                .padding(.bottom, duplicate == nil ? 0 : 20)
             }
-            .navigationTitle(duplicate == nil ? "Confirm Prospect" : "Possible Duplicate")
+            .navigationTitle(navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
+                    if duplicateStep == .replaceFields {
+                        Button("Back") {
+                            duplicateStep = .review
+                        }
+                    } else {
+                        Button("Cancel") {
+                            dismiss()
+                        }
                     }
                 }
             }
             .onAppear {
-                selectedMergeFields = defaultMergeFields()
+                selectedMergeFields = Set(replaceableFields(for: duplicate))
             }
+            .onChange(of: duplicateStep) { _, newValue in
+                if newValue == .replaceFields {
+                    selectedMergeFields = Set(replaceableFields(for: duplicate))
+                }
+            }
+        }
+    }
+
+    private var navigationTitle: String {
+        guard duplicate != nil else { return "Confirm Prospect" }
+
+        switch duplicateStep {
+        case .review:
+            return "Possible Duplicate"
+        case .replaceFields:
+            return "Replace Fields"
         }
     }
 
@@ -74,19 +102,69 @@ struct BusinessCardConfirmView: View {
         }
     }
 
-    private func duplicateContent(_ duplicate: BusinessCardDuplicateCandidate) -> some View {
+    private func duplicateReviewContent(_ duplicate: BusinessCardDuplicateCandidate) -> some View {
         VStack(alignment: .leading, spacing: 18) {
-            Label("This card looks like an existing \(duplicate.subtitle.lowercased()).", systemImage: "exclamationmark.triangle.fill")
-                .font(.headline)
-                .foregroundStyle(.orange)
+            VStack(alignment: .leading, spacing: 8) {
+                Label("Possible duplicate found", systemImage: "exclamationmark.triangle.fill")
+                    .font(.headline)
+                    .foregroundStyle(.orange)
+
+                Text("This scanned card matches an existing \(duplicate.subtitle.lowercased()). Choose whether to update the existing contact or add a separate prospect.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
 
             duplicateSummary(duplicate)
             scannedCardSection
+            duplicateActions(duplicate)
+        }
+    }
 
-            if isPickingMergeFields {
-                mergeFieldPicker(for: duplicate)
+    private func replaceFieldsContent(_ duplicate: BusinessCardDuplicateCandidate) -> some View {
+        let fields = replaceableFields(for: duplicate)
+
+        return VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Select Fields to Replace")
+                    .font(.title3.weight(.semibold))
+
+                Text("Only fields with new values different from the existing contact are shown.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            duplicateSummary(duplicate)
+
+            if fields.isEmpty {
+                ContentUnavailableView(
+                    "No New Fields",
+                    systemImage: "checkmark.seal",
+                    description: Text("The scanned card does not have any usable values that differ from this contact.")
+                )
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
             } else {
-                duplicateActions(duplicate)
+                VStack(spacing: 10) {
+                    ForEach(fields) { field in
+                        mergeFieldRow(field, duplicate: duplicate)
+                    }
+                }
+            }
+
+            HStack(spacing: 12) {
+                Button("Cancel") {
+                    dismiss()
+                }
+                .buttonStyle(.bordered)
+                .frame(maxWidth: .infinity)
+
+                Button("Apply Updates") {
+                    onUpdateExisting(duplicate, selectedMergeFields)
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+                .frame(maxWidth: .infinity)
+                .disabled(selectedMergeFields.isEmpty)
             }
         }
     }
@@ -137,83 +215,119 @@ struct BusinessCardConfirmView: View {
     private func duplicateActions(_ duplicate: BusinessCardDuplicateCandidate) -> some View {
         VStack(spacing: 12) {
             Button {
-                isPickingMergeFields = true
+                duplicateStep = .replaceFields
             } label: {
-                Label("Edit Existing Contact", systemImage: "square.and.pencil")
-                    .frame(maxWidth: .infinity)
+                actionButtonContent(
+                    title: "Edit Existing",
+                    subtitle: "Review which scanned fields replace saved values",
+                    systemImage: "arrow.triangle.2.circlepath"
+                )
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.plain)
+            .disabled(replaceableFields(for: duplicate).isEmpty)
+            .opacity(replaceableFields(for: duplicate).isEmpty ? 0.55 : 1)
 
-            Button {
-                onOpenExisting(duplicate)
-                dismiss()
-            } label: {
-                Label("Open Existing Contact", systemImage: "arrow.up.forward.app")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
+            HStack(spacing: 12) {
+                Button {
+                    onOpenExisting(duplicate)
+                    dismiss()
+                } label: {
+                    compactActionContent(title: "Open", systemImage: "arrow.up.forward.app")
+                }
+                .buttonStyle(.plain)
 
-            Button {
-                onConfirm(draft)
-                dismiss()
-            } label: {
-                Label("Add as New Prospect", systemImage: "plus.circle")
-                    .frame(maxWidth: .infinity)
+                Button {
+                    onConfirm(draft)
+                    dismiss()
+                } label: {
+                    compactActionContent(title: "Add New", systemImage: "plus.circle")
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.bordered)
         }
     }
 
-    private func mergeFieldPicker(for duplicate: BusinessCardDuplicateCandidate) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Choose fields to replace")
-                .font(.headline)
+    private func actionButtonContent(title: String, subtitle: String, systemImage: String) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: systemImage)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(width: 38, height: 38)
+                .background(Circle().fill(Color.accentColor))
 
-            ForEach(BusinessCardMergeField.allCases) { field in
-                let newValue = field.value(from: draft)
-                if field.isUsableValue(from: draft) {
-                    Button {
-                        toggle(field)
-                    } label: {
-                        HStack(alignment: .top, spacing: 12) {
-                            Image(systemName: selectedMergeFields.contains(field) ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(selectedMergeFields.contains(field) ? .blue : .secondary)
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(field.title)
-                                    .font(.subheadline.weight(.semibold))
-                                Text("Current: \(displayValue(field.existingValue(from: duplicate)))")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                Text("Card: \(newValue)")
-                                    .font(.caption)
-                            }
-
-                            Spacer()
-                        }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
             }
 
-            HStack(spacing: 12) {
-                Button("Back") {
-                    isPickingMergeFields = false
-                }
-                .buttonStyle(.bordered)
+            Spacer()
 
-                Button("Apply Updates") {
-                    onUpdateExisting(duplicate, selectedMergeFields)
-                    dismiss()
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(selectedMergeFields.isEmpty)
-            }
+            Image(systemName: "chevron.right")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
         }
-        .padding()
+        .padding(14)
         .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .strokeBorder(Color.primary.opacity(0.08))
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func compactActionContent(title: String, systemImage: String) -> some View {
+        Label(title, systemImage: systemImage)
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.primary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 13)
+            .background(.thinMaterial)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(Color.primary.opacity(0.08))
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func mergeFieldRow(_ field: BusinessCardMergeField, duplicate: BusinessCardDuplicateCandidate) -> some View {
+        let isSelected = selectedMergeFields.contains(field)
+        let newValue = field.value(from: draft)
+
+        return Button {
+            toggle(field)
+        } label: {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title3)
+                    .foregroundStyle(isSelected ? .blue : .secondary)
+                    .frame(width: 24)
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(field.title)
+                        .font(.subheadline.weight(.semibold))
+                    Text("Current: \(displayValue(field.existingValue(from: duplicate)))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("New: \(newValue)")
+                        .font(.caption)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(14)
+            .background(.ultraThinMaterial)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(isSelected ? Color.blue.opacity(0.5) : Color.primary.opacity(0.08))
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
     }
 
     private func contactRow(title: String, value: String, systemImage: String) -> some View {
@@ -233,10 +347,12 @@ struct BusinessCardConfirmView: View {
         }
     }
 
-    private func defaultMergeFields() -> Set<BusinessCardMergeField> {
-        Set(BusinessCardMergeField.allCases.filter { field in
-            field.isUsableValue(from: draft)
-        })
+    private func replaceableFields(for duplicate: BusinessCardDuplicateCandidate?) -> [BusinessCardMergeField] {
+        guard let duplicate else { return [] }
+
+        return BusinessCardMergeField.allCases.filter { field in
+            field.isUsableValue(from: draft) && !field.hasSameValue(draft: draft, duplicate: duplicate)
+        }
     }
 
     private func toggle(_ field: BusinessCardMergeField) {
@@ -251,4 +367,9 @@ struct BusinessCardConfirmView: View {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? "Not set" : trimmed
     }
+}
+
+private enum DuplicateStep {
+    case review
+    case replaceFields
 }
