@@ -225,13 +225,18 @@ struct ImportOverlayView: View {
 
         let draftName = normalizedText(draft.fullName)
         let contactName = normalizedText(contact.fullName)
+        guard isUsableName(draftName), draftName == contactName else {
+            return false
+        }
+
         let draftAddress = normalizedText(draft.address)
         let contactAddress = normalizedText(contact.address)
 
-        return !draftName.isEmpty &&
-            draftName == contactName &&
-            !draftAddress.isEmpty &&
-            draftAddress == contactAddress
+        if isUsableAddress(draftAddress), draftAddress == contactAddress {
+            return true
+        }
+
+        return !isUsableAddress(draftAddress)
     }
 
     private func updateExistingContact(
@@ -264,7 +269,7 @@ struct ImportOverlayView: View {
         if fields.contains(.phone), !draft.phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             contact.contactPhone = draft.phone
         }
-        if fields.contains(.address), !draft.address.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if fields.contains(.address), isUsableAddress(normalizedText(draft.address)) {
             contact.address = draft.address
         }
     }
@@ -292,6 +297,14 @@ struct ImportOverlayView: View {
 
     private func normalizedText(_ value: String) -> String {
         value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    private func isUsableName(_ value: String) -> Bool {
+        !value.isEmpty && value != "unknown" && value.split(separator: " ").count >= 2
+    }
+
+    private func isUsableAddress(_ value: String) -> Bool {
+        !value.isEmpty && value != "no address"
     }
 
     private func digitsOnly(_ value: String) -> String {

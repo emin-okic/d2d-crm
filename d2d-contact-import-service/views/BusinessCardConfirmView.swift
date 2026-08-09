@@ -171,7 +171,7 @@ struct BusinessCardConfirmView: View {
 
             ForEach(BusinessCardMergeField.allCases) { field in
                 let newValue = field.value(from: draft)
-                if !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                if field.isUsableValue(from: draft) {
                     Button {
                         toggle(field)
                     } label: {
@@ -235,8 +235,7 @@ struct BusinessCardConfirmView: View {
 
     private func defaultMergeFields() -> Set<BusinessCardMergeField> {
         Set(BusinessCardMergeField.allCases.filter { field in
-            let value = field.value(from: draft).trimmingCharacters(in: .whitespacesAndNewlines)
-            return !value.isEmpty && value != "Unknown" && value != "No Address"
+            field.isUsableValue(from: draft)
         })
     }
 

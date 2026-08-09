@@ -92,6 +92,20 @@ enum BusinessCardMergeField: String, CaseIterable, Identifiable {
         }
     }
 
+    func isUsableValue(from draft: ProspectDraft) -> Bool {
+        let value = value(from: draft).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return false }
+
+        switch self {
+        case .name:
+            return value.lowercased() != "unknown" && value.split(separator: " ").count >= 2
+        case .address:
+            return value.lowercased() != "no address"
+        case .email, .phone:
+            return true
+        }
+    }
+
     func existingValue(from duplicate: BusinessCardDuplicateCandidate) -> String {
         switch self {
         case .name:
