@@ -22,6 +22,8 @@ struct ImportOverlayView: View {
     let customers: [Customer]
     let modelContext: ModelContext
     let onSave: () -> Void
+    let onOpenDuplicateProspect: (Prospect) -> Void
+    let onOpenDuplicateCustomer: (Customer) -> Void
     
     let onAddManually: () -> Void
 
@@ -29,6 +31,7 @@ struct ImportOverlayView: View {
     
     @State private var showBusinessCardScanner = false
     @State private var scannedProspectDraft: ProspectDraft?
+    @State private var businessCardDuplicate: BusinessCardDuplicateCandidate?
     
     @StateObject private var importManager: ContactImportManager
     
@@ -45,6 +48,8 @@ struct ImportOverlayView: View {
         customers: [Customer],
         modelContext: ModelContext,
         onSave: @escaping () -> Void,
+        onOpenDuplicateProspect: @escaping (Prospect) -> Void,
+        onOpenDuplicateCustomer: @escaping (Customer) -> Void,
         onAddManually: @escaping () -> Void,
         showDuplicateToast: Binding<Bool>,
         duplicateNames: Binding<[String]>
@@ -57,6 +62,8 @@ struct ImportOverlayView: View {
         self.customers = customers
         self.modelContext = modelContext
         self.onSave = onSave
+        self.onOpenDuplicateProspect = onOpenDuplicateProspect
+        self.onOpenDuplicateCustomer = onOpenDuplicateCustomer
         self.onAddManually = onAddManually
 
         // ✅ Initialize StateObject here
@@ -154,9 +161,23 @@ struct ImportOverlayView: View {
                 .sheet(item: $scannedProspectDraft) { draft in
                     BusinessCardConfirmView(
                         draft: draft,
+                        duplicate: businessCardDuplicate,
                         onConfirm: { confirmedDraft in
                             saveProspect(confirmedDraft)
                             scannedProspectDraft = nil
+                            businessCardDuplicate = nil
+                            showingImportFromContacts = false
+                        },
+                        onUpdateExisting: { duplicate, fields in
+                            updateExistingContact(duplicate, with: draft, fields: fields)
+                            scannedProspectDraft = nil
+                            businessCardDuplicate = nil
+                            showingImportFromContacts = false
+                        },
+                        onOpenExisting: { duplicate in
+                            openExistingContact(duplicate)
+                            scannedProspectDraft = nil
+                            businessCardDuplicate = nil
                             showingImportFromContacts = false
                         }
                     )
@@ -164,6 +185,7 @@ struct ImportOverlayView: View {
                 .sheet(isPresented: $showBusinessCardScanner) {
                     BusinessCardScannerView(
                         onScanned: { draft in
+                            businessCardDuplicate = findDuplicate(for: draft)
                             scannedProspectDraft = draft
                             showBusinessCardScanner = false
                         },
@@ -176,6 +198,106 @@ struct ImportOverlayView: View {
         }
     }
     
+    private func findDuplicate(for draft: ProspectDraft) -> BusinessCardDuplicateCandidate? {
+        if let prospect = prospects.first(where: { isDuplicate(draft, of: $0) }) {
+            return BusinessCardDuplicateCandidate(prospect: prospect)
+        }
+
+        if let customer = customers.first(where: { isDuplicate(draft, of: $0) }) {
+            return BusinessCardDuplicateCandidate(customer: customer)
+        }
+
+        return nil
+    }
+
+    private func isDuplicate(_ draft: ProspectDraft, of contact: any ContactProtocol) -> Bool {
+        let draftEmail = normalizedEmail(draft.email)
+        let contactEmail = normalizedEmail(contact.contactEmail)
+        if !draftEmail.isEmpty && draftEmail == contactEmail {
+            return true
+        }
+
+        let draftPhone = digitsOnly(draft.phone)
+        let contactPhone = digitsOnly(contact.contactPhone)
+        if draftPhone.count >= 7 && draftPhone == contactPhone {
+            return true
+        }
+
+        let draftName = normalizedText(draft.fullName)
+        let contactName = normalizedText(contact.fullName)
+        let draftAddress = normalizedText(draft.address)
+        let contactAddress = normalizedText(contact.address)
+
+        return !draftName.isEmpty &&
+            draftName == contactName &&
+            !draftAddress.isEmpty &&
+            draftAddress == contactAddress
+    }
+
+    private func updateExistingContact(
+        _ duplicate: BusinessCardDuplicateCandidate,
+        with draft: ProspectDraft,
+        fields: Set<BusinessCardMergeField>
+    ) {
+        switch duplicate.type {
+        case .prospect:
+            guard let prospect = duplicate.prospect else { return }
+            apply(draft, to: prospect, fields: fields)
+        case .customer:
+            guard let customer = duplicate.customer else { return }
+            apply(draft, to: customer, fields: fields)
+        }
+
+        try? modelContext.save()
+        onSave()
+    }
+
+    private func apply(_ draft: ProspectDraft, to contact: any ContactProtocol, fields: Set<BusinessCardMergeField>) {
+        var contact = contact
+
+        if fields.contains(.name), !draft.fullName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            contact.fullName = draft.fullName
+        }
+        if fields.contains(.email), !draft.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            contact.contactEmail = draft.email
+        }
+        if fields.contains(.phone), !draft.phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            contact.contactPhone = draft.phone
+        }
+        if fields.contains(.address), !draft.address.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            contact.address = draft.address
+        }
+    }
+
+    private func openExistingContact(_ duplicate: BusinessCardDuplicateCandidate) {
+        switch duplicate.type {
+        case .prospect:
+            guard let prospect = duplicate.prospect else { return }
+            selectedList = "Prospects"
+            DispatchQueue.main.async {
+                onOpenDuplicateProspect(prospect)
+            }
+        case .customer:
+            guard let customer = duplicate.customer else { return }
+            selectedList = "Customers"
+            DispatchQueue.main.async {
+                onOpenDuplicateCustomer(customer)
+            }
+        }
+    }
+
+    private func normalizedEmail(_ value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    private func normalizedText(_ value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    private func digitsOnly(_ value: String) -> String {
+        value.filter(\.isNumber)
+    }
+
     private func saveProspect(_ draft: ProspectDraft) {
         let prospect = Prospect(
             fullName: draft.fullName,

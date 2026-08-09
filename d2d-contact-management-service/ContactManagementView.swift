@@ -130,6 +130,12 @@ struct ContactManagementView: View {
                     customers: customers,
                     modelContext: modelContext,
                     onSave: onSave,
+                    onOpenDuplicateProspect: { prospect in
+                        selectedProspect = prospect
+                    },
+                    onOpenDuplicateCustomer: { customer in
+                        selectedCustomer = customer
+                    },
                     onAddManually: {
                         showingAddProspect = true
                     },
