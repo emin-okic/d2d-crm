@@ -10,6 +10,28 @@ import SwiftData
 import ContactsUI
 
 struct ContactManagementView: View {
+    private struct ExportFile: Identifiable {
+        let id = UUID()
+        let url: URL
+    }
+
+    private enum ActiveSheet: Identifiable {
+        case export(ExportFile)
+        case emailGate
+        case addProspect
+
+        var id: String {
+            switch self {
+            case .export(let file):
+                return "export-\(file.id)"
+            case .emailGate:
+                return "emailGate"
+            case .addProspect:
+                return "addProspect"
+            }
+        }
+    }
+
     @Environment(\.modelContext) private var modelContext
     @Binding var selectedList: String
     var onSave: () -> Void
@@ -24,8 +46,6 @@ struct ContactManagementView: View {
 
     @Query private var prospects: [Prospect]
     @Query private var customers: [Customer]
-    
-    @State private var showingAddProspect = false
     
     @State private var showingAddCustomer = false
     
@@ -45,10 +65,7 @@ struct ContactManagementView: View {
             : selectedCustomers.count
     }
     
-    @State private var exportURL: URL?
-    @State private var showExportSheet = false
-    
-    @State private var showEmailGate = false
+    @State private var activeSheet: ActiveSheet?
     @StateObject private var emailGate = EmailGateManager.shared
     
     @State private var showDuplicateToast = false
@@ -97,7 +114,7 @@ struct ContactManagementView: View {
                             ContactScreenHapticsController.shared.successConfirmationTap()
                             ContactScreenSoundController.shared.playSound1()
                             
-                            showEmailGate = true
+                            activeSheet = .emailGate
                             
                         }
                     }
@@ -108,18 +125,6 @@ struct ContactManagementView: View {
                     .zIndex(999)
                 }
             )
-            .sheet(isPresented: $showExportSheet) {
-                if let url = exportURL {
-                    ShareSheet(activityItems: [url])
-                }
-            }
-            .sheet(isPresented: $showEmailGate) {
-                ExportEmailGateView {
-                    performExport()
-                }
-                .presentationDetents([.fraction(0.5)])
-                .presentationDragIndicator(.visible)
-            }
             .overlay(
                 ImportOverlayView(
                     showingImportFromContacts: $showingImportFromContacts,
@@ -137,7 +142,7 @@ struct ContactManagementView: View {
                         selectedCustomer = customer
                     },
                     onAddManually: {
-                        showingAddProspect = true
+                        activeSheet = .addProspect
                     },
                     showDuplicateToast: $showDuplicateToast,
                     duplicateNames: $duplicateNames
@@ -153,19 +158,33 @@ struct ContactManagementView: View {
                     }
                 }
             )
-            .sheet(isPresented: $showingAddProspect) {
-                ProspectCreateStepperView { newProspect in
-                    modelContext.insert(newProspect)
-                    try? modelContext.save()
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .export(let file):
+                    ShareSheet(activityItems: [file.url])
+                case .emailGate:
+                    ExportEmailGateView {
+                        activeSheet = nil
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            performExport()
+                        }
+                    }
+                    .presentationDetents([.fraction(0.5)])
+                    .presentationDragIndicator(.visible)
+                case .addProspect:
+                    ProspectCreateStepperView { newProspect in
+                        modelContext.insert(newProspect)
+                        try? modelContext.save()
 
-                    searchText = ""
-                    showingAddProspect = false
-                    onSave()
-                } onCancel: {
-                    showingAddProspect = false
+                        searchText = ""
+                        activeSheet = nil
+                        onSave()
+                    } onCancel: {
+                        activeSheet = nil
+                    }
+                    .presentationDetents([.fraction(0.5)]) // 50% of screen height
+                    .presentationDragIndicator(.visible)    // optional: show the drag handle
                 }
-                .presentationDetents([.fraction(0.5)]) // 50% of screen height
-                .presentationDragIndicator(.visible)    // optional: show the drag handle
             }
             .alert("Delete selected contacts?",
                    isPresented: $showDeleteContactsConfirm) {
@@ -201,12 +220,13 @@ struct ContactManagementView: View {
     
     private func performExport() {
         do {
+            let url: URL
             if selectedList == "Prospects" {
-                exportURL = try CSVExportService.exportProspects(prospects)
+                url = try CSVExportService.exportProspects(prospects)
             } else {
-                exportURL = try CSVExportService.exportCustomers(customers)
+                url = try CSVExportService.exportCustomers(customers)
             }
-            showExportSheet = true
+            activeSheet = .export(ExportFile(url: url))
         } catch {
             print("❌ Export failed:", error)
         }
