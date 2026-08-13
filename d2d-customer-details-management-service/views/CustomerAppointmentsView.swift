@@ -10,9 +10,13 @@ import SwiftData
 
 @available(iOS 18.0, *)
 struct CustomerAppointmentsView: View {
+    @Environment(\.modelContext) private var modelContext
     @Bindable var customer: Customer
     @StateObject private var controller = CustomerAppointmentsController()
     @State private var filter: AppointmentFilter = .upcoming
+    @State private var isSelecting = false
+    @State private var selectedAppointmentIDs: Set<UUID> = []
+    @State private var showDeleteConfirmation = false
 
     private var filteredAppointments: [Appointment] {
         let now = Date()
@@ -31,146 +35,237 @@ struct CustomerAppointmentsView: View {
         }
     }
 
+    private var selectedAppointments: [Appointment] {
+        customer.appointments.filter { selectedAppointmentIDs.contains($0.id) }
+    }
+
     var body: some View {
-        GeometryReader { geo in
-            let topPad: CGFloat = geo.size.height < 500 ? 20 : 40
-            let buttonSize: CGFloat = 48
-            let buttonPadding: CGFloat = 12
-            let buttonTotalHeight = buttonSize + (buttonPadding * 2)
-
-            ZStack(alignment: .bottomTrailing) {
-                VStack(spacing: 16) {
-
-                    // Header
-                    VStack(spacing: 4) {
-                        Text("Appointments")
-                            .font(.title2).bold()
-                        Text("\(filteredAppointments.count) \(filter.rawValue) for \(customer.fullName)")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.white)
-                    .cornerRadius(16)
-                    .shadow(color: .black.opacity(0.05), radius: 2)
-                    .padding(.horizontal, 12)
-                    .padding(.top, topPad)
-
-                    // Filters
-                    HStack(spacing: 8) {
-                        chip("Upcoming", isOn: filter == .upcoming) { filter = .upcoming }
-                        chip("Past", isOn: filter == .past) { filter = .past }
-                    }
-                    .padding(.horizontal, 12)
-
-                    // Container
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(.systemGray6))
-                            .shadow(color: .black.opacity(0.05), radius: 4)
-
-                        ScrollView {
-                            LazyVStack(spacing: 12) {
-                                if filteredAppointments.isEmpty {
-                                    Text("No \(filter.rawValue) Appointments")
-                                        .font(.title3.weight(.semibold))
-                                        .foregroundColor(.secondary)
-                                        .padding(.top, 24)
-                                } else {
-                                    ForEach(filteredAppointments) { appt in
-                                        Button {
-                                            ContactScreenHapticsController.shared.lightTap()
-                                            ContactScreenSoundController.shared.playSound1()
-                                            controller.selectedAppointment = appt
-                                        } label: {
-                                            appointmentRow(appt)
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                }
-                            }
-                            .padding()
-                            .padding(.bottom, buttonTotalHeight)
-                        }
-                    }
-                    .frame(
-                        maxWidth: .infinity,
-                        maxHeight: geo.size.height - topPad - 150   // shrink a bit
-                    )
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 16)   // extra space from bottom
-                }
-
-                // Floating Add Button
-                Button {
-                    ContactScreenHapticsController.shared.lightTap()
-                    ContactScreenSoundController.shared.playSound1()
-                    controller.showAppointmentSheet = true
-                } label: {
-                    Image(systemName: "calendar.badge.plus")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(12)
-                        .background(Color.blue)
-                        .clipShape(Circle())
-                        .shadow(radius: 4)
-                }
-                .padding(.trailing, 12)
-                .padding(.bottom, 12)
-            }
+        VStack(spacing: 14) {
+            header
+            filterControl
+            appointmentsList
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 18)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Color(.systemGroupedBackground))
+        .safeAreaInset(edge: .bottom) {
+            actionToolbar
         }
         .sheet(isPresented: $controller.showAppointmentSheet) {
             ScheduleCustomerAppointmentView(customer: customer)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(item: $controller.selectedAppointment) { appt in
             AppointmentDetailsView(appointment: appt)
         }
-    }
-
-    // MARK: - Chips
-    private func chip(_ title: String, isOn: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.caption.weight(.semibold))
-                .padding(.vertical, 6)
-                .padding(.horizontal, 14)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(isOn ? Color.blue : Color(.secondarySystemBackground))
-                )
-                .foregroundColor(isOn ? .white : .primary)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(isOn ? Color.blue.opacity(0.9) : Color.gray.opacity(0.25))
-                )
-        }
-        .buttonStyle(.plain)
-        .animation(.easeInOut(duration: 0.15), value: isOn)
-    }
-
-    // MARK: - Row
-    private func appointmentRow(_ appt: Appointment) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Follow Up With \(customer.fullName)")
-                    .font(.subheadline).fontWeight(.medium)
-                Text(customer.address)
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                Text(appt.date.formatted(date: .abbreviated, time: .shortened))
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+        .confirmationDialog(
+            "Delete selected appointments?",
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete \(selectedAppointmentIDs.count) Appointment\(selectedAppointmentIDs.count == 1 ? "" : "s")", role: .destructive) {
+                deleteSelectedAppointments()
             }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This removes the selected appointment\(selectedAppointmentIDs.count == 1 ? "" : "s") from \(customer.fullName).")
+        }
+        .onChange(of: filter) {
+            selectedAppointmentIDs.removeAll()
+            isSelecting = false
+        }
+    }
+
+    private var header: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Appointments")
+                    .font(.title3.weight(.semibold))
+                Text("\(filteredAppointments.count) \(filter.rawValue.lowercased()) for \(customer.fullName)")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+
             Spacer()
-            Image(systemName: "chevron.right")
-                .foregroundColor(.gray)
+
+            Button {
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
+                controller.showAppointmentSheet = true
+            } label: {
+                Image(systemName: "calendar.badge.plus")
+                    .font(.system(size: 17, weight: .semibold))
+                    .frame(width: 40, height: 40)
+            }
+            .buttonStyle(.borderedProminent)
+            .clipShape(Circle())
+            .accessibilityLabel("Add appointment")
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+    }
+
+    private var filterControl: some View {
+        Picker("Appointment filter", selection: $filter) {
+            Text("Upcoming").tag(AppointmentFilter.upcoming)
+            Text("Past").tag(AppointmentFilter.past)
+        }
+        .pickerStyle(.segmented)
+    }
+
+    private var appointmentsList: some View {
+        Group {
+            if filteredAppointments.isEmpty {
+                emptyState
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 10) {
+                        ForEach(filteredAppointments) { appointment in
+                            Button {
+                                handleAppointmentTap(appointment)
+                            } label: {
+                                appointmentRow(appointment)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "calendar")
+                .font(.system(size: 28, weight: .medium))
+                .foregroundStyle(.secondary)
+            Text("No \(filter.rawValue.lowercased()) appointments")
+                .font(.headline)
+            Text("New meetings for this customer will appear here.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var actionToolbar: some View {
+        HStack(spacing: 10) {
+            Button {
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isSelecting.toggle()
+                    selectedAppointmentIDs.removeAll()
+                }
+            } label: {
+                Label(isSelecting ? "Done" : "Select", systemImage: isSelecting ? "checkmark" : "checklist")
+            }
+            .buttonStyle(.bordered)
+            .disabled(filteredAppointments.isEmpty)
+
+            if isSelecting {
+                Button(role: .destructive) {
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    showDeleteConfirmation = true
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(selectedAppointmentIDs.isEmpty)
+                .transition(.move(edge: .leading).combined(with: .opacity))
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.regularMaterial)
+    }
+
+    private func appointmentRow(_ appointment: Appointment) -> some View {
+        let isSelected = selectedAppointmentIDs.contains(appointment.id)
+
+        return HStack(spacing: 12) {
+            if isSelecting {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title3)
+                    .foregroundStyle(isSelected ? .red : .secondary)
+                    .frame(width: 26, height: 26)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(appointment.title.isEmpty ? "Follow Up With \(customer.fullName)" : appointment.title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                Label(customer.address, systemImage: "mappin.and.ellipse")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+
+                Label(appointment.date.formatted(date: .abbreviated, time: .shortened), systemImage: "clock")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 8)
+
+            if !isSelecting {
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
         }
         .padding(12)
+        .frame(minHeight: 82)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.secondarySystemBackground))
-                .shadow(color: .black.opacity(0.05), radius: 4)
+                .fill(isSelected ? Color.red.opacity(0.08) : Color(.secondarySystemGroupedBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(isSelected ? Color.red.opacity(0.45) : Color(.separator).opacity(0.35), lineWidth: 1)
+                )
         )
+        .contentShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func handleAppointmentTap(_ appointment: Appointment) {
+        ContactScreenHapticsController.shared.lightTap()
+        ContactScreenSoundController.shared.playSound1()
+
+        if isSelecting {
+            if selectedAppointmentIDs.contains(appointment.id) {
+                selectedAppointmentIDs.remove(appointment.id)
+            } else {
+                selectedAppointmentIDs.insert(appointment.id)
+            }
+        } else {
+            controller.selectedAppointment = appointment
+        }
+    }
+
+    private func deleteSelectedAppointments() {
+        for appointment in selectedAppointments {
+            modelContext.delete(appointment)
+        }
+
+        try? modelContext.save()
+
+        withAnimation(.easeInOut(duration: 0.2)) {
+            selectedAppointmentIDs.removeAll()
+            isSelecting = false
+        }
     }
 }

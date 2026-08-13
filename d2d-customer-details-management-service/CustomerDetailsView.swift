@@ -146,6 +146,7 @@ struct CustomerDetailsView: View {
                     )
                     // .navigationTitle("Upcoming Meetings")
                     .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
                 }
             }
             .sheet(isPresented: $showKnocksSheet) {
