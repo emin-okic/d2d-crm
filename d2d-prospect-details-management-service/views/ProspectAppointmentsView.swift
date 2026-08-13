@@ -60,17 +60,14 @@ struct ProspectAppointmentsView: View {
         .sheet(item: $controller.selectedAppointmentDetails) { appt in
             AppointmentDetailsView(appointment: appt)
         }
-        .confirmationDialog(
-            "Delete selected appointments?",
-            isPresented: $showDeleteConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Delete \(selectedAppointmentIDs.count) Appointment\(selectedAppointmentIDs.count == 1 ? "" : "s")", role: .destructive) {
-                deleteSelectedAppointments()
-            }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("This removes the selected appointment\(selectedAppointmentIDs.count == 1 ? "" : "s") from \(prospect.fullName).")
+        .sheet(isPresented: $showDeleteConfirmation) {
+            AppointmentDeleteConfirmationSheet(
+                contactName: prospect.fullName,
+                selectedCount: selectedAppointmentIDs.count,
+                onDelete: deleteSelectedAppointments
+            )
+            .presentationDetents([.fraction(0.32)])
+            .presentationDragIndicator(.visible)
         }
         .onChange(of: filter) {
             selectedAppointmentIDs.removeAll()
@@ -267,5 +264,64 @@ struct ProspectAppointmentsView: View {
             selectedAppointmentIDs.removeAll()
             isSelecting = false
         }
+    }
+}
+
+struct AppointmentDeleteConfirmationSheet: View {
+    let contactName: String
+    let selectedCount: Int
+    let onDelete: () -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    private var appointmentLabel: String {
+        selectedCount == 1 ? "appointment" : "appointments"
+    }
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "trash.circle.fill")
+                .font(.system(size: 42, weight: .semibold))
+                .foregroundStyle(.red)
+
+            VStack(spacing: 8) {
+                Text("Delete \(selectedCount) \(appointmentLabel)?")
+                    .font(.headline)
+                    .multilineTextAlignment(.center)
+
+                Text("This removes the selected \(appointmentLabel) from \(contactName). This action cannot be undone.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 8)
+            }
+
+            HStack(spacing: 12) {
+                Button {
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    dismiss()
+                } label: {
+                    Text("Cancel")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(.gray)
+
+                Button(role: .destructive) {
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    onDelete()
+                    dismiss()
+                } label: {
+                    Text("Delete")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemGroupedBackground))
     }
 }

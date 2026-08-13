@@ -60,17 +60,14 @@ struct CustomerAppointmentsView: View {
         .sheet(item: $controller.selectedAppointment) { appt in
             AppointmentDetailsView(appointment: appt)
         }
-        .confirmationDialog(
-            "Delete selected appointments?",
-            isPresented: $showDeleteConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Delete \(selectedAppointmentIDs.count) Appointment\(selectedAppointmentIDs.count == 1 ? "" : "s")", role: .destructive) {
-                deleteSelectedAppointments()
-            }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("This removes the selected appointment\(selectedAppointmentIDs.count == 1 ? "" : "s") from \(customer.fullName).")
+        .sheet(isPresented: $showDeleteConfirmation) {
+            AppointmentDeleteConfirmationSheet(
+                contactName: customer.fullName,
+                selectedCount: selectedAppointmentIDs.count,
+                onDelete: deleteSelectedAppointments
+            )
+            .presentationDetents([.fraction(0.32)])
+            .presentationDragIndicator(.visible)
         }
         .onChange(of: filter) {
             selectedAppointmentIDs.removeAll()
