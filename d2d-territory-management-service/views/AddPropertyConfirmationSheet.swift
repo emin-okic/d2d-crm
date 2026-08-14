@@ -13,6 +13,9 @@ struct AddPropertyConfirmationSheet: View {
     let coordinate: CLLocationCoordinate2D
     let onConfirm: () -> Void
     let onCancel: () -> Void
+    var isTutorialActive = false
+
+    @State private var addPulse = false
 
     private var coordinateText: String {
         String(format: "%.5f, %.5f", coordinate.latitude, coordinate.longitude)
@@ -70,6 +73,11 @@ struct AddPropertyConfirmationSheet: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
 
+            if isTutorialActive {
+                InitialPropertyAddSheetTutorialBanner()
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
             HStack(spacing: 12) {
                 Button(role: .cancel) {
                     onCancel()
@@ -88,10 +96,23 @@ struct AddPropertyConfirmationSheet: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
+                .scaleEffect(isTutorialActive && addPulse ? 1.035 : 1.0)
+                .shadow(
+                    color: isTutorialActive ? Color.accentColor.opacity(addPulse ? 0.42 : 0.16) : .clear,
+                    radius: isTutorialActive ? 12 : 0,
+                    x: 0,
+                    y: 4
+                )
             }
         }
         .padding(.horizontal, 18)
         .padding(.top, 12)
         .padding(.bottom, 18)
+        .onAppear {
+            guard isTutorialActive else { return }
+            withAnimation(.easeInOut(duration: 0.82).repeatForever(autoreverses: true)) {
+                addPulse = true
+            }
+        }
     }
 }
