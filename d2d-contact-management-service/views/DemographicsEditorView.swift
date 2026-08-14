@@ -30,9 +30,8 @@ struct DemographicsEditorView: View {
     @State private var primaryLanguage: String
     @State private var householdType: String
     @State private var homeownership: String
-    @State private var notes: String
 
-    private let totalSteps = 3
+    private let totalSteps = 2
     private let ageOptions = ["", "18-24", "25-34", "35-44", "45-54", "55-64", "65+"]
     private let genderOptions = ["", "Female", "Male", "Nonbinary", "Prefer not to say"]
     private let ethnicityOptions = ["", "Asian", "Black", "Hispanic / Latino", "Middle Eastern", "Native American", "Pacific Islander", "White", "Multiracial", "Other", "Prefer not to say"]
@@ -57,7 +56,6 @@ struct DemographicsEditorView: View {
         _primaryLanguage = State(initialValue: initialData.primaryLanguage)
         _householdType = State(initialValue: initialData.householdType)
         _homeownership = State(initialValue: initialData.homeownership)
-        _notes = State(initialValue: initialData.notes)
     }
 
     var body: some View {
@@ -119,27 +117,11 @@ struct DemographicsEditorView: View {
                 optionPicker("Gender", selection: $gender, options: genderOptions)
                 optionPicker("Race / Ethnicity", selection: $raceEthnicity, options: ethnicityOptions)
             }
-        case 1:
+        default:
             optionCard(title: "Household") {
                 optionPicker("Primary Language", selection: $primaryLanguage, options: languageOptions)
                 optionPicker("Household Type", selection: $householdType, options: householdOptions)
                 optionPicker("Homeownership", selection: $homeownership, options: homeownershipOptions)
-            }
-        default:
-            optionCard(title: "Rep Notes") {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Demographic Notes")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    TextEditor(text: $notes)
-                        .frame(minHeight: 120)
-                        .padding(8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color(.systemBackground))
-                        )
-                }
             }
         }
     }
@@ -182,15 +164,14 @@ struct DemographicsEditorView: View {
             primaryLanguage: primaryLanguage,
             householdType: householdType,
             homeownership: homeownership,
-            notes: notes.trimmingCharacters(in: .whitespacesAndNewlines)
+            notes: initialData.notes
         )
     }
 
     private var stepTitle: String {
         switch stepIndex {
-        case 0: "Step 1 of 3"
-        case 1: "Step 2 of 3"
-        default: "Step 3 of 3"
+        case 0: "Step 1 of 2"
+        default: "Step 2 of 2"
         }
     }
 
