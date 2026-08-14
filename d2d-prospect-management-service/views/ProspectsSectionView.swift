@@ -22,7 +22,7 @@ struct ProspectsSectionView: View {
     // From parent
     let containerHeight: CGFloat
     
-    @Binding var searchText: String
+    @Binding var activeSearchFilter: ContactSearchFilter?
 
     private let rowHeight: CGFloat = 88
 
@@ -30,22 +30,11 @@ struct ProspectsSectionView: View {
         let base = allProspects
             .filter { $0.list == selectedList }
 
-        let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        guard !q.isEmpty else {
+        guard let filter = activeSearchFilter, !filter.isEmpty else {
             return base.sorted { $0.orderIndex < $1.orderIndex }
         }
 
-        // Match name, address, phone, email (case-insensitive)
-        let matches: (Prospect) -> Bool = { p in
-            p.fullName.localizedCaseInsensitiveContains(q) ||
-            p.address.localizedCaseInsensitiveContains(q) ||
-            p.contactPhone.localizedCaseInsensitiveContains(q) ||
-            p.contactEmail.localizedCaseInsensitiveContains(q) ||
-            p.demographicsSearchText.localizedCaseInsensitiveContains(q)
-        }
-
-        return base.filter(matches)
+        return base.filter { $0.matches(filter) }
             .sorted { $0.fullName.localizedCaseInsensitiveCompare($1.fullName) == .orderedAscending }
     }
     
@@ -134,7 +123,7 @@ struct ProspectsSectionView: View {
                 .listStyle(.plain)
             } else {
                 // Empty state — “No matches” if searching, otherwise “No Prospects/Customers”
-                Text(searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                Text(activeSearchFilter == nil
                      ? "No \(selectedList)"
                      : "No matches")
                     .font(.title3).fontWeight(.semibold)

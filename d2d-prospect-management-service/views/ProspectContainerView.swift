@@ -10,7 +10,7 @@ import SwiftUI
 struct ProspectContainerView: View {
     
     @Binding var selectedList: String
-    @Binding var searchText: String
+    @Binding var activeSearchFilter: ContactSearchFilter?
     
     @Binding var selectedProspect: Prospect?
     
@@ -30,7 +30,7 @@ struct ProspectContainerView: View {
                     selectedList: $selectedList,
                     selectedProspect: $selectedProspect,
                     containerHeight: targetHeight,
-                    searchText: $searchText,
+                    activeSearchFilter: $activeSearchFilter,
                     isDeleting: $isDeleting,
                     selectedProspects: $selectedProspects
                 )

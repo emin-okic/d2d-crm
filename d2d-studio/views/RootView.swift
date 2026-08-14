@@ -37,7 +37,8 @@ struct RootView: View {
     @State private var addressToCenter: String? = nil
     
     @State private var searchText: String = ""
-    @State private var contactSearchText: String = ""
+    @State private var contactSearchDraft: String = ""
+    @State private var contactSearchFilter: ContactSearchFilter?
     
     @State private var followUpFilter: AppointmentFilter? = nil
 
@@ -45,7 +46,8 @@ struct RootView: View {
         TabView(selection: $selectedTab) {
             MapSearchView(
                 searchText: $searchText,
-                contactSearchText: $contactSearchText,
+                contactSearchDraft: $contactSearchDraft,
+                contactSearchFilter: $contactSearchFilter,
                 region: $region,
                 selectedList: $selectedList,
                 addressToCenter: $addressToCenter
@@ -57,7 +59,8 @@ struct RootView: View {
 
             ContactManagementView(
                 selectedList: $selectedList,
-                searchText: $contactSearchText,
+                searchText: $contactSearchDraft,
+                activeSearchFilter: $contactSearchFilter,
                 onSave: { showingAddProspect = false }
             )
             .tabItem {

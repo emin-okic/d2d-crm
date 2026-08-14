@@ -15,7 +15,8 @@ import Contacts
 
 struct MapSearchView: View {
     @Binding var searchText: String
-    @Binding var contactSearchText: String
+    @Binding var contactSearchDraft: String
+    @Binding var contactSearchFilter: ContactSearchFilter?
     @Binding var region: MKCoordinateRegion
     @Binding var selectedList: String
     @Binding var addressToCenter: String?
@@ -76,12 +77,14 @@ struct MapSearchView: View {
     @State private var pendingSelectedContact: UnitContact? = nil
     
     init(searchText: Binding<String>,
-         contactSearchText: Binding<String>,
+         contactSearchDraft: Binding<String>,
+         contactSearchFilter: Binding<ContactSearchFilter?>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
          addressToCenter: Binding<String?>) {
         _searchText = searchText
-        _contactSearchText = contactSearchText
+        _contactSearchDraft = contactSearchDraft
+        _contactSearchFilter = contactSearchFilter
         _region = region
         _selectedList = selectedList
         _addressToCenter = addressToCenter
@@ -102,71 +105,41 @@ struct MapSearchView: View {
         return controller.markers + [previewMarker]
     }
 
-    private var activeContactFilter: String {
-        contactSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
+    private var activeContactFilter: ContactSearchFilter? {
+        guard let filter = contactSearchFilter, !filter.isEmpty else { return nil }
+        return filter
     }
 
     private var isContactFilterActive: Bool {
-        !activeContactFilter.isEmpty
+        activeContactFilter != nil
     }
 
     private var filteredProspectsForMap: [Prospect] {
-        guard isContactFilterActive else { return prospects }
+        guard let filter = activeContactFilter else { return prospects }
         guard selectedList == "Prospects" else { return [] }
-        return prospects.filter { contactMatchesFilter($0) }
+        return prospects.filter { $0.matches(filter) }
     }
 
     private var filteredCustomersForMap: [Customer] {
-        guard isContactFilterActive else { return customers }
+        guard let filter = activeContactFilter else { return customers }
         guard selectedList == "Customers" else { return [] }
-        return customers.filter { contactMatchesFilter($0) }
+        return customers.filter { $0.matches(filter) }
     }
 
     private var filteredMapContactCount: Int {
         filteredProspectsForMap.count + filteredCustomersForMap.count
     }
 
+    @ViewBuilder
     private var contactFilterBanner: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "line.3.horizontal.decrease.circle.fill")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(.blue)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Map filtered by Contacts")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-
-                Text("\(selectedList): \(filteredMapContactCount) match\(filteredMapContactCount == 1 ? "" : "es") for \"\(activeContactFilter)\"")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.78)
-            }
-
-            Spacer(minLength: 0)
-
-            Button {
-                clearContactFilter()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 30, height: 30)
-                    .background(Color(.secondarySystemBackground), in: Circle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Clear Contact Filter")
+        if let filter = activeContactFilter {
+            ContactFilterBanner(
+                filter: filter,
+                resultCount: filteredMapContactCount,
+                listName: selectedList,
+                onClear: clearContactFilter
+            )
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .frame(maxWidth: 420)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(Color.white.opacity(0.18), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.16), radius: 10, x: 0, y: 5)
     }
 
     var body: some View {
@@ -223,7 +196,7 @@ struct MapSearchView: View {
             .onChange(of: prospects) { updateMarkers() }
             .onChange(of: customers) { updateMarkers() }
             .onChange(of: selectedList) { updateMarkers() }
-            .onChange(of: contactSearchText) { updateMarkers() }
+            .onChange(of: contactSearchFilter) { updateMarkers() }
             
             // Prospect Popup Stuff
             .sheet(item: $selectedUnitGroup, onDismiss: resetSelectedMapMarker) { group in
@@ -903,19 +876,9 @@ struct MapSearchView: View {
         MapScreenHapticsController.shared.lightTap()
         MapScreenSoundController.shared.playPropertyOpen()
         withAnimation(.easeInOut(duration: 0.2)) {
-            contactSearchText = ""
+            contactSearchDraft = ""
+            contactSearchFilter = nil
         }
-    }
-
-    private func contactMatchesFilter<T: ContactProtocol>(_ contact: T) -> Bool {
-        let query = activeContactFilter
-        guard !query.isEmpty else { return true }
-
-        return contact.fullName.localizedCaseInsensitiveContains(query) ||
-            contact.address.localizedCaseInsensitiveContains(query) ||
-            contact.contactPhone.localizedCaseInsensitiveContains(query) ||
-            contact.contactEmail.localizedCaseInsensitiveContains(query) ||
-            contact.demographicsSearchText.localizedCaseInsensitiveContains(query)
     }
     
     private func resolveProspectForSale(address: String) -> Prospect? {

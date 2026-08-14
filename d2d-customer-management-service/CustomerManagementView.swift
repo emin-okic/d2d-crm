@@ -13,6 +13,8 @@ struct CustomerManagementView: View {
     @Environment(\.modelContext) private var modelContext
     
     @Binding var searchText: String
+    @Binding var selectedSearchField: ContactSearchField
+    @Binding var activeSearchFilter: ContactSearchFilter?
     
     @Binding var selectedList: String
     
@@ -31,6 +33,12 @@ struct CustomerManagementView: View {
     
     @Binding var isDeleting: Bool
     @Binding var selectedCustomers: Set<Customer>
+    var onClearSearchFilter: () -> Void
+
+    private var filteredCustomerCount: Int {
+        guard let filter = activeSearchFilter, !filter.isEmpty else { return customers.count }
+        return customers.filter { $0.matches(filter) }.count
+    }
 
     var body: some View {
         VStack(spacing: 16) {
@@ -38,20 +46,22 @@ struct CustomerManagementView: View {
             // 🔍 NEW — centered filter pill
             CustomerFilterRow(
                 searchText: $searchText,
+                selectedField: $selectedSearchField,
                 isSearchFocused: $isSearchFocused,
-                onSubmit: {
-                    let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard !trimmed.isEmpty else { return }
-
-                    if let match = customers.first(where: {
-                        $0.fullName.localizedCaseInsensitiveContains(trimmed) ||
-                        $0.address.localizedCaseInsensitiveContains(trimmed) ||
-                        $0.demographicsSearchText.localizedCaseInsensitiveContains(trimmed)
-                    }) {
-                        selectedCustomer = match
-                    }
-                }
+                onSubmit: applySearchFilter,
+                onClear: onClearSearchFilter
             )
+
+            if let filter = activeSearchFilter, !filter.isEmpty {
+                ContactFilterBanner(
+                    filter: filter,
+                    resultCount: filteredCustomerCount,
+                    listName: selectedList,
+                    onClear: onClearSearchFilter
+                )
+                .padding(.horizontal, 20)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
             
             // ✅ Header + chips stay
             CustomerHeaderView(totalCustomers: totalCustomers)
@@ -59,7 +69,7 @@ struct CustomerManagementView: View {
 
             // ✅ Section now wrapped in container for consistent style
             CustomerContainerView(
-                searchText: $searchText,
+                activeSearchFilter: $activeSearchFilter,
                 selectedCustomer: $selectedCustomer,
                 isDeleting: $isDeleting,
                 selectedCustomers: $selectedCustomers
@@ -73,7 +83,7 @@ struct CustomerManagementView: View {
                 modelContext.insert(newCustomer)
                 try? modelContext.save()
 
-                searchText = ""
+                onClearSearchFilter()
                 showingAddCustomer = false
                 onSave()
             } onCancel: {
@@ -81,5 +91,16 @@ struct CustomerManagementView: View {
             }
             .presentationDetents([.medium, .large])
         }
+    }
+
+    private func applySearchFilter() {
+        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            onClearSearchFilter()
+            return
+        }
+
+        activeSearchFilter = ContactSearchFilter(field: selectedSearchField, query: trimmed)
+        isSearchFocused = false
     }
 }
