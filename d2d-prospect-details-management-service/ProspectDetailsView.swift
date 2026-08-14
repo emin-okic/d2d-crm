@@ -107,36 +107,23 @@ struct ProspectDetailsView: View {
                 }
                 
             }
-            
-            // Bottom floating buttons
-            ProspectFloatingActionsView(
-                onDeleteTapped: {
-                    showDeleteConfirmation = true
-                },
-                onNotesTapped: {
-                    controller.showNotesSheet = true
+        }
+        .sheet(isPresented: $showDeleteConfirmation) {
+            DeleteProspectSheet(
+                prospectName: prospect.fullName,
+                onDelete: {
+                    controller.deleteProspect(prospect, modelContext: modelContext)
                 }
             )
-            .sheet(isPresented: $showDeleteConfirmation) {
-                
-                DeleteProspectSheet(
-                    prospectName: prospect.fullName,
-                    onDelete: {
-                        controller.deleteProspect(prospect, modelContext: modelContext)
-                    }
-                )
-                .presentationDetents([.fraction(0.25)])
-                .presentationDragIndicator(.visible)
-                .onAppear {
-                    // Haptic + Sound on sheet appear
-                    ContactScreenHapticsController.shared.lightTap()
-                    ContactScreenSoundController.shared.playSound1()
-                }
+            .presentationDetents([.fraction(0.25)])
+            .presentationDragIndicator(.visible)
+            .onAppear {
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
             }
-
-            .sheet(isPresented: $controller.showNotesSheet) {
-                ProspectNotesScreen(prospect: prospect)
-            }
+        }
+        .sheet(isPresented: $controller.showNotesSheet) {
+            ProspectNotesScreen(prospect: prospect)
         }
         .sheet(isPresented: $showDemographicsSheet) {
             DemographicsEditorView(
@@ -176,6 +163,23 @@ struct ProspectDetailsView: View {
             // Export + Share (hidden while editing)
             if !hasUnsavedEdits {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
+
+                    Button {
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+                        controller.showNotesSheet = true
+                    } label: {
+                        Image(systemName: "note.text")
+                    }
+
+                    Button(role: .destructive) {
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+                        showDeleteConfirmation = true
+                    } label: {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
+                    }
 
                     // ✅ Export to Contacts
                     Button {
