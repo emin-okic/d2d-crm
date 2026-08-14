@@ -15,6 +15,8 @@ import Contacts
 
 struct MapSearchView: View {
     @Binding var searchText: String
+    @Binding var contactSearchDraft: String
+    @Binding var contactSearchFilter: ContactSearchFilter?
     @Binding var region: MKCoordinateRegion
     @Binding var selectedList: String
     @Binding var addressToCenter: String?
@@ -75,10 +77,14 @@ struct MapSearchView: View {
     @State private var pendingSelectedContact: UnitContact? = nil
     
     init(searchText: Binding<String>,
+         contactSearchDraft: Binding<String>,
+         contactSearchFilter: Binding<ContactSearchFilter?>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
          addressToCenter: Binding<String?>) {
         _searchText = searchText
+        _contactSearchDraft = contactSearchDraft
+        _contactSearchFilter = contactSearchFilter
         _region = region
         _selectedList = selectedList
         _addressToCenter = addressToCenter
@@ -97,6 +103,43 @@ struct MapSearchView: View {
         )
 
         return controller.markers + [previewMarker]
+    }
+
+    private var activeContactFilter: ContactSearchFilter? {
+        guard let filter = contactSearchFilter, !filter.isEmpty else { return nil }
+        return filter
+    }
+
+    private var isContactFilterActive: Bool {
+        activeContactFilter != nil
+    }
+
+    private var filteredProspectsForMap: [Prospect] {
+        guard let filter = activeContactFilter else { return prospects }
+        guard selectedList == "Prospects" else { return [] }
+        return prospects.filter { $0.matches(filter) }
+    }
+
+    private var filteredCustomersForMap: [Customer] {
+        guard let filter = activeContactFilter else { return customers }
+        guard selectedList == "Customers" else { return [] }
+        return customers.filter { $0.matches(filter) }
+    }
+
+    private var filteredMapContactCount: Int {
+        filteredProspectsForMap.count + filteredCustomersForMap.count
+    }
+
+    @ViewBuilder
+    private var contactFilterBanner: some View {
+        if let filter = activeContactFilter {
+            ContactFilterBanner(
+                filter: filter,
+                resultCount: filteredMapContactCount,
+                listName: selectedList,
+                onClear: clearContactFilter
+            )
+        }
     }
 
     var body: some View {
@@ -137,6 +180,15 @@ struct MapSearchView: View {
                     onNavigateToUserLocation: navigateToUserLocation,
                     onRevertToPreviousRegion: revertToPreviousRegion
                 )
+
+                if isContactFilterActive {
+                    contactFilterBanner
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 118)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .zIndex(1200)
+                }
                 
             }
             
@@ -144,6 +196,7 @@ struct MapSearchView: View {
             .onChange(of: prospects) { updateMarkers() }
             .onChange(of: customers) { updateMarkers() }
             .onChange(of: selectedList) { updateMarkers() }
+            .onChange(of: contactSearchFilter) { updateMarkers() }
             
             // Prospect Popup Stuff
             .sheet(item: $selectedUnitGroup, onDismiss: resetSelectedMapMarker) { group in
@@ -608,8 +661,12 @@ struct MapSearchView: View {
         withAnimation(.easeInOut(duration: 0.35)) {
             controller.centerMapForPopup(coordinate: place.location)
         }
-        
-        presentPopup(for: place)
+
+        if let contact = units.first?.primaryContact {
+            presentPopup(for: self.place(for: contact))
+        } else {
+            presentPopup(for: place)
+        }
 
         if let mapView = MapDisplayView.cachedMapView {
             let raw = mapView.convert(place.location, toPointTo: mapView)
@@ -812,7 +869,21 @@ struct MapSearchView: View {
     
     // For updating the markers
     private func updateMarkers() {
-        controller.setMarkers(prospects: prospects, customers: customers)
+        controller.setMarkers(prospects: filteredProspectsForMap, customers: filteredCustomersForMap)
+    }
+
+    private func clearContactFilter() {
+        MapScreenHapticsController.shared.lightTap()
+        MapScreenSoundController.shared.playPropertyOpen()
+        withAnimation(.easeInOut(duration: 0.2)) {
+            contactSearchDraft = ""
+            contactSearchFilter = nil
+        }
+
+        updateMarkers()
+        DispatchQueue.main.async {
+            controller.recenterToFitAllMarkers()
+        }
     }
     
     private func resolveProspectForSale(address: String) -> Prospect? {
@@ -1074,6 +1145,16 @@ struct MapSearchView: View {
         // Close popup first (important for UX)
         closePopup()
 
+        if let selectedContact = place.selectedContact {
+            switch selectedContact {
+            case .prospect(let prospect):
+                selectedProspect = prospect
+            case .customer(let customer):
+                selectedCustomer = customer
+            }
+            return
+        }
+
         if place.list == "Customers" ,
            let customer = customers.first(where: { $0.address == place.address }) {
             selectedCustomer = customer
@@ -1102,13 +1183,13 @@ struct MapSearchView: View {
     
     private func unitContactGroupsForBaseAddress(_ base: String) -> [UnitContactGroup] {
 
-        let prospectUnits = prospects
+        let prospectUnits = filteredProspectsForMap
             .filter {
                 parseAddress($0.address).base.lowercased() == base.lowercased()
             }
             .map { UnitContact.prospect($0) }
 
-        let customerUnits = customers
+        let customerUnits = filteredCustomersForMap
             .filter {
                 parseAddress($0.address).base.lowercased() == base.lowercased()
             }

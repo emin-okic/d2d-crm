@@ -14,7 +14,7 @@ struct CustomersSectionView: View {
     
     @Query private var allCustomers: [Customer]
     
-    @Binding var searchText: String
+    @Binding var activeSearchFilter: ContactSearchFilter?
 
     @Binding var selectedCustomer: Customer?
     
@@ -25,21 +25,12 @@ struct CustomersSectionView: View {
 
     private var filtered: [Customer] {
         
-        let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        guard q.isEmpty else {
-            return allCustomers.filter { c in
-                c.fullName.localizedCaseInsensitiveContains(q) ||
-                c.address.localizedCaseInsensitiveContains(q) ||
-                c.contactPhone.localizedCaseInsensitiveContains(q) ||
-                c.contactEmail.localizedCaseInsensitiveContains(q) ||
-                c.demographicsSearchText.localizedCaseInsensitiveContains(q)
-            }
-            .sorted { $0.fullName.localizedCaseInsensitiveCompare($1.fullName) == .orderedAscending }
+        guard let filter = activeSearchFilter, !filter.isEmpty else {
+            return allCustomers.sorted { $0.orderIndex < $1.orderIndex }
         }
 
-        // ✅ Default list order
-        return allCustomers.sorted { $0.orderIndex < $1.orderIndex }
+        return allCustomers.filter { $0.matches(filter) }
+            .sorted { $0.fullName.localizedCaseInsensitiveCompare($1.fullName) == .orderedAscending }
     }
     
     @State private var draggingCustomerID: PersistentIdentifier?
@@ -133,7 +124,7 @@ struct CustomersSectionView: View {
                 }
                 .listStyle(.plain)
             } else {
-                Text(searchText.isEmpty ? "No Customers" : "No matches")
+                Text(activeSearchFilter == nil ? "No Customers" : "No matches")
                     .font(.title3)
                     .fontWeight(.semibold)
                     .foregroundColor(.secondary)

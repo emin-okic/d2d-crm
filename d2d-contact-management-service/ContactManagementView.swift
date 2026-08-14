@@ -34,10 +34,12 @@ struct ContactManagementView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Binding var selectedList: String
+    @Binding var searchText: String
+    @Binding var activeSearchFilter: ContactSearchFilter?
     var onSave: () -> Void
 
     // Shared state
-    @State private var searchText: String = ""
+    @State private var selectedSearchField: ContactSearchField = .all
     @StateObject private var controller = ContactManagerController()
 
     // Menu + overlays
@@ -176,7 +178,7 @@ struct ContactManagementView: View {
                         modelContext.insert(newProspect)
                         try? modelContext.save()
 
-                        searchText = ""
+                        clearSearchFilter()
                         activeSheet = nil
                         onSave()
                     } onCancel: {
@@ -237,26 +239,37 @@ struct ContactManagementView: View {
         if selectedList == "Prospects" {
             ProspectManagementView(
                 searchText: $searchText,
+                selectedSearchField: $selectedSearchField,
+                activeSearchFilter: $activeSearchFilter,
                 suggestedProspect: $controller.suggestedProspect,
                 selectedList: $selectedList,
                 onSave: onSave,
                 selectedProspect: $selectedProspect,
                 isSearchFocused: $isSearchFocused,
                 isDeleting: $isDeletingContacts,
-                selectedProspects: $selectedProspects
+                selectedProspects: $selectedProspects,
+                onClearSearchFilter: clearSearchFilter
             )
         } else {
             CustomerManagementView(
                 searchText: $searchText,
+                selectedSearchField: $selectedSearchField,
+                activeSearchFilter: $activeSearchFilter,
                 selectedList: $selectedList,
                 onSave: onSave,
                 showingAddCustomer: $showingAddCustomer,
                 selectedCustomer: $selectedCustomer,
                 isSearchFocused: $isSearchFocused,
                 isDeleting: $isDeletingContacts,
-                selectedCustomers: $selectedCustomers
+                selectedCustomers: $selectedCustomers,
+                onClearSearchFilter: clearSearchFilter
             )
         }
+    }
+
+    private func clearSearchFilter() {
+        searchText = ""
+        activeSearchFilter = nil
     }
     
     private func deleteSelectedContacts() {

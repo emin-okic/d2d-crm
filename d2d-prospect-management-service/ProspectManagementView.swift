@@ -13,6 +13,8 @@ struct ProspectManagementView: View {
     @Environment(\.modelContext) private var modelContext
     
     @Binding var searchText: String
+    @Binding var selectedSearchField: ContactSearchField
+    @Binding var activeSearchFilter: ContactSearchFilter?
     @Binding var suggestedProspect: Prospect?
     @Binding var selectedList: String   // 👈 add this
     
@@ -30,26 +32,35 @@ struct ProspectManagementView: View {
     
     @Binding var isDeleting: Bool
     @Binding var selectedProspects: Set<Prospect>
+    var onClearSearchFilter: () -> Void
+
+    private var filteredProspectCount: Int {
+        let base = prospects.filter { $0.list == selectedList }
+        guard let filter = activeSearchFilter, !filter.isEmpty else { return base.count }
+        return base.filter { $0.matches(filter) }.count
+    }
 
     var body: some View {
         VStack(spacing: 16) {
             
             ProspectFilterRow(
                 searchText: $searchText,
+                selectedField: $selectedSearchField,
                 isSearchFocused: $isSearchFocused,
-                onSubmit: {
-                    let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard !trimmed.isEmpty else { return }
-
-                    if let match = prospects.first(where: {
-                        $0.fullName.localizedCaseInsensitiveContains(trimmed) ||
-                        $0.address.localizedCaseInsensitiveContains(trimmed) ||
-                        $0.demographicsSearchText.localizedCaseInsensitiveContains(trimmed)
-                    }) {
-                        selectedProspect = match
-                    }
-                }
+                onSubmit: applySearchFilter,
+                onClear: onClearSearchFilter
             )
+
+            if let filter = activeSearchFilter, !filter.isEmpty {
+                ContactFilterBanner(
+                    filter: filter,
+                    resultCount: filteredProspectCount,
+                    listName: selectedList,
+                    onClear: onClearSearchFilter
+                )
+                .padding(.horizontal, 20)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
             
             ProspectHeaderView(totalProspects: totalProspects)
 
@@ -58,7 +69,7 @@ struct ProspectManagementView: View {
 
             ProspectContainerView(
                 selectedList: $selectedList,
-                searchText: $searchText,
+                activeSearchFilter: $activeSearchFilter,
                 selectedProspect: $selectedProspect,
                 isDeleting: $isDeleting,
                 selectedProspects: $selectedProspects
@@ -73,7 +84,7 @@ struct ProspectManagementView: View {
                     modelContext.insert(suggestion)
                     try? modelContext.save()
                     suggestedProspect = nil
-                    searchText = ""
+                    onClearSearchFilter()
                     onSave()
                 },
                 onDismiss: {
@@ -81,5 +92,17 @@ struct ProspectManagementView: View {
                 }
             )
         }
+    }
+
+    private func applySearchFilter() {
+        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            onClearSearchFilter()
+            return
+        }
+
+        activeSearchFilter = ContactSearchFilter(field: selectedSearchField, query: trimmed)
+        searchText = ""
+        isSearchFocused = false
     }
 }

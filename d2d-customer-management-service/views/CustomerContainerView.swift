@@ -9,7 +9,7 @@ import SwiftUI
 
 struct CustomerContainerView: View {
     
-    @Binding var searchText: String
+    @Binding var activeSearchFilter: ContactSearchFilter?
     
     @Binding var selectedCustomer: Customer?
     
@@ -26,7 +26,7 @@ struct CustomerContainerView: View {
                     .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
 
                 CustomersSectionView(
-                    searchText: $searchText,
+                    activeSearchFilter: $activeSearchFilter,
                     selectedCustomer: $selectedCustomer,
                     isDeleting: $isDeleting,
                     selectedCustomers: $selectedCustomers
