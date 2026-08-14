@@ -16,13 +16,22 @@ struct d2d_studioApp: App {
     @State private var sessionId = UUID().uuidString
     
     @State private var deepLinkURL: URL?
+    @AppStorage("hasSeenInitialWelcome") private var hasSeenInitialWelcome = false
 
     var body: some Scene {
         WindowGroup {
             
-            RootView()
-                .onOpenURL { url in handleDeepLink(url) }
-                .preferredColorScheme(.light)
+            Group {
+                if hasSeenInitialWelcome {
+                    RootView()
+                } else {
+                    WelcomeOnboardingView {
+                        hasSeenInitialWelcome = true
+                    }
+                }
+            }
+            .onOpenURL { url in handleDeepLink(url) }
+            .preferredColorScheme(.light)
             
         }
         .modelContainer(sharedModelContainer)
