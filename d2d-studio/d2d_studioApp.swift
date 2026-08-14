@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import Foundation
+import SQLite
 
 @main
 struct d2d_studioApp: App {
@@ -61,7 +62,24 @@ let sharedModelContainer: ModelContainer = {
         withIntermediateDirectories: true
     )
 
-    let schema = Schema([
+    let schema = appSchema
+    let config = appModelConfiguration(schema: schema, url: url)
+
+    do {
+        return try ModelContainer(for: schema, configurations: [config])
+    } catch {
+        let originalError = error
+        do {
+            try repairMissingDemographicColumnsIfNeeded(at: url)
+            return try ModelContainer(for: schema, configurations: [config])
+        } catch {
+            fatalError("Failed to load ModelContainer after compatibility repair. Original: \(originalError). Repair: \(error)")
+        }
+    }
+}()
+
+private var appSchema: Schema {
+    Schema([
         Prospect.self,
         Customer.self,
         Knock.self,
@@ -74,17 +92,84 @@ let sharedModelContainer: ModelContainer = {
         Email.self,
         PhoneCall.self
     ])
+}
 
-    // ⬇️ Explicitly opt OUT of CloudKit mirroring
-    let config = ModelConfiguration(
+private func appModelConfiguration(schema: Schema, url: URL) -> ModelConfiguration {
+    ModelConfiguration(
         schema: schema,
         url: url,
-        cloudKitDatabase: .none   // keep local-only
+        cloudKitDatabase: .none
+    )
+}
+
+private func repairMissingDemographicColumnsIfNeeded(at storeURL: URL) throws {
+    guard FileManager.default.fileExists(atPath: storeURL.path) else { return }
+
+    try backupStoreFilesIfNeeded(at: storeURL)
+
+    let db = try Connection(storeURL.path)
+    let modelTables = ["ZPROSPECT", "ZCUSTOMER"]
+    let demographicColumns = [
+        "ZDEMOGRAPHICAGERANGE",
+        "ZDEMOGRAPHICGENDER",
+        "ZDEMOGRAPHICRACEETHNICITY",
+        "ZDEMOGRAPHICPRIMARYLANGUAGE",
+        "ZDEMOGRAPHICHOUSEHOLDTYPE",
+        "ZDEMOGRAPHICHOMEOWNERSHIP",
+        "ZDEMOGRAPHICNOTES"
+    ]
+
+    for table in modelTables {
+        guard try tableExists(table, in: db) else { continue }
+
+        for column in demographicColumns where try !columnExists(column, in: table, db: db) {
+            try db.run("ALTER TABLE \(table) ADD COLUMN \(column) TEXT")
+        }
+    }
+}
+
+private func tableExists(_ tableName: String, in db: Connection) throws -> Bool {
+    let statement = try db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1", tableName)
+    return statement.makeIterator().next() != nil
+}
+
+private func columnExists(_ columnName: String, in tableName: String, db: Connection) throws -> Bool {
+    let statement = try db.prepare("PRAGMA table_info(\(tableName))")
+    for row in statement {
+        if let name = row[1] as? String, name == columnName {
+            return true
+        }
+    }
+
+    return false
+}
+
+private func backupStoreFilesIfNeeded(at storeURL: URL) throws {
+    let backupDirectory = storeURL.deletingLastPathComponent()
+        .appendingPathComponent("migration-backups", isDirectory: true)
+
+    try FileManager.default.createDirectory(
+        at: backupDirectory,
+        withIntermediateDirectories: true
     )
 
-    do {
-        return try ModelContainer(for: schema, configurations: [config])
-    } catch {
-        fatalError("Failed to load ModelContainer: \(error)")
+    let timestamp = ISO8601DateFormatter()
+        .string(from: Date())
+        .replacingOccurrences(of: ":", with: "-")
+
+    let fileNames = [
+        storeURL.lastPathComponent,
+        storeURL.lastPathComponent + "-wal",
+        storeURL.lastPathComponent + "-shm"
+    ]
+
+    for fileName in fileNames {
+        let source = storeURL.deletingLastPathComponent().appendingPathComponent(fileName)
+        guard FileManager.default.fileExists(atPath: source.path) else { continue }
+
+        let destination = backupDirectory.appendingPathComponent("\(timestamp)-\(fileName)")
+        if !FileManager.default.fileExists(atPath: destination.path) {
+            try FileManager.default.copyItem(at: source, to: destination)
+        }
     }
-}()
+}
