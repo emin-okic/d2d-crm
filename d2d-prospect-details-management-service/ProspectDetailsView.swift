@@ -37,6 +37,7 @@ struct ProspectDetailsView: View {
     
     @State private var showAppointmentsSheet = false
     @State private var showKnocksSheet = false
+    @State private var showDemographicsSheet = false
 
     var body: some View {
         ZStack {
@@ -89,6 +90,14 @@ struct ProspectDetailsView: View {
                     )
                 }
                 
+                Section {
+                    DemographicsSummaryRow(summary: prospect.demographicsSummary) {
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+                        showDemographicsSheet = true
+                    }
+                }
+                
                 // ✅ Actions Toolbar (unchanged)
                 Section {
                     ProspectActionsToolbar(
@@ -128,6 +137,22 @@ struct ProspectDetailsView: View {
             .sheet(isPresented: $controller.showNotesSheet) {
                 ProspectNotesScreen(prospect: prospect)
             }
+        }
+        .sheet(isPresented: $showDemographicsSheet) {
+            DemographicsEditorView(
+                title: "Prospect Demographics",
+                initialData: prospect.demographicsFormData,
+                onSave: { data in
+                    prospect.applyDemographics(data)
+                    controller.saveProspect(prospect, modelContext: modelContext)
+                    showDemographicsSheet = false
+                },
+                onCancel: {
+                    showDemographicsSheet = false
+                }
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
         // .navigationTitle("Edit Contact")
         .toolbar {

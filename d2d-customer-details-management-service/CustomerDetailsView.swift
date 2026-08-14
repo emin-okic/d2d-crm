@@ -44,6 +44,7 @@ struct CustomerDetailsView: View {
     
     @State private var showAppointmentsSheet = false
     @State private var showKnocksSheet = false
+    @State private var showDemographicsSheet = false
 
     var body: some View {
         ZStack {
@@ -94,6 +95,14 @@ struct CustomerDetailsView: View {
                         isFocused: $isAddressFieldFocused,
                         searchViewModel: searchViewModel
                     )
+                }
+                
+                Section {
+                    DemographicsSummaryRow(summary: customer.demographicsSummary) {
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+                        showDemographicsSheet = true
+                    }
                 }
                 
                 // ✅ Actions Toolbar
@@ -172,6 +181,22 @@ struct CustomerDetailsView: View {
                 }
             }
             
+        }
+        .sheet(isPresented: $showDemographicsSheet) {
+            DemographicsEditorView(
+                title: "Customer Demographics",
+                initialData: customer.demographicsFormData,
+                onSave: { data in
+                    customer.applyDemographics(data)
+                    try? modelContext.save()
+                    showDemographicsSheet = false
+                },
+                onCancel: {
+                    showDemographicsSheet = false
+                }
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
         .toolbar {
             // Back Button

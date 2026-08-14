@@ -32,7 +32,8 @@ struct CustomersSectionView: View {
                 c.fullName.localizedCaseInsensitiveContains(q) ||
                 c.address.localizedCaseInsensitiveContains(q) ||
                 c.contactPhone.localizedCaseInsensitiveContains(q) ||
-                c.contactEmail.localizedCaseInsensitiveContains(q)
+                c.contactEmail.localizedCaseInsensitiveContains(q) ||
+                c.demographicsSearchText.localizedCaseInsensitiveContains(q)
             }
             .sorted { $0.fullName.localizedCaseInsensitiveCompare($1.fullName) == .orderedAscending }
         }

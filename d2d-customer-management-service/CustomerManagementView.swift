@@ -45,7 +45,8 @@ struct CustomerManagementView: View {
 
                     if let match = customers.first(where: {
                         $0.fullName.localizedCaseInsensitiveContains(trimmed) ||
-                        $0.address.localizedCaseInsensitiveContains(trimmed)
+                        $0.address.localizedCaseInsensitiveContains(trimmed) ||
+                        $0.demographicsSearchText.localizedCaseInsensitiveContains(trimmed)
                     }) {
                         selectedCustomer = match
                     }

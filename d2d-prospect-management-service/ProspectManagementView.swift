@@ -43,7 +43,8 @@ struct ProspectManagementView: View {
 
                     if let match = prospects.first(where: {
                         $0.fullName.localizedCaseInsensitiveContains(trimmed) ||
-                        $0.address.localizedCaseInsensitiveContains(trimmed)
+                        $0.address.localizedCaseInsensitiveContains(trimmed) ||
+                        $0.demographicsSearchText.localizedCaseInsensitiveContains(trimmed)
                     }) {
                         selectedProspect = match
                     }
