@@ -218,6 +218,8 @@ struct ProspectActionsToolbar: View {
             customer.appointments.append(appt)
         }
         
+        customer.applyDemographics(prospect.demographicsFormData)
+        
         // Transfer phone calls back to prospect
         customer.phoneCalls = prospect.phoneCalls
         

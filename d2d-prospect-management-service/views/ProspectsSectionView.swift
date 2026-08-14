@@ -41,7 +41,8 @@ struct ProspectsSectionView: View {
             p.fullName.localizedCaseInsensitiveContains(q) ||
             p.address.localizedCaseInsensitiveContains(q) ||
             p.contactPhone.localizedCaseInsensitiveContains(q) ||
-            p.contactEmail.localizedCaseInsensitiveContains(q)
+            p.contactEmail.localizedCaseInsensitiveContains(q) ||
+            p.demographicsSearchText.localizedCaseInsensitiveContains(q)
         }
 
         return base.filter(matches)

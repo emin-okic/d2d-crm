@@ -44,6 +44,7 @@ struct CustomerDetailsView: View {
     
     @State private var showAppointmentsSheet = false
     @State private var showKnocksSheet = false
+    @State private var showDemographicsSheet = false
 
     var body: some View {
         ZStack {
@@ -96,6 +97,14 @@ struct CustomerDetailsView: View {
                     )
                 }
                 
+                Section {
+                    DemographicsSummaryRow(summary: customer.demographicsSummary) {
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+                        showDemographicsSheet = true
+                    }
+                }
+                
                 // ✅ Actions Toolbar
                 Section {
                     CustomerActionsToolbar(
@@ -106,72 +115,59 @@ struct CustomerDetailsView: View {
                 }
                 
             }
-            
-            CustomerFloatingActionsView(
-                onDeleteTapped: {
-                    
-                    // Haptic + Sound for Trash button
+        }
+        .ignoresSafeArea(.keyboard, edges: .bottom)
+        .sheet(isPresented: $showNotesSheet) {
+            CustomerNotesThreadFullView(customer: customer)
+                .onAppear {
                     ContactScreenHapticsController.shared.lightTap()
                     ContactScreenSoundController.shared.playSound1()
-                    
-                    showDeleteConfirmation = true
-                    
-                },
-                onNotesTapped: {
-                    
-                    // Haptic + Sound for Trash button
-                    ContactScreenHapticsController.shared.lightTap()
-                    ContactScreenSoundController.shared.playSound1()
-                    
-                    showNotesSheet = true
-                    
                 }
-            )
-            
-            .ignoresSafeArea(.keyboard, edges: .bottom)
-            .sheet(isPresented: $showNotesSheet) {
-                
-                CustomerNotesThreadFullView(customer: customer)
-                    .onAppear {
-                        // Haptic + Sound on sheet appear
-                        ContactScreenHapticsController.shared.lightTap()
-                        ContactScreenSoundController.shared.playSound1()
-                    }
-                
+        }
+        .sheet(isPresented: $showAppointmentsSheet) {
+            NavigationStack {
+                CustomerAppointmentsView(
+                    customer: customer
+                )
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
             }
-            .sheet(isPresented: $showAppointmentsSheet) {
-                NavigationStack {
-                    CustomerAppointmentsView(
-                        customer: customer
-                    )
-                    // .navigationTitle("Upcoming Meetings")
+        }
+        .sheet(isPresented: $showKnocksSheet) {
+            NavigationStack {
+                CustomerKnockingHistoryView(customer: customer)
+                    .navigationTitle("Knocking History")
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
-                }
             }
-            .sheet(isPresented: $showKnocksSheet) {
-                NavigationStack {
-                    CustomerKnockingHistoryView(customer: customer)
-                        .navigationTitle("Knocking History")
-                        .presentationDetents([.medium, .large])
-                        .presentationDragIndicator(.visible)
-                }
+        }
+        .sheet(isPresented: $showDeleteConfirmation) {
+            DeleteCustomerSheet(
+                customerName: customer.fullName,
+                onDelete: deleteCustomer
+            )
+            .presentationDetents([.fraction(0.35)])
+            .presentationDragIndicator(.visible)
+            .onAppear {
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
             }
-            .sheet(isPresented: $showDeleteConfirmation) {
-                
-                DeleteCustomerSheet(
-                    customerName: customer.fullName,
-                    onDelete: deleteCustomer
-                )
-                .presentationDetents([.fraction(0.35)])
-                .presentationDragIndicator(.visible)
-                .onAppear {
-                    // Haptic + Sound on sheet appear
-                    ContactScreenHapticsController.shared.lightTap()
-                    ContactScreenSoundController.shared.playSound1()
+        }
+        .sheet(isPresented: $showDemographicsSheet) {
+            DemographicsEditorView(
+                title: "Customer Demographics",
+                initialData: customer.demographicsFormData,
+                onSave: { data in
+                    customer.applyDemographics(data)
+                    try? modelContext.save()
+                    showDemographicsSheet = false
+                },
+                onCancel: {
+                    showDemographicsSheet = false
                 }
-            }
-            
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
         .toolbar {
             // Back Button
@@ -194,6 +190,23 @@ struct CustomerDetailsView: View {
             
             if !hasUnsavedEdits {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
+
+                    Button {
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+                        showNotesSheet = true
+                    } label: {
+                        Image(systemName: "note.text")
+                    }
+
+                    Button(role: .destructive) {
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+                        showDeleteConfirmation = true
+                    } label: {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
+                    }
 
                     Button {
                         

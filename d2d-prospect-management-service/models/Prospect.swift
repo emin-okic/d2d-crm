@@ -19,6 +19,14 @@ final class Prospect: ContactProtocol {
     var knockCount: Int
     var contactEmail: String
     var contactPhone: String
+
+    var demographicAgeRange: String?
+    var demographicGender: String?
+    var demographicRaceEthnicity: String?
+    var demographicPrimaryLanguage: String?
+    var demographicHouseholdType: String?
+    var demographicHomeownership: String?
+    var demographicNotes: String?
     
     var notes: [Note]
     

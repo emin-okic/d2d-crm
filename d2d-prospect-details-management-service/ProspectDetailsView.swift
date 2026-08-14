@@ -37,6 +37,7 @@ struct ProspectDetailsView: View {
     
     @State private var showAppointmentsSheet = false
     @State private var showKnocksSheet = false
+    @State private var showDemographicsSheet = false
 
     var body: some View {
         ZStack {
@@ -89,6 +90,14 @@ struct ProspectDetailsView: View {
                     )
                 }
                 
+                Section {
+                    DemographicsSummaryRow(summary: prospect.demographicsSummary) {
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+                        showDemographicsSheet = true
+                    }
+                }
+                
                 // ✅ Actions Toolbar (unchanged)
                 Section {
                     ProspectActionsToolbar(
@@ -98,36 +107,39 @@ struct ProspectDetailsView: View {
                 }
                 
             }
-            
-            // Bottom floating buttons
-            ProspectFloatingActionsView(
-                onDeleteTapped: {
-                    showDeleteConfirmation = true
-                },
-                onNotesTapped: {
-                    controller.showNotesSheet = true
+        }
+        .sheet(isPresented: $showDeleteConfirmation) {
+            DeleteProspectSheet(
+                prospectName: prospect.fullName,
+                onDelete: {
+                    controller.deleteProspect(prospect, modelContext: modelContext)
                 }
             )
-            .sheet(isPresented: $showDeleteConfirmation) {
-                
-                DeleteProspectSheet(
-                    prospectName: prospect.fullName,
-                    onDelete: {
-                        controller.deleteProspect(prospect, modelContext: modelContext)
-                    }
-                )
-                .presentationDetents([.fraction(0.25)])
-                .presentationDragIndicator(.visible)
-                .onAppear {
-                    // Haptic + Sound on sheet appear
-                    ContactScreenHapticsController.shared.lightTap()
-                    ContactScreenSoundController.shared.playSound1()
+            .presentationDetents([.fraction(0.25)])
+            .presentationDragIndicator(.visible)
+            .onAppear {
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
+            }
+        }
+        .sheet(isPresented: $controller.showNotesSheet) {
+            ProspectNotesScreen(prospect: prospect)
+        }
+        .sheet(isPresented: $showDemographicsSheet) {
+            DemographicsEditorView(
+                title: "Prospect Demographics",
+                initialData: prospect.demographicsFormData,
+                onSave: { data in
+                    prospect.applyDemographics(data)
+                    controller.saveProspect(prospect, modelContext: modelContext)
+                    showDemographicsSheet = false
+                },
+                onCancel: {
+                    showDemographicsSheet = false
                 }
-            }
-
-            .sheet(isPresented: $controller.showNotesSheet) {
-                ProspectNotesScreen(prospect: prospect)
-            }
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
         // .navigationTitle("Edit Contact")
         .toolbar {
@@ -151,6 +163,23 @@ struct ProspectDetailsView: View {
             // Export + Share (hidden while editing)
             if !hasUnsavedEdits {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
+
+                    Button {
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+                        controller.showNotesSheet = true
+                    } label: {
+                        Image(systemName: "note.text")
+                    }
+
+                    Button(role: .destructive) {
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+                        showDeleteConfirmation = true
+                    } label: {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
+                    }
 
                     // ✅ Export to Contacts
                     Button {

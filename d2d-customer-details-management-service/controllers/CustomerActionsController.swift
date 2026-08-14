@@ -137,6 +137,7 @@ final class CustomerActionsController: ObservableObject {
 
         prospect.contactPhone = customer.contactPhone
         prospect.contactEmail = customer.contactEmail
+        prospect.applyDemographics(customer.demographicsFormData)
         prospect.notes = customer.notes
         prospect.appointments = customer.appointments
         prospect.knockHistory = customer.knockHistory
