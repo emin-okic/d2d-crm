@@ -44,6 +44,7 @@ struct MapSearchView: View {
     @AppStorage("hasCompletedInitialPropertyTutorial") private var hasCompletedInitialPropertyTutorial = false
     @State private var isInitialPropertyTutorialVisible = false
     @State private var initialPropertyTutorialStep: InitialPropertyTutorialStep = .tapMap
+    @State private var hasStartedStartupAd = false
 
     @State private var isSearchExpanded = false
     @Namespace private var animationNamespace
@@ -408,8 +409,7 @@ struct MapSearchView: View {
             // Ad related modifiers
             .presentRotatingAdsCentered()
             .onAppear {
-                // 🔹 Show exactly one ad for this app session (centered). Will differ each launch.
-                AdEngine.shared.startSingleShot(inventory: AdDemoInventory.defaultAds)
+                startStartupAdIfAllowed()
             }
             .onDisappear {
                 // No-op for single-shot, but keep if you want to explicitly clear.
@@ -474,6 +474,12 @@ struct MapSearchView: View {
             
         }
         .onChange(of: searchText) { _, newValue in searchVM.updateQuery(newValue) }
+        .onChange(of: hasCompletedInitialPropertyTutorial) { _, completed in
+            guard completed else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                startStartupAdIfAllowed()
+            }
+        }
         .onAppear {
             updateMarkers()
             prospectKnockingController = ProspectKnockActionController(modelContext: modelContext, controller: controller)
@@ -783,6 +789,15 @@ struct MapSearchView: View {
         withAnimation(.easeOut(duration: 0.24)) {
             initialPropertyTutorialStep = .tapMap
         }
+    }
+
+    private func startStartupAdIfAllowed() {
+        guard !hasStartedStartupAd else { return }
+        guard !shouldStartInitialPropertyTutorial else { return }
+        guard !isInitialPropertyTutorialVisible else { return }
+
+        hasStartedStartupAd = true
+        AdEngine.shared.startSingleShot(inventory: AdDemoInventory.defaultAds)
     }
 
     private func completeInitialPropertyTutorial() {
