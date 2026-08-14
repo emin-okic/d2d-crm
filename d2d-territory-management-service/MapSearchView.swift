@@ -41,6 +41,10 @@ struct MapSearchView: View {
     @State private var popupState: PopupState?
     @State private var popupScreenPosition: CGPoint? = nil
 
+    @AppStorage("hasCompletedInitialPropertyTutorial") private var hasCompletedInitialPropertyTutorial = false
+    @State private var isInitialPropertyTutorialVisible = false
+    @State private var initialPropertyTutorialStep: InitialPropertyTutorialStep = .tapMap
+
     @State private var isSearchExpanded = false
     @Namespace private var animationNamespace
 
@@ -112,6 +116,16 @@ struct MapSearchView: View {
 
     private var isContactFilterActive: Bool {
         activeContactFilter != nil
+    }
+
+    private var shouldShowInitialPropertyTutorialOverlay: Bool {
+        isInitialPropertyTutorialVisible &&
+        !hasCompletedInitialPropertyTutorial &&
+        pendingAddProperty == nil
+    }
+
+    private var shouldStartInitialPropertyTutorial: Bool {
+        !hasCompletedInitialPropertyTutorial && prospects.isEmpty && customers.isEmpty
     }
 
     private var filteredProspectsForMap: [Prospect] {
@@ -188,6 +202,13 @@ struct MapSearchView: View {
                         .padding(.top, 118)
                         .transition(.move(edge: .top).combined(with: .opacity))
                         .zIndex(1200)
+                }
+
+                if shouldShowInitialPropertyTutorialOverlay {
+                    InitialPropertyTutorialOverlayView(step: initialPropertyTutorialStep)
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
+                        .zIndex(4200)
                 }
                 
             }
@@ -460,6 +481,8 @@ struct MapSearchView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     NotificationCenter.default.post(name: .mapShouldRecenterAllMarkers, object: nil)
                 }
+
+            startInitialPropertyTutorialIfNeeded()
             
         }
         .onChange(of: addressToCenter) { _, newValue in handleMapCenterChange(newAddress: newValue) }
@@ -478,6 +501,8 @@ struct MapSearchView: View {
                         address: item.address,
                         coordinate: item.coordinate
                     )
+
+                    completeInitialPropertyTutorial()
                     
                     
                     // 🏆 Reward haptic — feels like a win
@@ -488,9 +513,11 @@ struct MapSearchView: View {
                 },
                 onCancel: {
                     pendingAddProperty = nil
-                }
+                    resetInitialPropertyTutorialToMapStep()
+                },
+                isTutorialActive: isInitialPropertyTutorialVisible && initialPropertyTutorialStep == .confirmAdd
             )
-            .presentationDetents([.height(250)])
+            .presentationDetents([isInitialPropertyTutorialVisible ? .height(340) : .height(250)])
             .presentationDragIndicator(.visible)
             .onAppear {
                 // ✨ Entry sound
@@ -726,8 +753,52 @@ struct MapSearchView: View {
 
     private func presentPendingAddProperty(address: String, coordinate: CLLocationCoordinate2D) {
         selectedPlaceID = nil
+
+        if isInitialPropertyTutorialVisible && initialPropertyTutorialStep == .tapMap {
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
+                initialPropertyTutorialStep = .confirmAdd
+            }
+        }
+
         pendingAddProperty = PendingAddProperty(address: address, coordinate: coordinate)
         controller.centerMapForNewProperty(coordinate: coordinate)
+    }
+
+    private func startInitialPropertyTutorialIfNeeded() {
+        guard shouldStartInitialPropertyTutorial else { return }
+        guard !isInitialPropertyTutorialVisible else { return }
+
+        initialPropertyTutorialStep = .tapMap
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
+            guard shouldStartInitialPropertyTutorial else { return }
+            withAnimation(.easeOut(duration: 0.28)) {
+                isInitialPropertyTutorialVisible = true
+            }
+        }
+    }
+
+    private func resetInitialPropertyTutorialToMapStep() {
+        guard isInitialPropertyTutorialVisible else { return }
+
+        withAnimation(.easeOut(duration: 0.24)) {
+            initialPropertyTutorialStep = .tapMap
+        }
+    }
+
+    private func completeInitialPropertyTutorial() {
+        guard isInitialPropertyTutorialVisible else { return }
+
+        withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
+            initialPropertyTutorialStep = .completed
+            showConfetti = true
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
+            hasCompletedInitialPropertyTutorial = true
+            withAnimation(.easeOut(duration: 0.24)) {
+                isInitialPropertyTutorialVisible = false
+            }
+        }
     }
 
     private func resetSelectedMapMarker() {
