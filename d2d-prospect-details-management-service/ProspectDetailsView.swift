@@ -31,7 +31,9 @@ struct ProspectDetailsView: View {
     
     @State private var actionsToolbarProxy: ProspectActionsToolbar?
     
+    @State private var showContactExportOptions = false
     @State private var showExportPrompt = false
+    @State private var contactSharePayload: ContactSharePayload?
     @State private var showExportSuccessBanner = false
     @State private var exportSuccessMessage = ""
     
@@ -188,24 +190,12 @@ struct ProspectDetailsView: View {
                         KnockingFormHapticsController.shared.lightTap()
                         KnockingFormSoundController.shared.playConfirmationSound()
                         
-                        showExportPrompt = true
+                        showContactExportOptions = true
                         
                     } label: {
                         Image(systemName: "person.crop.circle.badge.plus")
                     }
 
-                    // Share
-                    Button {
-                        
-                        // ⚡ Haptics & Sound
-                        KnockingFormHapticsController.shared.lightTap()
-                        KnockingFormSoundController.shared.playConfirmationSound()
-                        
-                        controller.shareProspect(prospect)
-                        
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                    }
                 }
             }
 
@@ -241,26 +231,50 @@ struct ProspectDetailsView: View {
             }
             
         }
-        .alert("Export to Contacts", isPresented: $showExportPrompt) {
-            Button("Yes") {
-                
-                // ⚡ Haptics & Sound when confirming export
-                ContactScreenHapticsController.shared.successConfirmationTap()
-                ContactScreenSoundController.shared.playSound1()
-                
-                exportToContacts()
-                
-            }
-            Button("Cancel", role: .cancel) {
-                
-                // ⚡ Optional subtle feedback on cancel
-                ContactScreenHapticsController.shared.lightTap()
-                ContactScreenSoundController.shared.playSound1()
-                
-            }
-            
-        } message: {
-            Text("Would you like to save this contact to your iOS Contacts app?")
+        .sheet(isPresented: $showContactExportOptions) {
+            ContactExportOptionsSheet(
+                contactName: prospect.fullName,
+                onSaveToContacts: {
+                    showContactExportOptions = false
+                    ContactScreenHapticsController.shared.successConfirmationTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    showExportPromptAfterOptionsDismiss()
+                },
+                onShareContact: {
+                    showContactExportOptions = false
+                    ContactScreenHapticsController.shared.successConfirmationTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    shareProspectAfterOptionsDismiss()
+                },
+                onCancel: {
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    showContactExportOptions = false
+                }
+            )
+            .presentationDetents([.height(360)])
+            .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showExportPrompt) {
+            ContactExportConfirmationSheet(
+                contactName: prospect.fullName,
+                onConfirm: {
+                    showExportPrompt = false
+                    ContactScreenHapticsController.shared.successConfirmationTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    exportToContacts()
+                },
+                onCancel: {
+                    ContactScreenHapticsController.shared.lightTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    showExportPrompt = false
+                }
+            )
+            .presentationDetents([.height(320)])
+            .presentationDragIndicator(.visible)
+        }
+        .sheet(item: $contactSharePayload) { payload in
+            ShareSheet(activityItems: [payload.message])
         }
         .alert("Revert Changes?", isPresented: $showRevertConfirmation) {
             Button("Revert Changes", role: .destructive) {
@@ -361,6 +375,28 @@ struct ProspectDetailsView: View {
                 }
             )
         ]
+    }
+
+    private func showExportPromptAfterOptionsDismiss() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            showExportPrompt = true
+        }
+    }
+
+    private func shareProspectAfterOptionsDismiss() {
+        let fullName = prospect.fullName
+        let address = prospect.address
+        let phone = prospect.contactPhone
+        let email = prospect.contactEmail
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            contactSharePayload = ContactSharePresenter.payload(
+                fullName: fullName,
+                address: address,
+                phone: phone,
+                email: email
+            )
+        }
     }
 
     private func exportToContacts() {
