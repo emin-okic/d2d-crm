@@ -34,10 +34,10 @@ struct ContactManagementView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Binding var selectedList: String
+    @Binding var searchText: String
     var onSave: () -> Void
 
     // Shared state
-    @State private var searchText: String = ""
     @StateObject private var controller = ContactManagerController()
 
     // Menu + overlays

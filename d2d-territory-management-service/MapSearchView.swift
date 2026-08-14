@@ -15,6 +15,7 @@ import Contacts
 
 struct MapSearchView: View {
     @Binding var searchText: String
+    @Binding var contactSearchText: String
     @Binding var region: MKCoordinateRegion
     @Binding var selectedList: String
     @Binding var addressToCenter: String?
@@ -75,10 +76,12 @@ struct MapSearchView: View {
     @State private var pendingSelectedContact: UnitContact? = nil
     
     init(searchText: Binding<String>,
+         contactSearchText: Binding<String>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
          addressToCenter: Binding<String?>) {
         _searchText = searchText
+        _contactSearchText = contactSearchText
         _region = region
         _selectedList = selectedList
         _addressToCenter = addressToCenter
@@ -97,6 +100,73 @@ struct MapSearchView: View {
         )
 
         return controller.markers + [previewMarker]
+    }
+
+    private var activeContactFilter: String {
+        contactSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var isContactFilterActive: Bool {
+        !activeContactFilter.isEmpty
+    }
+
+    private var filteredProspectsForMap: [Prospect] {
+        guard isContactFilterActive else { return prospects }
+        guard selectedList == "Prospects" else { return [] }
+        return prospects.filter { contactMatchesFilter($0) }
+    }
+
+    private var filteredCustomersForMap: [Customer] {
+        guard isContactFilterActive else { return customers }
+        guard selectedList == "Customers" else { return [] }
+        return customers.filter { contactMatchesFilter($0) }
+    }
+
+    private var filteredMapContactCount: Int {
+        filteredProspectsForMap.count + filteredCustomersForMap.count
+    }
+
+    private var contactFilterBanner: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "line.3.horizontal.decrease.circle.fill")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(.blue)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Map filtered by Contacts")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                Text("\(selectedList): \(filteredMapContactCount) match\(filteredMapContactCount == 1 ? "" : "es") for \"\(activeContactFilter)\"")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+            }
+
+            Spacer(minLength: 0)
+
+            Button {
+                clearContactFilter()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 30, height: 30)
+                    .background(Color(.secondarySystemBackground), in: Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Clear Contact Filter")
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(maxWidth: 420)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color.white.opacity(0.18), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.16), radius: 10, x: 0, y: 5)
     }
 
     var body: some View {
@@ -137,6 +207,15 @@ struct MapSearchView: View {
                     onNavigateToUserLocation: navigateToUserLocation,
                     onRevertToPreviousRegion: revertToPreviousRegion
                 )
+
+                if isContactFilterActive {
+                    contactFilterBanner
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 118)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .zIndex(1200)
+                }
                 
             }
             
@@ -144,6 +223,7 @@ struct MapSearchView: View {
             .onChange(of: prospects) { updateMarkers() }
             .onChange(of: customers) { updateMarkers() }
             .onChange(of: selectedList) { updateMarkers() }
+            .onChange(of: contactSearchText) { updateMarkers() }
             
             // Prospect Popup Stuff
             .sheet(item: $selectedUnitGroup, onDismiss: resetSelectedMapMarker) { group in
@@ -608,8 +688,12 @@ struct MapSearchView: View {
         withAnimation(.easeInOut(duration: 0.35)) {
             controller.centerMapForPopup(coordinate: place.location)
         }
-        
-        presentPopup(for: place)
+
+        if let contact = units.first?.primaryContact {
+            presentPopup(for: self.place(for: contact))
+        } else {
+            presentPopup(for: place)
+        }
 
         if let mapView = MapDisplayView.cachedMapView {
             let raw = mapView.convert(place.location, toPointTo: mapView)
@@ -812,7 +896,26 @@ struct MapSearchView: View {
     
     // For updating the markers
     private func updateMarkers() {
-        controller.setMarkers(prospects: prospects, customers: customers)
+        controller.setMarkers(prospects: filteredProspectsForMap, customers: filteredCustomersForMap)
+    }
+
+    private func clearContactFilter() {
+        MapScreenHapticsController.shared.lightTap()
+        MapScreenSoundController.shared.playPropertyOpen()
+        withAnimation(.easeInOut(duration: 0.2)) {
+            contactSearchText = ""
+        }
+    }
+
+    private func contactMatchesFilter<T: ContactProtocol>(_ contact: T) -> Bool {
+        let query = activeContactFilter
+        guard !query.isEmpty else { return true }
+
+        return contact.fullName.localizedCaseInsensitiveContains(query) ||
+            contact.address.localizedCaseInsensitiveContains(query) ||
+            contact.contactPhone.localizedCaseInsensitiveContains(query) ||
+            contact.contactEmail.localizedCaseInsensitiveContains(query) ||
+            contact.demographicsSearchText.localizedCaseInsensitiveContains(query)
     }
     
     private func resolveProspectForSale(address: String) -> Prospect? {
@@ -1074,6 +1177,16 @@ struct MapSearchView: View {
         // Close popup first (important for UX)
         closePopup()
 
+        if let selectedContact = place.selectedContact {
+            switch selectedContact {
+            case .prospect(let prospect):
+                selectedProspect = prospect
+            case .customer(let customer):
+                selectedCustomer = customer
+            }
+            return
+        }
+
         if place.list == "Customers" ,
            let customer = customers.first(where: { $0.address == place.address }) {
             selectedCustomer = customer
@@ -1102,13 +1215,13 @@ struct MapSearchView: View {
     
     private func unitContactGroupsForBaseAddress(_ base: String) -> [UnitContactGroup] {
 
-        let prospectUnits = prospects
+        let prospectUnits = filteredProspectsForMap
             .filter {
                 parseAddress($0.address).base.lowercased() == base.lowercased()
             }
             .map { UnitContact.prospect($0) }
 
-        let customerUnits = customers
+        let customerUnits = filteredCustomersForMap
             .filter {
                 parseAddress($0.address).base.lowercased() == base.lowercased()
             }
