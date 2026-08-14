@@ -270,7 +270,7 @@ struct ProspectDetailsView: View {
                     showExportPrompt = false
                 }
             )
-            .presentationDetents([.height(280)])
+            .presentationDetents([.height(320)])
             .presentationDragIndicator(.visible)
         }
         .sheet(item: $contactSharePayload) { payload in

@@ -12,7 +12,7 @@ struct ContactExportOptionsSheet: View {
     let onCancel: () -> Void
 
     var body: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 20) {
             VStack(spacing: 6) {
                 Text("Export Contact")
                     .font(.headline)
@@ -48,11 +48,8 @@ struct ContactExportOptionsSheet: View {
             Button("Cancel", role: .cancel, action: onCancel)
                 .buttonStyle(.bordered)
                 .controlSize(.large)
-                .padding(.bottom, 8)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 24)
-        .padding(.bottom, 16)
+        .padding(32)
     }
 }
 
@@ -62,7 +59,7 @@ struct ContactExportConfirmationSheet: View {
     let onCancel: () -> Void
 
     var body: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 20) {
             Image(systemName: "person.crop.circle.badge.plus")
                 .font(.title2.weight(.semibold))
                 .foregroundStyle(.white)
@@ -83,7 +80,15 @@ struct ContactExportConfirmationSheet: View {
 
             Spacer(minLength: 12)
 
-            VStack(spacing: 10) {
+            HStack(spacing: 12) {
+                Button(action: onCancel) {
+                    Text("Cancel")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+
                 Button(action: onConfirm) {
                     Text("Save Contact")
                         .font(.subheadline.weight(.semibold))
@@ -91,16 +96,9 @@ struct ContactExportConfirmationSheet: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-
-                Button("Cancel", role: .cancel, action: onCancel)
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
             }
-            .padding(.bottom, 8)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 24)
-        .padding(.bottom, 16)
+        .padding(32)
     }
 
     private var message: String {
