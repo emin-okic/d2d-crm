@@ -102,6 +102,7 @@ struct ProspectManagementView: View {
         }
 
         activeSearchFilter = ContactSearchFilter(field: selectedSearchField, query: trimmed)
+        searchText = ""
         isSearchFocused = false
     }
 }

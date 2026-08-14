@@ -879,6 +879,11 @@ struct MapSearchView: View {
             contactSearchDraft = ""
             contactSearchFilter = nil
         }
+
+        updateMarkers()
+        DispatchQueue.main.async {
+            controller.recenterToFitAllMarkers()
+        }
     }
     
     private func resolveProspectForSale(address: String) -> Prospect? {
