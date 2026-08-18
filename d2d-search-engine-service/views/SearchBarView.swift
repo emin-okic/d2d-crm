@@ -21,7 +21,7 @@ struct SearchBarView: View {
     var onCancel: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 14) {
             searchField
 
             SearchSuggestionsListView(
@@ -29,7 +29,10 @@ struct SearchBarView: View {
                 results: viewModel.results,
                 onSelect: onSelectResult
             )
+            .padding(.top, 4)
+            .padding(.bottom, isFocused && !viewModel.results.isEmpty ? 12 : 0)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .animation(.easeInOut(duration: 0.22), value: viewModel.results.count)
     }
 
@@ -59,6 +62,7 @@ struct SearchBarView: View {
             }
             .buttonStyle(.plain)
         }
+        .frame(maxWidth: .infinity)
         .padding(.leading, 8)
         .padding(.trailing, 6)
         .padding(.vertical, 7)
@@ -136,6 +140,7 @@ struct MapContactFilterSearchView: View {
                 }
                 .buttonStyle(.plain)
             }
+            .frame(maxWidth: .infinity)
             .padding(.leading, 8)
             .padding(.trailing, 6)
             .padding(.vertical, 7)

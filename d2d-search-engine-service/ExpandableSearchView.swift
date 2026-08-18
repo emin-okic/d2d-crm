@@ -103,6 +103,7 @@ struct ExpandableSearchView: View {
                             )
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(10)
                     .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                     .overlay(
@@ -110,7 +111,6 @@ struct ExpandableSearchView: View {
                             .stroke(Color.white.opacity(0.34), lineWidth: 1)
                     )
                     .shadow(color: Color.black.opacity(0.18), radius: 18, x: 0, y: 10)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .matchedGeometryEffect(id: "search", in: animationNamespace)
                     .transition(.move(edge: .leading).combined(with: .opacity))
                 } else {

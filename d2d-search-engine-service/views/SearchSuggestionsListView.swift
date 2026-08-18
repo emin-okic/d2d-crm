@@ -13,6 +13,8 @@ struct SearchSuggestionsListView: View {
     var results: [MKLocalSearchCompletion]
     var onSelect: (MKLocalSearchCompletion) -> Void
 
+    private let maxVisibleResults = 5
+
     var body: some View {
         if isVisible && !results.isEmpty {
             VStack(alignment: .leading, spacing: 0) {
@@ -24,7 +26,7 @@ struct SearchSuggestionsListView: View {
 
                     Spacer()
 
-                    Text("\(min(results.count, 5))")
+                    Text("\(min(results.count, maxVisibleResults))")
                         .font(.caption2.weight(.bold))
                         .foregroundStyle(.blue)
                         .frame(minWidth: 22, minHeight: 22)
@@ -34,10 +36,10 @@ struct SearchSuggestionsListView: View {
                 .padding(.top, 11)
                 .padding(.bottom, 7)
 
-                ForEach(Array(results.prefix(5).enumerated()), id: \.element) { index, result in
+                ForEach(Array(results.prefix(maxVisibleResults).enumerated()), id: \.element) { index, result in
                     suggestionButton(for: result)
 
-                    if index < min(results.count, 5) - 1 {
+                    if index < min(results.count, maxVisibleResults) - 1 {
                         Divider()
                             .padding(.leading, 58)
                     }
