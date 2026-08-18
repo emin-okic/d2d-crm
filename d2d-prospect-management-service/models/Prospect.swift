@@ -27,6 +27,13 @@ final class Prospect: ContactProtocol {
     var demographicHouseholdType: String?
     var demographicHomeownership: String?
     var demographicNotes: String?
+    var demographicCompanyName: String?
+    var demographicJobTitle: String?
+    var demographicIndustry: String?
+    var demographicCompanyDomain: String?
+    var demographicCompanyLogoURL: String?
+    var demographicCompanyPrimaryColorHex: String?
+    var demographicCompanySecondaryColorHex: String?
     
     var notes: [Note]
     

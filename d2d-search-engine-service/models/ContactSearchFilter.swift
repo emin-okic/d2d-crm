@@ -17,6 +17,9 @@ enum ContactSearchField: String, CaseIterable, Identifiable {
     case primaryLanguage
     case householdType
     case homeownership
+    case companyName
+    case jobTitle
+    case industry
     case notes
 
     var id: String { rawValue }
@@ -34,6 +37,9 @@ enum ContactSearchField: String, CaseIterable, Identifiable {
         case .primaryLanguage: return "Language"
         case .householdType: return "Household"
         case .homeownership: return "Homeownership"
+        case .companyName: return "Company"
+        case .jobTitle: return "Job Title"
+        case .industry: return "Industry"
         case .notes: return "Notes"
         }
     }
@@ -51,6 +57,9 @@ enum ContactSearchField: String, CaseIterable, Identifiable {
         case .primaryLanguage: return "text.bubble"
         case .householdType: return "house"
         case .homeownership: return "key"
+        case .companyName: return "building.2"
+        case .jobTitle: return "person.crop.rectangle.badge.plus"
+        case .industry: return "briefcase"
         case .notes: return "note.text"
         }
     }
@@ -105,6 +114,12 @@ extension ContactProtocol {
             return (demographicHouseholdType ?? "").localizedCaseInsensitiveContains(query)
         case .homeownership:
             return (demographicHomeownership ?? "").localizedCaseInsensitiveContains(query)
+        case .companyName:
+            return (demographicCompanyName ?? "").localizedCaseInsensitiveContains(query)
+        case .jobTitle:
+            return (demographicJobTitle ?? "").localizedCaseInsensitiveContains(query)
+        case .industry:
+            return (demographicIndustry ?? "").localizedCaseInsensitiveContains(query)
         case .notes:
             return (demographicNotes ?? "").localizedCaseInsensitiveContains(query)
         }

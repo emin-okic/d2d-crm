@@ -21,6 +21,13 @@ protocol ContactProtocol: AnyObject {
     var demographicHouseholdType: String? { get set }
     var demographicHomeownership: String? { get set }
     var demographicNotes: String? { get set }
+    var demographicCompanyName: String? { get set }
+    var demographicJobTitle: String? { get set }
+    var demographicIndustry: String? { get set }
+    var demographicCompanyDomain: String? { get set }
+    var demographicCompanyLogoURL: String? { get set }
+    var demographicCompanyPrimaryColorHex: String? { get set }
+    var demographicCompanySecondaryColorHex: String? { get set }
     
     var notes: [Note] { get set }
     var appointments: [Appointment] { get set }
@@ -57,6 +64,13 @@ extension ContactProtocol {
             primaryLanguage: demographicPrimaryLanguage ?? "",
             householdType: demographicHouseholdType ?? "",
             homeownership: demographicHomeownership ?? "",
+            companyName: demographicCompanyName ?? "",
+            jobTitle: demographicJobTitle ?? "",
+            industry: demographicIndustry ?? "",
+            companyDomain: demographicCompanyDomain ?? "",
+            companyLogoURL: demographicCompanyLogoURL ?? "",
+            companyPrimaryColorHex: demographicCompanyPrimaryColorHex ?? "",
+            companySecondaryColorHex: demographicCompanySecondaryColorHex ?? "",
             notes: demographicNotes ?? ""
         )
     }
@@ -68,7 +82,10 @@ extension ContactProtocol {
             demographicRaceEthnicity,
             demographicPrimaryLanguage,
             demographicHouseholdType,
-            demographicHomeownership
+            demographicHomeownership,
+            demographicCompanyName,
+            demographicJobTitle,
+            demographicIndustry
         ]
         .compactMap { value in
             let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
@@ -78,7 +95,7 @@ extension ContactProtocol {
     }
 
     var demographicsSearchText: String {
-        ([demographicsSummary, demographicNotes ?? ""])
+        ([demographicsSummary, demographicCompanyDomain ?? "", demographicNotes ?? ""])
             .joined(separator: " ")
     }
 
@@ -89,7 +106,42 @@ extension ContactProtocol {
         demographicPrimaryLanguage = data.primaryLanguage.nilIfBlank
         demographicHouseholdType = data.householdType.nilIfBlank
         demographicHomeownership = data.homeownership.nilIfBlank
+        demographicCompanyName = data.companyName.nilIfBlank
+        demographicJobTitle = data.jobTitle.nilIfBlank
+        demographicIndustry = data.industry.nilIfBlank
+        demographicCompanyDomain = data.companyDomain.nilIfBlank
+        demographicCompanyLogoURL = data.companyLogoURL.nilIfBlank
+        demographicCompanyPrimaryColorHex = data.companyPrimaryColorHex.nilIfBlank
+        demographicCompanySecondaryColorHex = data.companySecondaryColorHex.nilIfBlank
         demographicNotes = data.notes.nilIfBlank
+    }
+
+    func companyInfoChangeNote(from oldData: DemographicsFormData, to newData: DemographicsFormData) -> String? {
+        let changes = [
+            companyInfoChange(label: "Company", oldValue: oldData.companyName, newValue: newData.companyName),
+            companyInfoChange(label: "Job title", oldValue: oldData.jobTitle, newValue: newData.jobTitle),
+            companyInfoChange(label: "Industry", oldValue: oldData.industry, newValue: newData.industry)
+        ].compactMap { $0 }
+
+        guard !changes.isEmpty else { return nil }
+        return "Updated company info: \(changes.joined(separator: "; "))."
+    }
+
+    private func companyInfoChange(label: String, oldValue: String, newValue: String) -> String? {
+        let oldTrimmed = oldValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let newTrimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard oldTrimmed != newTrimmed else { return nil }
+
+        if oldTrimmed.isEmpty {
+            return "\(label) set to \(newTrimmed)"
+        }
+
+        if newTrimmed.isEmpty {
+            return "\(label) cleared from \(oldTrimmed)"
+        }
+
+        return "\(label) changed from \(oldTrimmed) to \(newTrimmed)"
     }
 }
 
