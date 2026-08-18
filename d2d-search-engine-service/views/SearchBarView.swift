@@ -21,7 +21,7 @@ struct SearchBarView: View {
     var onCancel: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 14) {
             searchField
 
             SearchSuggestionsListView(
@@ -29,14 +29,10 @@ struct SearchBarView: View {
                 results: viewModel.results,
                 onSelect: onSelectResult
             )
+            .padding(.top, 4)
+            .padding(.bottom, isFocused && !viewModel.results.isEmpty ? 12 : 0)
         }
-        .padding(10)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color.white.opacity(0.34), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.18), radius: 18, x: 0, y: 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .animation(.easeInOut(duration: 0.22), value: viewModel.results.count)
     }
 
@@ -66,6 +62,7 @@ struct SearchBarView: View {
             }
             .buttonStyle(.plain)
         }
+        .frame(maxWidth: .infinity)
         .padding(.leading, 8)
         .padding(.trailing, 6)
         .padding(.vertical, 7)
@@ -82,6 +79,85 @@ struct SearchBarView: View {
         } else {
             searchText = ""
             viewModel.clear()
+        }
+    }
+}
+
+struct MapContactFilterSearchView: View {
+    @Binding var searchText: String
+    @Binding var selectedField: ContactSearchField
+    @FocusState.Binding var isFocused: Bool
+    var onSubmit: () -> Void
+    var onClear: () -> Void
+    var onCancel: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                Menu {
+                    ForEach(ContactSearchField.allCases) { field in
+                        Button {
+                            selectedField = field
+                        } label: {
+                            Label(field.label, systemImage: field.systemImage)
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: selectedField.systemImage)
+                            .font(.caption.weight(.semibold))
+
+                        Text(selectedField.label)
+                            .font(.caption.weight(.semibold))
+                            .lineLimit(1)
+
+                        Image(systemName: "chevron.down")
+                            .font(.caption2.weight(.bold))
+                    }
+                    .foregroundStyle(.blue)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 6)
+                    .background(Color.blue.opacity(0.1), in: Capsule())
+                }
+                .menuOrder(.fixed)
+
+                TextField("Filter properties", text: $searchText, onCommit: {
+                    onSubmit()
+                })
+                .focused($isFocused)
+                .font(.subheadline.weight(.medium))
+                .foregroundColor(.primary)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.search)
+
+                Button(action: clearOrCancel) {
+                    Image(systemName: searchText.isEmpty ? "xmark" : "xmark.circle.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.secondary)
+                        .frame(width: 30, height: 30)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.leading, 8)
+            .padding(.trailing, 6)
+            .padding(.vertical, 7)
+            .background(Color(.systemBackground).opacity(0.92), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+            )
+        }
+    }
+
+    private func clearOrCancel() {
+        if searchText.isEmpty {
+            onCancel()
+        } else {
+            searchText = ""
+            onClear()
         }
     }
 }

@@ -47,6 +47,8 @@ struct MapSearchView: View {
     @State private var hasStartedStartupAd = false
 
     @State private var isSearchExpanded = false
+    @State private var mapSearchMode: MapSearchMode = .property
+    @State private var selectedMapContactSearchField: ContactSearchField = .all
     @Namespace private var animationNamespace
 
     @Environment(\.modelContext) private var modelContext
@@ -183,11 +185,16 @@ struct MapSearchView: View {
 
                 FloatingSearchAndMicButtons(
                     searchText: $searchText,
+                    contactSearchText: $contactSearchDraft,
+                    selectedContactSearchField: $selectedMapContactSearchField,
+                    searchMode: $mapSearchMode,
                     isExpanded: $isSearchExpanded,
                     isFocused: $isSearchFocused,
                     viewModel: searchVM,
                     animationNamespace: animationNamespace,
                     onSubmit: { submitSearch() },
+                    onSubmitContactFilter: { submitContactFilter() },
+                    onClearContactFilter: { clearContactFilter() },
                     onSelectResult: { handleCompletionTap($0) },
                     userLocationManager: userLocationManager,
                     mapController: controller,
@@ -473,7 +480,17 @@ struct MapSearchView: View {
             controller.recenterToFitAllMarkers()
             
         }
-        .onChange(of: searchText) { _, newValue in searchVM.updateQuery(newValue) }
+        .onChange(of: searchText) { _, newValue in
+            guard mapSearchMode == .property else { return }
+            searchVM.updateQuery(newValue)
+        }
+        .onChange(of: mapSearchMode) { _, newValue in
+            if newValue == .filter {
+                searchVM.clear()
+            } else {
+                searchVM.updateQuery(searchText)
+            }
+        }
         .onChange(of: hasCompletedInitialPropertyTutorial) { _, completed in
             guard completed else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
@@ -965,6 +982,7 @@ struct MapSearchView: View {
             contactSearchDraft = ""
             contactSearchFilter = nil
         }
+        searchVM.clear()
 
         updateMarkers()
         DispatchQueue.main.async {
@@ -1684,6 +1702,25 @@ struct MapSearchView: View {
             presentPendingAddProperty(address: address, coordinate: coordinate)
         }
     }
+
+    private func submitContactFilter() {
+        let trimmed = contactSearchDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            clearContactFilter()
+            return
+        }
+
+        contactSearchFilter = ContactSearchFilter(field: selectedMapContactSearchField, query: trimmed)
+        contactSearchDraft = ""
+        searchVM.clear()
+        isSearchFocused = false
+        isSearchExpanded = false
+        updateMarkers()
+        DispatchQueue.main.async {
+            controller.recenterToFitAllMarkers()
+        }
+    }
+
 }
 
 private struct FollowUpScheduledConfirmation: Identifiable {

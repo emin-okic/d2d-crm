@@ -11,12 +11,17 @@ import MapKit
 
 struct FloatingSearchAndMicButtons: View {
     @Binding var searchText: String
+    @Binding var contactSearchText: String
+    @Binding var selectedContactSearchField: ContactSearchField
+    @Binding var searchMode: MapSearchMode
     @Binding var isExpanded: Bool
     @FocusState<Bool>.Binding var isFocused: Bool
 
     var viewModel: SearchCompleterViewModel
     var animationNamespace: Namespace.ID
     var onSubmit: () -> Void
+    var onSubmitContactFilter: () -> Void
+    var onClearContactFilter: () -> Void
     var onSelectResult: (MKLocalSearchCompletion) -> Void
     
     var userLocationManager: UserLocationManager
@@ -40,11 +45,16 @@ struct FloatingSearchAndMicButtons: View {
                     if isExpanded {
                         ExpandableSearchView(
                             searchText: $searchText,
+                            contactSearchText: $contactSearchText,
+                            selectedContactSearchField: $selectedContactSearchField,
+                            searchMode: $searchMode,
                             isExpanded: $isExpanded,
                             isFocused: $isFocused,
                             viewModel: viewModel,
                             animationNamespace: animationNamespace,
                             onSubmit: onSubmit,
+                            onSubmitContactFilter: onSubmitContactFilter,
+                            onClearContactFilter: onClearContactFilter,
                             onSelectResult: onSelectResult
                         )
                         .frame(maxWidth: 420, alignment: .leading)
@@ -77,11 +87,16 @@ struct FloatingSearchAndMicButtons: View {
 
                                 ExpandableSearchView(
                                     searchText: $searchText,
+                                    contactSearchText: $contactSearchText,
+                                    selectedContactSearchField: $selectedContactSearchField,
+                                    searchMode: $searchMode,
                                     isExpanded: $isExpanded,
                                     isFocused: $isFocused,
                                     viewModel: viewModel,
                                     animationNamespace: animationNamespace,
                                     onSubmit: onSubmit,
+                                    onSubmitContactFilter: onSubmitContactFilter,
+                                    onClearContactFilter: onClearContactFilter,
                                     onSelectResult: onSelectResult
                                 )
                             }
