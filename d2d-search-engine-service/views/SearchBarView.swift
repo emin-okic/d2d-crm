@@ -30,13 +30,6 @@ struct SearchBarView: View {
                 onSelect: onSelectResult
             )
         }
-        .padding(10)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color.white.opacity(0.34), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.18), radius: 18, x: 0, y: 10)
         .animation(.easeInOut(duration: 0.22), value: viewModel.results.count)
     }
 
@@ -152,13 +145,6 @@ struct MapContactFilterSearchView: View {
                     .stroke(Color.primary.opacity(0.08), lineWidth: 1)
             )
         }
-        .padding(10)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color.white.opacity(0.34), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.18), radius: 18, x: 0, y: 10)
     }
 
     private func clearOrCancel() {

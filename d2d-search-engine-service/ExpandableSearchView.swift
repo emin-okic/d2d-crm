@@ -16,8 +16,8 @@ enum MapSearchMode: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .property: return "Property"
-        case .filter: return "Filter"
+        case .property: return "Address Search"
+        case .filter: return "Contact Filter"
         }
     }
 
@@ -55,7 +55,7 @@ struct ExpandableSearchView: View {
                 if isExpanded {
                     
                     VStack(alignment: .leading, spacing: 10) {
-                        searchModePicker
+                        searchScopeMenu
 
                         if searchMode == .property {
                             SearchBarView(
@@ -103,6 +103,13 @@ struct ExpandableSearchView: View {
                             )
                         }
                     }
+                    .padding(10)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(Color.white.opacity(0.34), lineWidth: 1)
+                    )
+                    .shadow(color: Color.black.opacity(0.18), radius: 18, x: 0, y: 10)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .matchedGeometryEffect(id: "search", in: animationNamespace)
                     .transition(.move(edge: .leading).combined(with: .opacity))
@@ -133,23 +140,56 @@ struct ExpandableSearchView: View {
         }
     }
 
-    private var searchModePicker: some View {
-        Picker("Map Search Mode", selection: $searchMode) {
+    private var searchScopeMenu: some View {
+        HStack(spacing: 8) {
             ForEach(MapSearchMode.allCases) { mode in
-                Label(mode.label, systemImage: mode.systemImage)
-                    .tag(mode)
+                Button {
+                    switchSearchMode(to: mode)
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: mode.systemImage)
+                            .font(.system(size: 14, weight: .semibold))
+
+                        Text(mode.label)
+                            .font(.subheadline.weight(.semibold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.82)
+                    }
+                    .foregroundStyle(searchMode == mode ? .white : .blue)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 38)
+                    .background(
+                        Capsule()
+                            .fill(searchMode == mode ? Color.blue : Color.blue.opacity(0.12))
+                    )
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.blue.opacity(searchMode == mode ? 0 : 0.24), lineWidth: 1)
+                    )
+                    .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(mode.label)
             }
         }
-        .pickerStyle(.segmented)
-        .onChange(of: searchMode) { _, newValue in
-            resetPropertySearchState()
-            contactSearchText = ""
-            if newValue == .property {
-                isFocused = true
-            } else {
-                viewModel.clear()
-                isFocused = true
-            }
+        .padding(.horizontal, 2)
+    }
+
+    private func switchSearchMode(to mode: MapSearchMode) {
+        guard searchMode != mode else {
+            isFocused = true
+            return
+        }
+
+        searchMode = mode
+        resetPropertySearchState()
+        contactSearchText = ""
+        if mode == .filter {
+            viewModel.clear()
+        }
+
+        DispatchQueue.main.async {
+            isFocused = true
         }
     }
 
