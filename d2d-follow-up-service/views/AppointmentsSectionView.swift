@@ -153,6 +153,11 @@ struct AppointmentsSectionView: View {
                         }
                         .padding(.horizontal, 1)
                     }
+                    .contentShape(Rectangle())
+                    .simultaneousGesture(
+                        DragGesture(minimumDistance: 24)
+                            .onEnded(handleDayCarouselSwipe)
+                    )
                     .onAppear {
                         proxy.scrollTo(calendar.startOfDay(for: selectedDate), anchor: .center)
                     }
@@ -353,6 +358,25 @@ struct AppointmentsSectionView: View {
     private func moveDay(by value: Int) {
         if let newDate = calendar.date(byAdding: .day, value: value, to: selectedDate) {
             selectedDate = newDate
+        }
+    }
+
+    private func handleDayCarouselSwipe(_ value: DragGesture.Value) {
+        let dragWidth = value.translation.width
+        let projectedWidth = value.predictedEndTranslation.width
+        let strongestWidth = abs(projectedWidth) > abs(dragWidth) ? projectedWidth : dragWidth
+
+        guard abs(strongestWidth) >= 36 else { return }
+
+        let dayWidth: CGFloat = 56
+        let dayCount = min(max(Int((abs(strongestWidth) / dayWidth).rounded()), 2), 5)
+        let direction = strongestWidth < 0 ? 1 : -1
+
+        FollowUpScreenHapticsController.shared.lightTap()
+        FollowUpScreenSoundController.shared.playSound1()
+
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+            moveDay(by: direction * dayCount)
         }
     }
 
