@@ -33,6 +33,7 @@ struct ProspectManagementView: View {
     @Binding var isDeleting: Bool
     @Binding var selectedProspects: Set<Prospect>
     var onClearSearchFilter: () -> Void
+    var onProspectOpenRequested: (Prospect) -> Bool = { _ in false }
 
     private var filteredProspectCount: Int {
         let base = prospects.filter { $0.list == selectedList }
@@ -72,7 +73,8 @@ struct ProspectManagementView: View {
                 activeSearchFilter: $activeSearchFilter,
                 selectedProspect: $selectedProspect,
                 isDeleting: $isDeleting,
-                selectedProspects: $selectedProspects
+                selectedProspects: $selectedProspects,
+                onProspectOpenRequested: onProspectOpenRequested
             )
             .padding(.horizontal, 20)
             .padding(.vertical, 10)

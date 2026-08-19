@@ -15,6 +15,7 @@ struct CustomerContainerView: View {
     
     @Binding var isDeleting: Bool
     @Binding var selectedCustomers: Set<Customer>
+    var onCustomerOpenRequested: (Customer) -> Bool = { _ in false }
 
     var body: some View {
         GeometryReader { geo in
@@ -29,7 +30,8 @@ struct CustomerContainerView: View {
                     activeSearchFilter: $activeSearchFilter,
                     selectedCustomer: $selectedCustomer,
                     isDeleting: $isDeleting,
-                    selectedCustomers: $selectedCustomers
+                    selectedCustomers: $selectedCustomers,
+                    onCustomerOpenRequested: onCustomerOpenRequested
                 )
                     .padding()
             }
