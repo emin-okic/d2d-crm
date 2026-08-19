@@ -47,6 +47,7 @@ struct CustomerDetailsView: View {
     @State private var showAppointmentsSheet = false
     @State private var showKnocksSheet = false
     @State private var showDemographicsSheet = false
+    @State private var demographicsSheetDetent: PresentationDetent = .fraction(0.68)
 
     var body: some View {
         ZStack {
@@ -160,15 +161,24 @@ struct CustomerDetailsView: View {
                 title: "Customer Demographics",
                 initialData: customer.demographicsFormData,
                 onSave: { data in
+                    let oldData = customer.demographicsFormData
                     customer.applyDemographics(data)
+                    if let noteContent = customer.companyInfoChangeNote(from: oldData, to: data) {
+                        customer.notes.append(Note(content: noteContent, date: Date()))
+                    }
                     try? modelContext.save()
                     showDemographicsSheet = false
                 },
                 onCancel: {
                     showDemographicsSheet = false
+                },
+                onExpandedContentChange: { isExpanded in
+                    withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
+                        demographicsSheetDetent = isExpanded ? .large : .fraction(0.68)
+                    }
                 }
             )
-            .presentationDetents([.medium, .large])
+            .presentationDetents([.fraction(0.68), .large], selection: $demographicsSheetDetent)
             .presentationDragIndicator(.visible)
         }
         .toolbar {

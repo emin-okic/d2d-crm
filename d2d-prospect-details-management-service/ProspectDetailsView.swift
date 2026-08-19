@@ -40,6 +40,7 @@ struct ProspectDetailsView: View {
     @State private var showAppointmentsSheet = false
     @State private var showKnocksSheet = false
     @State private var showDemographicsSheet = false
+    @State private var demographicsSheetDetent: PresentationDetent = .fraction(0.68)
 
     var body: some View {
         ZStack {
@@ -132,15 +133,24 @@ struct ProspectDetailsView: View {
                 title: "Prospect Demographics",
                 initialData: prospect.demographicsFormData,
                 onSave: { data in
+                    let oldData = prospect.demographicsFormData
                     prospect.applyDemographics(data)
+                    if let noteContent = prospect.companyInfoChangeNote(from: oldData, to: data) {
+                        prospect.notes.append(Note(content: noteContent, date: Date(), prospect: prospect))
+                    }
                     controller.saveProspect(prospect, modelContext: modelContext)
                     showDemographicsSheet = false
                 },
                 onCancel: {
                     showDemographicsSheet = false
+                },
+                onExpandedContentChange: { isExpanded in
+                    withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
+                        demographicsSheetDetent = isExpanded ? .large : .fraction(0.68)
+                    }
                 }
             )
-            .presentationDetents([.medium, .large])
+            .presentationDetents([.fraction(0.68), .large], selection: $demographicsSheetDetent)
             .presentationDragIndicator(.visible)
         }
         // .navigationTitle("Edit Contact")
