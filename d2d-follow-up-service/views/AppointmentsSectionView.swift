@@ -139,8 +139,8 @@ struct AppointmentsSectionView: View {
             }
 
             HStack(spacing: 8) {
-                weekButton(systemImage: "chevron.left") {
-                    moveWeek(by: -1)
+                dayStepperButton(systemImage: "chevron.left") {
+                    moveDay(by: -1)
                 }
 
                 ScrollViewReader { proxy in
@@ -163,8 +163,8 @@ struct AppointmentsSectionView: View {
                     }
                 }
 
-                weekButton(systemImage: "chevron.right") {
-                    moveWeek(by: 1)
+                dayStepperButton(systemImage: "chevron.right") {
+                    moveDay(by: 1)
                 }
             }
         }
@@ -180,14 +180,9 @@ struct AppointmentsSectionView: View {
 
     private var monthSwitcher: some View {
         HStack(spacing: 10) {
-            Button {
+            monthStepperButton(systemImage: "chevron.left") {
                 moveMonth(by: -1)
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 13, weight: .bold))
-                    .frame(width: 38, height: 38)
             }
-            .buttonStyle(.bordered)
 
             VStack(spacing: 2) {
                 Text(selectedDate.formatted(.dateTime.month(.wide)))
@@ -200,14 +195,9 @@ struct AppointmentsSectionView: View {
             }
             .frame(maxWidth: .infinity)
 
-            Button {
+            monthStepperButton(systemImage: "chevron.right") {
                 moveMonth(by: 1)
-            } label: {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .bold))
-                    .frame(width: 38, height: 38)
             }
-            .buttonStyle(.bordered)
         }
         .padding(10)
         .background(
@@ -319,7 +309,7 @@ struct AppointmentsSectionView: View {
         .accessibilityLabel(date.formatted(.dateTime.weekday(.wide).month(.wide).day()))
     }
 
-    private func weekButton(systemImage: String, action: @escaping () -> Void) -> some View {
+    private func dayStepperButton(systemImage: String, action: @escaping () -> Void) -> some View {
         Button {
             FollowUpScreenHapticsController.shared.lightTap()
             FollowUpScreenSoundController.shared.playSound1()
@@ -341,8 +331,27 @@ struct AppointmentsSectionView: View {
         .buttonStyle(.plain)
     }
 
-    private func moveWeek(by value: Int) {
-        if let newDate = calendar.date(byAdding: .weekOfYear, value: value, to: selectedDate) {
+    private func monthStepperButton(systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(.blue)
+                .frame(width: 58, height: 38)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.white)
+                        .shadow(color: Color.black.opacity(0.06), radius: 5, x: 0, y: 2)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.blue.opacity(0.18), lineWidth: 1)
+                        )
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func moveDay(by value: Int) {
+        if let newDate = calendar.date(byAdding: .day, value: value, to: selectedDate) {
             selectedDate = newDate
         }
     }
