@@ -37,6 +37,7 @@ struct CustomersSectionView: View {
     
     @Binding var isDeleting: Bool
     @Binding var selectedCustomers: Set<Customer>
+    var onCustomerOpenRequested: (Customer) -> Bool = { _ in false }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -74,6 +75,10 @@ struct CustomersSectionView: View {
                                 // ✅ Haptics & Sound when opening a prospect/customer
                                 ContactScreenHapticsController.shared.lightTap()
                                 ContactScreenSoundController.shared.playSound1()
+
+                                if onCustomerOpenRequested(c) {
+                                    return
+                                }
                                 
                                 selectedCustomer = c
                             }

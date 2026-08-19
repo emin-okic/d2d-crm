@@ -34,6 +34,7 @@ struct CustomerManagementView: View {
     @Binding var isDeleting: Bool
     @Binding var selectedCustomers: Set<Customer>
     var onClearSearchFilter: () -> Void
+    var onCustomerOpenRequested: (Customer) -> Bool = { _ in false }
 
     private var filteredCustomerCount: Int {
         guard let filter = activeSearchFilter, !filter.isEmpty else { return customers.count }
@@ -72,7 +73,8 @@ struct CustomerManagementView: View {
                 activeSearchFilter: $activeSearchFilter,
                 selectedCustomer: $selectedCustomer,
                 isDeleting: $isDeleting,
-                selectedCustomers: $selectedCustomers
+                selectedCustomers: $selectedCustomers,
+                onCustomerOpenRequested: onCustomerOpenRequested
             )
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)

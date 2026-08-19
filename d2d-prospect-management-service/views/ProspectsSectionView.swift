@@ -42,6 +42,7 @@ struct ProspectsSectionView: View {
     
     @Binding var isDeleting: Bool
     @Binding var selectedProspects: Set<Prospect>
+    var onProspectOpenRequested: (Prospect) -> Bool = { _ in false }
 
     var body: some View {
         let tableAreaHeight = max(containerHeight, rowHeight * 2)
@@ -80,6 +81,10 @@ struct ProspectsSectionView: View {
                                 // ✅ Haptics & Sound when opening a prospect/customer
                                 ContactScreenHapticsController.shared.lightTap()
                                 ContactScreenSoundController.shared.playSound1()
+
+                                if onProspectOpenRequested(p) {
+                                    return
+                                }
                                 
                                 selectedProspect = p
                             }

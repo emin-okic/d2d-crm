@@ -72,6 +72,21 @@ struct ContactManagementView: View {
     
     @State private var showDuplicateToast = false
     @State private var duplicateNames: [String] = []
+
+    @AppStorage("hasCompletedInitialPropertyTutorial") private var hasCompletedInitialPropertyTutorial = false
+    @AppStorage("hasCompletedContactScreenTutorial") private var hasCompletedContactScreenTutorial = false
+    @State private var isContactTutorialVisible = false
+    @State private var contactTutorialStep: ContactScreenTutorialStep = .search
+    @State private var showContactTutorialReward = false
+    @State private var shouldResumeContactTutorialAfterDetails = false
+
+    private var shouldStartContactTutorial: Bool {
+        hasCompletedInitialPropertyTutorial &&
+        !hasCompletedContactScreenTutorial &&
+        !showingImportFromContacts &&
+        activeSheet == nil &&
+        !showingAddCustomer
+    }
     
     var body: some View {
         
@@ -100,66 +115,11 @@ struct ContactManagementView: View {
                 
             }
             .navigationTitle("")
-            .overlay(
-                GeometryReader { geo in
-                    ExportCSVButton(isUnlocked: emailGate.isUnlocked) {
-                        
-                        if emailGate.isUnlocked {
-                            
-                            ContactScreenHapticsController.shared.successConfirmationTap()
-                            ContactScreenSoundController.shared.playSound1()
-                            
-                            performExport()
-                            
-                        } else {
-                            
-                            ContactScreenHapticsController.shared.successConfirmationTap()
-                            ContactScreenSoundController.shared.playSound1()
-                            
-                            activeSheet = .emailGate
-                            
-                        }
-                    }
-                    .position(
-                        x: geo.size.width - 45, // 20 trailing + 25 half width
-                        y: geo.size.height - 55 // 30 bottom + 25 half height
-                    )
-                    .zIndex(999)
-                }
-            )
-            .overlay(
-                ImportOverlayView(
-                    showingImportFromContacts: $showingImportFromContacts,
-                    showImportSuccess: $showImportSuccess,
-                    selectedList: $selectedList,
-                    searchText: $searchText,
-                    prospects: prospects,
-                    customers: customers,
-                    modelContext: modelContext,
-                    onSave: onSave,
-                    onOpenDuplicateProspect: { prospect in
-                        selectedProspect = prospect
-                    },
-                    onOpenDuplicateCustomer: { customer in
-                        selectedCustomer = customer
-                    },
-                    onAddManually: {
-                        activeSheet = .addProspect
-                    },
-                    showDuplicateToast: $showDuplicateToast,
-                    duplicateNames: $duplicateNames
-                )
-            )
-            .overlay(
-                Group {
-                    if showImportSuccess {
-                        ToastMessageView(message: "Contacts imported successfully!")
-                    } else if showDuplicateToast {
-                        let message = duplicateNames.joined(separator: ", ") + " already exist."
-                        ToastMessageView(message: message)
-                    }
-                }
-            )
+            .overlay(exportOverlay)
+            .overlay(importOverlay)
+            .overlay(toastOverlay)
+            .overlay(tutorialRewardOverlay)
+            .overlay(tutorialOverlay)
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
                 case .export(let file):
@@ -217,9 +177,100 @@ struct ContactManagementView: View {
                     }
                 }
             }
+            .onChange(of: hasCompletedInitialPropertyTutorial) { _, completed in
+                guard completed else { return }
+                startContactTutorialIfNeeded()
+            }
+            .onChange(of: selectedProspect) { _, prospect in
+                handleContactDetailsSelectionChanged(isPresented: prospect != nil)
+            }
+            .onChange(of: selectedCustomer) { _, customer in
+                handleContactDetailsSelectionChanged(isPresented: customer != nil)
+            }
+            .onAppear {
+                startContactTutorialIfNeeded()
+            }
         }
     }
     
+    @ViewBuilder
+    private var exportOverlay: some View {
+        GeometryReader { geo in
+            ExportCSVButton(isUnlocked: emailGate.isUnlocked) {
+                if emailGate.isUnlocked {
+                    ContactScreenHapticsController.shared.successConfirmationTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    performExport()
+                } else {
+                    ContactScreenHapticsController.shared.successConfirmationTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    activeSheet = .emailGate
+                }
+            }
+            .position(
+                x: geo.size.width - 45,
+                y: geo.size.height - 55
+            )
+            .zIndex(999)
+        }
+    }
+
+    private var importOverlay: some View {
+        ImportOverlayView(
+            showingImportFromContacts: $showingImportFromContacts,
+            showImportSuccess: $showImportSuccess,
+            selectedList: $selectedList,
+            searchText: $searchText,
+            prospects: prospects,
+            customers: customers,
+            modelContext: modelContext,
+            onSave: onSave,
+            onOpenDuplicateProspect: { prospect in
+                selectedProspect = prospect
+            },
+            onOpenDuplicateCustomer: { customer in
+                selectedCustomer = customer
+            },
+            onAddManually: {
+                activeSheet = .addProspect
+            },
+            showDuplicateToast: $showDuplicateToast,
+            duplicateNames: $duplicateNames
+        )
+    }
+
+    @ViewBuilder
+    private var toastOverlay: some View {
+        if showImportSuccess {
+            ToastMessageView(message: "Contacts imported successfully!")
+        } else if showDuplicateToast {
+            let message = duplicateNames.joined(separator: ", ") + " already exist."
+            ToastMessageView(message: message)
+        }
+    }
+
+    @ViewBuilder
+    private var tutorialRewardOverlay: some View {
+        if showContactTutorialReward {
+            ConfettiBurstView()
+                .zIndex(4600)
+        }
+    }
+
+    @ViewBuilder
+    private var tutorialOverlay: some View {
+        if isContactTutorialVisible {
+            ContactScreenTutorialOverlayView(
+                step: contactTutorialStep,
+                onPrevious: previousContactTutorialStep,
+                onNext: nextContactTutorialStep,
+                onSkip: finishContactTutorial
+            )
+            .transition(.opacity)
+            .zIndex(4500)
+        }
+    }
+
     private func performExport() {
         do {
             let url: URL
@@ -248,7 +299,8 @@ struct ContactManagementView: View {
                 isSearchFocused: $isSearchFocused,
                 isDeleting: $isDeletingContacts,
                 selectedProspects: $selectedProspects,
-                onClearSearchFilter: clearSearchFilter
+                onClearSearchFilter: clearSearchFilter,
+                onProspectOpenRequested: handleTutorialProspectOpenRequested
             )
         } else {
             CustomerManagementView(
@@ -262,7 +314,8 @@ struct ContactManagementView: View {
                 isSearchFocused: $isSearchFocused,
                 isDeleting: $isDeletingContacts,
                 selectedCustomers: $selectedCustomers,
-                onClearSearchFilter: clearSearchFilter
+                onClearSearchFilter: clearSearchFilter,
+                onCustomerOpenRequested: handleTutorialCustomerOpenRequested
             )
         }
     }
@@ -270,6 +323,122 @@ struct ContactManagementView: View {
     private func clearSearchFilter() {
         searchText = ""
         activeSearchFilter = nil
+    }
+
+    private func startContactTutorialIfNeeded() {
+        guard shouldStartContactTutorial else { return }
+        guard !isContactTutorialVisible else { return }
+
+        contactTutorialStep = .search
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+            guard shouldStartContactTutorial else { return }
+            withAnimation(.easeOut(duration: 0.26)) {
+                isContactTutorialVisible = true
+            }
+        }
+    }
+
+    private func previousContactTutorialStep() {
+        guard let previous = ContactScreenTutorialStep(rawValue: contactTutorialStep.rawValue - 1) else { return }
+
+        ContactScreenHapticsController.shared.lightTap()
+        ContactScreenSoundController.shared.playSound1()
+
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
+            contactTutorialStep = previous
+        }
+    }
+
+    private func nextContactTutorialStep() {
+        ContactScreenHapticsController.shared.lightTap()
+        ContactScreenSoundController.shared.playSound1()
+
+        guard let next = ContactScreenTutorialStep(rawValue: contactTutorialStep.rawValue + 1) else {
+            finishContactTutorial()
+            return
+        }
+
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.84)) {
+            contactTutorialStep = next
+        }
+    }
+
+    private func handleTutorialProspectOpenRequested(_ prospect: Prospect) -> Bool {
+        guard beginTutorialContactDetailsReward() else { return false }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.58) {
+            selectedProspect = prospect
+        }
+
+        return true
+    }
+
+    private func handleTutorialCustomerOpenRequested(_ customer: Customer) -> Bool {
+        guard beginTutorialContactDetailsReward() else { return false }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.58) {
+            selectedCustomer = customer
+        }
+
+        return true
+    }
+
+    private func beginTutorialContactDetailsReward() -> Bool {
+        guard isContactTutorialVisible && contactTutorialStep == .contacts else { return false }
+
+        shouldResumeContactTutorialAfterDetails = true
+        ContactScreenHapticsController.shared.successConfirmationTap()
+        ContactScreenSoundController.shared.playSound1()
+
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.84)) {
+            showContactTutorialReward = true
+            isContactTutorialVisible = false
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            withAnimation(.easeOut(duration: 0.18)) {
+                showContactTutorialReward = false
+            }
+        }
+
+        return true
+    }
+
+    private func handleContactDetailsSelectionChanged(isPresented: Bool) {
+        guard !isPresented else { return }
+        guard shouldResumeContactTutorialAfterDetails else { return }
+
+        shouldResumeContactTutorialAfterDetails = false
+        contactTutorialStep = .add
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+            guard !hasCompletedContactScreenTutorial else { return }
+            guard !showingImportFromContacts && activeSheet == nil && !showingAddCustomer else { return }
+
+            withAnimation(.easeOut(duration: 0.24)) {
+                isContactTutorialVisible = true
+            }
+        }
+    }
+
+    private func finishContactTutorial() {
+        guard !hasCompletedContactScreenTutorial else { return }
+
+        ContactScreenHapticsController.shared.successConfirmationTap()
+        ContactScreenSoundController.shared.playSound1()
+
+        withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
+            showContactTutorialReward = true
+            isContactTutorialVisible = false
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation(.easeOut(duration: 0.2)) {
+                showContactTutorialReward = false
+            }
+        }
+
+        hasCompletedContactScreenTutorial = true
     }
     
     private func deleteSelectedContacts() {
