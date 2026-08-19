@@ -97,10 +97,12 @@ struct DemographicsEditorView: View {
             header
                 .padding(.horizontal)
                 .padding(.top, 12)
-                .padding(.bottom, 8)
+                .padding(.bottom, 14)
 
-            DotStepBar(total: totalSteps, index: stepIndex)
-                .padding(.bottom, 12)
+            demographicsStepNavigation
+                .padding(.horizontal)
+                .padding(.top, 2)
+                .padding(.bottom, 16)
 
             Divider()
 
@@ -142,7 +144,7 @@ struct DemographicsEditorView: View {
 
     private var header: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(title)
                     .font(.title3)
                     .fontWeight(.semibold)
@@ -161,6 +163,63 @@ struct DemographicsEditorView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+
+    private var demographicsStepNavigation: some View {
+        GeometryReader { proxy in
+            let stepCount = Self.stepLabels.count
+            let cellWidth = proxy.size.width / CGFloat(stepCount)
+            let railStart = cellWidth / 2
+            let railWidth = max(proxy.size.width - cellWidth, 0)
+            let progress = CGFloat(stepIndex) / CGFloat(max(stepCount - 1, 1))
+
+            ZStack(alignment: .topLeading) {
+                Capsule()
+                    .fill(Color.secondary.opacity(0.22))
+                    .frame(width: railWidth, height: 4)
+                    .offset(x: railStart, y: 4)
+
+                Capsule()
+                    .fill(Color.accentColor)
+                    .frame(width: railWidth * progress, height: 4)
+                    .offset(x: railStart, y: 4)
+                    .animation(.spring(response: 0.35, dampingFraction: 0.82), value: stepIndex)
+
+                HStack(alignment: .top, spacing: 0) {
+                    ForEach(Array(Self.stepLabels.enumerated()), id: \.offset) { index, label in
+                        Button {
+                            jumpToStep(index)
+                        } label: {
+                            VStack(spacing: 8) {
+                                Circle()
+                                    .fill(index <= stepIndex ? Color.accentColor : Color(.systemBackground))
+                                    .frame(width: 12, height: 12)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(index <= stepIndex ? Color.accentColor : Color.secondary.opacity(0.35), lineWidth: 2)
+                                    )
+                                    .scaleEffect(index == stepIndex ? 1.2 : 1.0)
+                                    .shadow(color: index == stepIndex ? Color.accentColor.opacity(0.28) : .clear, radius: 6, y: 2)
+
+                                Text(label)
+                                    .font(.caption2.weight(index == stepIndex ? .semibold : .medium))
+                                    .foregroundStyle(index == stepIndex ? .primary : .secondary)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.78)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Go to \(label) demographics")
+                        .accessibilityAddTraits(index == stepIndex ? [.isSelected] : [])
+                    }
+                }
+            }
+        }
+        .frame(height: 42)
+        .animation(.spring(response: 0.25, dampingFraction: 0.82), value: stepIndex)
+        .accessibilityElement(children: .contain)
     }
 
     @ViewBuilder
@@ -661,6 +720,18 @@ struct DemographicsEditorView: View {
         }
     }
 
+    private func jumpToStep(_ index: Int) {
+        guard index != stepIndex else { return }
+
+        ContactScreenHapticsController.shared.lightTap()
+        ContactScreenSoundController.shared.playSound1()
+        closeExpandedContent()
+
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) {
+            stepIndex = index
+        }
+    }
+
     private func markCompleted(_ field: CompanyField, value: String, force: Bool = false) {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
@@ -852,6 +923,8 @@ private extension String {
 }
 
 private extension DemographicsEditorView {
+    static let stepLabels = ["Identity", "Household", "Company"]
+
     static let commonCompanySuggestions: [LogoDevCompanySuggestion] = [
         companySuggestion("Apple", "apple.com"),
         companySuggestion("Amazon", "amazon.com"),
