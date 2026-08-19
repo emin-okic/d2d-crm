@@ -34,6 +34,7 @@ struct CustomerManagementView: View {
     @Binding var isDeleting: Bool
     @Binding var selectedCustomers: Set<Customer>
     var onClearSearchFilter: () -> Void
+    var onContactAdded: () -> Void = {}
 
     private var filteredCustomerCount: Int {
         guard let filter = activeSearchFilter, !filter.isEmpty else { return customers.count }
@@ -86,6 +87,7 @@ struct CustomerManagementView: View {
                 onClearSearchFilter()
                 showingAddCustomer = false
                 onSave()
+                onContactAdded()
             } onCancel: {
                 showingAddCustomer = false
             }

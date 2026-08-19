@@ -26,6 +26,8 @@ struct ImportOverlayView: View {
     let onOpenDuplicateCustomer: (Customer) -> Void
     
     let onAddManually: () -> Void
+    let isTutorialActive: Bool
+    let onTutorialContactAdded: () -> Void
 
     @State private var showContactsPicker = false
     
@@ -50,6 +52,8 @@ struct ImportOverlayView: View {
         onOpenDuplicateProspect: @escaping (Prospect) -> Void,
         onOpenDuplicateCustomer: @escaping (Customer) -> Void,
         onAddManually: @escaping () -> Void,
+        isTutorialActive: Bool = false,
+        onTutorialContactAdded: @escaping () -> Void = {},
         showDuplicateToast: Binding<Bool>,
         duplicateNames: Binding<[String]>
     ) {
@@ -64,6 +68,8 @@ struct ImportOverlayView: View {
         self.onOpenDuplicateProspect = onOpenDuplicateProspect
         self.onOpenDuplicateCustomer = onOpenDuplicateCustomer
         self.onAddManually = onAddManually
+        self.isTutorialActive = isTutorialActive
+        self.onTutorialContactAdded = onTutorialContactAdded
 
         // ✅ Initialize StateObject here
         _importManager = StateObject(wrappedValue: ContactImportManager(
@@ -98,6 +104,11 @@ struct ImportOverlayView: View {
                             .multilineTextAlignment(.center)
                     }
 
+                    if isTutorialActive {
+                        InitialContactAddOptionsTutorialBanner()
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+
                     VStack(spacing: 12) {
                         
                         actionButton(
@@ -120,7 +131,7 @@ struct ImportOverlayView: View {
                         
                         actionButton(
                             title: "Scan Business Card",
-                            subtitle: "Use your camera to add a prospect",
+                            subtitle: "Scan a card with camera",
                             systemImage: "camera.viewfinder"
                         ) {
                             showBusinessCardScanner = true
@@ -141,7 +152,7 @@ struct ImportOverlayView: View {
                     Spacer()
                 }
                 .padding()
-                .frame(maxWidth: 340, maxHeight: 400)
+                .frame(maxWidth: 340, maxHeight: isTutorialActive ? 540 : 400)
                 .background(.ultraThinMaterial)
                 .cornerRadius(16)
                 .shadow(radius: 8)
@@ -392,6 +403,7 @@ struct ImportOverlayView: View {
             modelContext.insert(prospect)
             try? modelContext.save()
             onSave()
+            onTutorialContactAdded()
         }
     }
 
@@ -433,6 +445,7 @@ struct ImportOverlayView: View {
 
         if didAdd {
             showImportSuccess = true
+            onTutorialContactAdded()
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 showImportSuccess = false
             }
@@ -468,13 +481,18 @@ struct ImportOverlayView: View {
                     .frame(width: 36)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.headline)
+                    Text(title)
+                        .font(.headline)
+                        .lineLimit(1)
+
                     Text(subtitle)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                Spacer()
                 Image(systemName: "chevron.right")
                     .foregroundStyle(.secondary)
             }

@@ -72,6 +72,26 @@ struct ContactManagementView: View {
     
     @State private var showDuplicateToast = false
     @State private var duplicateNames: [String] = []
+
+    @AppStorage("hasCompletedInitialPropertyTutorial") private var hasCompletedInitialPropertyTutorial = false
+    @AppStorage("hasCompletedInitialContactTutorial") private var hasCompletedInitialContactTutorial = false
+    @State private var isInitialContactTutorialVisible = false
+    @State private var initialContactTutorialStep: InitialContactTutorialStep = .tapAdd
+    @State private var showContactTutorialConfetti = false
+
+    private var shouldStartInitialContactTutorial: Bool {
+        hasCompletedInitialPropertyTutorial &&
+        !hasCompletedInitialContactTutorial &&
+        selectedList == "Prospects"
+    }
+
+    private var shouldShowInitialContactTutorialOverlay: Bool {
+        isInitialContactTutorialVisible &&
+        !hasCompletedInitialContactTutorial &&
+        !showingImportFromContacts &&
+        activeSheet == nil &&
+        !showingAddCustomer
+    }
     
     var body: some View {
         
@@ -83,6 +103,8 @@ struct ContactManagementView: View {
                 // Toolbar
                 ContactsToolbarView(
                     onAddTapped: {
+                        advanceInitialContactTutorialToOptionsIfNeeded()
+
                         if selectedList == "Prospects" {
                             withAnimation(.spring()) {
                                 showingImportFromContacts = true
@@ -146,6 +168,8 @@ struct ContactManagementView: View {
                     onAddManually: {
                         activeSheet = .addProspect
                     },
+                    isTutorialActive: isInitialContactTutorialVisible && initialContactTutorialStep == .chooseMethod,
+                    onTutorialContactAdded: completeInitialContactTutorial,
                     showDuplicateToast: $showDuplicateToast,
                     duplicateNames: $duplicateNames
                 )
@@ -157,6 +181,24 @@ struct ContactManagementView: View {
                     } else if showDuplicateToast {
                         let message = duplicateNames.joined(separator: ", ") + " already exist."
                         ToastMessageView(message: message)
+                    }
+                }
+            )
+            .overlay(
+                Group {
+                    if showContactTutorialConfetti {
+                        ConfettiBurstView()
+                            .zIndex(4500)
+                    }
+                }
+            )
+            .overlay(
+                Group {
+                    if shouldShowInitialContactTutorialOverlay {
+                        InitialContactTutorialOverlayView(step: initialContactTutorialStep)
+                            .allowsHitTesting(false)
+                            .transition(.opacity)
+                            .zIndex(4400)
                     }
                 }
             )
@@ -181,6 +223,7 @@ struct ContactManagementView: View {
                         clearSearchFilter()
                         activeSheet = nil
                         onSave()
+                        completeInitialContactTutorial()
                     } onCancel: {
                         activeSheet = nil
                     }
@@ -215,7 +258,15 @@ struct ContactManagementView: View {
                             existingProspects: prospects
                         )
                     }
+                    startInitialContactTutorialIfNeeded()
                 }
+            }
+            .onChange(of: hasCompletedInitialPropertyTutorial) { _, completed in
+                guard completed else { return }
+                startInitialContactTutorialIfNeeded()
+            }
+            .onAppear {
+                startInitialContactTutorialIfNeeded()
             }
         }
     }
@@ -262,7 +313,8 @@ struct ContactManagementView: View {
                 isSearchFocused: $isSearchFocused,
                 isDeleting: $isDeletingContacts,
                 selectedCustomers: $selectedCustomers,
-                onClearSearchFilter: clearSearchFilter
+                onClearSearchFilter: clearSearchFilter,
+                onContactAdded: completeInitialContactTutorial
             )
         }
     }
@@ -270,6 +322,53 @@ struct ContactManagementView: View {
     private func clearSearchFilter() {
         searchText = ""
         activeSearchFilter = nil
+    }
+
+    private func startInitialContactTutorialIfNeeded() {
+        guard shouldStartInitialContactTutorial else { return }
+        guard !isInitialContactTutorialVisible else { return }
+
+        initialContactTutorialStep = .tapAdd
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
+            guard shouldStartInitialContactTutorial else { return }
+            withAnimation(.easeOut(duration: 0.28)) {
+                isInitialContactTutorialVisible = true
+            }
+        }
+    }
+
+    private func advanceInitialContactTutorialToOptionsIfNeeded() {
+        guard isInitialContactTutorialVisible else { return }
+        guard initialContactTutorialStep == .tapAdd else { return }
+
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
+            initialContactTutorialStep = .chooseMethod
+        }
+    }
+
+    private func completeInitialContactTutorial() {
+        guard isInitialContactTutorialVisible else { return }
+
+        ContactScreenHapticsController.shared.successConfirmationTap()
+        ContactScreenSoundController.shared.playSound1()
+
+        withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
+            initialContactTutorialStep = .completed
+            showContactTutorialConfetti = true
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
+            withAnimation(.easeOut(duration: 0.2)) {
+                showContactTutorialConfetti = false
+            }
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
+            hasCompletedInitialContactTutorial = true
+            withAnimation(.easeOut(duration: 0.24)) {
+                isInitialContactTutorialVisible = false
+            }
+        }
     }
     
     private func deleteSelectedContacts() {
