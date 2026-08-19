@@ -51,6 +51,7 @@ struct DemographicsEditorView: View {
     @State private var completedCompanyFields: Set<CompanyField> = []
     @State private var isApplyingCompanySuggestion = false
     @State private var selectedCompanyName: String
+    @State private var selectedCompanyDomain: String
     @StateObject private var companySuggestionService = LogoDevCompanySuggestionService()
 
     private let totalSteps = 3
@@ -88,6 +89,7 @@ struct DemographicsEditorView: View {
         _companyPrimaryColorHex = State(initialValue: initialData.companyPrimaryColorHex)
         _companySecondaryColorHex = State(initialValue: initialData.companySecondaryColorHex)
         _selectedCompanyName = State(initialValue: initialData.companyLogoURL.isEmpty ? "" : initialData.companyName)
+        _selectedCompanyDomain = State(initialValue: initialData.companyLogoURL.isEmpty ? "" : initialData.companyDomain)
     }
 
     var body: some View {
@@ -187,8 +189,8 @@ struct DemographicsEditorView: View {
     }
 
     private var companyBrandHeader: some View {
-        VStack(spacing: 10) {
-            if let logoURL = URL(string: companyLogoURL), !companyLogoURL.isEmpty {
+        Group {
+            if shouldShowCompanyLogo, let logoURL = URL(string: companyLogoURL) {
                 AsyncImage(url: logoURL) { phase in
                     switch phase {
                     case .success(let image):
@@ -206,15 +208,7 @@ struct DemographicsEditorView: View {
                 .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .shadow(color: brandPrimaryColor.opacity(0.18), radius: 10, y: 5)
                 .transition(.scale.combined(with: .opacity))
-            } else {
-                Image(systemName: "building.2.crop.circle")
-                    .font(.system(size: 48, weight: .semibold))
-                    .foregroundStyle(brandPrimaryColor)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
-            }
-
-            if !companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            } else if !companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 Text(companyName)
                     .font(.headline)
                     .multilineTextAlignment(.center)
@@ -247,40 +241,41 @@ struct DemographicsEditorView: View {
     private var companySuggestions: some View {
         let trimmedCompany = companyName.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if companySuggestionService.isLoading {
+        if companySuggestionService.isLoading && companySuggestionsToShow.isEmpty {
             Label("Looking up companies", systemImage: "sparkle.magnifyingglass")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .transition(.opacity)
-        } else if !companySuggestionService.suggestions.isEmpty {
-            VStack(spacing: 8) {
-                ForEach(companySuggestionService.suggestions) { suggestion in
-                    Button {
-                        applyCompanySuggestion(suggestion)
-                    } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: "building.2")
-                                .foregroundStyle(brandPrimaryColor)
-                            .frame(width: 28, height: 28)
-
+        } else if !companySuggestionsToShow.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(companySuggestionsToShow) { suggestion in
+                        Button {
+                            applyCompanySuggestion(suggestion)
+                        } label: {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(suggestion.name)
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(.primary)
-                                Text(suggestion.domain)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(brandPrimaryColor)
+                                    .lineLimit(1)
 
-                            Spacer()
+                                Text(suggestion.domain)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(brandPrimaryColor.opacity(0.12), in: Capsule())
                         }
-                        .padding(10)
-                        .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 10))
+                        .buttonStyle(.plain)
+                        .transition(.scale(scale: 0.88).combined(with: .opacity))
                     }
-                    .buttonStyle(.plain)
                 }
+                .padding(.vertical, 2)
             }
-            .transition(.move(edge: .top).combined(with: .opacity))
+            .transition(.opacity)
+            .animation(.spring(response: 0.24, dampingFraction: 0.78), value: companySuggestionsToShow)
         } else if let message = companySuggestionService.statusMessage, trimmedCompany.count >= 2 {
             Text(message)
                 .font(.caption)
@@ -288,6 +283,53 @@ struct DemographicsEditorView: View {
                 .padding(.vertical, 2)
                 .transition(.opacity)
         }
+    }
+
+    private var companySuggestionsToShow: [LogoDevCompanySuggestion] {
+        guard !isResolvedCompanyInput else { return [] }
+
+        let remoteSuggestions = remoteCompanySuggestions
+        if !remoteSuggestions.isEmpty {
+            return Array(remoteSuggestions.prefix(6))
+        }
+
+        return Array(localCompanySuggestions.prefix(6))
+    }
+
+    private var remoteCompanySuggestions: [LogoDevCompanySuggestion] {
+        let query = companyName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard query.count >= 2 else { return [] }
+
+        return companySuggestionService.suggestions.filter { suggestion in
+            suggestion.name.localizedCaseInsensitiveContains(query) ||
+                suggestion.domain.localizedCaseInsensitiveContains(query)
+        }
+    }
+
+    private var localCompanySuggestions: [LogoDevCompanySuggestion] {
+        let query = companyName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard query.count >= 2 else { return [] }
+
+        return Self.commonCompanySuggestions.filter { suggestion in
+            suggestion.name.localizedCaseInsensitiveContains(query) ||
+                suggestion.domain.localizedCaseInsensitiveContains(query)
+        }
+    }
+
+    private var shouldShowCompanyLogo: Bool {
+        let normalizedCompany = companyName.normalizedCompanyName
+        guard !companyLogoURL.isEmpty, !selectedCompanyName.isEmpty else { return false }
+
+        return normalizedCompany == selectedCompanyName.normalizedCompanyName ||
+            normalizedCompany == selectedCompanyDomain.normalizedCompanyName
+    }
+
+    private var isResolvedCompanyInput: Bool {
+        let normalizedCompany = companyName.normalizedCompanyName
+        guard !normalizedCompany.isEmpty, !selectedCompanyName.isEmpty else { return false }
+
+        return normalizedCompany == selectedCompanyName.normalizedCompanyName ||
+            normalizedCompany == selectedCompanyDomain.normalizedCompanyName
     }
 
     private var jobTitleField: some View {
@@ -471,11 +513,13 @@ struct DemographicsEditorView: View {
     }
 
     private var brandPrimaryColor: Color {
-        Color(hex: companyPrimaryColorHex) ?? deterministicBrandColor
+        guard shouldShowCompanyLogo else { return .blue }
+        return Color(hex: companyPrimaryColorHex) ?? deterministicBrandColor
     }
 
     private var brandSecondaryColor: Color {
-        Color(hex: companySecondaryColorHex) ?? brandPrimaryColor.opacity(0.18)
+        guard shouldShowCompanyLogo else { return Color.blue.opacity(0.18) }
+        return Color(hex: companySecondaryColorHex) ?? brandPrimaryColor.opacity(0.18)
     }
 
     @ViewBuilder
@@ -544,6 +588,7 @@ struct DemographicsEditorView: View {
         companyLookupTask?.cancel()
         withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
             selectedCompanyName = suggestion.name
+            selectedCompanyDomain = suggestion.domain
             companyName = suggestion.name
             companyDomain = suggestion.domain
             companyLogoURL = suggestion.logoURL
@@ -566,6 +611,11 @@ struct DemographicsEditorView: View {
             return
         }
 
+        if let exactSuggestion = exactCompanySuggestion(for: query, in: companySuggestionsToShow) {
+            applyCompanySuggestion(exactSuggestion)
+            return
+        }
+
         if stepIndex == 2 {
             onExpandedContentChange(true)
         }
@@ -574,16 +624,34 @@ struct DemographicsEditorView: View {
             try? await Task.sleep(nanoseconds: 350_000_000)
             guard !Task.isCancelled else { return }
             await companySuggestionService.searchCompanies(matching: query)
+            guard !Task.isCancelled else { return }
+
+            if let exactSuggestion = exactCompanySuggestion(for: query, in: companySuggestionService.suggestions) {
+                applyCompanySuggestion(exactSuggestion)
+            }
         }
     }
 
     private func clearCompanyMetadataIfNeeded(for value: String) {
         guard !isApplyingCompanySuggestion else { return }
         selectedCompanyName = ""
+        selectedCompanyDomain = ""
         companyDomain = ""
         companyLogoURL = ""
         companyPrimaryColorHex = ""
         companySecondaryColorHex = ""
+    }
+
+    private func exactCompanySuggestion(
+        for query: String,
+        in suggestions: [LogoDevCompanySuggestion]
+    ) -> LogoDevCompanySuggestion? {
+        let normalizedQuery = query.normalizedCompanyName
+
+        return suggestions.first { suggestion in
+            suggestion.name.normalizedCompanyName == normalizedQuery ||
+                suggestion.domain.normalizedCompanyName == normalizedQuery
+        }
     }
 
     private func closeExpandedContent() {
@@ -702,6 +770,7 @@ private final class LogoDevCompanySuggestionService: ObservableObject {
 
     func clearSuggestions() {
         suggestions = []
+        isLoading = false
         statusMessage = nil
     }
 
@@ -710,6 +779,12 @@ private final class LogoDevCompanySuggestionService: ObservableObject {
         guard !trimmed.isEmpty else { return "" }
         let encodedName = trimmed.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? trimmed
         return "https://img.logo.dev/name/\(encodedName)?token=\(publishableKey)&size=160&retina=true"
+    }
+
+    static func logoURL(forDomain domain: String) -> String {
+        let trimmed = domain.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "" }
+        return "https://img.logo.dev/\(trimmed)?token=\(publishableKey)&size=160&retina=true"
     }
 
     private func makeSearchRequest(query: String) -> URLRequest? {
@@ -760,7 +835,91 @@ private extension Color {
     }
 }
 
+private extension String {
+    var normalizedCompanyName: String {
+        lowercased()
+            .replacingOccurrences(of: "https://", with: "")
+            .replacingOccurrences(of: "http://", with: "")
+            .replacingOccurrences(of: "www.", with: "")
+            .replacingOccurrences(of: ".com", with: "")
+            .replacingOccurrences(of: ".org", with: "")
+            .replacingOccurrences(of: ".net", with: "")
+            .replacingOccurrences(of: "&", with: "and")
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+            .joined()
+    }
+}
+
 private extension DemographicsEditorView {
+    static let commonCompanySuggestions: [LogoDevCompanySuggestion] = [
+        companySuggestion("Apple", "apple.com"),
+        companySuggestion("Amazon", "amazon.com"),
+        companySuggestion("Google", "google.com"),
+        companySuggestion("Microsoft", "microsoft.com"),
+        companySuggestion("Meta", "meta.com"),
+        companySuggestion("Walmart", "walmart.com"),
+        companySuggestion("Target", "target.com"),
+        companySuggestion("Costco", "costco.com"),
+        companySuggestion("Home Depot", "homedepot.com"),
+        companySuggestion("Lowe's", "lowes.com"),
+        companySuggestion("Starbucks", "starbucks.com"),
+        companySuggestion("McDonald's", "mcdonalds.com"),
+        companySuggestion("Chick-fil-A", "chick-fil-a.com"),
+        companySuggestion("Nike", "nike.com"),
+        companySuggestion("FedEx", "fedex.com"),
+        companySuggestion("UPS", "ups.com"),
+        companySuggestion("Coca-Cola", "coca-cola.com"),
+        companySuggestion("PepsiCo", "pepsico.com"),
+        companySuggestion("Ford", "ford.com"),
+        companySuggestion("General Motors", "gm.com"),
+        companySuggestion("Tesla", "tesla.com"),
+        companySuggestion("JPMorgan Chase", "jpmorganchase.com"),
+        companySuggestion("Bank of America", "bankofamerica.com"),
+        companySuggestion("Wells Fargo", "wellsfargo.com"),
+        companySuggestion("State Farm", "statefarm.com"),
+        companySuggestion("Allstate", "allstate.com"),
+        companySuggestion("UnitedHealth Group", "unitedhealthgroup.com"),
+        companySuggestion("CVS Health", "cvshealth.com"),
+        companySuggestion("Walgreens", "walgreens.com"),
+        companySuggestion("Kroger", "kroger.com"),
+        companySuggestion("Verizon", "verizon.com"),
+        companySuggestion("AT&T", "att.com"),
+        companySuggestion("T-Mobile", "t-mobile.com"),
+        companySuggestion("Comcast", "comcast.com"),
+        companySuggestion("Spectrum", "spectrum.com"),
+        companySuggestion("Salesforce", "salesforce.com"),
+        companySuggestion("Oracle", "oracle.com"),
+        companySuggestion("Adobe", "adobe.com"),
+        companySuggestion("Intuit", "intuit.com"),
+        companySuggestion("PayPal", "paypal.com"),
+        companySuggestion("Uber", "uber.com"),
+        companySuggestion("Lyft", "lyft.com"),
+        companySuggestion("DoorDash", "doordash.com"),
+        companySuggestion("Airbnb", "airbnb.com"),
+        companySuggestion("Netflix", "netflix.com"),
+        companySuggestion("Disney", "disney.com"),
+        companySuggestion("Marriott", "marriott.com"),
+        companySuggestion("Hilton", "hilton.com"),
+        companySuggestion("Delta Air Lines", "delta.com"),
+        companySuggestion("American Airlines", "aa.com"),
+        companySuggestion("Southwest Airlines", "southwest.com"),
+        companySuggestion("Deloitte", "deloitte.com"),
+        companySuggestion("PwC", "pwc.com"),
+        companySuggestion("KPMG", "kpmg.com"),
+        companySuggestion("EY", "ey.com")
+    ]
+
+    static func companySuggestion(_ name: String, _ domain: String) -> LogoDevCompanySuggestion {
+        LogoDevCompanySuggestion(
+            name: name,
+            domain: domain,
+            logoURL: LogoDevCompanySuggestionService.logoURL(forDomain: domain),
+            primaryColorHex: nil,
+            secondaryColorHex: nil
+        )
+    }
+
     static let commonIndustries = [
         "Accounting", "Advertising", "Aerospace", "Agriculture", "Architecture", "Automotive",
         "Banking", "Biotechnology", "Construction", "Consulting", "Consumer Goods", "Education",
