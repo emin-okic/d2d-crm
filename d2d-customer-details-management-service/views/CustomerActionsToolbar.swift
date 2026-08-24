@@ -13,6 +13,7 @@ struct CustomerActionsToolbar: View {
     @StateObject private var controller: CustomerActionsController
     
     @State private var showEmailSheet = false
+    @State private var showManualKnockSheet = false
     
     private var phoneCallController: PhoneCallController {
         PhoneCallController(modelContext: controller.modelContext)
@@ -51,13 +52,10 @@ struct CustomerActionsToolbar: View {
                     showEmailSheet = true
                 }
 
-                ContactDetailsActionButton(icon: "person.crop.circle.badge.xmark", title: "Sale Lost", color: .red) {
-                    
-                    // ✅ Haptic + sound
+                ContactDetailsActionButton(icon: "hand.tap.fill", title: "Log Knock", color: .orange) {
                     ContactScreenHapticsController.shared.successConfirmationTap()
                     ContactScreenSoundController.shared.playSound1()
-                    
-                    controller.confirmCustomerLost()
+                    showManualKnockSheet = true
                 }
 
                 Spacer()
@@ -134,6 +132,23 @@ struct CustomerActionsToolbar: View {
             .presentationDragIndicator(.visible)
         }
         
+        .sheet(isPresented: $showManualKnockSheet) {
+            ManualKnockLogSheet(
+                contactName: controller.customer.fullName,
+                contactType: "Customer",
+                outcomes: manualKnockOutcomes,
+                onLog: { result in
+                    controller.logManualKnock(result)
+                    showManualKnockSheet = false
+                },
+                onCancel: {
+                    showManualKnockSheet = false
+                }
+            )
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+        }
+        
         .confirmationDialog(
             "Mark this customer as lost?",
             isPresented: $controller.showCustomerLostConfirmation,
@@ -153,6 +168,14 @@ struct CustomerActionsToolbar: View {
             .environment(\.modelContext, controller.modelContext)
         }
 
+    }
+
+    private var manualKnockOutcomes: [ManualKnockOutcome] {
+        [
+            ManualKnockOutcome(title: "Customer Lost", systemName: "person.crop.circle.badge.xmark", color: .red),
+            ManualKnockOutcome(title: "Wasn't Home", systemName: "house.slash.fill", color: .gray),
+            ManualKnockOutcome(title: "Follow Up Later", systemName: "calendar.badge.clock", color: .orange)
+        ]
     }
     
 }

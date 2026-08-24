@@ -21,6 +21,7 @@ struct ProspectActionsToolbar: View {
     @State private var showCallSheet = false
     
     @State private var showCreateSaleSheet = false
+    @State private var showManualKnockSheet = false
     
     @State private var phoneError: String?
     
@@ -78,16 +79,13 @@ struct ProspectActionsToolbar: View {
 
                 if prospect.list == "Prospects" {
                     ContactDetailsActionButton(
-                        icon: "checkmark.seal.fill",
-                        title: "Convert",
-                        color: .green
+                        icon: "hand.tap.fill",
+                        title: "Log Knock",
+                        color: .orange
                     ) {
-                        
-                        // ✅ Haptic + sound
                         ContactScreenHapticsController.shared.successConfirmationTap()
                         ContactScreenSoundController.shared.playSound1()
-                        
-                        showCreateSaleSheet = true
+                        showManualKnockSheet = true
                     }
                 }
 
@@ -150,6 +148,23 @@ struct ProspectActionsToolbar: View {
             .presentationDragIndicator(.visible)
         }
 
+        .sheet(isPresented: $showManualKnockSheet) {
+            ManualKnockLogSheet(
+                contactName: prospect.fullName,
+                contactType: "Prospect",
+                outcomes: manualKnockOutcomes,
+                onLog: { result in
+                    logManualKnock(result)
+                    showManualKnockSheet = false
+                },
+                onCancel: {
+                    showManualKnockSheet = false
+                }
+            )
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+        }
+
         // Convert to Customer sheet using common stepper form
         .sheet(isPresented: $showCreateSaleSheet) {
             NavigationStack {
@@ -203,6 +218,94 @@ struct ProspectActionsToolbar: View {
         try? modelContext.save()
     }
     
+    private var manualKnockOutcomes: [ManualKnockOutcome] {
+        if prospect.isUnqualified {
+            return [
+                ManualKnockOutcome(title: "Wasn't Home", systemName: "house.slash.fill", color: .gray),
+                ManualKnockOutcome(title: "Requalified", systemName: "arrow.uturn.backward.circle.fill", color: .green)
+            ]
+        }
+
+        return [
+            ManualKnockOutcome(title: "Unqualified", systemName: "xmark.octagon.fill", color: .red),
+            ManualKnockOutcome(title: "Wasn't Home", systemName: "house.slash.fill", color: .gray),
+            ManualKnockOutcome(title: "Follow Up Later", systemName: "calendar.badge.clock", color: .orange),
+            ManualKnockOutcome(title: "Converted To Sale", systemName: "checkmark.seal.fill", color: .green)
+        ]
+    }
+
+    private func logManualKnock(_ result: ManualKnockLogResult) {
+        let location = LocationManager.shared.currentLocation
+        let latitude = location?.latitude ?? 0
+        let longitude = location?.longitude ?? 0
+        let status = result.outcome.title
+
+        if status == "Requalified" {
+            prospect.isUnqualified = false
+            prospect.fullName = prospect.fullName.replacingOccurrences(of: " - Unqualified", with: "")
+        }
+
+        prospect.knockCount += 1
+        prospect.knockHistory.append(
+            Knock(
+                date: result.date,
+                status: status,
+                latitude: latitude,
+                longitude: longitude
+            )
+        )
+
+        if status == "Unqualified" {
+            prospect.isUnqualified = true
+            if !prospect.fullName.contains("Unqualified") {
+                prospect.fullName = "\(prospect.fullName) - Unqualified"
+            }
+        }
+
+        if let followUpDate = result.followUpDate {
+            saveManualFollowUp(date: followUpDate)
+        }
+
+        if !result.note.isEmpty {
+            prospect.notes.append(Note(content: result.note, date: result.date, prospect: prospect))
+        }
+
+        saveManualTripIfNeeded(result)
+        try? modelContext.save()
+
+        if result.completionAction == .convertToSale {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                showCreateSaleSheet = true
+            }
+        }
+    }
+
+    private func saveManualFollowUp(date: Date) {
+        let appointment = Appointment(
+            title: "Follow-Up",
+            location: prospect.address,
+            clientName: prospect.fullName,
+            date: date,
+            type: "Follow-Up",
+            notes: prospect.notes.map { $0.content },
+            prospect: prospect
+        )
+        modelContext.insert(appointment)
+    }
+
+    private func saveManualTripIfNeeded(_ result: ManualKnockLogResult) {
+        let endAddress = result.tripEndAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !endAddress.isEmpty else { return }
+
+        let trip = Trip(
+            startAddress: result.tripStartAddress,
+            endAddress: endAddress,
+            miles: 0,
+            date: result.tripDate
+        )
+        modelContext.insert(trip)
+    }
+
     private func transferProspectData(to customer: Customer) {
         // Deep copy notes, knocks, appointments
         customer.notes = prospect.notes.map {
