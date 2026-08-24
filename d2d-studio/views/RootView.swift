@@ -35,6 +35,7 @@ struct RootView: View {
     
     @State private var selectedTab = 0
     @State private var addressToCenter: String? = nil
+    @State private var mapContactNavigationRequest: MapContactNavigationRequest? = nil
     
     @State private var searchText: String = ""
     @State private var contactSearchDraft: String = ""
@@ -50,7 +51,8 @@ struct RootView: View {
                 contactSearchFilter: $contactSearchFilter,
                 region: $region,
                 selectedList: $selectedList,
-                addressToCenter: $addressToCenter
+                addressToCenter: $addressToCenter,
+                contactNavigationRequest: $mapContactNavigationRequest
             )
             .tabItem {
                 Label("Map", systemImage: "map.fill")
@@ -90,13 +92,18 @@ struct RootView: View {
                 followUpFilter = filter
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .openContactOnMap)) { notification in
+            guard let request = notification.object as? MapContactNavigationRequest else { return }
+            mapContactNavigationRequest = request
+            selectedTab = 0
+        }
         .onChange(of: selectedTab) { _, newValue in
             
             // ✅ Haptics + sound for tab switching
             RootViewHapticsController.shared.lightTap()
             RootViewSoundController.shared.playSound1()
             
-            if newValue == 0 {
+            if newValue == 0 && mapContactNavigationRequest == nil {
                 NotificationCenter.default.post(
                     name: .mapShouldRecenterAllMarkers,
                     object: nil
@@ -114,4 +121,5 @@ extension Notification.Name {
 
 extension Notification.Name {
     static let openFollowUpAssistant = Notification.Name("OpenFollowUpAssistant")
+    static let openContactOnMap = Notification.Name("OpenContactOnMap")
 }

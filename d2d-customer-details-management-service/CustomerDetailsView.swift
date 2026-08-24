@@ -99,14 +99,28 @@ struct CustomerDetailsView: View {
                         searchViewModel: searchViewModel
                     )
                 }
-                
+
                 Section {
-                    DemographicsSummaryRow(summary: customer.demographicsSummary) {
-                        ContactScreenHapticsController.shared.lightTap()
-                        ContactScreenSoundController.shared.playSound1()
-                        showDemographicsSheet = true
+                    HStack(spacing: 10) {
+                        ContactDetailsUtilityWidget(
+                            icon: "person.text.rectangle.fill",
+                            title: "Demographics",
+                            subtitle: customer.demographicsSummary.isEmpty ? "Add profile and company info" : customer.demographicsSummary,
+                            color: .indigo,
+                            layout: .tile,
+                            action: openDemographics
+                        )
+
+                        ContactMapNavigationWidget(
+                            title: "Show on Map",
+                            subtitle: customer.coordinate == nil ? "Save mapped address first" : "Open marker and popup",
+                            isDisabled: customer.coordinate == nil,
+                            layout: .tile,
+                            action: openCustomerOnMap
+                        )
                     }
                 }
+                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                 
                 // ✅ Actions Toolbar
                 Section {
@@ -510,6 +524,31 @@ struct CustomerDetailsView: View {
     }
 
     // MARK: - Logic
+    private func openCustomerOnMap() {
+        guard customer.coordinate != nil else { return }
+
+        ContactScreenHapticsController.shared.lightTap()
+        ContactScreenSoundController.shared.playSound1()
+        presentationMode.wrappedValue.dismiss()
+
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: .openContactOnMap,
+                object: MapContactNavigationRequest(
+                    contactID: customer.uuid,
+                    type: .customer,
+                    address: customer.address
+                )
+            )
+        }
+    }
+
+    private func openDemographics() {
+        ContactScreenHapticsController.shared.lightTap()
+        ContactScreenSoundController.shared.playSound1()
+        showDemographicsSheet = true
+    }
+
     private func commitEdits() {
         
         let trimmedName = tempFullName.trimmingCharacters(in: .whitespacesAndNewlines)

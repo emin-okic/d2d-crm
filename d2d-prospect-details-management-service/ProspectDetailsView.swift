@@ -92,14 +92,28 @@ struct ProspectDetailsView: View {
                         searchViewModel: searchViewModel
                     )
                 }
-                
+
                 Section {
-                    DemographicsSummaryRow(summary: prospect.demographicsSummary) {
-                        ContactScreenHapticsController.shared.lightTap()
-                        ContactScreenSoundController.shared.playSound1()
-                        showDemographicsSheet = true
+                    HStack(spacing: 10) {
+                        ContactDetailsUtilityWidget(
+                            icon: "person.text.rectangle.fill",
+                            title: "Demographics",
+                            subtitle: prospect.demographicsSummary.isEmpty ? "Add profile and company info" : prospect.demographicsSummary,
+                            color: .indigo,
+                            layout: .tile,
+                            action: openDemographics
+                        )
+
+                        ContactMapNavigationWidget(
+                            title: "Show on Map",
+                            subtitle: prospect.coordinate == nil ? "Save mapped address first" : "Open marker and popup",
+                            isDisabled: prospect.coordinate == nil,
+                            layout: .tile,
+                            action: openProspectOnMap
+                        )
                     }
                 }
+                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                 
                 // ✅ Actions Toolbar (unchanged)
                 Section {
@@ -519,6 +533,31 @@ struct ProspectDetailsView: View {
     private var hasUnsavedEdits: Bool {
         tempFullName.trimmingCharacters(in: .whitespacesAndNewlines) != prospect.fullName.trimmingCharacters(in: .whitespacesAndNewlines) ||
         tempAddress.trimmingCharacters(in: .whitespacesAndNewlines) != prospect.address.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func openProspectOnMap() {
+        guard prospect.coordinate != nil else { return }
+
+        ContactScreenHapticsController.shared.lightTap()
+        ContactScreenSoundController.shared.playSound1()
+        presentationMode.wrappedValue.dismiss()
+
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: .openContactOnMap,
+                object: MapContactNavigationRequest(
+                    contactID: prospect.uuid,
+                    type: .prospect,
+                    address: prospect.address
+                )
+            )
+        }
+    }
+
+    private func openDemographics() {
+        ContactScreenHapticsController.shared.lightTap()
+        ContactScreenSoundController.shared.playSound1()
+        showDemographicsSheet = true
     }
 
     private func commitEdits() {

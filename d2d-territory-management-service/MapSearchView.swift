@@ -20,6 +20,7 @@ struct MapSearchView: View {
     @Binding var region: MKCoordinateRegion
     @Binding var selectedList: String
     @Binding var addressToCenter: String?
+    @Binding var contactNavigationRequest: MapContactNavigationRequest?
 
     @Query private var prospects: [Prospect]
     @Query private var customers: [Customer]
@@ -88,13 +89,15 @@ struct MapSearchView: View {
          contactSearchFilter: Binding<ContactSearchFilter?>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
-         addressToCenter: Binding<String?>) {
+         addressToCenter: Binding<String?>,
+         contactNavigationRequest: Binding<MapContactNavigationRequest?>) {
         _searchText = searchText
         _contactSearchDraft = contactSearchDraft
         _contactSearchFilter = contactSearchFilter
         _region = region
         _selectedList = selectedList
         _addressToCenter = addressToCenter
+        _contactNavigationRequest = contactNavigationRequest
         _controller = StateObject(wrappedValue: MapController(region: region.wrappedValue))
     }
 
@@ -509,6 +512,9 @@ struct MapSearchView: View {
             
         }
         .onChange(of: addressToCenter) { _, newValue in handleMapCenterChange(newAddress: newValue) }
+        .onChange(of: contactNavigationRequest) { _, newValue in
+            handleContactNavigationRequest(newValue)
+        }
         .onTapGesture {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to:nil,from:nil,for:nil)
         }
@@ -973,6 +979,64 @@ struct MapSearchView: View {
     // For updating the markers
     private func updateMarkers() {
         controller.setMarkers(prospects: filteredProspectsForMap, customers: filteredCustomersForMap)
+    }
+
+    private func handleContactNavigationRequest(_ request: MapContactNavigationRequest?) {
+        guard let request else { return }
+
+        selectedList = request.type.listName
+        contactSearchDraft = ""
+        contactSearchFilter = nil
+        searchText = ""
+        searchVM.clear()
+
+        updateMarkers()
+
+        guard let contact = unitContact(for: request) else {
+            addressToCenter = request.address
+            contactNavigationRequest = nil
+            return
+        }
+
+        selectedUnitGroup = nil
+        selectedMultiContactState = nil
+        popupState = nil
+
+        showPopup(for: mapPlace(for: contact))
+        contactNavigationRequest = nil
+    }
+
+    private func unitContact(for request: MapContactNavigationRequest) -> UnitContact? {
+        switch request.type {
+        case .prospect:
+            guard let prospect = prospects.first(where: { $0.uuid == request.contactID }) else { return nil }
+            return .prospect(prospect)
+        case .customer:
+            guard let customer = customers.first(where: { $0.uuid == request.contactID }) else { return nil }
+            return .customer(customer)
+        }
+    }
+
+    private func mapPlace(for contact: UnitContact) -> IdentifiablePlace {
+        let selectedPlace = place(for: contact)
+
+        guard let marker = controller.markers.first(where: { addressesMatch($0.address, contact.address) }) else {
+            return selectedPlace
+        }
+
+        return IdentifiablePlace(
+            id: marker.id,
+            address: selectedPlace.address,
+            location: marker.location,
+            count: selectedPlace.count,
+            unitCount: marker.unitCount,
+            contactCount: marker.contactCount,
+            list: selectedPlace.list,
+            isUnqualified: selectedPlace.isUnqualified,
+            isMultiUnit: marker.isMultiUnit,
+            showsMultiContact: false,
+            selectedContact: contact
+        )
     }
 
     private func clearContactFilter() {
