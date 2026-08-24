@@ -96,19 +96,7 @@ struct ManualKnockLogSheet: View {
 
                 Spacer(minLength: 12)
 
-                Button(action: primaryAction) {
-                    Text(primaryButtonTitle)
-                        .font(.title3.weight(.bold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 58)
-                        .background(Color.blue, in: Capsule())
-                }
-                .buttonStyle(.plain)
-                .disabled(step == .addObjection && newObjectionText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                .opacity(step == .addObjection && newObjectionText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.55 : 1)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 14)
+                bottomActionControls
             }
             .background(Color(.systemBackground))
             .navigationTitle("Log Knock")
@@ -282,6 +270,16 @@ struct ManualKnockLogSheet: View {
                 .padding(12)
                 .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             } else {
+                ScrollView {
+                    VStack(spacing: 8) {
+                        ForEach(objectionOptions) { objection in
+                            objectionRow(objection)
+                        }
+                    }
+                }
+                .scrollIndicators(.hidden)
+                .frame(maxHeight: 210)
+
                 Button {
                     step = .addObjection
                     playLightFeedback()
@@ -294,16 +292,6 @@ struct ManualKnockLogSheet: View {
                 .buttonStyle(.plain)
                 .foregroundStyle(.blue)
                 .background(Color.blue.opacity(0.10), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-
-                ScrollView {
-                    VStack(spacing: 8) {
-                        ForEach(objectionOptions) { objection in
-                            objectionRow(objection)
-                        }
-                    }
-                }
-                .scrollIndicators(.hidden)
-                .frame(maxHeight: 210)
             }
         }
         .padding(.horizontal, 24)
@@ -369,18 +357,6 @@ struct ManualKnockLogSheet: View {
                 .padding()
                 .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
-                Button {
-                    saveObjection(returnToFollowUp: false)
-                } label: {
-                    Label("Save & Add Another", systemImage: "plus")
-                        .font(.subheadline.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 42)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(.blue)
-                .background(Color.blue.opacity(0.10), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                .disabled(newObjectionText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
             .padding(.horizontal, 24)
             .padding(.top, 28)
@@ -420,21 +396,6 @@ struct ManualKnockLogSheet: View {
                 .padding(12)
                 .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
-            Button {
-                tripStartAddress = ""
-                tripEndAddress = ""
-                tripFocusedField = nil
-                step = .review
-                playLightFeedback()
-            } label: {
-                Label("Skip Trip", systemImage: "arrow.right.circle")
-                    .font(.subheadline.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 42)
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.blue)
-            .background(Color.blue.opacity(0.10), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
         .padding(.horizontal, 24)
         .padding(.top, 28)
@@ -469,6 +430,51 @@ struct ManualKnockLogSheet: View {
         }
         .padding(.horizontal, 24)
         .padding(.top, 28)
+    }
+
+    @ViewBuilder
+    private var bottomActionControls: some View {
+        if step == .trip {
+            HStack(spacing: 12) {
+                Button {
+                    skipTrip()
+                } label: {
+                    Label("Skip Trip", systemImage: "arrow.right.circle")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 58)
+                        .background(Color.blue.opacity(0.10), in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.blue)
+
+                Button(action: primaryAction) {
+                    Text(primaryButtonTitle)
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 58)
+                        .background(Color.blue, in: Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 14)
+        } else {
+            Button(action: primaryAction) {
+                Text(primaryButtonTitle)
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 58)
+                    .background(Color.blue, in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .disabled(step == .addObjection && newObjectionText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .opacity(step == .addObjection && newObjectionText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.55 : 1)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 14)
+        }
     }
 
     private var selectedOutcome: ManualKnockOutcome {
@@ -526,6 +532,14 @@ struct ManualKnockLogSheet: View {
 
     private var followUpDateForResult: Date? {
         selectedOutcome.title == "Follow Up Later" ? followUpDate : nil
+    }
+
+    private func skipTrip() {
+        tripStartAddress = ""
+        tripEndAddress = ""
+        tripFocusedField = nil
+        step = .review
+        playLightFeedback()
     }
 
     private func primaryAction() {
