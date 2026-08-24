@@ -87,6 +87,76 @@ final class CustomerActionsController: ObservableObject {
         onClose?()
     }
 
+    func logManualKnock(_ result: ManualKnockLogResult) {
+        let location = LocationManager.shared.currentLocation
+        let latitude = location?.latitude ?? 0
+        let longitude = location?.longitude ?? 0
+        let status = result.outcome.title
+
+        if result.completionAction == .customerLost {
+            convertCustomerToProspect(
+                customer: customer,
+                knockDate: result.date,
+                latitude: latitude,
+                longitude: longitude,
+                note: result.note,
+                followUpDate: result.followUpDate,
+                tripStartAddress: result.tripStartAddress,
+                tripEndAddress: result.tripEndAddress,
+                tripDate: result.tripDate
+            )
+            onClose?()
+            return
+        }
+
+        customer.knockCount += 1
+        customer.knockHistory.append(
+            Knock(
+                date: result.date,
+                status: status,
+                latitude: latitude,
+                longitude: longitude
+            )
+        )
+
+        if let followUpDate = result.followUpDate {
+            saveManualFollowUp(date: followUpDate)
+        }
+
+        if !result.note.isEmpty {
+            customer.notes.append(Note(content: result.note, date: result.date))
+        }
+
+        saveManualTripIfNeeded(result)
+        try? modelContext.save()
+    }
+
+    private func saveManualFollowUp(date: Date) {
+        let appointment = Appointment(
+            title: "Follow-Up",
+            location: customer.address,
+            clientName: customer.fullName,
+            date: date,
+            type: "Follow-Up",
+            notes: customer.notes.map { $0.content },
+            customer: customer
+        )
+        modelContext.insert(appointment)
+    }
+
+    private func saveManualTripIfNeeded(_ result: ManualKnockLogResult) {
+        let endAddress = result.tripEndAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !endAddress.isEmpty else { return }
+
+        let trip = Trip(
+            startAddress: result.tripStartAddress,
+            endAddress: endAddress,
+            miles: 0,
+            date: result.tripDate
+        )
+        modelContext.insert(trip)
+    }
+
     // MARK: - Helpers
 
     func logCustomerCallNote() {
@@ -127,11 +197,21 @@ final class CustomerActionsController: ObservableObject {
         return true
     }
 
-    private func convertCustomerToProspect(customer: Customer) {
+    private func convertCustomerToProspect(
+        customer: Customer,
+        knockDate: Date = .now,
+        latitude: Double? = nil,
+        longitude: Double? = nil,
+        note: String = "",
+        followUpDate: Date? = nil,
+        tripStartAddress: String = "",
+        tripEndAddress: String = "",
+        tripDate: Date = .now
+    ) {
         let prospect = Prospect(
             fullName: customer.fullName,
             address: customer.address,
-            count: customer.knockCount,
+            count: customer.knockCount + 1,
             list: "Prospects"
         )
 
@@ -139,8 +219,35 @@ final class CustomerActionsController: ObservableObject {
         prospect.contactEmail = customer.contactEmail
         prospect.applyDemographics(customer.demographicsFormData)
         prospect.notes = customer.notes
+        if !note.isEmpty {
+            prospect.notes.append(Note(content: note, date: knockDate, prospect: prospect))
+        }
         prospect.appointments = customer.appointments
+        if let followUpDate {
+            let appointment = Appointment(
+                title: "Follow-Up",
+                location: prospect.address,
+                clientName: prospect.fullName,
+                date: followUpDate,
+                type: "Follow-Up",
+                notes: prospect.notes.map { $0.content },
+                prospect: prospect
+            )
+            prospect.appointments.append(appointment)
+            modelContext.insert(appointment)
+        }
         prospect.knockHistory = customer.knockHistory
+        
+        let manualTripEndAddress = tripEndAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !manualTripEndAddress.isEmpty {
+            let trip = Trip(
+                startAddress: tripStartAddress,
+                endAddress: manualTripEndAddress,
+                miles: 0,
+                date: tripDate
+            )
+            modelContext.insert(trip)
+        }
         
         // ✅ Transfer emails BEFORE deleting customer
         transferEmailsToProspect(from: customer, to: prospect)
@@ -150,10 +257,10 @@ final class CustomerActionsController: ObservableObject {
 
         prospect.knockHistory.append(
             Knock(
-                date: .now,
+                date: knockDate,
                 status: "Customer Lost",
-                latitude: customer.latitude ?? 0,
-                longitude: customer.longitude ?? 0
+                latitude: latitude ?? customer.latitude ?? 0,
+                longitude: longitude ?? customer.longitude ?? 0
             )
         )
 
