@@ -306,14 +306,11 @@ struct MapSearchView: View {
                             obj.timesHeard += 1
                             if recordingFeaturesActive,
                                let name = pendingRecordingFileName {
-                                let rec = Recording(
+                                insertFollowUpRecording(
                                     fileName: name,
                                     title: obj.text,
-                                    date: .now,
-                                    objection: obj,
-                                    rating: 3
+                                    objection: obj
                                 )
-                                modelContext.insert(rec)
                                 pendingRecordingFileName = nil
                             }
                             try? modelContext.save()
@@ -1018,6 +1015,45 @@ struct MapSearchView: View {
         // 2) Fallback: single-contact address
         return prospects.first { addressesMatch($0.address, address) }
     }
+
+    private func insertFollowUpRecording(
+        fileName: String,
+        title: String,
+        objection: Objection
+    ) {
+        let association = pendingRecordingAssociation()
+        let rec = Recording(
+            fileName: fileName,
+            title: title,
+            date: .now,
+            objection: objection,
+            rating: 3,
+            prospect: association.prospect,
+            customer: association.customer
+        )
+        modelContext.insert(rec)
+    }
+
+    private func pendingRecordingAssociation() -> (prospect: Prospect?, customer: Customer?) {
+        if let selected = pendingSelectedContact {
+            switch selected {
+            case .prospect(let prospect):
+                return (prospect, nil)
+            case .customer(let customer):
+                return (nil, customer)
+            }
+        }
+
+        guard let address = pendingAddress else {
+            return (nil, nil)
+        }
+
+        if isTappedAddressCustomer {
+            return (nil, customers.first { addressesMatch($0.address, address) })
+        }
+
+        return (prospects.first { addressesMatch($0.address, address) }, nil)
+    }
     
     // For converting to customer
     @ViewBuilder
@@ -1065,14 +1101,11 @@ struct MapSearchView: View {
 
                         if recordingFeaturesActive,
                            let name = pendingRecordingFileName {
-                            let rec = Recording(
+                            insertFollowUpRecording(
                                 fileName: name,
                                 title: obj.text,
-                                date: .now,
-                                objection: obj,
-                                rating: 3
+                                objection: obj
                             )
-                            modelContext.insert(rec)
                             pendingRecordingFileName = nil
                         }
 

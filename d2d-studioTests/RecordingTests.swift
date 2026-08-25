@@ -33,6 +33,8 @@ final class RecordingTests: XCTestCase {
         XCTAssertEqual(recording.date, date)
         XCTAssertEqual(recording.objection?.text, objection.text)
         XCTAssertEqual(recording.rating, rating)
+        XCTAssertNil(recording.prospect)
+        XCTAssertNil(recording.customer)
     }
 
     func testRecordingDefaultRatingIsNil() {
@@ -46,5 +48,26 @@ final class RecordingTests: XCTestCase {
 
         // Assert
         XCTAssertNil(recording.rating)
+    }
+
+    func testRecordingCanAssociateProspect() {
+        // Arrange
+        let prospect = Prospect(fullName: "Taylor Reed", address: "100 Main St")
+
+        // Act
+        let recording = Recording(
+            fileName: "prospect_recording.m4a",
+            title: "Follow Up",
+            date: Date(),
+            objection: nil,
+            prospect: prospect
+        )
+
+        // Assert
+        XCTAssertEqual(recording.prospect?.fullName, "Taylor Reed")
+        XCTAssertNil(recording.customer)
+        XCTAssertEqual(recording.associatedContactName, "Taylor Reed")
+        XCTAssertEqual(recording.associatedContactType, "Prospect")
+        XCTAssertEqual(recording.associatedContactAddress, "100 Main St")
     }
 }

@@ -46,7 +46,7 @@ struct RecordingDetailView: View {
                             if let text = recording.objection?.text {
                                 TagView(text: text, color: .blue)
                             }
-                            
+
                             // Always show stars, even if rating is nil or 0
                             HStack(spacing: 4) {
                                 ForEach(0..<5, id: \.self) { i in
@@ -60,9 +60,22 @@ struct RecordingDetailView: View {
                                             
                                             recording.rating = i + 1
                                             try? modelContext.save()
-                                        }
+                                    }
                                 }
                             }
+
+                        }
+                        .padding()
+                        .background(cardBackground)
+
+                        // MARK: - Contact Card
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Contact")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .textCase(.uppercase)
+
+                            associatedContactSection
                         }
                         .padding()
                         .background(cardBackground)
@@ -212,6 +225,100 @@ struct RecordingDetailView: View {
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(Color.black.opacity(0.04))
             )
+    }
+
+    @ViewBuilder
+    private var associatedContactSection: some View {
+        if let prospect = recording.prospect {
+            NavigationLink {
+                ProspectDetailsView(prospect: prospect)
+                    .navigationBarBackButtonHidden(true)
+            } label: {
+                associatedContactCard(contactType: "Prospect")
+            }
+            .buttonStyle(.plain)
+            .simultaneousGesture(TapGesture().onEnded {
+                RecordingScreenHapticsController.shared.lightTap()
+                RecordingScreenSoundController.shared.playSound1()
+            })
+        } else if let customer = recording.customer {
+            NavigationLink {
+                CustomerDetailsView(customer: customer)
+                    .navigationBarBackButtonHidden(true)
+            } label: {
+                associatedContactCard(contactType: "Customer")
+            }
+            .buttonStyle(.plain)
+            .simultaneousGesture(TapGesture().onEnded {
+                RecordingScreenHapticsController.shared.lightTap()
+                RecordingScreenSoundController.shared.playSound1()
+            })
+        } else {
+            unassociatedContactCard
+        }
+    }
+
+    private func associatedContactCard(contactType: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: recording.associatedContactIconName)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(recording.customer == nil ? .blue : .green)
+                .frame(width: 34, height: 34)
+                .background((recording.customer == nil ? Color.blue : Color.green).opacity(0.1), in: Circle())
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(contactType)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+
+                Text(recording.associatedContactName ?? contactType)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+
+                if let address = recording.associatedContactAddress {
+                    Text(address)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+            }
+
+            Spacer(minLength: 0)
+
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(12)
+        .background(Color(.tertiarySystemBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
+    private var unassociatedContactCard: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "person.crop.circle.badge.questionmark")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 34, height: 34)
+                .background(Color.secondary.opacity(0.1), in: Circle())
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Unassociated")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+
+                Text("This recording was saved before contact associations were available.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .background(Color(.tertiarySystemBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     // MARK: - Save / Revert

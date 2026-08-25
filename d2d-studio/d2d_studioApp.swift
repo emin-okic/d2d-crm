@@ -79,7 +79,7 @@ let sharedModelContainer: ModelContainer = {
     } catch {
         let originalError = error
         do {
-            try repairMissingDemographicColumnsIfNeeded(at: url)
+            try repairStoreCompatibilityIfNeeded(at: url)
             return try ModelContainer(for: schema, configurations: [config])
         } catch {
             fatalError("Failed to load ModelContainer after compatibility repair. Original: \(originalError). Repair: \(error)")
@@ -111,12 +111,18 @@ private func appModelConfiguration(schema: Schema, url: URL) -> ModelConfigurati
     )
 }
 
-private func repairMissingDemographicColumnsIfNeeded(at storeURL: URL) throws {
+private func repairStoreCompatibilityIfNeeded(at storeURL: URL) throws {
     guard FileManager.default.fileExists(atPath: storeURL.path) else { return }
 
     try backupStoreFilesIfNeeded(at: storeURL)
 
     let db = try Connection(storeURL.path)
+
+    try repairMissingDemographicColumnsIfNeeded(db: db)
+    try repairMissingRecordingContactColumnsIfNeeded(db: db)
+}
+
+private func repairMissingDemographicColumnsIfNeeded(db: Connection) throws {
     let modelTables = ["ZPROSPECT", "ZCUSTOMER"]
     let demographicColumns = [
         "ZDEMOGRAPHICAGERANGE",
@@ -134,6 +140,19 @@ private func repairMissingDemographicColumnsIfNeeded(at storeURL: URL) throws {
         for column in demographicColumns where try !columnExists(column, in: table, db: db) {
             try db.run("ALTER TABLE \(table) ADD COLUMN \(column) TEXT")
         }
+    }
+}
+
+private func repairMissingRecordingContactColumnsIfNeeded(db: Connection) throws {
+    guard try tableExists("ZRECORDING", in: db) else { return }
+
+    let contactColumns = [
+        "ZPROSPECT",
+        "ZCUSTOMER"
+    ]
+
+    for column in contactColumns where try !columnExists(column, in: "ZRECORDING", db: db) {
+        try db.run("ALTER TABLE ZRECORDING ADD COLUMN \(column) INTEGER")
     }
 }
 

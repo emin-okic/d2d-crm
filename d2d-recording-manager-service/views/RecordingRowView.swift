@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-import SwiftUI
-
 struct RecordingRowView: View {
     var recording: Recording
     var isEditing: Bool
@@ -49,6 +47,21 @@ struct RecordingRowView: View {
                         .background(Color.blue.opacity(0.1))
                         .foregroundColor(.blue)
                         .clipShape(Capsule())
+                }
+
+                if recording.hasAssociatedContact,
+                   let contactType = recording.associatedContactType,
+                   let contactName = recording.associatedContactName {
+                    HStack(spacing: 6) {
+                        Image(systemName: recording.associatedContactIconName)
+                            .font(.caption.weight(.semibold))
+
+                        Text("\(contactType): \(contactName)")
+                            .font(.caption.weight(.semibold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+                    .foregroundColor(recording.customer == nil ? .blue : .green)
                 }
 
                 // Rating
