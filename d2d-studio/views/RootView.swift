@@ -35,6 +35,7 @@ struct RootView: View {
     
     @State private var selectedTab = 0
     @State private var addressToCenter: String? = nil
+    @State private var mapContactSelection: MapContactSelection?
     
     @State private var searchText: String = ""
     @State private var contactSearchDraft: String = ""
@@ -50,7 +51,8 @@ struct RootView: View {
                 contactSearchFilter: $contactSearchFilter,
                 region: $region,
                 selectedList: $selectedList,
-                addressToCenter: $addressToCenter
+                addressToCenter: $addressToCenter,
+                mapContactSelection: $mapContactSelection
             )
             .tabItem {
                 Label("Map", systemImage: "map.fill")
@@ -61,7 +63,8 @@ struct RootView: View {
                 selectedList: $selectedList,
                 searchText: $contactSearchDraft,
                 activeSearchFilter: $contactSearchFilter,
-                onSave: { showingAddProspect = false }
+                onSave: { showingAddProspect = false },
+                onNavigateToMap: navigateToMap
             )
             .tabItem {
                 Label("Contacts", systemImage: "person.3.fill")
@@ -97,6 +100,8 @@ struct RootView: View {
             RootViewSoundController.shared.playSound1()
             
             if newValue == 0 {
+                guard mapContactSelection == nil else { return }
+
                 NotificationCenter.default.post(
                     name: .mapShouldRecenterAllMarkers,
                     object: nil
@@ -105,6 +110,20 @@ struct RootView: View {
             
         }
         
+    }
+
+    private func navigateToMap(_ selection: MapContactSelection) {
+        contactSearchDraft = ""
+        contactSearchFilter = nil
+        searchText = ""
+        selectedList = selection.list
+        addressToCenter = nil
+        mapContactSelection = nil
+        selectedTab = 0
+
+        DispatchQueue.main.async {
+            mapContactSelection = selection
+        }
     }
 }
 

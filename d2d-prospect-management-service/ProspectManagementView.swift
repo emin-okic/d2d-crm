@@ -33,6 +33,7 @@ struct ProspectManagementView: View {
     @Binding var isDeleting: Bool
     @Binding var selectedProspects: Set<Prospect>
     var onClearSearchFilter: () -> Void
+    var onNavigateToMap: (MapContactSelection) -> Void = { _ in }
     var onProspectOpenRequested: (Prospect) -> Bool = { _ in false }
 
     private var filteredProspectCount: Int {
@@ -74,6 +75,7 @@ struct ProspectManagementView: View {
                 selectedProspect: $selectedProspect,
                 isDeleting: $isDeleting,
                 selectedProspects: $selectedProspects,
+                onNavigateToMap: onNavigateToMap,
                 onProspectOpenRequested: onProspectOpenRequested
             )
             .padding(.horizontal, 20)

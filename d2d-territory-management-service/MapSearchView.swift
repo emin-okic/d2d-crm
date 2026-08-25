@@ -20,6 +20,7 @@ struct MapSearchView: View {
     @Binding var region: MKCoordinateRegion
     @Binding var selectedList: String
     @Binding var addressToCenter: String?
+    @Binding var mapContactSelection: MapContactSelection?
 
     @Query private var prospects: [Prospect]
     @Query private var customers: [Customer]
@@ -88,13 +89,15 @@ struct MapSearchView: View {
          contactSearchFilter: Binding<ContactSearchFilter?>,
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
-         addressToCenter: Binding<String?>) {
+         addressToCenter: Binding<String?>,
+         mapContactSelection: Binding<MapContactSelection?>) {
         _searchText = searchText
         _contactSearchDraft = contactSearchDraft
         _contactSearchFilter = contactSearchFilter
         _region = region
         _selectedList = selectedList
         _addressToCenter = addressToCenter
+        _mapContactSelection = mapContactSelection
         _controller = StateObject(wrappedValue: MapController(region: region.wrappedValue))
     }
 
@@ -502,13 +505,18 @@ struct MapSearchView: View {
             prospectKnockingController = ProspectKnockActionController(modelContext: modelContext, controller: controller)
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                if mapContactSelection == nil {
                     NotificationCenter.default.post(name: .mapShouldRecenterAllMarkers, object: nil)
+                } else {
+                    handleMapContactSelectionChange(mapContactSelection)
+                }
                 }
 
             startInitialPropertyTutorialIfNeeded()
             
         }
         .onChange(of: addressToCenter) { _, newValue in handleMapCenterChange(newAddress: newValue) }
+        .onChange(of: mapContactSelection) { _, newValue in handleMapContactSelectionChange(newValue) }
         .onTapGesture {
             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to:nil,from:nil,for:nil)
         }
@@ -612,13 +620,19 @@ struct MapSearchView: View {
         // This is for opening the contact details
         .sheet(item: $selectedProspect) { prospect in
             NavigationStack {
-                ProspectDetailsView(prospect: prospect)
+                ProspectDetailsView(prospect: prospect) { selection in
+                    selectedProspect = nil
+                    handleMapContactSelectionChange(selection)
+                }
             }
         }
 
         .sheet(item: $selectedCustomer) { customer in
             NavigationStack {
-                CustomerDetailsView(customer: customer)
+                CustomerDetailsView(customer: customer) { selection in
+                    selectedCustomer = nil
+                    handleMapContactSelectionChange(selection)
+                }
             }
         }
     }
@@ -1498,6 +1512,107 @@ struct MapSearchView: View {
             }
             addressToCenter = nil
         }
+    }
+
+    @MainActor
+    private func handleMapContactSelectionChange(_ selection: MapContactSelection?) {
+        guard let selection else { return }
+
+        selectedList = selection.list
+        contactSearchFilter = nil
+        updateMarkers()
+        closePopup()
+
+        if let contact = unitContact(for: selection) {
+            presentSelectedMapPopup(for: selectedMapPlace(for: contact))
+            mapContactSelection = nil
+            return
+        }
+
+        if let coordinate = selection.coordinate {
+            presentSelectedMapPopup(
+                for: IdentifiablePlace(
+                    id: selection.contactID,
+                    address: selection.address,
+                    location: coordinate,
+                    count: 0,
+                    list: selection.list
+                )
+            )
+            mapContactSelection = nil
+            return
+        }
+
+        handleMapCenterChange(newAddress: selection.address)
+        mapContactSelection = nil
+    }
+
+    private func unitContact(for selection: MapContactSelection) -> UnitContact? {
+        if selection.list == "Customers" {
+            return customers.first { customer in
+                customer.uuid == selection.contactID || addressesMatch(customer.address, selection.address)
+            }.map(UnitContact.customer)
+        }
+
+        return prospects.first { prospect in
+            prospect.uuid == selection.contactID || addressesMatch(prospect.address, selection.address)
+        }.map(UnitContact.prospect)
+    }
+
+    private func selectedMapPlace(for contact: UnitContact) -> IdentifiablePlace {
+        let contactPlace = place(for: contact)
+        let baseAddress = parseAddress(contact.address).base
+
+        guard let marker = controller.markers.first(where: { marker in
+            addressesMatch(marker.address, baseAddress) || addressesMatch(marker.address, contact.address)
+        }) else {
+            return contactPlace
+        }
+
+        return IdentifiablePlace(
+            id: marker.id,
+            address: contact.address,
+            location: marker.location,
+            count: marker.count,
+            unitCount: marker.unitCount,
+            contactCount: marker.contactCount,
+            list: contact.list,
+            isUnqualified: contact.isUnqualified,
+            isMultiUnit: marker.isMultiUnit,
+            showsMultiContact: marker.showsMultiContact,
+            selectedContact: contact
+        )
+    }
+
+    private func presentSelectedMapPopup(for place: IdentifiablePlace) {
+        selectedPlaceID = place.id
+        refreshSelectedMarker(for: place)
+        presentPopup(for: place)
+
+        centerSelectedPopupMarker(for: place)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+            centerSelectedPopupMarker(for: place)
+        }
+    }
+
+    private func refreshSelectedMarker(for place: IdentifiablePlace) {
+        guard let mapView = MapDisplayView.cachedMapView else { return }
+        guard let coordinator = mapView.delegate as? MapDisplayCoordinator else { return }
+
+        coordinator.updateSelectedPlaceID(place.id)
+        coordinator.refreshAllAnnotations(on: mapView)
+    }
+
+    private func centerSelectedPopupMarker(for place: IdentifiablePlace) {
+        refreshSelectedMarker(for: place)
+        controller.centerMapForSelectedPopup(
+            coordinate: place.location,
+            bottomSheetFraction: popupSheetFraction(for: place)
+        )
+    }
+
+    private func popupSheetFraction(for place: IdentifiablePlace) -> CGFloat {
+        place.list == "Customers" ? 0.34 : 0.5
     }
 
     private func displayAddress(for item: MKMapItem, fallback: String) -> String {

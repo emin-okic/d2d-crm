@@ -42,6 +42,7 @@ struct ProspectsSectionView: View {
     
     @Binding var isDeleting: Bool
     @Binding var selectedProspects: Set<Prospect>
+    var onNavigateToMap: (MapContactSelection) -> Void = { _ in }
     var onProspectOpenRequested: (Prospect) -> Bool = { _ in false }
 
     var body: some View {
@@ -141,7 +142,7 @@ struct ProspectsSectionView: View {
         .frame(height: tableAreaHeight)
         .sheet(item: $selectedProspect) { p in
             NavigationStack {
-                ProspectDetailsView(prospect: p)
+                ProspectDetailsView(prospect: p, onNavigateToMap: onNavigateToMap)
                     .navigationBarTitleDisplayMode(.inline)
             }
         }

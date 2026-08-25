@@ -16,6 +16,7 @@ struct ProspectContainerView: View {
     
     @Binding var isDeleting: Bool
     @Binding var selectedProspects: Set<Prospect>
+    var onNavigateToMap: (MapContactSelection) -> Void = { _ in }
     var onProspectOpenRequested: (Prospect) -> Bool = { _ in false }
 
     var body: some View {
@@ -34,6 +35,7 @@ struct ProspectContainerView: View {
                     activeSearchFilter: $activeSearchFilter,
                     isDeleting: $isDeleting,
                     selectedProspects: $selectedProspects,
+                    onNavigateToMap: onNavigateToMap,
                     onProspectOpenRequested: onProspectOpenRequested
                 )
                 .padding()

@@ -15,6 +15,7 @@ struct CustomerContainerView: View {
     
     @Binding var isDeleting: Bool
     @Binding var selectedCustomers: Set<Customer>
+    var onNavigateToMap: (MapContactSelection) -> Void = { _ in }
     var onCustomerOpenRequested: (Customer) -> Bool = { _ in false }
 
     var body: some View {
@@ -31,6 +32,7 @@ struct CustomerContainerView: View {
                     selectedCustomer: $selectedCustomer,
                     isDeleting: $isDeleting,
                     selectedCustomers: $selectedCustomers,
+                    onNavigateToMap: onNavigateToMap,
                     onCustomerOpenRequested: onCustomerOpenRequested
                 )
                     .padding()

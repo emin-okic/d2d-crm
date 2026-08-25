@@ -210,6 +210,39 @@ class MapController: ObservableObject {
         )
         
     }
+
+    func centerMapForSelectedPopup(
+        coordinate: CLLocationCoordinate2D,
+        bottomSheetFraction: CGFloat,
+        targetVisibleYRatio: CGFloat = 0.5
+    ) {
+        guard let mapView = MapDisplayView.cachedMapView else {
+            centerMapForPopup(coordinate: coordinate)
+            return
+        }
+
+        let previewRegion = MKCoordinateRegion(
+            center: coordinate,
+            latitudinalMeters: 250,
+            longitudinalMeters: 250
+        )
+
+        mapView.setRegion(previewRegion, animated: false)
+
+        let visibleHeight = max(mapView.bounds.height * (1 - bottomSheetFraction), 1)
+        let targetY = visibleHeight * targetVisibleYRatio
+        let point = mapView.convert(coordinate, toPointTo: mapView)
+        let deltaY = point.y - targetY
+        let offsetPoint = CGPoint(x: point.x, y: point.y + deltaY)
+        let offsetCoordinate = mapView.convert(offsetPoint, toCoordinateFrom: mapView)
+        let centeredRegion = MKCoordinateRegion(
+            center: offsetCoordinate,
+            span: previewRegion.span
+        )
+
+        mapView.setRegion(centeredRegion, animated: true)
+        region = centeredRegion
+    }
     
     func centerMapForNewProperty(coordinate: CLLocationCoordinate2D) {
         guard let mapView = MapDisplayView.cachedMapView else { return }

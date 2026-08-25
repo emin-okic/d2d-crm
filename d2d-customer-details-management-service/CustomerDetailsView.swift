@@ -13,6 +13,7 @@ import MapKit
 @available(iOS 18.0, *)
 struct CustomerDetailsView: View {
     @Bindable var customer: Customer
+    var onNavigateToMap: (MapContactSelection) -> Void = { _ in }
     @Environment(\.presentationMode) private var presentationMode
     @Environment(\.modelContext) private var modelContext
 
@@ -92,12 +93,18 @@ struct CustomerDetailsView: View {
                 Section() {
                     TextField("Full Name", text: $tempFullName)
                     
-                    // 👇 Autocomplete-enabled address field
-                    AddressAutocompleteField(
-                        addressText: $tempAddress,
-                        isFocused: $isAddressFieldFocused,
-                        searchViewModel: searchViewModel
-                    )
+                    HStack(spacing: 10) {
+                        // 👇 Autocomplete-enabled address field
+                        AddressAutocompleteField(
+                            addressText: $tempAddress,
+                            isFocused: $isAddressFieldFocused,
+                            searchViewModel: searchViewModel
+                        )
+
+                        ContactMapNavigationButton {
+                            navigateToMap()
+                        }
+                    }
                 }
                 
                 Section {
@@ -360,6 +367,20 @@ struct CustomerDetailsView: View {
                 }
             )
         ]
+    }
+
+    private func navigateToMap() {
+        ContactScreenHapticsController.shared.successConfirmationTap()
+        ContactScreenSoundController.shared.playSound1()
+        presentationMode.wrappedValue.dismiss()
+        onNavigateToMap(
+            MapContactSelection(
+                contactID: customer.uuid,
+                address: customer.address,
+                list: "Customers",
+                coordinate: customer.coordinate
+            )
+        )
     }
 
     private func showExportPromptAfterOptionsDismiss() {
