@@ -37,6 +37,7 @@ struct CustomersSectionView: View {
     
     @Binding var isDeleting: Bool
     @Binding var selectedCustomers: Set<Customer>
+    var onNavigateToMap: (MapContactSelection) -> Void = { _ in }
     var onCustomerOpenRequested: (Customer) -> Bool = { _ in false }
 
     var body: some View {
@@ -140,7 +141,7 @@ struct CustomersSectionView: View {
         }
         .sheet(item: $selectedCustomer) { c in
             NavigationStack {
-                CustomerDetailsView(customer: c)
+                CustomerDetailsView(customer: c, onNavigateToMap: onNavigateToMap)
                     .navigationBarTitleDisplayMode(.inline)
             }
         }

@@ -37,6 +37,7 @@ struct ContactManagementView: View {
     @Binding var searchText: String
     @Binding var activeSearchFilter: ContactSearchFilter?
     var onSave: () -> Void
+    var onNavigateToMap: (MapContactSelection) -> Void = { _ in }
 
     // Shared state
     @State private var selectedSearchField: ContactSearchField = .all
@@ -300,6 +301,7 @@ struct ContactManagementView: View {
                 isDeleting: $isDeletingContacts,
                 selectedProspects: $selectedProspects,
                 onClearSearchFilter: clearSearchFilter,
+                onNavigateToMap: onNavigateToMap,
                 onProspectOpenRequested: handleTutorialProspectOpenRequested
             )
         } else {
@@ -315,6 +317,7 @@ struct ContactManagementView: View {
                 isDeleting: $isDeletingContacts,
                 selectedCustomers: $selectedCustomers,
                 onClearSearchFilter: clearSearchFilter,
+                onNavigateToMap: onNavigateToMap,
                 onCustomerOpenRequested: handleTutorialCustomerOpenRequested
             )
         }

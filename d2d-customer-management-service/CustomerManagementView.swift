@@ -34,6 +34,7 @@ struct CustomerManagementView: View {
     @Binding var isDeleting: Bool
     @Binding var selectedCustomers: Set<Customer>
     var onClearSearchFilter: () -> Void
+    var onNavigateToMap: (MapContactSelection) -> Void = { _ in }
     var onCustomerOpenRequested: (Customer) -> Bool = { _ in false }
 
     private var filteredCustomerCount: Int {
@@ -74,6 +75,7 @@ struct CustomerManagementView: View {
                 selectedCustomer: $selectedCustomer,
                 isDeleting: $isDeleting,
                 selectedCustomers: $selectedCustomers,
+                onNavigateToMap: onNavigateToMap,
                 onCustomerOpenRequested: onCustomerOpenRequested
             )
                 .padding(.horizontal, 20)
