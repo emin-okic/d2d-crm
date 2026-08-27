@@ -22,8 +22,17 @@ struct EmailActionSheet: View {
 
     let context: EmailContactContext
 
+    private enum EmailSheetSection: String, CaseIterable, Identifiable {
+        case templates = "Templates"
+        case history = "History"
+
+        var id: Self { self }
+    }
+
     @State private var tempEmail: String = ""
     @State private var selectedTemplate: EmailTemplate?
+    @State private var selectedSection: EmailSheetSection = .templates
+    @State private var selectedDetent: PresentationDetent = .fraction(0.72)
 
     @State private var emailError: String?
     @State private var showCreateTemplate = false
@@ -43,18 +52,24 @@ struct EmailActionSheet: View {
     @Query private var emails: [Email]
 
     private var emailCount: Int {
-        emails.filter {
-            $0.recipientUUID == context.id &&
-            $0.recipientType == context.recipientType
-        }.count
+        sentEmails.count
+    }
+
+    private var sentEmails: [Email] {
+        emails
+            .filter {
+                $0.recipientUUID == context.id &&
+                $0.recipientType == context.recipientType
+            }
+            .sorted { $0.sentAt > $1.sentAt }
     }
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 16) {
+            VStack(spacing: 10) {
 
                 // Header
-                VStack(spacing: 4) {
+                VStack(spacing: 2) {
                     HStack(spacing: 10) {
                         Image(systemName: "envelope.fill")
                             .foregroundColor(.purple)
@@ -74,7 +89,8 @@ struct EmailActionSheet: View {
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
-                    .padding()
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
                     .background(Color(.secondarySystemBackground))
                     .cornerRadius(14)
                     .onChange(of: tempEmail) { validateEmail() }
@@ -85,41 +101,26 @@ struct EmailActionSheet: View {
                         .foregroundColor(.red)
                 }
 
-                // Templates
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 8) {
-
-                        Button {
-                            sendBlankEmail()
-                        } label: {
-                            templateRow(
-                                title: "Email Without Template",
-                                subtitle: "Start from a blank email"
-                            )
-                        }
-
-                        ForEach(templates) { template in
-                            Button {
-                                selectedTemplate = template
-                            } label: {
-                                templateRow(
-                                    title: template.title,
-                                    subtitle: template.subject
-                                )
-                            }
-                        }
-
-                        Button("Create New Template") {
-                            haptics.lightTap()
-                            sounds.playSound1()
-                            showCreateTemplate = true
-                        }
-                        .padding(.top, 4)
+                Picker("Email Section", selection: $selectedSection) {
+                    ForEach(EmailSheetSection.allCases) { section in
+                        Text(section.rawValue).tag(section)
                     }
                 }
+                .pickerStyle(.segmented)
+
+                Group {
+                    switch selectedSection {
+                    case .templates:
+                        templateTab
+                    case .history:
+                        historyTab
+                    }
+                }
+                .frame(maxHeight: .infinity)
             }
             .padding()
-            .presentationDetents([.medium])
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .presentationDetents([.fraction(0.72), .large], selection: $selectedDetent)
             .presentationDragIndicator(.visible)
             .navigationTitle("")
             .toolbar {
@@ -183,19 +184,158 @@ struct EmailActionSheet: View {
 
     // MARK: - Helpers
 
+    private var templateTab: some View {
+        VStack(spacing: 10) {
+            ScrollView(showsIndicators: false) {
+                templateList
+            }
+
+            createTemplateButton
+        }
+        .frame(maxHeight: .infinity)
+    }
+
+    private var templateList: some View {
+        VStack(spacing: 6) {
+
+            Button {
+                sendBlankEmail()
+            } label: {
+                templateRow(
+                    title: "Email Without Template",
+                    subtitle: "Start from a blank email"
+                )
+            }
+
+            ForEach(templates) { template in
+                Button {
+                    selectedTemplate = template
+                } label: {
+                    templateRow(
+                        title: template.title,
+                        subtitle: template.subject
+                    )
+                }
+            }
+        }
+    }
+
+    private var createTemplateButton: some View {
+        Button {
+            haptics.lightTap()
+            sounds.playSound1()
+            showCreateTemplate = true
+        } label: {
+            Label("Create New Template", systemImage: "plus")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+        }
+        .buttonStyle(.borderedProminent)
+    }
+
+    private var historyTab: some View {
+        ScrollView(showsIndicators: false) {
+            emailHistoryList
+        }
+        .frame(maxHeight: .infinity)
+    }
+
+    private var emailHistoryList: some View {
+        VStack(spacing: 6) {
+            if sentEmails.isEmpty {
+                emptyHistoryView
+            } else {
+                ForEach(sentEmails) { email in
+                    historyRow(email)
+                }
+            }
+        }
+    }
+
+    private var emptyHistoryView: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "tray")
+                .font(.title2)
+                .foregroundStyle(.secondary)
+
+            Text("No emails sent yet")
+                .font(.subheadline)
+                .fontWeight(.medium)
+
+            Text("Sent emails will appear here after you choose a template or start a blank email.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(.ultraThinMaterial)
+        .cornerRadius(12)
+    }
+
     private func templateRow(title: String, subtitle: String) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).fontWeight(.medium)
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .lineLimit(1)
+
                 Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
             Spacer()
             Image(systemName: "chevron.right")
                 .foregroundStyle(.secondary)
         }
-        .padding()
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(minHeight: 56)
+        .background(.ultraThinMaterial)
+        .cornerRadius(12)
+    }
+
+    private func historyRow(_ email: Email) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(email.subject.isEmpty ? "Blank email" : email.subject)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .lineLimit(1)
+
+                    Text(email.sentAt.formatted(date: .abbreviated, time: .shortened))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Text(email.templateUUID == nil ? "No template" : "Template")
+                    .font(.caption2)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color(.tertiarySystemFill))
+                    .cornerRadius(8)
+            }
+
+            if !email.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Text(email.body)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(minHeight: 64)
         .background(.ultraThinMaterial)
         .cornerRadius(12)
     }
