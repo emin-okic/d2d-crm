@@ -66,13 +66,7 @@ struct KnockStepperPopupView: View {
 
     private var popupHeight: CGFloat {
         switch currentStep {
-        case .objection:
-            374
-        case .scheduleFollowUp:
-            340
-        case .trip:
-            380
-        case .done:
+        case .objection, .scheduleFollowUp, .note, .trip, .done:
             560
         default:
             304
@@ -81,13 +75,7 @@ struct KnockStepperPopupView: View {
 
     private var contentHeight: CGFloat {
         switch currentStep {
-        case .objection:
-            244
-        case .scheduleFollowUp:
-            210
-        case .trip:
-            250
-        case .done:
+        case .objection, .scheduleFollowUp, .note, .trip, .done:
             430
         default:
             154
@@ -164,11 +152,30 @@ struct KnockStepperPopupView: View {
       .padding(.bottom, 14)
       .frame(maxWidth: .infinity)
       .frame(height: popupHeight, alignment: .top)
-      .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+      .background {
+          RoundedRectangle(cornerRadius: 18, style: .continuous)
+              .fill(.regularMaterial)
+              .overlay(
+                  RoundedRectangle(cornerRadius: 18, style: .continuous)
+                      .fill(
+                          LinearGradient(
+                              colors: [
+                                  Color.white.opacity(0.20),
+                                  Color.white.opacity(0.04),
+                                  Color.black.opacity(0.05)
+                              ],
+                              startPoint: .topLeading,
+                              endPoint: .bottomTrailing
+                          )
+                      )
+              )
+      }
       .overlay(
           RoundedRectangle(cornerRadius: 18, style: .continuous)
               .stroke(Color.primary.opacity(0.10), lineWidth: 1)
       )
+      .shadow(color: Color.black.opacity(0.16), radius: 18, x: 0, y: 10)
+      .padding(.horizontal, 14)
       .onAppear { configureSteps() }
       .onAppear {
         chosenOutcome = initialOutcome
@@ -265,6 +272,12 @@ struct KnockStepperPopupView: View {
                     Text("No objections saved")
                         .font(.subheadline.weight(.semibold))
 
+                    Text("Add the reason they asked you to come back so your follow-up note has useful context.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(3)
+
                     Button {
                         KnockingFormHapticsController.shared.lightTap()
                         KnockingFormSoundController.shared.playConfirmationSound()
@@ -279,17 +292,26 @@ struct KnockStepperPopupView: View {
                     .foregroundColor(.white)
                     .background(Color.blue, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 }
+                .padding(16)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .background(Color(.secondarySystemGroupedBackground).opacity(0.86), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
             } else {
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 8) {
-                        ForEach(objectionOptions) { obj in
-                            objectionRow(obj)
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Pick the reason for returning. This will be attached to the follow-up and counted in objection tracking.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(3)
+
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 8) {
+                            ForEach(objectionOptions) { obj in
+                                objectionRow(obj)
+                            }
                         }
+                        .padding(.vertical, 2)
                     }
-                    .padding(.vertical, 2)
+                    .scrollIndicators(.hidden)
                 }
-                .scrollIndicators(.hidden)
 
                 Button {
                     KnockingFormHapticsController.shared.lightTap()
@@ -339,7 +361,6 @@ struct KnockStepperPopupView: View {
             KnockingFormHapticsController.shared.lightTap()
             KnockingFormSoundController.shared.playConfirmationSound()
             selectedObjection = objection
-            incrementObjection(objection)
         } label: {
             HStack(alignment: .center, spacing: 12) {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
@@ -378,47 +399,43 @@ struct KnockStepperPopupView: View {
 
     private var followUpStep: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 10) {
-                Image(systemName: "calendar.badge.clock")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.blue)
-                    .frame(width: 38, height: 38)
-                    .background(Color.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Schedule Follow-Up")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundColor(.primary)
-
-                    Text(shortAddress(context.address))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.82)
-                }
-
-                Spacer(minLength: 0)
-
-                Text(followUpDate.formatted(.dateTime.month(.abbreviated).day()))
-                    .font(.caption2.weight(.bold))
-                    .foregroundColor(.blue)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(Color.blue.opacity(0.10), in: Capsule())
-            }
+            stepHeader(
+                icon: "calendar.badge.clock",
+                color: .blue,
+                title: "Schedule Follow-Up",
+                subtitle: "Set the exact return time for this address."
+            )
 
             Divider()
 
-            HStack(spacing: 10) {
-                Image(systemName: "clock")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.indigo)
-                    .frame(width: 32, height: 32)
-                    .background(Color.indigo.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
+                    Image(systemName: "clock")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.indigo)
+                        .frame(width: 28, height: 28)
+                        .background(Color.indigo.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Return time")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+
+                        Text(followUpDate.formatted(.dateTime.month(.abbreviated).day().hour().minute()))
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.78)
+                    }
+
+                    Spacer(minLength: 0)
+                }
 
                 DatePicker("Follow-up date", selection: $followUpDate, displayedComponents: [.date, .hourAndMinute])
                     .labelsHidden()
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .datePickerStyle(.compact)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .onChange(of: followUpDate) { _, _ in
                         if suppressNextFollowUpDateFeedback {
                             suppressNextFollowUpDateFeedback = false
@@ -428,20 +445,33 @@ struct KnockStepperPopupView: View {
                         KnockingFormHapticsController.shared.lightTap()
                         KnockingFormSoundController.shared.playConfirmationSound()
                     }
-            }
 
-            HStack(spacing: 8) {
-                quickDateChip("Tomorrow", days: 1)
-                quickDateChip("Next Week", days: 7)
-                quickDateChip("30 Days", days: 30)
+                HStack(spacing: 8) {
+                    quickDateChip("Tomorrow", days: 1)
+                    quickDateChip("Next Week", days: 7)
+                    quickDateChip("30 Days", days: 30)
+                }
             }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 12)
+            .background(Color(.secondarySystemGroupedBackground).opacity(0.86), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
-            Text("Next books the follow-up and prepares a note.")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-                .lineLimit(2)
+            guidancePanel(
+                icon: "text.badge.checkmark",
+                color: .teal,
+                title: "What happens next",
+                message: "The next step can log your route. When you finish, the app saves the knock, creates the follow-up, and prepares a note for this contact."
+            )
+
+            guidancePanel(
+                icon: "mappin.and.ellipse",
+                color: .orange,
+                title: "Current address",
+                message: shortAddress(context.address)
+            )
+
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 2)
     }
 
     @ViewBuilder
@@ -488,10 +518,44 @@ struct KnockStepperPopupView: View {
     }
 
     private var noteStep: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Add Note (optional)").font(.subheadline).foregroundColor(.secondary)
-            TextEditor(text: $noteText)
-                .frame(minHeight: 100, maxHeight: .infinity)
+        VStack(alignment: .leading, spacing: 14) {
+            stepHeader(
+                icon: "note.text",
+                color: .teal,
+                title: "Add Note",
+                subtitle: "Optional context for the next conversation."
+            )
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Follow-up note")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.secondary)
+
+                TextEditor(text: $noteText)
+                    .font(.subheadline)
+                    .scrollContentBackground(.hidden)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 190)
+                    .padding(10)
+                    .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                    )
+            }
+            .padding(12)
+            .background(Color(.secondarySystemGroupedBackground).opacity(0.86), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+            guidancePanel(
+                icon: "sparkles",
+                color: .blue,
+                title: "Keep it useful",
+                message: "Add what they asked for, who should follow up, or anything to remember before returning."
+            )
+
+            Spacer(minLength: 0)
         }
     }
     
@@ -501,7 +565,7 @@ struct KnockStepperPopupView: View {
                 icon: "point.topleft.down.curvedto.point.bottomright.up.fill",
                 color: .purple,
                 title: "Log Trip",
-                subtitle: "Optional mileage tracking for this route. Skip leaves trip history unchanged."
+                subtitle: "Optional route history for this follow-up."
             )
 
             Divider()
@@ -523,25 +587,52 @@ struct KnockStepperPopupView: View {
                     field: .end
                 )
 
-                HStack(spacing: 10) {
-                    Image(systemName: "calendar")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.indigo)
-                        .frame(width: 32, height: 32)
-                        .background(Color.indigo.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "calendar")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.indigo)
+                            .frame(width: 28, height: 28)
+                            .background(Color.indigo.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Trip date")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundColor(.primary)
+                                .lineLimit(1)
+
+                            Text(tripDate.formatted(.dateTime.month(.abbreviated).day().hour().minute()))
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.78)
+                        }
+
+                        Spacer(minLength: 0)
+                    }
 
                     DatePicker("Trip date", selection: $tripDate, displayedComponents: [.date, .hourAndMinute])
                         .labelsHidden()
-                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .datePickerStyle(.compact)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .onChange(of: tripDate) { _, _ in
                             KnockingFormHapticsController.shared.lightTap()
                             KnockingFormSoundController.shared.playConfirmationSound()
                         }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 12)
                 .background(Color(.secondarySystemGroupedBackground).opacity(0.86), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
+
+            guidancePanel(
+                icon: "arrow.right.circle",
+                color: .blue,
+                title: "You can skip this",
+                message: "Skip only bypasses trip history. The knock and follow-up still continue to the confirmation step."
+            )
+
+            Spacer(minLength: 0)
         }
     }
 
@@ -582,52 +673,60 @@ struct KnockStepperPopupView: View {
                 subtitle: "Review the scheduled return before closing this form."
             )
 
-            VStack(alignment: .leading, spacing: 10) {
-                confirmationRow(
-                    icon: "mappin.and.ellipse",
-                    color: .blue,
-                    title: "Address",
-                    value: shortAddress(context.address)
-                )
+            ScrollView {
+                VStack(alignment: .leading, spacing: 10) {
+                    confirmationRow(
+                        icon: "mappin.and.ellipse",
+                        color: .blue,
+                        title: "Address",
+                        value: shortAddress(context.address)
+                    )
 
-                confirmationRow(
-                    icon: "calendar",
-                    color: .teal,
-                    title: "Scheduled",
-                    value: followUpDate.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().hour().minute())
-                )
+                    confirmationRow(
+                        icon: "calendar",
+                        color: .teal,
+                        title: "Scheduled",
+                        value: followUpDate.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().hour().minute())
+                    )
 
-                confirmationRow(
-                    icon: "questionmark.bubble",
-                    color: .orange,
-                    title: "Objection",
-                    value: selectedObjection?.text ?? "No objection selected"
-                )
+                    confirmationRow(
+                        icon: "questionmark.bubble",
+                        color: .orange,
+                        title: "Objection",
+                        value: selectedObjection?.text ?? "No objection selected"
+                    )
 
-                confirmationRow(
-                    icon: "point.topleft.down.curvedto.point.bottomright.up.fill",
-                    color: .purple,
-                    title: "Trip",
-                    value: didLogTrip ? "Trip logged for this follow-up." : "Trip skipped."
-                )
-            }
+                    confirmationRow(
+                        icon: "point.topleft.down.curvedto.point.bottomright.up.fill",
+                        color: .purple,
+                        title: "Trip",
+                        value: didLogTrip ? "Trip logged for this follow-up." : "Trip skipped."
+                    )
 
-            if !noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                VStack(alignment: .leading, spacing: 6) {
-                    Label("Note prepared", systemImage: "note.text")
-                        .font(.caption.weight(.semibold))
-                        .foregroundColor(.secondary)
+                    if !noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Label("Note prepared", systemImage: "note.text")
+                                .font(.caption.weight(.semibold))
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
 
-                    Text(noteText)
-                        .font(.caption)
-                        .foregroundColor(.primary)
-                        .lineLimit(3)
-                        .minimumScaleFactor(0.88)
+                            Text(noteText.trimmingCharacters(in: .whitespacesAndNewlines))
+                                .font(.caption)
+                                .foregroundColor(.primary)
+                                .lineLimit(2, reservesSpace: true)
+                                .truncationMode(.tail)
+                                .multilineTextAlignment(.leading)
+                                .frame(maxWidth: .infinity, alignment: .topLeading)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(height: 82, alignment: .topLeading)
+                        .background(Color(.secondarySystemGroupedBackground).opacity(0.86), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    }
                 }
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.secondarySystemGroupedBackground).opacity(0.86), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
+            .scrollIndicators(.hidden)
 
             Button {
                 KnockingFormHapticsController.shared.successFeedbackConfirmation()
@@ -672,6 +771,33 @@ struct KnockStepperPopupView: View {
         .background(Color(.secondarySystemGroupedBackground).opacity(0.86), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
+    private func guidancePanel(icon: String, color: Color, title: String, message: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(color)
+                .frame(width: 30, height: 30)
+                .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.primary)
+
+                Text(message)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(3)
+                    .minimumScaleFactor(0.86)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemGroupedBackground).opacity(0.86), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
     // MARK: - Helpers
 
     private func canSkip(_ step: KnockStep) -> Bool {
@@ -695,8 +821,14 @@ struct KnockStepperPopupView: View {
         if step == .scheduleFollowUp, let p = committedWorkingProspect() {
             KnockingFormHapticsController.shared.successFeedbackConfirmation()
             KnockingFormSoundController.shared.playConfirmationSound()
-            saveFollowUp(p, followUpDate)
-            didScheduleFollowUp = true
+
+            if !didScheduleFollowUp {
+                if let selectedObjection {
+                    incrementObjection(selectedObjection)
+                }
+                saveFollowUp(p, followUpDate)
+                didScheduleFollowUp = true
+            }
 
             noteText = SuggestedFollowUpNoteGenerator.generate(
                 prospect: p,
