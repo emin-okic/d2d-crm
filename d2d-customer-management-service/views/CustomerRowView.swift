@@ -83,7 +83,7 @@ struct CustomerRowView: View {
                     showCallSheet = false
                 }
             )
-            .presentationDetents([.fraction(0.25)])
+            .presentationDetents([.height(320)])
             .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showAddPhoneSheet) {
@@ -96,7 +96,7 @@ struct CustomerRowView: View {
                     showAddPhoneSheet = false
                 }
             )
-            .presentationDetents([.fraction(0.25)])
+            .presentationDetents([.height(320)])
             .presentationDragIndicator(.visible)
         }
     }

@@ -115,7 +115,7 @@ struct ProspectActionsToolbar: View {
                     showCallSheet = false
                 }
             )
-            .presentationDetents([.fraction(0.25)])
+            .presentationDetents([.height(320)])
             .presentationDragIndicator(.visible)
         }
         
@@ -144,7 +144,7 @@ struct ProspectActionsToolbar: View {
                     showAddPhoneSheet = false
                 }
             )
-            .presentationDetents([.fraction(0.25)])
+            .presentationDetents([.height(320)])
             .presentationDragIndicator(.visible)
         }
 

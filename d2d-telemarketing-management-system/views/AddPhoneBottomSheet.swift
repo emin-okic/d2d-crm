@@ -4,6 +4,7 @@
 //
 //  Created by Emin Okic on 12/15/25.
 //
+
 import SwiftUI
 import PhoneNumberKit
 
@@ -22,94 +23,140 @@ struct AddPhoneBottomSheet: View {
 
     private var subtitle: String {
         mode == .add
-            ? "Add a phone number for this contact."
-            : "Update the existing phone number."
+            ? "Save a reachable number before starting the call."
+            : "Update the number used for calls and activity tracking."
     }
 
     private var primaryButtonTitle: String {
-        mode == .add ? "Add Number" : "Save"
+        mode == .add ? "Save and Call" : "Save Changes"
+    }
+
+    private var canSave: Bool {
+        !phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && error == nil
     }
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 0) {
             Capsule()
-                .fill(Color.secondary.opacity(0.4))
-                .frame(width: 36, height: 5)
+                .fill(Color.secondary.opacity(0.35))
+                .frame(width: 38, height: 5)
                 .padding(.top, 8)
+                .padding(.bottom, 14)
 
-            VStack(spacing: 4) {
-                Text(title)
-                    .font(.headline)
-
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-
-            TextField(
-                mode == .add ? "Enter phone number" : "Update phone number",
-                text: $phone
-            )
-            .keyboardType(.phonePad)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .padding()
-            .background(Color(.secondarySystemBackground))
-            .cornerRadius(12)
-            .onChange(of: phone) { _, _ in
-                // ✅ Live validation
-                if let errorMessage = PhoneValidator.validate(phone) {
-                    error = errorMessage
-                } else {
-                    error = nil
+            HStack(alignment: .top, spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.blue.opacity(0.12))
+                    Image(systemName: mode == .add ? "phone.badge.plus" : "phone.connection")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.blue)
                 }
-            }
+                .frame(width: 46, height: 46)
 
-            if let error {
-                Text(error)
-                    .font(.footnote)
-                    .foregroundColor(.red)
-            }
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(title)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
 
-            HStack(spacing: 12) {
-                Button(action: {
-                    TelemarketingManagerHapticsController.shared.lightTap()
-                    TelemarketingManagerSoundController.shared.playSound1()
-                    onCancel()
-                }) {
-                    Text("Cancel")
+                    Text(subtitle)
                         .font(.subheadline)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 16)
-                        .background(Color(.systemGray5))
-                        .foregroundColor(.primary)
-                        .cornerRadius(10)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .frame(maxWidth: .infinity)
 
-                Button(action: {
-                    TelemarketingManagerHapticsController.shared.successConfirmationTap()
-                    TelemarketingManagerSoundController.shared.playSound1()
-                    onSave()
-                }) {
-                    Text(primaryButtonTitle)
-                        .font(.subheadline)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 16)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                Spacer(minLength: 8)
+
+                Button(action: cancelTapped) {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 30, height: 30)
+                        .background(Color(.systemGray6), in: Circle())
                 }
-                .frame(maxWidth: .infinity)
-                .disabled(
-                    phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                    error != nil
+                .buttonStyle(.plain)
+                .accessibilityLabel("Cancel")
+            }
+            .padding(.horizontal, 18)
+            .padding(.bottom, 16)
+
+            VStack(alignment: .leading, spacing: 7) {
+                Text("Phone")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+
+                HStack(spacing: 10) {
+                    Image(systemName: "phone.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.blue)
+                        .frame(width: 24)
+
+                    TextField(
+                        mode == .add ? "Enter phone number" : "Update phone number",
+                        text: $phone
+                    )
+                    .keyboardType(.phonePad)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .font(.body.weight(.medium))
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 12)
+                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(error == nil ? Color(.systemGray5) : Color.red.opacity(0.65), lineWidth: 1)
                 )
-            }
+                .onChange(of: phone) { _, _ in
+                    if let errorMessage = PhoneValidator.validate(phone) {
+                        error = errorMessage
+                    } else {
+                        error = nil
+                    }
+                }
 
-            Spacer(minLength: 0)
+                if let error {
+                    Label(error, systemImage: "exclamationmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+            }
+            .padding(.horizontal, 18)
+            .padding(.bottom, 16)
+
+            HStack(spacing: 10) {
+                Button(action: cancelTapped) {
+                    Text("Cancel")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(.bordered)
+                .tint(.secondary)
+
+                Button(action: saveTapped) {
+                    Text(primaryButtonTitle)
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.blue)
+                .disabled(!canSave)
+            }
+            .padding(.horizontal, 18)
+            .padding(.bottom, 16)
         }
-        .padding(.horizontal)
-        .padding(.bottom, 12)
+        .background(Color(.systemBackground))
+    }
+
+    private func cancelTapped() {
+        TelemarketingManagerHapticsController.shared.lightTap()
+        TelemarketingManagerSoundController.shared.playSound1()
+        onCancel()
+    }
+
+    private func saveTapped() {
+        TelemarketingManagerHapticsController.shared.successConfirmationTap()
+        TelemarketingManagerSoundController.shared.playSound1()
+        onSave()
     }
 }
