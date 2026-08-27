@@ -28,16 +28,11 @@ struct ProspectRowView: View {
                     .lineLimit(1)
             }
 
-            if !prospect.contactEmail.isEmpty {
-                Text("✉️ \(prospect.contactEmail)")
-                    .font(.subheadline)
-                    .foregroundColor(.blue)
-                    .lineLimit(1)
-            }
-
-            if !prospect.sortedKnocks.isEmpty {
-                KnockDotsView(knocks: prospect.sortedKnocks)
-            }
+            ProspectActivityMetricsView(
+                knockCount: prospect.sortedKnocks.count,
+                emailCount: prospect.emailsSent.count,
+                phoneCallCount: prospect.phoneCallCount
+            )
         }
         .padding(15)
         .frame(maxWidth: .infinity, minHeight: minRowHeight, alignment: .leading)
@@ -61,5 +56,35 @@ struct ProspectRowView: View {
             return "\(digits.prefix(3))-\(digits.dropFirst(3).prefix(3))-\(digits.suffix(4))"
         }
         return raw
+    }
+}
+
+private struct ProspectActivityMetricsView: View {
+    let knockCount: Int
+    let emailCount: Int
+    let phoneCallCount: Int
+
+    var body: some View {
+        HStack(spacing: 14) {
+            metric(systemImage: "door.left.hand.open", count: knockCount, color: .brown, label: "Knocks")
+            metric(systemImage: "envelope", count: emailCount, color: .blue, label: "Emails sent")
+            metric(systemImage: "phone", count: phoneCallCount, color: .green, label: "Calls made")
+        }
+        .font(.subheadline.weight(.semibold))
+        .foregroundColor(.secondary)
+        .padding(.top, 2)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(knockCount) knocks, \(emailCount) emails sent, \(phoneCallCount) calls made")
+    }
+
+    private func metric(systemImage: String, count: Int, color: Color, label: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: systemImage)
+                .foregroundColor(color)
+                .frame(width: 17)
+            Text("\(count)")
+                .monospacedDigit()
+        }
+        .accessibilityLabel("\(count) \(label)")
     }
 }

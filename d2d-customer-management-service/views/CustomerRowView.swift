@@ -27,13 +27,6 @@ struct CustomerRowView: View {
                     .lineLimit(1)
             }
 
-            if !customer.contactEmail.isEmpty {
-                Text("✉️ \(customer.contactEmail)")
-                    .font(.subheadline)
-                    .foregroundColor(.blue)
-                    .lineLimit(1)
-            }
-
             // Optional knock history dots for parity (if you want parity)
             if !customer.knockHistory.isEmpty {
                 KnockDotsView(knocks: customer.knockHistory)
