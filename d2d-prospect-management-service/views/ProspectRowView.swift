@@ -83,7 +83,7 @@ struct ProspectRowView: View {
                     showCallSheet = false
                 }
             )
-            .presentationDetents([.height(320)])
+            .presentationDetents([.height(420)])
             .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showAddPhoneSheet) {

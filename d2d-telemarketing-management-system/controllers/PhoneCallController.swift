@@ -63,14 +63,20 @@ final class PhoneCallController {
 
     // MARK: - Total Calls
     func totalCallsMade(for context: PhoneActionContext) -> Int {
+        callHistory(for: context).count
+    }
+
+    func callHistory(for context: PhoneActionContext) -> [PhoneCall] {
+        let calls: [PhoneCall]
+
         switch context.recipientType {
         case .prospect:
-            guard let prospect = fetchProspect(id: context.id) else { return 0 }
-            return prospect.phoneCalls.count
+            calls = fetchProspect(id: context.id)?.phoneCalls ?? []
         case .customer:
-            guard let customer = fetchCustomer(id: context.id) else { return 0 }
-            return customer.phoneCalls.count
+            calls = fetchCustomer(id: context.id)?.phoneCalls ?? []
         }
+
+        return calls.sorted { $0.date > $1.date }
     }
 
     // MARK: - Fetch Helpers
