@@ -14,40 +14,71 @@ struct CallActionBottomSheet: View {
     let onCancel: () -> Void
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            VStack(spacing: 16) {
-                Text("Call")
-                    .font(.headline)
+        VStack(spacing: 0) {
+            Capsule()
+                .fill(Color.secondary.opacity(0.35))
+                .frame(width: 38, height: 5)
+                .padding(.top, 8)
+                .padding(.bottom, 14)
 
-                Text(phone)
-                    .font(.title3)
-                    .fontWeight(.semibold)
+            HStack(alignment: .top, spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.blue.opacity(0.12))
+                    Image(systemName: "phone.fill")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.blue)
+                }
+                .frame(width: 46, height: 46)
 
-                HStack(spacing: 12) {
-                    Button(action: onCall) {
-                        Label("Call", systemImage: "phone.fill")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Ready to call")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
 
-                    Button(action: onEdit) {
-                        Label("Edit", systemImage: "pencil")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
+                    Text(phone)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
 
-                Spacer(minLength: 0)
-            }
-            .padding(.top, 32)
-            .padding(.horizontal)
-            .padding(.bottom, 12)
+                Spacer(minLength: 8)
 
-            Button(action: onCancel) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .bold))
+                Button(action: onCancel) {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 30, height: 30)
+                        .background(Color(.systemGray6), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Cancel")
             }
-            .padding(8)
+            .padding(.horizontal, 18)
+            .padding(.bottom, 18)
+
+            HStack(spacing: 10) {
+                Button(action: onEdit) {
+                    Label("Edit", systemImage: "pencil")
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                }
+                .buttonStyle(.bordered)
+                .tint(.blue)
+
+                Button(action: onCall) {
+                    Label("Call", systemImage: "phone.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.blue)
+            }
+            .padding(.horizontal, 18)
+            .padding(.bottom, 16)
         }
+        .background(Color(.systemBackground))
     }
 }

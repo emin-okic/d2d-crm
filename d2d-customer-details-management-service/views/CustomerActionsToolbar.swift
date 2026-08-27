@@ -100,7 +100,7 @@ struct CustomerActionsToolbar: View {
                     controller.showCallSheet = false
                 }
             )
-            .presentationDetents([.fraction(0.25)])
+            .presentationDetents([.height(420)])
             .presentationDragIndicator(.visible)
         }
 
@@ -128,7 +128,7 @@ struct CustomerActionsToolbar: View {
                     controller.showAddPhoneSheet = false
                 }
             )
-            .presentationDetents([.fraction(0.25)])
+            .presentationDetents([.height(320)])
             .presentationDragIndicator(.visible)
         }
         
