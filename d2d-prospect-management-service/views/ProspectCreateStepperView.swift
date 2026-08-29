@@ -24,8 +24,12 @@ struct ProspectCreateStepperView: View {
     @StateObject private var searchVM = SearchCompleterViewModel()
     @FocusState private var isAddressFocused: Bool
     @State private var phoneError: String?
+    @State private var selectedPresentationDetent: PresentationDetent = .fraction(0.5)
     
     @State private var emailError: String?
+
+    private static let compactPresentationDetent: PresentationDetent = .fraction(0.5)
+    private static let expandedAddressPresentationDetent: PresentationDetent = .fraction(0.58)
 
     var body: some View {
         VStack(spacing: 0) {
@@ -59,6 +63,23 @@ struct ProspectCreateStepperView: View {
             footerActions
                 .padding()
                 .background(.ultraThinMaterial)
+        }
+        .presentationDetents(
+            [
+                Self.compactPresentationDetent,
+                Self.expandedAddressPresentationDetent,
+                .large
+            ],
+            selection: $selectedPresentationDetent
+        )
+        .onChange(of: stepIndex) { _, _ in
+            updatePresentationDetent()
+        }
+        .onChange(of: isAddressFocused) { _, _ in
+            updatePresentationDetent()
+        }
+        .onChange(of: searchVM.results.count) { _, _ in
+            updatePresentationDetent()
         }
     }
 
@@ -111,41 +132,11 @@ struct ProspectCreateStepperView: View {
             }
 
             labeledField("Address") {
-                VStack(spacing: 6) {
-                    TextField("123 Main St", text: $address)
-                        .focused($isAddressFocused)
-                        .onChange(of: address) {
-                            searchVM.updateQuery(address)
-                        }
-
-                    if isAddressFocused && !searchVM.results.isEmpty {
-                        VStack(spacing: 0) {
-                            ForEach(searchVM.results.prefix(4), id: \.self) { result in
-                                Button {
-                                    handleAddressSelection(result)
-                                } label: {
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(result.title).fontWeight(.medium)
-                                        Text(result.subtitle)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    .padding(.vertical, 10)
-                                    .padding(.horizontal, 12)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                }
-                                .buttonStyle(.plain)
-
-                                Divider()
-                            }
-                        }
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(.systemBackground))
-                                .shadow(color: .black.opacity(0.1), radius: 6)
-                        )
-                    }
-                }
+                ContactAddressPredictiveTextField(
+                    address: $address,
+                    isFocused: $isAddressFocused,
+                    searchVM: searchVM
+                )
             }
         }
     }
@@ -229,7 +220,10 @@ struct ProspectCreateStepperView: View {
                     ContactScreenHapticsController.shared.lightTap()
                     ContactScreenSoundController.shared.playSound1()
                     
-                    stepIndex = 1
+                    Task {
+                        await acceptBestAddressPredictionIfAvailable()
+                        stepIndex = 1
+                    }
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(!canProceedStepOne)
@@ -261,13 +255,28 @@ struct ProspectCreateStepperView: View {
         phoneError == nil && validateEmail()
     }
 
-    private func handleAddressSelection(_ result: MKLocalSearchCompletion) {
-        Task {
-            if let resolved = await SearchBarController.resolveAddress(from: result) {
-                address = resolved
-                searchVM.results = []
-                isAddressFocused = false
-            }
+    private func acceptBestAddressPredictionIfAvailable() async {
+        guard isAddressFocused || !searchVM.results.isEmpty else { return }
+        guard let resolved = await ContactAddressPredictionController.resolvePrediction(
+            typedAddress: address,
+            completions: searchVM.results
+        ) else { return }
+
+        address = resolved
+        searchVM.clear()
+        isAddressFocused = false
+    }
+
+    private func updatePresentationDetent() {
+        let shouldExpand = stepIndex == 0 && isAddressFocused && !searchVM.results.isEmpty
+        let targetDetent = shouldExpand
+            ? Self.expandedAddressPresentationDetent
+            : Self.compactPresentationDetent
+
+        guard selectedPresentationDetent != targetDetent else { return }
+
+        withAnimation(.easeInOut(duration: 0.2)) {
+            selectedPresentationDetent = targetDetent
         }
     }
 

@@ -93,7 +93,7 @@ struct CustomerManagementView: View {
             } onCancel: {
                 showingAddCustomer = false
             }
-            .presentationDetents([.medium, .large])
+            .presentationDetents([.fraction(0.5), .fraction(0.58), .large])
         }
     }
 
