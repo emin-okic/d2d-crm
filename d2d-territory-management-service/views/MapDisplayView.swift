@@ -103,12 +103,12 @@ struct MapDisplayView: UIViewRepresentable {
             
         }
         
-        // Sync region
+        // Sync programmatic region changes through MapKit's camera interpolation.
         if abs(mapView.region.center.latitude - region.center.latitude) > 0.0001 ||
            abs(mapView.region.center.longitude - region.center.longitude) > 0.0001 ||
            abs(mapView.region.span.latitudeDelta - region.span.latitudeDelta) > 0.0001 ||
            abs(mapView.region.span.longitudeDelta - region.span.longitudeDelta) > 0.0001 {
-            mapView.setRegion(region, animated: false)
+            mapView.setRegion(region, animated: true)
         }
         // Sync annotations
         let existing = mapView.annotations.compactMap { $0 as? IdentifiableAnnotation }
