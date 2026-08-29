@@ -72,6 +72,7 @@ struct MapSearchView: View {
     
     @StateObject private var userLocationManager = UserLocationManager()
     @State private var previousRegionBeforeUserLocationJump: MKCoordinateRegion?
+    @State private var hasCenteredEmptyMapOnUserLocation = false
     
     @State private var selectedPlaceID: UUID? = nil
     @State private var isCustomizingMapScorecards = false
@@ -132,6 +133,10 @@ struct MapSearchView: View {
 
     private var shouldStartInitialPropertyTutorial: Bool {
         !hasCompletedInitialPropertyTutorial && prospects.isEmpty && customers.isEmpty
+    }
+
+    private var hasNoSavedContacts: Bool {
+        prospects.isEmpty && customers.isEmpty
     }
 
     private var filteredProspectsForMap: [Prospect] {
@@ -480,8 +485,14 @@ struct MapSearchView: View {
         
         // Modifier for markers
         .onReceive(NotificationCenter.default.publisher(for: .mapShouldRecenterAllMarkers)) { _ in
-            controller.recenterToFitAllMarkers()
-            
+            if hasNoSavedContacts {
+                centerEmptyMapOnUserLocationIfNeeded(force: true)
+            } else {
+                controller.recenterToFitAllMarkers()
+            }
+        }
+        .onReceive(userLocationManager.$location.compactMap { $0 }) { location in
+            centerEmptyMapOnUserLocationIfNeeded(location: location)
         }
         .onChange(of: searchText) { _, newValue in
             guard mapSearchMode == .property else { return }
@@ -503,14 +514,19 @@ struct MapSearchView: View {
         .onAppear {
             updateMarkers()
             prospectKnockingController = ProspectKnockActionController(modelContext: modelContext, controller: controller)
+            centerEmptyMapOnUserLocationIfNeeded()
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 if mapContactSelection == nil {
-                    NotificationCenter.default.post(name: .mapShouldRecenterAllMarkers, object: nil)
+                    if hasNoSavedContacts {
+                        centerEmptyMapOnUserLocationIfNeeded()
+                    } else {
+                        NotificationCenter.default.post(name: .mapShouldRecenterAllMarkers, object: nil)
+                    }
                 } else {
                     handleMapContactSelectionChange(mapContactSelection)
                 }
-                }
+            }
 
             startInitialPropertyTutorialIfNeeded()
             
@@ -659,7 +675,7 @@ struct MapSearchView: View {
         guard let location = userLocationManager.location else { return }
 
         previousRegionBeforeUserLocationJump = controller.region
-        controller.region.center = location.coordinate
+        controller.centerMapOnUserLocation(location.coordinate)
     }
 
     private func revertToPreviousRegion() {
@@ -987,6 +1003,23 @@ struct MapSearchView: View {
     // For updating the markers
     private func updateMarkers() {
         controller.setMarkers(prospects: filteredProspectsForMap, customers: filteredCustomersForMap)
+
+        if hasNoSavedContacts {
+            centerEmptyMapOnUserLocationIfNeeded()
+        } else {
+            hasCenteredEmptyMapOnUserLocation = false
+        }
+    }
+
+    private func centerEmptyMapOnUserLocationIfNeeded(location: CLLocation? = nil, force: Bool = false) {
+        guard hasNoSavedContacts else { return }
+        guard force || !hasCenteredEmptyMapOnUserLocation else { return }
+
+        let currentLocation = location ?? userLocationManager.location
+        guard let currentLocation else { return }
+
+        hasCenteredEmptyMapOnUserLocation = true
+        controller.centerMapOnUserLocation(currentLocation.coordinate)
     }
 
     private func clearContactFilter() {

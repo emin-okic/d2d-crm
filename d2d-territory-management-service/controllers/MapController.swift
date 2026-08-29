@@ -131,8 +131,57 @@ class MapController: ObservableObject {
     }
     
     func recenterToFitAllMarkers() {
-            updateRegionToFitAllMarkers()
+        updateRegionToFitAllMarkers()
+    }
+
+    func centerMapOnUserLocation(_ coordinate: CLLocationCoordinate2D, animated: Bool = true) {
+        let targetRegion = MKCoordinateRegion(
+            center: coordinate,
+            latitudinalMeters: 650,
+            longitudinalMeters: 650
+        )
+
+        guard animated, let mapView = MapDisplayView.cachedMapView else {
+            region = targetRegion
+            return
         }
+
+        let currentLocation = CLLocation(
+            latitude: mapView.region.center.latitude,
+            longitude: mapView.region.center.longitude
+        )
+        let targetLocation = CLLocation(
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude
+        )
+        let distance = currentLocation.distance(from: targetLocation)
+        let currentSpan = max(mapView.region.span.latitudeDelta, mapView.region.span.longitudeDelta)
+        let targetSpan = max(targetRegion.span.latitudeDelta, targetRegion.span.longitudeDelta)
+
+        guard distance > 80 || abs(currentSpan - targetSpan) > 0.002 else {
+            region = targetRegion
+            return
+        }
+
+        let midpoint = CLLocationCoordinate2D(
+            latitude: (mapView.region.center.latitude + coordinate.latitude) / 2,
+            longitude: (mapView.region.center.longitude + coordinate.longitude) / 2
+        )
+        let overviewDistance = min(max(distance * 1.35, 2_400), 120_000)
+        let overviewRegion = MKCoordinateRegion(
+            center: midpoint,
+            latitudinalMeters: overviewDistance,
+            longitudinalMeters: overviewDistance
+        )
+
+        mapView.setRegion(overviewRegion, animated: true)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) { [weak self, weak mapView] in
+            guard let self else { return }
+            mapView?.setRegion(targetRegion, animated: true)
+            self.region = targetRegion
+        }
+    }
     
     /// Updates the `region` property to fit all current markers on the map.
     private func updateRegionToFitAllMarkers() {
