@@ -12,6 +12,7 @@ struct ProspectsSectionView: View {
     @Environment(\.modelContext) private var modelContext
     
     @Query private var allProspects: [Prospect]
+    @Query private var allCustomers: [Customer]
 
     @Binding var selectedList: String
     @Binding var selectedProspect: Prospect?
@@ -26,16 +27,30 @@ struct ProspectsSectionView: View {
 
     private let rowHeight: CGFloat = 88
 
+    private var rankingController: ProspectRankingController {
+        ProspectRankingController(customers: allCustomers)
+    }
+
+    private var shouldShowRankingToolbar: Bool {
+        selectedList == "Prospects" && rankingController.hasCustomerSignals
+    }
+
     private var filtered: [Prospect] {
         let base = allProspects
             .filter { $0.list == selectedList }
 
-        guard let filter = activeSearchFilter, !filter.isEmpty else {
-            return base.sorted { $0.orderIndex < $1.orderIndex }
+        let visibleProspects: [Prospect]
+        if let filter = activeSearchFilter, !filter.isEmpty {
+            visibleProspects = base.filter { $0.matches(filter) }
+        } else {
+            visibleProspects = base
         }
 
-        return base.filter { $0.matches(filter) }
-            .sorted { $0.fullName.localizedCaseInsensitiveCompare($1.fullName) == .orderedAscending }
+        guard selectedList == "Prospects" else {
+            return visibleProspects.sorted { $0.orderIndex < $1.orderIndex }
+        }
+
+        return rankingController.rankedProspects(visibleProspects)
     }
     
     @State private var draggingProspectID: PersistentIdentifier?
@@ -127,6 +142,11 @@ struct ProspectsSectionView: View {
                     .listRowInsets(EdgeInsets()) // optional, to control spacing like LazyVStack
                 }
                 .listStyle(.plain)
+                .safeAreaInset(edge: .top, spacing: 0) {
+                    if shouldShowRankingToolbar {
+                        rankingToolbar
+                    }
+                }
             } else {
                 // Empty state — “No matches” if searching, otherwise “No Prospects/Customers”
                 Text(activeSearchFilter == nil
@@ -186,6 +206,41 @@ struct ProspectsSectionView: View {
         }
     }
     
+    private var rankingToolbar: some View {
+        HStack(spacing: 8) {
+            Label("Ranked by close fit", systemImage: "chart.line.uptrend.xyaxis")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
+            Spacer(minLength: 8)
+
+            Button(action: syncRankedOrder) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.blue)
+                    .frame(width: 28, height: 28)
+                    .background(Color.blue.opacity(0.09), in: Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Sync prospect ranking")
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color(.systemGray6))
+    }
+
+    private func syncRankedOrder() {
+        ContactScreenHapticsController.shared.lightTap()
+        ContactScreenSoundController.shared.playSound1()
+
+        for (index, prospect) in filtered.enumerated() {
+            prospect.orderIndex = index
+        }
+
+        try? modelContext.save()
+    }
+
     private func moveProspects(from source: IndexSet, to destination: Int) {
         var reordered = filtered
         reordered.move(fromOffsets: source, toOffset: destination)
