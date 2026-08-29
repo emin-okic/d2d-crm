@@ -14,6 +14,7 @@ import MapKit
 class ContactManagerController: ObservableObject {
     
     @Published var suggestedProspect: Prospect?
+    @Published var suggestedNeighborSourceAddress: String?
     
     private var suggestionSourceIndex = 0
     
@@ -23,11 +24,13 @@ class ContactManagerController: ObservableObject {
     func fetchNextSuggestedNeighbor(from customers: [Customer], existingProspects: [Prospect]) async {
         guard !customers.isEmpty else {
             suggestedProspect = nil
+            suggestedNeighborSourceAddress = nil
             return
         }
 
         var attemptIndex = suggestionSourceIndex
         var found: Prospect?
+        var sourceAddress: String?
 
         for _ in 0..<customers.count {
             guard !customers.isEmpty else { break }
@@ -60,6 +63,7 @@ class ContactManagerController: ObservableObject {
 
             if let valid = result {
                 found = valid
+                sourceAddress = customer.address
                 suggestionSourceIndex = (safeIndex + 1) % customers.count
                 break
             }
@@ -68,6 +72,7 @@ class ContactManagerController: ObservableObject {
         }
 
         suggestedProspect = found
+        suggestedNeighborSourceAddress = sourceAddress
     }
     
     /// Attempts to geocode a customer address and suggests a neighbor not already in existingProspects.

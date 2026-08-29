@@ -294,6 +294,7 @@ struct ContactManagementView: View {
                 selectedSearchField: $selectedSearchField,
                 activeSearchFilter: $activeSearchFilter,
                 suggestedProspect: $controller.suggestedProspect,
+                suggestedNeighborSourceAddress: $controller.suggestedNeighborSourceAddress,
                 selectedList: $selectedList,
                 onSave: onSave,
                 selectedProspect: $selectedProspect,
