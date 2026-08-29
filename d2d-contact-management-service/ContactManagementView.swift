@@ -171,7 +171,7 @@ struct ContactManagementView: View {
             .onChange(of: selectedList) { _, newValue in
                 if newValue == "Prospects" {
                     Task {
-                        await controller.fetchNextSuggestedNeighbor(
+                        await controller.handleProspectListNavigation(
                             from: customers,
                             existingProspects: prospects
                         )
@@ -294,6 +294,7 @@ struct ContactManagementView: View {
                 selectedSearchField: $selectedSearchField,
                 activeSearchFilter: $activeSearchFilter,
                 suggestedProspect: $controller.suggestedProspect,
+                suggestedNeighborSourceAddress: $controller.suggestedNeighborSourceAddress,
                 selectedList: $selectedList,
                 onSave: onSave,
                 selectedProspect: $selectedProspect,
@@ -302,7 +303,9 @@ struct ContactManagementView: View {
                 selectedProspects: $selectedProspects,
                 onClearSearchFilter: clearSearchFilter,
                 onNavigateToMap: onNavigateToMap,
-                onProspectOpenRequested: handleTutorialProspectOpenRequested
+                onProspectOpenRequested: handleTutorialProspectOpenRequested,
+                onSuggestionReview: controller.recordSuggestedNeighborReview,
+                onSuggestionRejected: controller.recordSuggestedNeighborRejection
             )
         } else {
             CustomerManagementView(

@@ -14,20 +14,48 @@ import MapKit
 class ContactManagerController: ObservableObject {
     
     @Published var suggestedProspect: Prospect?
+    @Published var suggestedNeighborSourceAddress: String?
     
     private var suggestionSourceIndex = 0
+    private var suggestedNeighborRejectionStreak = 0
+    private var prospectNavigationsUntilNextSuggestion = 0
     
     var geocodeNeighborClosure: ((_ address: String, _ existingProspects: [Prospect], _ completion: @escaping (String?, CLLocationCoordinate2D?) -> Void) -> Void)?
+
+    func handleProspectListNavigation(from customers: [Customer], existingProspects: [Prospect]) async {
+        guard prospectNavigationsUntilNextSuggestion == 0 else {
+            prospectNavigationsUntilNextSuggestion -= 1
+            suggestedProspect = nil
+            suggestedNeighborSourceAddress = nil
+            return
+        }
+
+        await fetchNextSuggestedNeighbor(from: customers, existingProspects: existingProspects)
+    }
+
+    func recordSuggestedNeighborReview() {
+        suggestedNeighborRejectionStreak = 0
+        prospectNavigationsUntilNextSuggestion = 0
+    }
+
+    func recordSuggestedNeighborRejection() {
+        suggestedNeighborRejectionStreak += 1
+        prospectNavigationsUntilNextSuggestion = fibonacciDelay(for: suggestedNeighborRejectionStreak)
+        suggestedProspect = nil
+        suggestedNeighborSourceAddress = nil
+    }
     
     // 🔑 Now uses customers directly
     func fetchNextSuggestedNeighbor(from customers: [Customer], existingProspects: [Prospect]) async {
         guard !customers.isEmpty else {
             suggestedProspect = nil
+            suggestedNeighborSourceAddress = nil
             return
         }
 
         var attemptIndex = suggestionSourceIndex
         var found: Prospect?
+        var sourceAddress: String?
 
         for _ in 0..<customers.count {
             guard !customers.isEmpty else { break }
@@ -60,6 +88,7 @@ class ContactManagerController: ObservableObject {
 
             if let valid = result {
                 found = valid
+                sourceAddress = customer.address
                 suggestionSourceIndex = (safeIndex + 1) % customers.count
                 break
             }
@@ -68,6 +97,7 @@ class ContactManagerController: ObservableObject {
         }
 
         suggestedProspect = found
+        suggestedNeighborSourceAddress = sourceAddress
     }
     
     /// Attempts to geocode a customer address and suggests a neighbor not already in existingProspects.
@@ -114,6 +144,21 @@ class ContactManagerController: ObservableObject {
         }
 
         tryOffset(1)
+    }
+
+    private func fibonacciDelay(for rejectionStreak: Int) -> Int {
+        guard rejectionStreak > 1 else { return 1 }
+
+        var previous = 1
+        var current = 1
+
+        for _ in 2...rejectionStreak {
+            let next = previous + current
+            previous = current
+            current = next
+        }
+
+        return current
     }
     
 }
