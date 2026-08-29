@@ -43,7 +43,7 @@ struct CustomerManagementView: View {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             
             // 🔍 NEW — centered filter pill
             CustomerFilterRow(
@@ -79,7 +79,7 @@ struct CustomerManagementView: View {
                 onCustomerOpenRequested: onCustomerOpenRequested
             )
                 .padding(.horizontal, 20)
-                .padding(.vertical, 10)
+                .padding(.vertical, 4)
         }
         // ✅ Stepper sheet for creating customers
         .sheet(isPresented: $showingAddCustomer) {

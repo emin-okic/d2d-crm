@@ -12,12 +12,15 @@ struct ProspectsSectionView: View {
     @Environment(\.modelContext) private var modelContext
     
     @Query private var allProspects: [Prospect]
+    @Query private var allCustomers: [Customer]
 
     @Binding var selectedList: String
     @Binding var selectedProspect: Prospect?
     
     @State private var showDeleteConfirmation: Bool = false
     @State private var prospectToDelete: Prospect?
+    @State private var isRankingApplied = false
+    @State private var trackedProspectIDs: Set<PersistentIdentifier> = []
 
     // From parent
     let containerHeight: CGFloat
@@ -26,16 +29,37 @@ struct ProspectsSectionView: View {
 
     private let rowHeight: CGFloat = 88
 
-    private var filtered: [Prospect] {
+    private var rankingController: ProspectRankingController {
+        ProspectRankingController(customers: allCustomers)
+    }
+
+    private var shouldShowRankingToolbar: Bool {
+        selectedList == "Prospects" && rankingController.hasCustomerSignals
+    }
+
+    private var prospectIdentitySnapshot: Set<PersistentIdentifier> {
+        Set(allProspects
+            .filter { $0.list == "Prospects" }
+            .map { $0.persistentModelID })
+    }
+
+    private var visibleProspects: [Prospect] {
         let base = allProspects
             .filter { $0.list == selectedList }
 
         guard let filter = activeSearchFilter, !filter.isEmpty else {
-            return base.sorted { $0.orderIndex < $1.orderIndex }
+            return base
         }
 
         return base.filter { $0.matches(filter) }
-            .sorted { $0.fullName.localizedCaseInsensitiveCompare($1.fullName) == .orderedAscending }
+    }
+
+    private var filtered: [Prospect] {
+        if selectedList == "Prospects", isRankingApplied {
+            return rankingController.rankedProspects(visibleProspects)
+        }
+
+        return visibleProspects.sorted { $0.orderIndex < $1.orderIndex }
     }
     
     @State private var draggingProspectID: PersistentIdentifier?
@@ -127,6 +151,11 @@ struct ProspectsSectionView: View {
                     .listRowInsets(EdgeInsets()) // optional, to control spacing like LazyVStack
                 }
                 .listStyle(.plain)
+                .safeAreaInset(edge: .top, spacing: 0) {
+                    if shouldShowRankingToolbar {
+                        rankingToolbar
+                    }
+                }
             } else {
                 // Empty state — “No matches” if searching, otherwise “No Prospects/Customers”
                 Text(activeSearchFilter == nil
@@ -168,6 +197,16 @@ struct ProspectsSectionView: View {
         .onChange(of: selectedProspect) { _, newValue in
             guard newValue != nil else { return }
         }
+        .onAppear {
+            trackedProspectIDs = prospectIdentitySnapshot
+        }
+        .onChange(of: prospectIdentitySnapshot) { oldValue, newValue in
+            if !trackedProspectIDs.isEmpty, oldValue != newValue {
+                isRankingApplied = false
+            }
+
+            trackedProspectIDs = newValue
+        }
     }
     
     private func toggleSelection(_ prospect: Prospect) {
@@ -186,6 +225,56 @@ struct ProspectsSectionView: View {
         }
     }
     
+    private var rankingToolbar: some View {
+        HStack(spacing: 8) {
+            if isRankingApplied {
+                Label("Ranked by close fit", systemImage: "chart.line.uptrend.xyaxis")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+
+                Spacer(minLength: 8)
+            }
+
+            Button(action: applyRankedOrder) {
+                Label(
+                    isRankingApplied ? "Resort" : "Sort by Close Fit",
+                    systemImage: isRankingApplied ? "arrow.triangle.2.circlepath" : "arrow.up.arrow.down.circle"
+                )
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.blue)
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+                .padding(.horizontal, 10)
+                .frame(height: 30)
+                .background(Color.blue.opacity(0.09), in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isRankingApplied ? "Refresh prospect close-fit ranking" : "Sort prospects by close fit")
+
+            if !isRankingApplied {
+                Spacer(minLength: 0)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color(.systemGray6))
+    }
+
+    private func applyRankedOrder() {
+        ContactScreenHapticsController.shared.lightTap()
+        ContactScreenSoundController.shared.playSound1()
+
+        let rankedProspects = rankingController.rankedProspects(visibleProspects)
+        for (index, prospect) in rankedProspects.enumerated() {
+            prospect.orderIndex = index
+        }
+
+        isRankingApplied = true
+        trackedProspectIDs = prospectIdentitySnapshot
+        try? modelContext.save()
+    }
+
     private func moveProspects(from source: IndexSet, to destination: Int) {
         var reordered = filtered
         reordered.move(fromOffsets: source, toOffset: destination)
@@ -194,6 +283,7 @@ struct ProspectsSectionView: View {
             prospect.orderIndex = index
         }
 
+        isRankingApplied = false
         try? modelContext.save()
         
         draggingProspectID = nil

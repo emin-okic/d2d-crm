@@ -10,36 +10,54 @@ import SwiftData
 struct ToggleChipsView: View {
     @Binding var selectedList: String
 
+    private let options = ["Prospects", "Customers"]
+
     var body: some View {
-        HStack(spacing: 10) {
-            chip("Prospects")
-            chip("Customers")
+        HStack(spacing: 4) {
+            ForEach(options, id: \.self) { option in
+                chip(option)
+            }
         }
+        .padding(4)
+        .background(
+            Capsule()
+                .fill(Color(.tertiarySystemGroupedBackground))
+                .overlay(
+                    Capsule()
+                        .stroke(Color(.separator).opacity(0.35), lineWidth: 1)
+                )
+        )
         .padding(.horizontal, 20)
     }
 
     private func chip(_ title: String) -> some View {
-        
-        Button {
-            
-            // ✅ Haptics & Sound when selecting a pill
+        let isSelected = selectedList == title
+
+        return Button {
             ContactScreenHapticsController.shared.lightTap()
             ContactScreenSoundController.shared.playSound1()
-            
+
             selectedList = title
         } label: {
-            Text(title)
-                .font(.callout)
-                .fontWeight(.semibold)
-                .padding(.vertical, 7)
-                .padding(.horizontal, 14)
-                .frame(minWidth: 110)
+            Label(title, systemImage: iconName(for: title))
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(isSelected ? Color.primary : Color.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+                .frame(maxWidth: .infinity)
+                .frame(height: 32)
+                .padding(.horizontal, 10)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(selectedList == title ? Color.blue : Color(.secondarySystemBackground))
+                    Capsule()
+                        .fill(isSelected ? Color(.systemBackground) : Color.clear)
+                        .shadow(color: isSelected ? Color.black.opacity(0.08) : .clear, radius: 5, y: 2)
                 )
-                .foregroundColor(selectedList == title ? .white : .primary)
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+
+    private func iconName(for title: String) -> String {
+        title == "Prospects" ? "person.crop.circle.badge.plus" : "person.crop.circle.fill"
     }
 }

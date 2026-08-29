@@ -21,7 +21,7 @@ struct ProspectContainerView: View {
 
     var body: some View {
         GeometryReader { geo in
-            let targetHeight = geo.size.height * 0.90
+            let targetHeight = geo.size.height * 0.94
 
             ZStack {
                 RoundedRectangle(cornerRadius: 16)
@@ -38,7 +38,7 @@ struct ProspectContainerView: View {
                     onNavigateToMap: onNavigateToMap,
                     onProspectOpenRequested: onProspectOpenRequested
                 )
-                .padding()
+                .padding(10)
             }
             .frame(height: targetHeight, alignment: .top)
             .frame(maxWidth: .infinity)
