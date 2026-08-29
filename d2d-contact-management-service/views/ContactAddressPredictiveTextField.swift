@@ -21,8 +21,9 @@ struct ContactAddressPredictiveTextField: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            TextField(placeholder, text: $address)
+            TextField(placeholder, text: $address, axis: .vertical)
                 .focused($isFocused)
+                .lineLimit(1...3)
                 .textInputAutocapitalization(.words)
                 .autocorrectionDisabled()
                 .onChange(of: address) { _, newValue in
@@ -33,22 +34,23 @@ struct ContactAddressPredictiveTextField: View {
                 Button {
                     acceptPrediction(prediction)
                 } label: {
-                    HStack(spacing: 8) {
+                    HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "arrow.up.left.and.arrow.down.right")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.tint)
                             .frame(width: 18, height: 18)
+                            .padding(.top, 1)
 
                         VStack(alignment: .leading, spacing: 1) {
                             Text(prediction.title)
                                 .font(.subheadline.weight(.medium))
-                                .lineLimit(1)
+                                .lineLimit(2)
 
                             if !prediction.subtitle.isEmpty {
                                 Text(prediction.subtitle)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
-                                    .lineLimit(1)
+                                    .lineLimit(2)
                             }
                         }
 
@@ -57,6 +59,7 @@ struct ContactAddressPredictiveTextField: View {
                         Image(systemName: "return")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
+                            .padding(.top, 2)
                     }
                     .padding(.vertical, 8)
                     .padding(.horizontal, 10)
