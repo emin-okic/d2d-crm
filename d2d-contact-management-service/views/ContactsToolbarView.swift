@@ -13,37 +13,96 @@ struct ContactsToolbarView: View {
     @Binding var isDeleting: Bool
     var selectedCount: Int
     var onDeleteConfirmed: () -> Void
+    let isExportUnlocked: Bool
+    var onExportTapped: () -> Void
 
     var body: some View {
-        ZStack {
-            // Positioning container (fills screen)
-            VStack {
-                Spacer()
+        ContactScreenToolbarLiquidGlass {
+            ContactToolbarButtons(
+                onAddTapped: onAddTapped,
+                isDeleting: $isDeleting,
+                selectedCount: selectedCount,
+                onDeleteConfirmed: onDeleteConfirmed,
+                isExportUnlocked: isExportUnlocked,
+                onExportTapped: onExportTapped
+            )
+        }
+        .accessibilityElement(children: .contain)
+    }
+}
 
-                HStack {
-                    // 🔹 Liquid glass only wraps the buttons
-                    ContactScreenToolbarLiquidGlass {
-                        VStack(spacing: 10) {
+private struct ContactToolbarButtons: View {
+    var onAddTapped: () -> Void
+    @Binding var isDeleting: Bool
+    var selectedCount: Int
+    var onDeleteConfirmed: () -> Void
+    let isExportUnlocked: Bool
+    var onExportTapped: () -> Void
 
-                            CreateContactButton(action: onAddTapped)
-                            
-                            
-                            DeleteContactButton(
-                                isDeleting: $isDeleting,
-                                selectedCount: selectedCount,
-                                onDeleteConfirmed: onDeleteConfirmed
-                            )
+    var body: some View {
+        HStack(spacing: 10) {
+            CreateContactButton(action: onAddTapped)
 
-                        }
-                    }
+            DeleteContactButton(
+                isDeleting: $isDeleting,
+                selectedCount: selectedCount,
+                onDeleteConfirmed: onDeleteConfirmed
+            )
 
-                    Spacer()
+            ExportCSVButton(isUnlocked: isExportUnlocked, onTap: onExportTapped)
+        }
+    }
+}
+
+struct ContactListCommandRow: View {
+    @Binding var selectedList: String
+    @Binding var isDeleting: Bool
+    let selectedDeleteCount: Int
+    var onAddTapped: () -> Void
+    var onDeleteConfirmed: () -> Void
+    let isExportUnlocked: Bool
+    var onExportTapped: () -> Void
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            commandShelf {
+                HStack(alignment: .center, spacing: 12) {
+                    ToggleChipsView(selectedList: $selectedList, horizontalPadding: 0)
+
+                    Divider()
+                        .frame(height: 34)
+
+                    toolbarButtons
                 }
-                .padding(.leading, 20)
-                .padding(.bottom, 16)
+            }
+
+            commandShelf {
+                VStack(spacing: 10) {
+                    ToggleChipsView(selectedList: $selectedList, horizontalPadding: 0)
+
+                    Divider()
+
+                    toolbarButtons
+                }
             }
         }
-        .allowsHitTesting(true)
-        .zIndex(998)
+        .padding(.horizontal, 20)
+    }
+
+    private var toolbarButtons: some View {
+        ContactToolbarButtons(
+            onAddTapped: onAddTapped,
+            isDeleting: $isDeleting,
+            selectedCount: selectedDeleteCount,
+            onDeleteConfirmed: onDeleteConfirmed,
+            isExportUnlocked: isExportUnlocked,
+            onExportTapped: onExportTapped
+        )
+    }
+
+    private func commandShelf<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        ContactScreenToolbarLiquidGlass {
+            content()
+        }
     }
 }

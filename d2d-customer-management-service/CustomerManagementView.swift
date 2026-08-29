@@ -34,6 +34,11 @@ struct CustomerManagementView: View {
     @Binding var isDeleting: Bool
     @Binding var selectedCustomers: Set<Customer>
     var onClearSearchFilter: () -> Void
+    var onAddTapped: () -> Void
+    var selectedDeleteCount: Int
+    var onDeleteConfirmed: () -> Void
+    var isExportUnlocked: Bool
+    var onExportTapped: () -> Void
     var onNavigateToMap: (MapContactSelection) -> Void = { _ in }
     var onCustomerOpenRequested: (Customer) -> Bool = { _ in false }
 
@@ -67,7 +72,15 @@ struct CustomerManagementView: View {
             
             // ✅ Header + chips stay
             CustomerHeaderView(totalCustomers: totalCustomers)
-            ToggleChipsView(selectedList: $selectedList)
+            ContactListCommandRow(
+                selectedList: $selectedList,
+                isDeleting: $isDeleting,
+                selectedDeleteCount: selectedDeleteCount,
+                onAddTapped: onAddTapped,
+                onDeleteConfirmed: onDeleteConfirmed,
+                isExportUnlocked: isExportUnlocked,
+                onExportTapped: onExportTapped
+            )
 
             // ✅ Section now wrapped in container for consistent style
             CustomerContainerView(

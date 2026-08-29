@@ -33,6 +33,11 @@ struct ProspectManagementView: View {
     @Binding var isDeleting: Bool
     @Binding var selectedProspects: Set<Prospect>
     var onClearSearchFilter: () -> Void
+    var onAddTapped: () -> Void
+    var selectedDeleteCount: Int
+    var onDeleteConfirmed: () -> Void
+    var isExportUnlocked: Bool
+    var onExportTapped: () -> Void
     var onNavigateToMap: (MapContactSelection) -> Void = { _ in }
     var onProspectOpenRequested: (Prospect) -> Bool = { _ in false }
 
@@ -66,8 +71,15 @@ struct ProspectManagementView: View {
             
             ProspectHeaderView(totalProspects: totalProspects)
 
-            // Toggle chips under header (uses shared binding now)
-            ToggleChipsView(selectedList: $selectedList)
+            ContactListCommandRow(
+                selectedList: $selectedList,
+                isDeleting: $isDeleting,
+                selectedDeleteCount: selectedDeleteCount,
+                onAddTapped: onAddTapped,
+                onDeleteConfirmed: onDeleteConfirmed,
+                isExportUnlocked: isExportUnlocked,
+                onExportTapped: onExportTapped
+            )
 
             ProspectContainerView(
                 selectedList: $selectedList,

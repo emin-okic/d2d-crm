@@ -21,9 +21,9 @@ struct ExportCSVButton: View {
                 Image(systemName: "square.and.arrow.up")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 30, height: 30)
+                    .frame(width: 24, height: 24)
                     .foregroundStyle(.white)
-                    .padding(15)
+                    .frame(width: 50, height: 50)
                     .background(
                         LinearGradient(
                             colors: isUnlocked
@@ -33,7 +33,7 @@ struct ExportCSVButton: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                    .cornerRadius(16)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
                     .scaleEffect(isPressed ? 0.95 : 1.0)
                     .opacity(isUnlocked ? 1.0 : 0.85)

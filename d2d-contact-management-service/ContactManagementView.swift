@@ -95,28 +95,9 @@ struct ContactManagementView: View {
             ZStack {
                 
                 managementContent
-
-                // Toolbar
-                ContactsToolbarView(
-                    onAddTapped: {
-                        if selectedList == "Prospects" {
-                            withAnimation(.spring()) {
-                                showingImportFromContacts = true
-                            }
-                        } else {
-                            showingAddCustomer = true
-                        }
-                    },
-                    isDeleting: $isDeletingContacts,
-                    selectedCount: selectedDeleteCount,
-                    onDeleteConfirmed: {
-                        showDeleteContactsConfirm = true
-                    }
-                )
                 
             }
             .navigationTitle("")
-            .overlay(exportOverlay)
             .overlay(importOverlay)
             .overlay(toastOverlay)
             .overlay(tutorialRewardOverlay)
@@ -194,25 +175,11 @@ struct ContactManagementView: View {
         }
     }
     
-    @ViewBuilder
-    private var exportOverlay: some View {
-        GeometryReader { geo in
-            ExportCSVButton(isUnlocked: emailGate.isUnlocked) {
-                if emailGate.isUnlocked {
-                    ContactScreenHapticsController.shared.successConfirmationTap()
-                    ContactScreenSoundController.shared.playSound1()
-                    performExport()
-                } else {
-                    ContactScreenHapticsController.shared.successConfirmationTap()
-                    ContactScreenSoundController.shared.playSound1()
-                    activeSheet = .emailGate
-                }
-            }
-            .position(
-                x: geo.size.width - 45,
-                y: geo.size.height - 55
-            )
-            .zIndex(999)
+    private func handleExportTapped() {
+        if emailGate.isUnlocked {
+            performExport()
+        } else {
+            activeSheet = .emailGate
         }
     }
 
@@ -301,6 +268,13 @@ struct ContactManagementView: View {
                 isDeleting: $isDeletingContacts,
                 selectedProspects: $selectedProspects,
                 onClearSearchFilter: clearSearchFilter,
+                onAddTapped: showAddContact,
+                selectedDeleteCount: selectedDeleteCount,
+                onDeleteConfirmed: {
+                    showDeleteContactsConfirm = true
+                },
+                isExportUnlocked: emailGate.isUnlocked,
+                onExportTapped: handleExportTapped,
                 onNavigateToMap: onNavigateToMap,
                 onProspectOpenRequested: handleTutorialProspectOpenRequested
             )
@@ -317,6 +291,13 @@ struct ContactManagementView: View {
                 isDeleting: $isDeletingContacts,
                 selectedCustomers: $selectedCustomers,
                 onClearSearchFilter: clearSearchFilter,
+                onAddTapped: showAddContact,
+                selectedDeleteCount: selectedDeleteCount,
+                onDeleteConfirmed: {
+                    showDeleteContactsConfirm = true
+                },
+                isExportUnlocked: emailGate.isUnlocked,
+                onExportTapped: handleExportTapped,
                 onNavigateToMap: onNavigateToMap,
                 onCustomerOpenRequested: handleTutorialCustomerOpenRequested
             )
@@ -326,6 +307,16 @@ struct ContactManagementView: View {
     private func clearSearchFilter() {
         searchText = ""
         activeSearchFilter = nil
+    }
+
+    private func showAddContact() {
+        if selectedList == "Prospects" {
+            withAnimation(.spring()) {
+                showingImportFromContacts = true
+            }
+        } else {
+            showingAddCustomer = true
+        }
     }
 
     private func startContactTutorialIfNeeded() {

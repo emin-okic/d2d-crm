@@ -18,12 +18,12 @@ struct ContactScreenToolbarLiquidGlass<Content: View>: View {
         VStack(spacing: 12) {
             content
         }
-        .padding(12)
+        .padding(8)
         .background(
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(.ultraThinMaterial)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .stroke(Color.white.opacity(0.18), lineWidth: 1)
                 )
         )

@@ -50,7 +50,8 @@ struct DeleteContactButton: View {
                 .foregroundColor(.white)
                 .frame(width: 50, height: 50)
                 .background(
-                    Circle().fill(isDeleting ? Color.red : Color.blue)
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(isDeleting ? Color.red : Color.blue)
                 )
                 .scaleEffect(isDeleting ? (trashPulse ? 1.06 : 1.0) : 1.0)
                 .rotationEffect(.degrees(isDeleting ? (trashPulse ? 2 : -2) : 0))

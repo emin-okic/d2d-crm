@@ -26,7 +26,10 @@ struct CreateContactButton: View {
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.white)
                 .frame(width: 50, height: 50)
-                .background(Circle().fill(Color.blue))
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.blue)
+                )
                 .shadow(radius: 4)
 
         }
