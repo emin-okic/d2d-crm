@@ -43,7 +43,7 @@ struct ProspectManagementView: View {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             
             ProspectFilterRow(
                 searchText: $searchText,
@@ -79,7 +79,7 @@ struct ProspectManagementView: View {
                 onProspectOpenRequested: onProspectOpenRequested
             )
             .padding(.horizontal, 20)
-            .padding(.vertical, 10)
+            .padding(.vertical, 4)
         }
         .sheet(item: $suggestedProspect) { suggestion in
             SuggestedProspectSheetView(
