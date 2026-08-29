@@ -8,6 +8,7 @@
 
 import SwiftUI
 import SwiftData
+import Contacts
 import ContactsUI
 import CoreLocation
 import MapKit
@@ -374,17 +375,20 @@ struct ImportOverlayView: View {
     }
 
     private func saveProspect(_ draft: ProspectDraft) {
-        let prospect = Prospect(
-            fullName: draft.fullName,
-            address: draft.address,
-            list: "Prospects"
-        )
-
-        prospect.contactPhone = draft.phone
-        prospect.contactEmail = draft.email
-
         Task { @MainActor in
-            if let coordinate = await coordinate(for: draft.address) {
+            let resolvedAddress = await resolvedAddress(for: draft.address)
+                ?? ImportedContactAddressFormatter.normalizedSingleLine(draft.address)
+
+            let prospect = Prospect(
+                fullName: draft.fullName,
+                address: resolvedAddress,
+                list: "Prospects"
+            )
+
+            prospect.contactPhone = draft.phone
+            prospect.contactEmail = draft.email
+
+            if let coordinate = await coordinate(for: resolvedAddress) {
                 prospect.latitude = coordinate.latitude
                 prospect.longitude = coordinate.longitude
             }
@@ -392,6 +396,36 @@ struct ImportOverlayView: View {
             modelContext.insert(prospect)
             try? modelContext.save()
             onSave()
+        }
+    }
+
+    private func resolvedAddress(for addressString: String) async -> String? {
+        let trimmed = addressString.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty && trimmed != "No Address" else { return nil }
+
+        if #available(iOS 26.0, *) {
+            guard let request = MKGeocodingRequest(addressString: trimmed) else { return nil }
+
+            do {
+                let mapItems = try await request.mapItems
+                guard let mapItem = mapItems.first else { return nil }
+                return ImportedContactAddressFormatter.singleLineAddress(for: mapItem, fallback: trimmed)
+            } catch {
+                return nil
+            }
+        } else {
+            do {
+                let placemarks = try await CLGeocoder().geocodeAddressString(trimmed)
+                guard let placemark = placemarks.first else { return nil }
+
+                if let postalAddress = placemark.postalAddress {
+                    return ImportedContactAddressFormatter.singleLineAddress(from: postalAddress)
+                }
+
+                return ImportedContactAddressFormatter.normalizedSingleLine(placemark.name ?? trimmed)
+            } catch {
+                return nil
+            }
         }
     }
 
