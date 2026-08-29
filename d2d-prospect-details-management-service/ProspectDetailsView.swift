@@ -87,11 +87,10 @@ struct ProspectDetailsView: View {
                     TextField("Full Name", text: $tempFullName)
                     
                     HStack(spacing: 10) {
-                        // Address with autocomplete
-                        AddressAutocompleteField(
-                            addressText: $tempAddress,
+                        ContactAddressPredictiveTextField(
+                            address: $tempAddress,
                             isFocused: $isAddressFieldFocused,
-                            searchViewModel: searchViewModel
+                            searchVM: searchViewModel
                         )
 
                         ContactMapNavigationButton {
@@ -239,8 +238,11 @@ struct ProspectDetailsView: View {
                         KnockingFormHapticsController.shared.successFeedbackConfirmation()
                         KnockingFormSoundController.shared.playConfirmationSound()
                         
-                        withAnimation(.easeInOut(duration: 0.25)) {
-                            commitEdits()
+                        Task {
+                            await acceptBestAddressPredictionIfAvailable()
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                commitEdits()
+                            }
                         }
                     }
                     .buttonStyle(.borderedProminent)
@@ -533,6 +535,7 @@ struct ProspectDetailsView: View {
             tempFullName = prospect.fullName
             tempAddress = prospect.address
             isAddressFieldFocused = false
+            searchViewModel.clear()
         }
     }
 
@@ -540,6 +543,18 @@ struct ProspectDetailsView: View {
     private var hasUnsavedEdits: Bool {
         tempFullName.trimmingCharacters(in: .whitespacesAndNewlines) != prospect.fullName.trimmingCharacters(in: .whitespacesAndNewlines) ||
         tempAddress.trimmingCharacters(in: .whitespacesAndNewlines) != prospect.address.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func acceptBestAddressPredictionIfAvailable() async {
+        guard isAddressFieldFocused || !searchViewModel.results.isEmpty else { return }
+        guard let resolved = await ContactAddressPredictionController.resolvePrediction(
+            typedAddress: tempAddress,
+            completions: searchViewModel.results
+        ) else { return }
+
+        tempAddress = resolved
+        searchViewModel.clear()
+        isAddressFieldFocused = false
     }
 
     private func commitEdits() {

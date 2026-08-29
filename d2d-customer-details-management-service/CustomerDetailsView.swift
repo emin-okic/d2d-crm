@@ -94,11 +94,10 @@ struct CustomerDetailsView: View {
                     TextField("Full Name", text: $tempFullName)
                     
                     HStack(spacing: 10) {
-                        // 👇 Autocomplete-enabled address field
-                        AddressAutocompleteField(
-                            addressText: $tempAddress,
+                        ContactAddressPredictiveTextField(
+                            address: $tempAddress,
                             isFocused: $isAddressFieldFocused,
-                            searchViewModel: searchViewModel
+                            searchVM: searchViewModel
                         )
 
                         ContactMapNavigationButton {
@@ -263,7 +262,10 @@ struct CustomerDetailsView: View {
                         KnockingFormHapticsController.shared.lightTap()
                         KnockingFormSoundController.shared.playConfirmationSound()
                         
-                        commitEdits()
+                        Task {
+                            await acceptBestAddressPredictionIfAvailable()
+                            commitEdits()
+                        }
                     }
                     .buttonStyle(.borderedProminent)
                 }
@@ -508,6 +510,7 @@ struct CustomerDetailsView: View {
             tempFullName = customer.fullName
             tempAddress = customer.address
             isAddressFieldFocused = false
+            searchViewModel.clear()
         }
     }
     
@@ -531,6 +534,18 @@ struct CustomerDetailsView: View {
     }
 
     // MARK: - Logic
+    private func acceptBestAddressPredictionIfAvailable() async {
+        guard isAddressFieldFocused || !searchViewModel.results.isEmpty else { return }
+        guard let resolved = await ContactAddressPredictionController.resolvePrediction(
+            typedAddress: tempAddress,
+            completions: searchViewModel.results
+        ) else { return }
+
+        tempAddress = resolved
+        searchViewModel.clear()
+        isAddressFieldFocused = false
+    }
+
     private func commitEdits() {
         
         let trimmedName = tempFullName.trimmingCharacters(in: .whitespacesAndNewlines)
