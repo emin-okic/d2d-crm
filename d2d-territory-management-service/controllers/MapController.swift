@@ -134,53 +134,59 @@ class MapController: ObservableObject {
         updateRegionToFitAllMarkers()
     }
 
-    func centerMapOnUserLocation(_ coordinate: CLLocationCoordinate2D, animated: Bool = true) {
-        let targetRegion = MKCoordinateRegion(
-            center: coordinate,
+    func centerMapOnUserLocation(_ coordinate: CLLocationCoordinate2D) {
+        moveMap(
+            to: coordinate,
             latitudinalMeters: 650,
             longitudinalMeters: 650
         )
+    }
 
-        guard animated, let mapView = MapDisplayView.cachedMapView else {
-            region = targetRegion
-            return
-        }
-
-        let currentLocation = CLLocation(
-            latitude: mapView.region.center.latitude,
-            longitude: mapView.region.center.longitude
+    func moveMap(
+        to coordinate: CLLocationCoordinate2D,
+        latitudinalMeters: CLLocationDistance,
+        longitudinalMeters: CLLocationDistance
+    ) {
+        moveMap(
+            to: MKCoordinateRegion(
+                center: coordinate,
+                latitudinalMeters: latitudinalMeters,
+                longitudinalMeters: longitudinalMeters
+            )
         )
-        let targetLocation = CLLocation(
-            latitude: coordinate.latitude,
+    }
+
+    func moveMap(to targetRegion: MKCoordinateRegion) {
+        guard !regionsMatch(region, targetRegion) else { return }
+        region = targetRegion
+    }
+
+    private func regionsMatch(_ lhs: MKCoordinateRegion, _ rhs: MKCoordinateRegion) -> Bool {
+        abs(lhs.center.latitude - rhs.center.latitude) <= 0.0001 &&
+        abs(lhs.center.longitude - rhs.center.longitude) <= 0.0001 &&
+        abs(lhs.span.latitudeDelta - rhs.span.latitudeDelta) <= 0.0001 &&
+        abs(lhs.span.longitudeDelta - rhs.span.longitudeDelta) <= 0.0001
+    }
+
+    private func offsetRegion(
+        for coordinate: CLLocationCoordinate2D,
+        latitudinalMeters: CLLocationDistance,
+        longitudinalMeters: CLLocationDistance,
+        targetYRatio: CGFloat
+    ) -> MKCoordinateRegion {
+        let baseRegion = MKCoordinateRegion(
+            center: coordinate,
+            latitudinalMeters: latitudinalMeters,
+            longitudinalMeters: longitudinalMeters
+        )
+        let clampedYRatio = max(0, min(1, targetYRatio))
+        let latitudeOffset = baseRegion.span.latitudeDelta * (0.5 - clampedYRatio)
+        let adjustedCenter = CLLocationCoordinate2D(
+            latitude: coordinate.latitude - latitudeOffset,
             longitude: coordinate.longitude
         )
-        let distance = currentLocation.distance(from: targetLocation)
-        let currentSpan = max(mapView.region.span.latitudeDelta, mapView.region.span.longitudeDelta)
-        let targetSpan = max(targetRegion.span.latitudeDelta, targetRegion.span.longitudeDelta)
 
-        guard distance > 80 || abs(currentSpan - targetSpan) > 0.002 else {
-            region = targetRegion
-            return
-        }
-
-        let midpoint = CLLocationCoordinate2D(
-            latitude: (mapView.region.center.latitude + coordinate.latitude) / 2,
-            longitude: (mapView.region.center.longitude + coordinate.longitude) / 2
-        )
-        let overviewDistance = min(max(distance * 1.35, 2_400), 120_000)
-        let overviewRegion = MKCoordinateRegion(
-            center: midpoint,
-            latitudinalMeters: overviewDistance,
-            longitudinalMeters: overviewDistance
-        )
-
-        mapView.setRegion(overviewRegion, animated: true)
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) { [weak self, weak mapView] in
-            guard let self else { return }
-            mapView?.setRegion(targetRegion, animated: true)
-            self.region = targetRegion
-        }
+        return MKCoordinateRegion(center: adjustedCenter, span: baseRegion.span)
     }
     
     /// Updates the `region` property to fit all current markers on the map.
@@ -235,29 +241,14 @@ class MapController: ObservableObject {
     
     @MainActor
     func centerMapForPopup(coordinate: CLLocationCoordinate2D) {
-
-        // Target zoom (tight enough to matter visually)
-        let latMeters: CLLocationDistance = 250
-        let lonMeters: CLLocationDistance = 250
-
-        // Convert meters → degrees (approx)
-        let metersToDegrees = 1.0 / 111_000.0
-        let latitudeSpanDegrees = latMeters * metersToDegrees
-
-        // Push marker into TOP HALF (25% from top)
-        let verticalOffset = latitudeSpanDegrees * 0.25
-
-        let adjustedCenter = CLLocationCoordinate2D(
-            latitude: coordinate.latitude - verticalOffset,
-            longitude: coordinate.longitude
+        moveMap(
+            to: offsetRegion(
+                for: coordinate,
+                latitudinalMeters: 250,
+                longitudinalMeters: 250,
+                targetYRatio: 0.25
+            )
         )
-
-        self.region = MKCoordinateRegion(
-            center: adjustedCenter,
-            latitudinalMeters: latMeters,
-            longitudinalMeters: lonMeters
-        )
-        
     }
 
     func centerMapForSelectedPopup(
@@ -265,59 +256,30 @@ class MapController: ObservableObject {
         bottomSheetFraction: CGFloat,
         targetVisibleYRatio: CGFloat = 0.5
     ) {
-        guard let mapView = MapDisplayView.cachedMapView else {
-            centerMapForPopup(coordinate: coordinate)
-            return
-        }
-
-        let previewRegion = MKCoordinateRegion(
-            center: coordinate,
-            latitudinalMeters: 250,
-            longitudinalMeters: 250
+        let visibleYRatio = max(0, min(1, (1 - bottomSheetFraction) * targetVisibleYRatio))
+        moveMap(
+            to: offsetRegion(
+                for: coordinate,
+                latitudinalMeters: 250,
+                longitudinalMeters: 250,
+                targetYRatio: visibleYRatio
+            )
         )
-
-        mapView.setRegion(previewRegion, animated: false)
-
-        let visibleHeight = max(mapView.bounds.height * (1 - bottomSheetFraction), 1)
-        let targetY = visibleHeight * targetVisibleYRatio
-        let point = mapView.convert(coordinate, toPointTo: mapView)
-        let deltaY = point.y - targetY
-        let offsetPoint = CGPoint(x: point.x, y: point.y + deltaY)
-        let offsetCoordinate = mapView.convert(offsetPoint, toCoordinateFrom: mapView)
-        let centeredRegion = MKCoordinateRegion(
-            center: offsetCoordinate,
-            span: previewRegion.span
-        )
-
-        mapView.setRegion(centeredRegion, animated: true)
-        region = centeredRegion
     }
     
     func centerMapForNewProperty(coordinate: CLLocationCoordinate2D) {
-        guard let mapView = MapDisplayView.cachedMapView else { return }
+        let mapHeight = MapDisplayView.cachedMapView?.bounds.height ?? 0
+        let visibleHeight = mapHeight > 0 ? max(mapHeight - 250, 1) : 1
+        let targetYRatio = mapHeight > 0 ? (visibleHeight / 2) / mapHeight : 0.5
 
-        let sheetHeight: CGFloat = 250
-        let visibleHeight = max(mapView.bounds.height - sheetHeight, 1)
-        let previewRegion = MKCoordinateRegion(
-            center: coordinate,
-            latitudinalMeters: 180,
-            longitudinalMeters: 180
+        moveMap(
+            to: offsetRegion(
+                for: coordinate,
+                latitudinalMeters: 180,
+                longitudinalMeters: 180,
+                targetYRatio: targetYRatio
+            )
         )
-
-        mapView.setRegion(previewRegion, animated: false)
-
-        let point = mapView.convert(coordinate, toPointTo: mapView)
-        let targetY = visibleHeight / 2
-        let deltaY = point.y - targetY
-        let offsetPoint = CGPoint(x: point.x, y: point.y + deltaY)
-        let offsetCoordinate = mapView.convert(offsetPoint, toCoordinateFrom: mapView)
-        let centeredRegion = MKCoordinateRegion(
-            center: offsetCoordinate,
-            span: previewRegion.span
-        )
-
-        mapView.setRegion(centeredRegion, animated: true)
-        region = centeredRegion
     }
     
     func reverseGeocode(

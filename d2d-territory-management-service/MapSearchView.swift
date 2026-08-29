@@ -1535,13 +1535,11 @@ struct MapSearchView: View {
         Task { @MainActor [controller] in
             
             if let coord = await controller.geocodeAddress(query) {
-                withAnimation {
-                    controller.region = MKCoordinateRegion(
-                        center: coord,
-                        latitudinalMeters: 1609.34,
-                        longitudinalMeters: 1609.34
-                    )
-                }
+                controller.moveMap(
+                    to: coord,
+                    latitudinalMeters: 1609.34,
+                    longitudinalMeters: 1609.34
+                )
             }
             addressToCenter = nil
         }
@@ -1668,17 +1666,11 @@ struct MapSearchView: View {
                 clearMapSearchState()
                 pendingAddress = addr
 
-                // Determine zoom: ~1 mile (1609 meters) or adjust based on your UX preference
-                let region = MKCoordinateRegion(
-                    center: coordinate,
+                controller.moveMap(
+                    to: coordinate,
                     latitudinalMeters: 500,
                     longitudinalMeters: 500
                 )
-
-                // Animate the region change
-                withAnimation(.easeInOut(duration: 0.4)) {
-                    controller.region = region
-                }
                 
                 // 1️⃣ Check if it's a Prospect
                 if let existingProspect = prospects.first(where: {
@@ -1801,14 +1793,11 @@ struct MapSearchView: View {
 
             pendingAddress = address
 
-            // 📍 Move map
-            withAnimation(.easeInOut(duration: 0.4)) {
-                controller.region = MKCoordinateRegion(
-                    center: coordinate,
-                    latitudinalMeters: 500,
-                    longitudinalMeters: 500
-                )
-            }
+            controller.moveMap(
+                to: coordinate,
+                latitudinalMeters: 500,
+                longitudinalMeters: 500
+            )
 
             // 🔍 Existing Prospect?
             if let prospect = prospects.first(where: {
