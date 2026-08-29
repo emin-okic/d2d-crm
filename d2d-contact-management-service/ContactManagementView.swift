@@ -145,8 +145,8 @@ struct ContactManagementView: View {
                     } onCancel: {
                         activeSheet = nil
                     }
-                    .presentationDetents([.fraction(0.5)]) // 50% of screen height
-                    .presentationDragIndicator(.visible)    // optional: show the drag handle
+                    .presentationDetents([.fraction(0.5), .fraction(0.58), .large])
+                    .presentationDragIndicator(.visible)
                 }
             }
             .alert("Delete selected contacts?",

@@ -184,8 +184,8 @@ struct ProspectActionsToolbar: View {
                     }
                 )
             }
-            .presentationDetents([.fraction(0.5)])      // Limit to 50% of the screen
-            .presentationDragIndicator(.visible)        // Show drag indicator
+            .presentationDetents([.fraction(0.5), .fraction(0.58), .large])
+            .presentationDragIndicator(.visible)
         }
         
         .sheet(isPresented: $showEmailSheet) {
