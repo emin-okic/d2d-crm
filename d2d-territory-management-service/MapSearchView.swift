@@ -1647,8 +1647,8 @@ struct MapSearchView: View {
     }
 
     private func displayAddress(for item: MKMapItem, fallback: String) -> String {
-        item.addressRepresentations?.fullAddress(includingRegion: false, singleLine: true)
-        ?? item.address?.fullAddress
+        item.addressRepresentations?.fullAddress(includingRegion: true, singleLine: true)
+        ?? item.address?.fullAddress.replacingOccurrences(of: "\n", with: ", ")
         ?? item.name
         ?? fallback
     }

@@ -36,9 +36,7 @@ final class ContactImportManager: ObservableObject {
         for contact in contacts {
             let fullName = CNContactFormatter.string(from: contact, style: .fullName) ?? "No Name"
             let addressString = contact.postalAddresses.first.map {
-                CNPostalAddressFormatter
-                    .string(from: $0.value, style: .mailingAddress)
-                    .replacingOccurrences(of: "\n", with: ", ")
+                ImportedContactAddressFormatter.singleLineAddress(from: $0.value)
             } ?? "No Address"
 
             let phone = contact.phoneNumbers.first?.value.stringValue ?? ""

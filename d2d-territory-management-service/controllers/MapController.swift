@@ -298,9 +298,9 @@ class MapController: ObservableObject {
                 guard let mapItem = mapItems.first else { return nil }
 
                 return mapItem.addressRepresentations?.fullAddress(
-                    includingRegion: false,
+                    includingRegion: true,
                     singleLine: true
-                ) ?? mapItem.address?.fullAddress ?? mapItem.name
+                ) ?? mapItem.address?.fullAddress.replacingOccurrences(of: "\n", with: ", ") ?? mapItem.name
             } else {
                 let placemark = try await CLGeocoder().reverseGeocodeLocation(location).first
                 guard let placemark else { return nil }
