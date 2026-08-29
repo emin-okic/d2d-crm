@@ -29,8 +29,9 @@ class MapTapAddressManager: ObservableObject {
         Task { [weak self] in
             guard let request = MKReverseGeocodingRequest(location: location),
                   let mapItem = try? await request.mapItems.first,
-                  let address = mapItem.address?.shortAddress
-                    ?? mapItem.addressRepresentations?.fullAddress(includingRegion: false, singleLine: true) else {
+                  let address = mapItem.addressRepresentations?.fullAddress(includingRegion: true, singleLine: true)
+                    ?? mapItem.address?.fullAddress.replacingOccurrences(of: "\n", with: ", ")
+                    ?? mapItem.name else {
                 return
             }
 
