@@ -36,6 +36,8 @@ struct ProspectManagementView: View {
     var onClearSearchFilter: () -> Void
     var onNavigateToMap: (MapContactSelection) -> Void = { _ in }
     var onProspectOpenRequested: (Prospect) -> Bool = { _ in false }
+    var onSuggestionReview: () -> Void = {}
+    var onSuggestionRejected: () -> Void = {}
 
     @State private var isShowingSuggestedProspectSheet = false
     @State private var dismissedSuggestionAddress: String?
@@ -74,6 +76,7 @@ struct ProspectManagementView: View {
                     onOpen: {
                         ContactScreenHapticsController.shared.lightTap()
                         ContactScreenSoundController.shared.playSound1()
+                        onSuggestionReview()
                         isShowingSuggestedProspectSheet = true
                     },
                     onDismiss: dismissSuggestionBanner
@@ -99,6 +102,15 @@ struct ProspectManagementView: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 4)
         }
+        .overlay {
+            if isShowingSuggestedProspectSheet {
+                Color.black.opacity(0.44)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.18), value: isShowingSuggestedProspectSheet)
         .animation(.spring(response: 0.32, dampingFraction: 0.86), value: shouldShowSuggestionBanner)
         .onChange(of: suggestedProspect?.address) { _, newAddress in
             guard newAddress != dismissedSuggestionAddress else { return }
@@ -131,13 +143,19 @@ struct ProspectManagementView: View {
     private func dismissSuggestionBanner() {
         ContactScreenHapticsController.shared.lightTap()
         ContactScreenSoundController.shared.playSound1()
-        dismissedSuggestionAddress = suggestedProspect?.address
+        rejectSuggestion()
     }
 
     private func clearSuggestion() {
         dismissedSuggestionAddress = suggestedProspect?.address
         suggestedProspect = nil
         suggestedNeighborSourceAddress = nil
+        isShowingSuggestedProspectSheet = false
+    }
+
+    private func rejectSuggestion() {
+        dismissedSuggestionAddress = suggestedProspect?.address
+        onSuggestionRejected()
         isShowingSuggestedProspectSheet = false
     }
 

@@ -17,8 +17,33 @@ class ContactManagerController: ObservableObject {
     @Published var suggestedNeighborSourceAddress: String?
     
     private var suggestionSourceIndex = 0
+    private var suggestedNeighborRejectionStreak = 0
+    private var prospectNavigationsUntilNextSuggestion = 0
     
     var geocodeNeighborClosure: ((_ address: String, _ existingProspects: [Prospect], _ completion: @escaping (String?, CLLocationCoordinate2D?) -> Void) -> Void)?
+
+    func handleProspectListNavigation(from customers: [Customer], existingProspects: [Prospect]) async {
+        guard prospectNavigationsUntilNextSuggestion == 0 else {
+            prospectNavigationsUntilNextSuggestion -= 1
+            suggestedProspect = nil
+            suggestedNeighborSourceAddress = nil
+            return
+        }
+
+        await fetchNextSuggestedNeighbor(from: customers, existingProspects: existingProspects)
+    }
+
+    func recordSuggestedNeighborReview() {
+        suggestedNeighborRejectionStreak = 0
+        prospectNavigationsUntilNextSuggestion = 0
+    }
+
+    func recordSuggestedNeighborRejection() {
+        suggestedNeighborRejectionStreak += 1
+        prospectNavigationsUntilNextSuggestion = fibonacciDelay(for: suggestedNeighborRejectionStreak)
+        suggestedProspect = nil
+        suggestedNeighborSourceAddress = nil
+    }
     
     // 🔑 Now uses customers directly
     func fetchNextSuggestedNeighbor(from customers: [Customer], existingProspects: [Prospect]) async {
@@ -119,6 +144,21 @@ class ContactManagerController: ObservableObject {
         }
 
         tryOffset(1)
+    }
+
+    private func fibonacciDelay(for rejectionStreak: Int) -> Int {
+        guard rejectionStreak > 1 else { return 1 }
+
+        var previous = 1
+        var current = 1
+
+        for _ in 2...rejectionStreak {
+            let next = previous + current
+            previous = current
+            current = next
+        }
+
+        return current
     }
     
 }

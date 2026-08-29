@@ -79,7 +79,7 @@ struct SuggestedProspectSheetView: View {
                 suggestionCoordinate: suggestion.coordinate,
                 nearbyCustomerAddress: nearbyCustomerAddress
             )
-            .frame(height: 220)
+            .frame(height: 300)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .padding(.horizontal, 20)
             .padding(.top, 18)
@@ -151,7 +151,9 @@ struct SuggestedProspectSheetView: View {
             }
             .padding(20)
         }
-        .presentationDetents([.fraction(0.5), .fraction(0.68)])
+        .presentationDetents([.fraction(0.78), .large])
+        .presentationBackground(Color(.systemBackground))
+        .presentationBackgroundInteraction(.disabled)
         .presentationDragIndicator(.visible)
     }
 
@@ -217,37 +219,67 @@ private struct SuggestedProspectMapPreview: View {
     var body: some View {
         Map(position: $position) {
             if let nearbyCustomerCoordinate {
-                Annotation("Customer", coordinate: nearbyCustomerCoordinate, anchor: .bottom) {
-                    VStack(spacing: 3) {
-                        Image(systemName: "house.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(.blue)
-                            .background(Color.white, in: Circle())
-
+                Annotation("", coordinate: nearbyCustomerCoordinate, anchor: .bottom) {
+                    VStack(spacing: 4) {
                         Text("Customer")
-                            .font(.caption2.weight(.semibold))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 3)
-                            .background(.thinMaterial, in: Capsule())
+                            .font(.caption.weight(.black))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.blue, in: Capsule())
+                            .overlay {
+                                Capsule()
+                                    .stroke(Color.white, lineWidth: 2)
+                            }
+
+                        Image(systemName: "house.circle.fill")
+                            .font(.system(size: 36, weight: .bold))
+                            .foregroundColor(.blue)
+                            .padding(4)
+                            .background(Color.white, in: Circle())
+                            .overlay {
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 3)
+                            }
                     }
+                    .shadow(color: .black.opacity(0.35), radius: 4, y: 2)
+                    .accessibilityLabel("Customer")
                 }
             }
 
             if let suggestedCoordinate {
-                Annotation("Recommended prospect", coordinate: suggestedCoordinate, anchor: .bottom) {
-                    VStack(spacing: 3) {
-                        Image(systemName: "mappin.circle.fill")
-                            .font(.title)
-                            .foregroundColor(.green)
-                            .background(Color.white, in: Circle())
-                            .shadow(radius: 2)
+                Annotation("", coordinate: suggestedCoordinate, anchor: .bottom) {
+                    VStack(spacing: 4) {
+                        Text("Recommended Prospect")
+                            .font(.caption.weight(.black))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.orange, in: Capsule())
+                            .overlay {
+                                Capsule()
+                                    .stroke(Color.white, lineWidth: 2)
+                            }
 
-                        Text("Prospect")
-                            .font(.caption2.weight(.semibold))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 3)
-                            .background(.thinMaterial, in: Capsule())
+                        ZStack {
+                            Image(systemName: "mappin.circle.fill")
+                                .font(.system(size: 46, weight: .black))
+                                .foregroundColor(.orange)
+                                .padding(3)
+                                .background(Color.white, in: Circle())
+                                .overlay {
+                                    Circle()
+                                        .stroke(Color.white, lineWidth: 3)
+                                }
+
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 13, weight: .black))
+                                .foregroundColor(.white)
+                                .offset(y: -4)
+                        }
                     }
+                    .shadow(color: .black.opacity(0.4), radius: 5, y: 3)
+                    .accessibilityLabel("Recommended Prospect")
                 }
             }
         }
@@ -296,8 +328,8 @@ private struct SuggestedProspectMapPreview: View {
             position = .region(
                 MKCoordinateRegion(
                     center: first,
-                    latitudinalMeters: 500,
-                    longitudinalMeters: 500
+                    latitudinalMeters: 180,
+                    longitudinalMeters: 180
                 )
             )
             return
@@ -311,8 +343,8 @@ private struct SuggestedProspectMapPreview: View {
             latitude: (minLatitude + maxLatitude) / 2,
             longitude: (minLongitude + maxLongitude) / 2
         )
-        let latitudeMeters = max(450, (maxLatitude - minLatitude) * 111_000 * 2.4)
-        let longitudeMeters = max(450, (maxLongitude - minLongitude) * 85_000 * 2.4)
+        let latitudeMeters = max(180, (maxLatitude - minLatitude) * 111_000 * 1.35)
+        let longitudeMeters = max(180, (maxLongitude - minLongitude) * 85_000 * 1.35)
 
         position = .region(
             MKCoordinateRegion(
