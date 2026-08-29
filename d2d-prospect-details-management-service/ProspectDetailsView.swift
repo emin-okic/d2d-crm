@@ -93,10 +93,14 @@ struct ProspectDetailsView: View {
                             searchVM: searchViewModel
                         )
 
-                        ContactMapNavigationButton {
-                            navigateToMap()
+                        if !isAddressPredictionVisible {
+                            ContactMapNavigationButton {
+                                navigateToMap()
+                            }
+                            .transition(.opacity.combined(with: .scale(scale: 0.92)))
                         }
                     }
+                    .animation(.easeInOut(duration: 0.18), value: isAddressPredictionVisible)
                 }
                 
                 Section {
@@ -543,6 +547,10 @@ struct ProspectDetailsView: View {
     private var hasUnsavedEdits: Bool {
         tempFullName.trimmingCharacters(in: .whitespacesAndNewlines) != prospect.fullName.trimmingCharacters(in: .whitespacesAndNewlines) ||
         tempAddress.trimmingCharacters(in: .whitespacesAndNewlines) != prospect.address.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var isAddressPredictionVisible: Bool {
+        isAddressFieldFocused && !searchViewModel.results.isEmpty
     }
 
     private func acceptBestAddressPredictionIfAvailable() async {

@@ -100,10 +100,14 @@ struct CustomerDetailsView: View {
                             searchVM: searchViewModel
                         )
 
-                        ContactMapNavigationButton {
-                            navigateToMap()
+                        if !isAddressPredictionVisible {
+                            ContactMapNavigationButton {
+                                navigateToMap()
+                            }
+                            .transition(.opacity.combined(with: .scale(scale: 0.92)))
                         }
                     }
+                    .animation(.easeInOut(duration: 0.18), value: isAddressPredictionVisible)
                 }
                 
                 Section {
@@ -534,6 +538,10 @@ struct CustomerDetailsView: View {
     }
 
     // MARK: - Logic
+    private var isAddressPredictionVisible: Bool {
+        isAddressFieldFocused && !searchViewModel.results.isEmpty
+    }
+
     private func acceptBestAddressPredictionIfAvailable() async {
         guard isAddressFieldFocused || !searchViewModel.results.isEmpty else { return }
         guard let resolved = await ContactAddressPredictionController.resolvePrediction(
