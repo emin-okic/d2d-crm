@@ -189,11 +189,8 @@ struct BulkAddConfirmationSheet: View {
                     .foregroundStyle(isSelected ? .blue : .secondary)
                     .frame(width: 24, height: 24)
 
-                Text(displayAddress(for: property))
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .multilineTextAlignment(.leading)
+                MarqueeAddressText(text: property.address)
+                    .frame(height: 20)
 
                 Spacer(minLength: 8)
             }
@@ -213,16 +210,6 @@ struct BulkAddConfirmationSheet: View {
     private func rowBorder(isSelected: Bool) -> some View {
         RoundedRectangle(cornerRadius: 8, style: .continuous)
             .stroke(isSelected ? Color.blue.opacity(0.36) : Color(.separator).opacity(0.36), lineWidth: 1)
-    }
-
-    private func displayAddress(for property: PendingAddProperty) -> String {
-        let parts = property.address
-            .split(separator: ",")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-
-        guard parts.count > 3 else { return property.address }
-        return parts.prefix(3).joined(separator: ", ")
     }
 
     private func toggleAllProperties() {
@@ -245,5 +232,98 @@ struct BulkAddConfirmationSheet: View {
 
         MapScreenHapticsController.shared.lightTap()
         MapScreenSoundController.shared.playPropertyOpen()
+    }
+}
+
+private struct MarqueeAddressText: View {
+    let text: String
+
+    @State private var textWidth: CGFloat = 0
+    @State private var containerWidth: CGFloat = 0
+    @State private var offset: CGFloat = 0
+    @State private var scrollTask: Task<Void, Never>?
+
+    private let font = Font.subheadline.weight(.semibold)
+    private let scrollDelay: UInt64 = 900_000_000
+    private let resetDelay: UInt64 = 600_000_000
+
+    var body: some View {
+        GeometryReader { geometry in
+            Text(text)
+                .font(font)
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .offset(x: offset)
+                .background(widthReader)
+                .clipped()
+                .onAppear {
+                    containerWidth = geometry.size.width
+                    restartScrollIfNeeded()
+                }
+                .onChange(of: geometry.size.width) { _, newWidth in
+                    containerWidth = newWidth
+                    restartScrollIfNeeded()
+                }
+                .onChange(of: textWidth) { _, _ in
+                    restartScrollIfNeeded()
+                }
+                .onDisappear {
+                    scrollTask?.cancel()
+                    scrollTask = nil
+                }
+        }
+        .clipped()
+    }
+
+    private var widthReader: some View {
+        GeometryReader { geometry in
+            Color.clear
+                .preference(key: AddressTextWidthPreferenceKey.self, value: geometry.size.width)
+        }
+        .onPreferenceChange(AddressTextWidthPreferenceKey.self) { width in
+            textWidth = width
+        }
+    }
+
+    private func restartScrollIfNeeded() {
+        scrollTask?.cancel()
+        scrollTask = nil
+
+        guard textWidth > containerWidth + 8 else {
+            withAnimation(.easeOut(duration: 0.16)) {
+                offset = 0
+            }
+            return
+        }
+
+        let travelDistance = textWidth - containerWidth + 18
+        let duration = min(max(Double(travelDistance) / 34, 1.4), 4.5)
+
+        offset = 0
+        scrollTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: scrollDelay)
+            guard !Task.isCancelled else { return }
+
+            withAnimation(.linear(duration: duration)) {
+                offset = -travelDistance
+            }
+
+            try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+            try? await Task.sleep(nanoseconds: resetDelay)
+            guard !Task.isCancelled else { return }
+
+            withAnimation(.easeOut(duration: 0.2)) {
+                offset = 0
+            }
+        }
+    }
+}
+
+private struct AddressTextWidthPreferenceKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
