@@ -22,12 +22,11 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     
     var selectedPlaceID: UUID?
     
-    private var activeRadiusOverlay: MKCircle?
     private var currentZoomSizeBucket: Int?
     private var isUserDrivenRegionChange = false
     private let bulkAddRadius: CLLocationDistance = 35
+    private var bulkAddRadiusPreview: BulkAddRadiusOverlayController?
     
-    private var hasZoomedForActiveRadius = false
     private var pendingSparkleCoordinates: [CLLocationCoordinate2D] = []
 
     init(
@@ -83,6 +82,11 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
                 self?.coordinatesAreClose(pending, coordinate) == true
             }
         }
+    }
+    
+    func attach(mapView: MKMapView) {
+        self.mapView = mapView
+        bulkAddRadiusPreview = BulkAddRadiusOverlayController(mapView: mapView)
     }
     
     func updateSelectedPlaceID(_ id: UUID?) {
@@ -190,110 +194,33 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         let coord = mapView.convert(point, toCoordinateFrom: mapView)
 
         switch gesture.state {
-
         case .began:
-            
-            hasZoomedForActiveRadius = false
-
-            // Remove old overlay if any
-            if let overlay = activeRadiusOverlay {
-                mapView.removeOverlay(overlay)
-            }
-
-            let circle = MKCircle(center: coord, radius: bulkAddRadius)
-            activeRadiusOverlay = circle
-            mapView.addOverlay(circle)
-            
-            // 🏆 Strong reward feedback
+            bulkAddRadiusPreview?.begin(at: coord, touchPoint: point, radius: bulkAddRadius)
+            zoomToBulkAddArea(center: coord, radius: bulkAddRadius)
             MapScreenHapticsController.shared.propertyAdded()
             MapScreenSoundController.shared.playPropertyAdded()
-            
-            // 🔍 Zoom in right away so user sees placement context
-            zoomToBulkAddArea(center: coord, radius: bulkAddRadius)
-            hasZoomedForActiveRadius = true
 
         case .changed:
-            
-            if let overlay = activeRadiusOverlay {
-                mapView.removeOverlay(overlay)
-            }
-
-            let circle = MKCircle(center: coord, radius: bulkAddRadius)
-            activeRadiusOverlay = circle
-            mapView.addOverlay(circle)
-            
+            bulkAddRadiusPreview?.move(to: coord, touchPoint: point)
 
         case .ended:
-            
-            guard let overlay = activeRadiusOverlay else { return }
+            bulkAddRadiusPreview?.move(to: coord, touchPoint: point)
 
-            let center = overlay.coordinate
-            let radius = overlay.radius
+            guard let center = bulkAddRadiusPreview?.center else { return }
+            let radius = bulkAddRadiusPreview?.radius ?? bulkAddRadius
 
-            // Brief pause so the user visually confirms placement
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
-                guard let self, let mapView = self.mapView else { return }
-
-                // Fade out the ring
-                self.fadeOutRadiusOverlay(overlay)
-
-                // Remove overlay after fade
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                    mapView.removeOverlay(overlay)
-                    self.activeRadiusOverlay = nil
-                }
-
-                // Trigger bulk add
-                self.notifyBulkAdd(center: center, radius: radius)
-            }
-            
-            // 🏆 Strong reward feedback
             MapScreenHapticsController.shared.propertyAdded()
             MapScreenSoundController.shared.playPropertyAdded()
+
+            bulkAddRadiusPreview?.finish { [weak self] in
+                self?.notifyBulkAdd(center: center, radius: radius)
+            }
+
+        case .cancelled, .failed:
+            bulkAddRadiusPreview?.cancel()
 
         default:
             break
-        }
-    }
-    
-    private func fadeOutRadiusOverlay(
-        _ overlay: MKCircle,
-        duration: TimeInterval = 0.25
-    ) {
-        guard
-            let mapView,
-            let renderer = mapView.renderer(for: overlay) as? MKCircleRenderer
-        else { return }
-
-        let start = Date()
-        let initialAlpha: CGFloat = 1.0
-
-        renderer.alpha = initialAlpha
-
-        let displayLink = CADisplayLink(target: BlockTarget { [weak renderer] link in
-            let elapsed = Date().timeIntervalSince(start)
-            let progress = min(elapsed / duration, 1.0)
-
-            renderer?.alpha = initialAlpha * (1.0 - progress)
-
-            if progress >= 1.0 {
-                renderer?.alpha = 0.0
-                link.invalidate()
-            }
-        }, selector: #selector(BlockTarget.tick))
-
-        displayLink.add(to: .main, forMode: .common)
-    }
-    
-    private final class BlockTarget {
-        let block: (CADisplayLink) -> Void
-
-        init(_ block: @escaping (CADisplayLink) -> Void) {
-            self.block = block
-        }
-
-        @objc func tick(_ link: CADisplayLink) {
-            block(link)
         }
     }
     
@@ -304,9 +231,7 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     ) {
         guard let mapView else { return }
 
-        // Slightly larger than the radius so the ring fits comfortably
         let paddingMultiplier: CLLocationDistance = 2.4
-
         let region = MKCoordinateRegion(
             center: center,
             latitudinalMeters: radius * paddingMultiplier,
@@ -813,6 +738,8 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     }
 
     func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+        bulkAddRadiusPreview?.refreshForVisibleRegionChange()
+
         let nextBucket = zoomSizeBucket(for: mapView)
         if currentZoomSizeBucket != nextBucket {
             currentZoomSizeBucket = nextBucket

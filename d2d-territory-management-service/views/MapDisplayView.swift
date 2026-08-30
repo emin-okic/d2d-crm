@@ -39,7 +39,7 @@ struct MapDisplayView: UIViewRepresentable {
         let mapView = MKMapView()
         
         mapView.delegate = context.coordinator
-        context.coordinator.mapView = mapView
+        context.coordinator.attach(mapView: mapView)
         configureMapAppearance(mapView)
         
         mapView.setRegion(region, animated: false)
