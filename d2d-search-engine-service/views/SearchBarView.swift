@@ -21,7 +21,7 @@ struct SearchBarView: View {
     var onCancel: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             searchField
 
             SearchSuggestionsListView(
@@ -29,20 +29,19 @@ struct SearchBarView: View {
                 results: viewModel.results,
                 onSelect: onSelectResult
             )
-            .padding(.top, 4)
-            .padding(.bottom, isFocused && !viewModel.results.isEmpty ? 12 : 0)
+            .padding(.top, 2)
+            .padding(.bottom, isFocused && !viewModel.results.isEmpty ? 10 : 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .animation(.easeInOut(duration: 0.22), value: viewModel.results.count)
     }
 
     private var searchField: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "building.2.crop.circle")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(.blue)
-                .frame(width: 34, height: 34)
-                .background(Color.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        HStack(spacing: 12) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(.primary)
+                .frame(width: 28, height: 28)
 
             TextField("Search properties or addresses", text: $searchText, onCommit: {
                 onSubmit()
@@ -63,14 +62,10 @@ struct SearchBarView: View {
             .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity)
-        .padding(.leading, 8)
-        .padding(.trailing, 6)
-        .padding(.vertical, 7)
-        .background(Color(.systemBackground).opacity(0.92), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
-        )
+        .padding(.leading, 16)
+        .padding(.trailing, 8)
+        .frame(height: 48)
+        .background(Color(.secondarySystemBackground).opacity(0.78), in: Capsule())
     }
 
     private func cancelOrClearSearch() {
@@ -115,8 +110,8 @@ struct MapContactFilterSearchView: View {
                             .font(.caption2.weight(.bold))
                     }
                     .foregroundStyle(.blue)
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, 10)
+                    .frame(height: 34)
                     .background(Color.blue.opacity(0.1), in: Capsule())
                 }
                 .menuOrder(.fixed)
@@ -141,14 +136,10 @@ struct MapContactFilterSearchView: View {
                 .buttonStyle(.plain)
             }
             .frame(maxWidth: .infinity)
-            .padding(.leading, 8)
-            .padding(.trailing, 6)
-            .padding(.vertical, 7)
-            .background(Color(.systemBackground).opacity(0.92), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
-            )
+            .padding(.leading, 10)
+            .padding(.trailing, 8)
+            .frame(height: 48)
+            .background(Color(.secondarySystemBackground).opacity(0.78), in: Capsule())
         }
     }
 

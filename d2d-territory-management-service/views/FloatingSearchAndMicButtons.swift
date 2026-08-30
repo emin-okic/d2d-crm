@@ -5,7 +5,6 @@
 //  Created by Emin Okic on 8/6/25.
 //
 
-
 import SwiftUI
 import MapKit
 
@@ -29,245 +28,156 @@ struct FloatingSearchAndMicButtons: View {
     var isShowingPreviousRegionButton: Bool = false
     var onNavigateToUserLocation: () -> Void = {}
     var onRevertToPreviousRegion: () -> Void = {}
-    
-    @AppStorage("mapQRCodeWidgetVisible") private var isQRCodeWidgetVisible: Bool = true
-    @State private var isEditingWidgets: Bool = false
-    @State private var isShowingQRCodeRestoreTarget: Bool = false
 
-    private let floatingButtonSize: CGFloat = 50
+    @State private var qrURL: String = "https://example.com"
+    @State private var isShowingQRCodeSheet: Bool = false
+    @State private var qrSheetDetent: PresentationDetent = .fraction(0.58)
+
+    private let controlButtonSize: CGFloat = 48
 
     var body: some View {
         VStack {
             Spacer()
-            
-            ZStack(alignment: .bottomTrailing) {
-                HStack(alignment: .bottom) {
-                    if isExpanded {
-                        ExpandableSearchView(
-                            searchText: $searchText,
-                            contactSearchText: $contactSearchText,
-                            selectedContactSearchField: $selectedContactSearchField,
-                            searchMode: $searchMode,
-                            isExpanded: $isExpanded,
-                            isFocused: $isFocused,
-                            viewModel: viewModel,
-                            animationNamespace: animationNamespace,
-                            onSubmit: onSubmit,
-                            onSubmitContactFilter: onSubmitContactFilter,
-                            onClearContactFilter: onClearContactFilter,
-                            onSelectResult: onSelectResult
-                        )
-                        .frame(maxWidth: 420, alignment: .leading)
-                        .padding(.trailing, 20)
-                        .padding(.bottom, 20)
-                    } else {
-                        MapScreenToolbarLiquidGlass {
-                            VStack(spacing: 10) {
-                                Button {
-                                    MapScreenHapticsController.shared.lightTap()
-                                    MapScreenSoundController.shared.playPropertyOpen()
-                                    if isShowingPreviousRegionButton {
-                                        onRevertToPreviousRegion()
-                                    } else {
-                                        onNavigateToUserLocation()
-                                    }
-                                } label: {
-                                    Image(systemName: isShowingPreviousRegionButton ? "arrow.uturn.backward" : "location.fill")
-                                        .foregroundColor(.white)
-                                        .frame(width: floatingButtonSize, height: floatingButtonSize)
-                                        .background(Circle().fill(Color.blue))
-                                        .shadow(radius: 4)
-                                }
-                                .transition(.opacity)
-                                .accessibilityLabel(
-                                    isShowingPreviousRegionButton
-                                    ? "Return to Previous Map View"
-                                    : "Navigate to Current Location"
-                                )
 
-                                ExpandableSearchView(
-                                    searchText: $searchText,
-                                    contactSearchText: $contactSearchText,
-                                    selectedContactSearchField: $selectedContactSearchField,
-                                    searchMode: $searchMode,
-                                    isExpanded: $isExpanded,
-                                    isFocused: $isFocused,
-                                    viewModel: viewModel,
-                                    animationNamespace: animationNamespace,
-                                    onSubmit: onSubmit,
-                                    onSubmitContactFilter: onSubmitContactFilter,
-                                    onClearContactFilter: onClearContactFilter,
-                                    onSelectResult: onSelectResult
-                                )
-                            }
-                        }
-                        .onLongPressGesture(minimumDuration: 0.5) {
-                            beginWidgetEditing()
-                        }
-                        .padding(.bottom, 10)
+            VStack(spacing: 12) {
+                if isExpanded {
+                    ExpandableSearchView(
+                        searchText: $searchText,
+                        contactSearchText: $contactSearchText,
+                        selectedContactSearchField: $selectedContactSearchField,
+                        searchMode: $searchMode,
+                        isExpanded: $isExpanded,
+                        isFocused: $isFocused,
+                        viewModel: viewModel,
+                        animationNamespace: animationNamespace,
+                        onSubmit: onSubmit,
+                        onSubmitContactFilter: onSubmitContactFilter,
+                        onClearContactFilter: onClearContactFilter,
+                        onSelectResult: onSelectResult
+                    )
+                    .padding(.horizontal, 14)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                } else {
+                    HStack(alignment: .bottom) {
+                        bottomLeftToolbar
+
+                        Spacer()
                     }
+                    .padding(.horizontal, 20)
 
-                    Spacer()
-                }
-                
-                if !isExpanded {
-                    qrWidgetSlot
-                        .padding(.trailing, 20)
-                        .padding(.bottom, 20)
-                        .transition(.scale.combined(with: .opacity))
-                        .zIndex(1000)
+                    bottomSearchBar
+                        .padding(.horizontal, 20)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
-            .padding(.leading, 20)
+            .padding(.bottom, 10)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .zIndex(999)
-        .onChange(of: isExpanded) { _, newValue in
-            if newValue {
-                isEditingWidgets = false
-                isShowingQRCodeRestoreTarget = false
-            }
-        }
-        .animation(.spring(response: 0.28, dampingFraction: 0.78), value: isEditingWidgets)
-        .animation(.spring(response: 0.28, dampingFraction: 0.78), value: isQRCodeWidgetVisible)
-        .animation(.spring(response: 0.24, dampingFraction: 0.78), value: isShowingQRCodeRestoreTarget)
-    }
-
-    @ViewBuilder
-    private var qrWidgetSlot: some View {
-        if isQRCodeWidgetVisible {
-            QRCodeCardView(
-                isEditing: isEditingWidgets,
-                onBeginEditing: beginWidgetEditing,
-                onCancelEditing: cancelWidgetEditing,
-                onRemove: removeQRCodeWidget
-            )
-        } else {
-            qrCodeRestoreTarget
-                .accessibilityLabel("Add QR Code Widget")
+        .sheet(isPresented: $isShowingQRCodeSheet) {
+            QRCodeDetailView(qrURL: $qrURL, sheetDetent: $qrSheetDetent)
+                .presentationDetents([.fraction(0.58), .fraction(0.76)], selection: $qrSheetDetent)
+                .presentationDragIndicator(.visible)
         }
     }
 
-    private var qrCodeRestoreTarget: some View {
-        ZStack(alignment: .bottomTrailing) {
-            if isShowingQRCodeRestoreTarget {
-                qrCodeRestorePrompt
-                    .padding(.bottom, 78)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
+    private var bottomLeftToolbar: some View {
+        VStack(spacing: 0) {
+            locationButton
 
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(isShowingQRCodeRestoreTarget ? Color.blue.opacity(0.12) : Color.clear)
-                .frame(width: 60, height: 60)
-                .overlay {
-                    if isShowingQRCodeRestoreTarget {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .stroke(
-                                Color.blue,
-                                style: StrokeStyle(lineWidth: 2, dash: [6, 5])
-                            )
-                    }
-                }
-                .contentShape(Rectangle())
-                .simultaneousGesture(
-                    LongPressGesture(minimumDuration: 0.5)
-                        .onEnded { _ in
-                            requestQRCodeRestore()
-                        }
-                )
+            Divider()
+                .padding(.horizontal, 8)
+
+            qrCodeButton
         }
-        .frame(
-            width: isShowingQRCodeRestoreTarget ? 260 : 60,
-            height: isShowingQRCodeRestoreTarget ? 210 : 60,
-            alignment: .bottomTrailing
-        )
-    }
-
-    private var qrCodeRestorePrompt: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 10) {
-                Image(systemName: "qrcode")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.blue)
-                    .frame(width: 36, height: 36)
-                    .background(Color.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Restore QR widget")
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-
-                    Text("Add it back to this map shortcut slot.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-
-            HStack(spacing: 10) {
-                Button {
-                    isShowingQRCodeRestoreTarget = false
-                } label: {
-                    Text("Cancel")
-                        .font(.subheadline.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 36)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
-                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-
-                Button {
-                    restoreQRCodeWidget()
-                } label: {
-                    Text("Add")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 36)
-                }
-                .buttonStyle(.plain)
-                .background(Color.blue, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-            }
-        }
-        .padding(14)
-        .frame(width: 248)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .frame(width: 50)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 25, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Color.white.opacity(0.32), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 25, style: .continuous)
+                .stroke(Color.white.opacity(0.38), lineWidth: 1)
         )
-        .shadow(color: Color.black.opacity(0.2), radius: 16, x: 0, y: 8)
-    }
-    private func beginWidgetEditing() {
-        guard !isExpanded else { return }
-        MapScreenHapticsController.shared.lightTap()
-        isEditingWidgets = true
+        .shadow(color: Color.black.opacity(0.16), radius: 14, x: 0, y: 7)
+        .transition(.scale.combined(with: .opacity))
     }
 
-    private func cancelWidgetEditing() {
-        MapScreenHapticsController.shared.lightTap()
-        isEditingWidgets = false
+    private var locationButton: some View {
+        Button {
+            MapScreenHapticsController.shared.lightTap()
+            MapScreenSoundController.shared.playPropertyOpen()
+            if isShowingPreviousRegionButton {
+                onRevertToPreviousRegion()
+            } else {
+                onNavigateToUserLocation()
+            }
+        } label: {
+            Image(systemName: isShowingPreviousRegionButton ? "arrow.uturn.backward" : "location.fill")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(Color.blue)
+                .frame(width: controlButtonSize, height: controlButtonSize)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(
+            isShowingPreviousRegionButton
+            ? "Return to Previous Map View"
+            : "Navigate to Current Location"
+        )
     }
 
-    private func removeQRCodeWidget() {
-        MapScreenHapticsController.shared.lightTap()
-        isQRCodeWidgetVisible = false
-        isEditingWidgets = false
+    private var qrCodeButton: some View {
+        Button {
+            MapScreenHapticsController.shared.lightTap()
+            MapScreenSoundController.shared.playPropertyOpen()
+            isShowingQRCodeSheet = true
+        } label: {
+            Image(systemName: "qrcode")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(.primary)
+                .frame(width: controlButtonSize, height: controlButtonSize)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Show QR Code")
     }
 
-    private func requestQRCodeRestore() {
-        guard !isExpanded, !isQRCodeWidgetVisible else { return }
-        MapScreenHapticsController.shared.lightTap()
-        isShowingQRCodeRestoreTarget = true
+    private var bottomSearchBar: some View {
+        Button {
+            openSearch()
+        } label: {
+            HStack(spacing: 11) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(.primary)
+
+                Text("Search Maps")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
+
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 17)
+            .frame(height: 52)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(Color.white.opacity(0.38), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.16), radius: 16, x: 0, y: 8)
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .matchedGeometryEffect(id: "search", in: animationNamespace)
+        .accessibilityLabel("Search map")
     }
 
-    private func restoreQRCodeWidget() {
+    private func openSearch() {
         MapScreenHapticsController.shared.lightTap()
         MapScreenSoundController.shared.playPropertyOpen()
-        isQRCodeWidgetVisible = true
-        isEditingWidgets = false
-        isShowingQRCodeRestoreTarget = false
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.84)) {
+            isExpanded = true
+            isFocused = true
+        }
     }
 }

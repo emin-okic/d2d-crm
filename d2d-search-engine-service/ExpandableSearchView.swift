@@ -16,14 +16,14 @@ enum MapSearchMode: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .property: return "Address Search"
-        case .filter: return "Contact Filter"
+        case .property: return "Address"
+        case .filter: return "Contacts"
         }
     }
 
     var systemImage: String {
         switch self {
-        case .property: return "building.2.crop.circle"
+        case .property: return "magnifyingglass"
         case .filter: return "line.3.horizontal.decrease.circle"
         }
     }
@@ -44,100 +44,72 @@ struct ExpandableSearchView: View {
     var onSubmitContactFilter: () -> Void
     var onClearContactFilter: () -> Void
     var onSelectResult: (MKLocalSearchCompletion) -> Void
-    
-    private let floatingButtonSize: CGFloat = 50
 
     var body: some View {
-        VStack {
-            
-            HStack {
+        VStack(spacing: 10) {
+            Capsule()
+                .fill(Color.secondary.opacity(0.32))
+                .frame(width: 42, height: 5)
+                .padding(.top, 7)
 
-                if isExpanded {
-                    
-                    VStack(alignment: .leading, spacing: 10) {
-                        searchScopeMenu
+            VStack(alignment: .leading, spacing: 12) {
+                searchScopeMenu
 
-                        if searchMode == .property {
-                            SearchBarView(
-                                searchText: $searchText,
-                                isFocused: $isFocused,
-                                viewModel: viewModel,
-                                onSubmit: {
-                                    onSubmit()
-                                    resetPropertySearchState()
-                                    withAnimation { isExpanded = false }
-                                },
-                                onSelectResult: {
-                                    onSelectResult($0)
-                                    resetPropertySearchState()
-                                    
-                                    // Collapse search bar
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        isExpanded = false
-                                        isFocused = false
-                                    }
-                                },
-                                onCancel: {
-                                    resetPropertySearchState()
-                                    withAnimation {
-                                        isExpanded = false
-                                    }
-                                }
-                            )
-                        } else {
-                            MapContactFilterSearchView(
-                                searchText: $contactSearchText,
-                                selectedField: $selectedContactSearchField,
-                                isFocused: $isFocused,
-                                onSubmit: {
-                                    onSubmitContactFilter()
-                                    withAnimation { isExpanded = false }
-                                },
-                                onClear: onClearContactFilter,
-                                onCancel: {
-                                    contactSearchText = ""
-                                    withAnimation {
-                                        isExpanded = false
-                                    }
-                                }
-                            )
+                if searchMode == .property {
+                    SearchBarView(
+                        searchText: $searchText,
+                        isFocused: $isFocused,
+                        viewModel: viewModel,
+                        onSubmit: {
+                            onSubmit()
+                            resetPropertySearchState()
+                            withAnimation { isExpanded = false }
+                        },
+                        onSelectResult: {
+                            onSelectResult($0)
+                            resetPropertySearchState()
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isExpanded = false
+                                isFocused = false
+                            }
+                        },
+                        onCancel: {
+                            resetPropertySearchState()
+                            withAnimation {
+                                isExpanded = false
+                            }
                         }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(10)
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(Color.white.opacity(0.34), lineWidth: 1)
                     )
-                    .shadow(color: Color.black.opacity(0.18), radius: 18, x: 0, y: 10)
-                    .matchedGeometryEffect(id: "search", in: animationNamespace)
-                    .transition(.move(edge: .leading).combined(with: .opacity))
                 } else {
-                    Button {
-                        
-                        // ✅ Haptics
-                        MapScreenHapticsController.shared.lightTap()
-                        
-                        // ✅ Sound
-                        MapScreenSoundController.shared.playPropertyOpen()
-                        
-                        withAnimation(.easeInOut(duration: 0.25)) {
-                            isExpanded = true
-                            isFocused = true
+                    MapContactFilterSearchView(
+                        searchText: $contactSearchText,
+                        selectedField: $selectedContactSearchField,
+                        isFocused: $isFocused,
+                        onSubmit: {
+                            onSubmitContactFilter()
+                            withAnimation { isExpanded = false }
+                        },
+                        onClear: onClearContactFilter,
+                        onCancel: {
+                            contactSearchText = ""
+                            withAnimation {
+                                isExpanded = false
+                            }
                         }
-                    } label: {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.white)
-                            .padding()
-                            .frame(width: floatingButtonSize, height: floatingButtonSize)
-                            .background(Circle().fill(Color.blue))
-                    }
-                    .matchedGeometryEffect(id: "search", in: animationNamespace)
-                    .shadow(radius: 4)
+                    )
                 }
             }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 10)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.white.opacity(0.38), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.18), radius: 22, x: 0, y: 10)
+        .matchedGeometryEffect(id: "search", in: animationNamespace)
     }
 
     private var searchScopeMenu: some View {
@@ -146,7 +118,7 @@ struct ExpandableSearchView: View {
                 Button {
                     switchSearchMode(to: mode)
                 } label: {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 7) {
                         Image(systemName: mode.systemImage)
                             .font(.system(size: 14, weight: .semibold))
 
@@ -155,16 +127,12 @@ struct ExpandableSearchView: View {
                             .lineLimit(1)
                             .minimumScaleFactor(0.82)
                     }
-                    .foregroundStyle(searchMode == mode ? .white : .blue)
+                    .foregroundStyle(searchMode == mode ? .primary : .secondary)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 38)
+                    .frame(height: 36)
                     .background(
                         Capsule()
-                            .fill(searchMode == mode ? Color.blue : Color.blue.opacity(0.12))
-                    )
-                    .overlay(
-                        Capsule()
-                            .stroke(Color.blue.opacity(searchMode == mode ? 0 : 0.24), lineWidth: 1)
+                            .fill(searchMode == mode ? Color(.systemBackground).opacity(0.82) : Color.clear)
                     )
                     .contentShape(Capsule())
                 }
@@ -172,7 +140,8 @@ struct ExpandableSearchView: View {
                 .accessibilityLabel(mode.label)
             }
         }
-        .padding(.horizontal, 2)
+        .padding(4)
+        .background(Color(.secondarySystemBackground).opacity(0.66), in: Capsule())
     }
 
     private func switchSearchMode(to mode: MapSearchMode) {
