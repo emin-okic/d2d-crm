@@ -212,9 +212,8 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             MapScreenHapticsController.shared.propertyAdded()
             MapScreenSoundController.shared.playPropertyAdded()
 
-            bulkAddRadiusPreview?.finish { [weak self] in
-                self?.notifyBulkAdd(center: center, radius: radius)
-            }
+            notifyBulkAdd(center: center, radius: radius)
+            bulkAddRadiusPreview?.finish {}
 
         case .cancelled, .failed:
             bulkAddRadiusPreview?.cancel()

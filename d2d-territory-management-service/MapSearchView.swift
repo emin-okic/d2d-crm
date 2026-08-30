@@ -598,9 +598,7 @@ struct MapSearchView: View {
                     // Skip if duplicate inside this bulk
                     guard !existsGlobally, !seenAddresses.contains(normalized) else { continue }
 
-                    let propertyCoordinate = await controller.geocodeAddress(address) ?? prop.coordinate
-
-                    resolved.append(PendingAddProperty(address: address, coordinate: propertyCoordinate))
+                    resolved.append(PendingAddProperty(address: address, coordinate: prop.coordinate))
                     seenAddresses.insert(normalized)
                 }
 
@@ -624,7 +622,7 @@ struct MapSearchView: View {
                     pendingBulkAdd = nil
                 }
             )
-            .presentationDetents([.fraction(0.5)])
+            .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
             .onAppear {
                 // ✨ Entry feedback
