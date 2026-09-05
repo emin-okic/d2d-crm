@@ -52,6 +52,8 @@ struct DemographicsEditorView: View {
     @State private var isApplyingCompanySuggestion = false
     @State private var selectedCompanyName: String
     @State private var selectedCompanyDomain: String
+    @FocusState private var isCompanyNameFocused: Bool
+    @FocusState private var isJobTitleFocused: Bool
     @StateObject private var companySuggestionService = LogoDevCompanySuggestionService()
 
     private let totalSteps = 3
@@ -283,65 +285,57 @@ struct DemographicsEditorView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            TextField("Company name", text: $companyName)
-                .textInputAutocapitalization(.words)
-                .submitLabel(.done)
-                .onSubmit {
-                    markCompleted(.company, value: companyName, force: true)
-                }
-                .padding(12)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemBackground)))
+            ZStack(alignment: .leading) {
+                TextField("Company name", text: $companyName)
+                    .focused($isCompanyNameFocused)
+                    .font(.body)
+                    .textInputAutocapitalization(.words)
+                    .submitLabel(.done)
+                    .onSubmit {
+                        markCompleted(.company, value: companyName, force: true)
+                    }
 
-            companySuggestions
+                if isCompanyNameFocused, let completion = companyNameCompletion {
+                    HStack(spacing: 4) {
+                        Text(completion.prefix)
+                            .hidden()
+
+                        Button {
+                            acceptCompanyNameCompletion(completion.suggestion)
+                        } label: {
+                            Text(completion.suffix)
+                                .lineLimit(1)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+
+                        Image(systemName: "return")
+                            .font(.caption.weight(.semibold))
+                    }
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .accessibilityLabel("Complete company name as \(completion.suggestion.name)")
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                }
+            }
+            .padding(12)
+            .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemBackground)))
+            .animation(.spring(response: 0.24, dampingFraction: 0.86), value: companyNameCompletion?.suggestion.id)
         }
     }
 
-    @ViewBuilder
-    private var companySuggestions: some View {
-        let trimmedCompany = companyName.trimmingCharacters(in: .whitespacesAndNewlines)
+    private var companyNameCompletion: CompanyNameCompletion? {
+        let typedCompanyName = companyName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !typedCompanyName.isEmpty, !isResolvedCompanyInput else { return nil }
 
-        if companySuggestionService.isLoading && companySuggestionsToShow.isEmpty {
-            Label("Looking up companies", systemImage: "sparkle.magnifyingglass")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .transition(.opacity)
-        } else if !companySuggestionsToShow.isEmpty {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(companySuggestionsToShow) { suggestion in
-                        Button {
-                            applyCompanySuggestion(suggestion)
-                        } label: {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(suggestion.name)
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(brandPrimaryColor)
-                                    .lineLimit(1)
-
-                                Text(suggestion.domain)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 8)
-                            .background(brandPrimaryColor.opacity(0.12), in: Capsule())
-                        }
-                        .buttonStyle(.plain)
-                        .transition(.scale(scale: 0.88).combined(with: .opacity))
-                    }
-                }
-                .padding(.vertical, 2)
-            }
-            .transition(.opacity)
-            .animation(.spring(response: 0.24, dampingFraction: 0.78), value: companySuggestionsToShow)
-        } else if let message = companySuggestionService.statusMessage, trimmedCompany.count >= 2 {
-            Text(message)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.vertical, 2)
-                .transition(.opacity)
+        guard let suggestion = bestCompanyNameCompletionSuggestion(for: typedCompanyName),
+              let typedRange = suggestion.name.range(of: typedCompanyName, options: [.caseInsensitive, .anchored]) else {
+            return nil
         }
+
+        let suffix = String(suggestion.name[typedRange.upperBound...])
+        guard !suffix.isEmpty else { return nil }
+        return CompanyNameCompletion(suggestion: suggestion, prefix: typedCompanyName, suffix: suffix)
     }
 
     private var companySuggestionsToShow: [LogoDevCompanySuggestion] {
@@ -375,6 +369,22 @@ struct DemographicsEditorView: View {
         }
     }
 
+    private func bestCompanyNameCompletionSuggestion(for query: String) -> LogoDevCompanySuggestion? {
+        let suggestions = remoteCompanySuggestions.isEmpty ? localCompanySuggestions : remoteCompanySuggestions
+
+        if let namePrefixMatch = suggestions.first(where: {
+            $0.name.range(of: query, options: [.caseInsensitive, .anchored]) != nil &&
+                $0.name.compare(query, options: [.caseInsensitive]) != .orderedSame
+        }) {
+            return namePrefixMatch
+        }
+
+        return suggestions.first(where: {
+            $0.domain.range(of: query, options: [.caseInsensitive, .anchored]) != nil &&
+                $0.name.compare(query, options: [.caseInsensitive]) != .orderedSame
+        })
+    }
+
     private var shouldShowCompanyLogo: Bool {
         let normalizedCompany = companyName.normalizedCompanyName
         guard !companyLogoURL.isEmpty, !selectedCompanyName.isEmpty else { return false }
@@ -397,38 +407,42 @@ struct DemographicsEditorView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            TextField("Job title", text: $jobTitle)
-                .textInputAutocapitalization(.words)
-                .submitLabel(.done)
-                .onSubmit {
-                    markCompleted(.jobTitle, value: jobTitle, force: true)
-                }
-                .padding(12)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemBackground)))
-
-            if !suggestedJobTitles.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(suggestedJobTitles, id: \.self) { title in
-                            Button {
-                                withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
-                                    jobTitle = title
-                                }
-                                markCompleted(.jobTitle, value: title, force: true)
-                            } label: {
-                                Text(title)
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(brandPrimaryColor)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 7)
-                                    .background(brandPrimaryColor.opacity(0.12), in: Capsule())
-                            }
-                            .buttonStyle(.plain)
-                        }
+            ZStack(alignment: .leading) {
+                TextField("Job title", text: $jobTitle)
+                    .focused($isJobTitleFocused)
+                    .font(.body)
+                    .textInputAutocapitalization(.words)
+                    .submitLabel(.done)
+                    .onSubmit {
+                        markCompleted(.jobTitle, value: jobTitle, force: true)
                     }
+
+                if isJobTitleFocused, let completion = jobTitleCompletion {
+                    HStack(spacing: 4) {
+                        Text(completion.prefix)
+                            .hidden()
+
+                        Button {
+                            acceptJobTitleCompletion(completion.title)
+                        } label: {
+                            Text(completion.suffix)
+                                .lineLimit(1)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Complete job title as \(completion.title)")
+
+                        Image(systemName: "return")
+                            .font(.caption.weight(.semibold))
+                    }
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
-                .transition(.opacity)
             }
+            .padding(12)
+            .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemBackground)))
+            .animation(.spring(response: 0.24, dampingFraction: 0.86), value: jobTitleCompletion?.title)
         }
     }
 
@@ -556,19 +570,25 @@ struct DemographicsEditorView: View {
         }
     }
 
-    private var suggestedJobTitles: [String] {
-        let query = jobTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        let matches: [String]
+    private var jobTitleCompletion: JobTitleCompletion? {
+        let typedTitle = jobTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        let query = typedTitle
+        guard !query.isEmpty else { return nil }
 
-        if query.isEmpty {
-            matches = Array(Self.commonJobTitles.prefix(12))
-        } else {
-            matches = Self.commonJobTitles.filter {
-                $0.localizedCaseInsensitiveContains(query)
-            }
+        guard let title = Self.commonJobTitles.first(where: { candidate in
+            candidate.range(of: query, options: [.caseInsensitive, .anchored]) != nil &&
+                candidate.compare(query, options: [.caseInsensitive]) != .orderedSame
+        }) else {
+            return nil
         }
 
-        return Array(matches.prefix(12))
+        guard let typedRange = title.range(of: query, options: [.caseInsensitive, .anchored]) else {
+            return nil
+        }
+
+        let suffix = String(title[typedRange.upperBound...])
+        guard !suffix.isEmpty else { return nil }
+        return JobTitleCompletion(title: title, prefix: typedTitle, suffix: suffix)
     }
 
     private var brandPrimaryColor: Color {
@@ -675,10 +695,6 @@ struct DemographicsEditorView: View {
             return
         }
 
-        if stepIndex == 2 {
-            onExpandedContentChange(true)
-        }
-
         companyLookupTask = Task {
             try? await Task.sleep(nanoseconds: 350_000_000)
             guard !Task.isCancelled else { return }
@@ -732,6 +748,19 @@ struct DemographicsEditorView: View {
         }
     }
 
+    private func acceptCompanyNameCompletion(_ suggestion: LogoDevCompanySuggestion) {
+        applyCompanySuggestion(suggestion)
+        isCompanyNameFocused = false
+    }
+
+    private func acceptJobTitleCompletion(_ title: String) {
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
+            jobTitle = title
+            isJobTitleFocused = false
+        }
+        markCompleted(.jobTitle, value: title, force: true)
+    }
+
     private func markCompleted(_ field: CompanyField, value: String, force: Bool = false) {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
@@ -781,6 +810,18 @@ private enum CompanyField: Hashable {
     case company
     case jobTitle
     case industry
+}
+
+private struct CompanyNameCompletion: Equatable {
+    let suggestion: LogoDevCompanySuggestion
+    let prefix: String
+    let suffix: String
+}
+
+private struct JobTitleCompletion: Equatable {
+    let title: String
+    let prefix: String
+    let suffix: String
 }
 
 private struct LogoDevCompanySuggestion: Identifiable, Decodable, Equatable {
