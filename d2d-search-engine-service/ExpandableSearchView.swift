@@ -156,6 +156,7 @@ struct ExpandableSearchView: View {
                         isFocused = false
                     }
                 },
+                showsCancelButton: false,
                 onCancel: {
                     resetPropertySearchState()
                     withAnimation {
@@ -169,6 +170,7 @@ struct ExpandableSearchView: View {
                 searchText: $contactSearchText,
                 selectedField: $selectedContactSearchField,
                 isFocused: $isFocused,
+                showsCancelButton: false,
                 onSubmit: {
                     onSubmitContactFilter()
                     withAnimation { isExpanded = false }
