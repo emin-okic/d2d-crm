@@ -34,91 +34,27 @@ struct FloatingSearchAndMicButtons: View {
     @State private var isEditingWidgets: Bool = false
     @State private var isShowingQRCodeRestoreTarget: Bool = false
 
-    private let floatingButtonSize: CGFloat = 50
+    private let floatingControlSize: CGFloat = 44
 
     var body: some View {
         VStack {
             Spacer()
-            
+
             ZStack(alignment: .bottomTrailing) {
-                HStack(alignment: .bottom) {
-                    if isExpanded {
-                        ExpandableSearchView(
-                            searchText: $searchText,
-                            contactSearchText: $contactSearchText,
-                            selectedContactSearchField: $selectedContactSearchField,
-                            searchMode: $searchMode,
-                            isExpanded: $isExpanded,
-                            isFocused: $isFocused,
-                            viewModel: viewModel,
-                            animationNamespace: animationNamespace,
-                            onSubmit: onSubmit,
-                            onSubmitContactFilter: onSubmitContactFilter,
-                            onClearContactFilter: onClearContactFilter,
-                            onSelectResult: onSelectResult
-                        )
-                        .frame(maxWidth: 420, alignment: .leading)
-                        .padding(.trailing, 20)
-                        .padding(.bottom, 20)
-                    } else {
-                        MapScreenToolbarLiquidGlass {
-                            VStack(spacing: 10) {
-                                Button {
-                                    MapScreenHapticsController.shared.lightTap()
-                                    MapScreenSoundController.shared.playPropertyOpen()
-                                    if isShowingPreviousRegionButton {
-                                        onRevertToPreviousRegion()
-                                    } else {
-                                        onNavigateToUserLocation()
-                                    }
-                                } label: {
-                                    Image(systemName: isShowingPreviousRegionButton ? "arrow.uturn.backward" : "location.fill")
-                                        .foregroundColor(.white)
-                                        .frame(width: floatingButtonSize, height: floatingButtonSize)
-                                        .background(Circle().fill(Color.blue))
-                                        .shadow(radius: 4)
-                                }
-                                .transition(.opacity)
-                                .accessibilityLabel(
-                                    isShowingPreviousRegionButton
-                                    ? "Return to Previous Map View"
-                                    : "Navigate to Current Location"
-                                )
+                searchTray
+                    .frame(maxWidth: 500, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-                                ExpandableSearchView(
-                                    searchText: $searchText,
-                                    contactSearchText: $contactSearchText,
-                                    selectedContactSearchField: $selectedContactSearchField,
-                                    searchMode: $searchMode,
-                                    isExpanded: $isExpanded,
-                                    isFocused: $isFocused,
-                                    viewModel: viewModel,
-                                    animationNamespace: animationNamespace,
-                                    onSubmit: onSubmit,
-                                    onSubmitContactFilter: onSubmitContactFilter,
-                                    onClearContactFilter: onClearContactFilter,
-                                    onSelectResult: onSelectResult
-                                )
-                            }
-                        }
-                        .onLongPressGesture(minimumDuration: 0.5) {
-                            beginWidgetEditing()
-                        }
-                        .padding(.bottom, 10)
-                    }
-
-                    Spacer()
-                }
-                
                 if !isExpanded {
-                    qrWidgetSlot
-                        .padding(.trailing, 20)
-                        .padding(.bottom, 20)
+                    floatingControlCluster
+                        .padding(.trailing, 16)
+                        .padding(.bottom, 88)
                         .transition(.scale.combined(with: .opacity))
                         .zIndex(1000)
                 }
             }
-            .padding(.leading, 20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .zIndex(999)
@@ -133,11 +69,73 @@ struct FloatingSearchAndMicButtons: View {
         .animation(.spring(response: 0.24, dampingFraction: 0.78), value: isShowingQRCodeRestoreTarget)
     }
 
+    private var searchTray: some View {
+        ExpandableSearchView(
+            searchText: $searchText,
+            contactSearchText: $contactSearchText,
+            selectedContactSearchField: $selectedContactSearchField,
+            searchMode: $searchMode,
+            isExpanded: $isExpanded,
+            isFocused: $isFocused,
+            viewModel: viewModel,
+            animationNamespace: animationNamespace,
+            onSubmit: onSubmit,
+            onSubmitContactFilter: onSubmitContactFilter,
+            onClearContactFilter: onClearContactFilter,
+            onSelectResult: onSelectResult
+        )
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+    }
+
+    private var floatingControlCluster: some View {
+        VStack(spacing: 0) {
+            qrWidgetSlot
+
+            Divider()
+                .frame(width: 26)
+                .padding(.vertical, 2)
+
+            locationControlButton
+        }
+        .padding(4)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.white.opacity(0.22), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.24), radius: 14, x: 0, y: 7)
+    }
+
+    private var locationControlButton: some View {
+        Button {
+            MapScreenHapticsController.shared.lightTap()
+            MapScreenSoundController.shared.playPropertyOpen()
+            if isShowingPreviousRegionButton {
+                onRevertToPreviousRegion()
+            } else {
+                onNavigateToUserLocation()
+            }
+        } label: {
+            Image(systemName: isShowingPreviousRegionButton ? "arrow.uturn.backward" : "location.fill")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(.blue)
+                .frame(width: floatingControlSize, height: floatingControlSize)
+                .background(Color(.systemBackground).opacity(0.88), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(
+            isShowingPreviousRegionButton
+            ? "Return to Previous Map View"
+            : "Navigate to Current Location"
+        )
+    }
+
     @ViewBuilder
     private var qrWidgetSlot: some View {
         if isQRCodeWidgetVisible {
             QRCodeCardView(
                 isEditing: isEditingWidgets,
+                controlSize: floatingControlSize,
                 onBeginEditing: beginWidgetEditing,
                 onCancelEditing: cancelWidgetEditing,
                 onRemove: removeQRCodeWidget
@@ -158,7 +156,7 @@ struct FloatingSearchAndMicButtons: View {
 
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(isShowingQRCodeRestoreTarget ? Color.blue.opacity(0.12) : Color.clear)
-                .frame(width: 60, height: 60)
+                .frame(width: floatingControlSize, height: floatingControlSize)
                 .overlay {
                     if isShowingQRCodeRestoreTarget {
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -177,8 +175,8 @@ struct FloatingSearchAndMicButtons: View {
                 )
         }
         .frame(
-            width: isShowingQRCodeRestoreTarget ? 260 : 60,
-            height: isShowingQRCodeRestoreTarget ? 210 : 60,
+            width: isShowingQRCodeRestoreTarget ? 260 : floatingControlSize,
+            height: isShowingQRCodeRestoreTarget ? 210 : floatingControlSize,
             alignment: .bottomTrailing
         )
     }

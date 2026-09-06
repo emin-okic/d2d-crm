@@ -44,8 +44,6 @@ struct ExpandableSearchView: View {
     var onSubmitContactFilter: () -> Void
     var onClearContactFilter: () -> Void
     var onSelectResult: (MKLocalSearchCompletion) -> Void
-    
-    private let floatingButtonSize: CGFloat = 50
 
     var body: some View {
         VStack {
@@ -114,29 +112,76 @@ struct ExpandableSearchView: View {
                     .matchedGeometryEffect(id: "search", in: animationNamespace)
                     .transition(.move(edge: .leading).combined(with: .opacity))
                 } else {
-                    Button {
-                        
-                        // ✅ Haptics
-                        MapScreenHapticsController.shared.lightTap()
-                        
-                        // ✅ Sound
-                        MapScreenSoundController.shared.playPropertyOpen()
-                        
-                        withAnimation(.easeInOut(duration: 0.25)) {
-                            isExpanded = true
-                            isFocused = true
+                    compactSearchField
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(10)
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .stroke(Color.white.opacity(0.34), lineWidth: 1)
+                        )
+                        .shadow(color: Color.black.opacity(0.18), radius: 18, x: 0, y: 10)
+                        .matchedGeometryEffect(id: "search", in: animationNamespace)
+                        .onChange(of: isFocused) { _, newValue in
+                            guard newValue else { return }
+                            MapScreenHapticsController.shared.lightTap()
+                            MapScreenSoundController.shared.playPropertyOpen()
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                isExpanded = true
+                            }
                         }
-                    } label: {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.white)
-                            .padding()
-                            .frame(width: floatingButtonSize, height: floatingButtonSize)
-                            .background(Circle().fill(Color.blue))
-                    }
-                    .matchedGeometryEffect(id: "search", in: animationNamespace)
-                    .shadow(radius: 4)
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private var compactSearchField: some View {
+        if searchMode == .property {
+            SearchBarView(
+                searchText: $searchText,
+                isFocused: $isFocused,
+                viewModel: viewModel,
+                onSubmit: {
+                    onSubmit()
+                    resetPropertySearchState()
+                    withAnimation { isExpanded = false }
+                },
+                onSelectResult: {
+                    onSelectResult($0)
+                    resetPropertySearchState()
+
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isExpanded = false
+                        isFocused = false
+                    }
+                },
+                onCancel: {
+                    resetPropertySearchState()
+                    withAnimation {
+                        isExpanded = false
+                        isFocused = false
+                    }
+                }
+            )
+        } else {
+            MapContactFilterSearchView(
+                searchText: $contactSearchText,
+                selectedField: $selectedContactSearchField,
+                isFocused: $isFocused,
+                onSubmit: {
+                    onSubmitContactFilter()
+                    withAnimation { isExpanded = false }
+                },
+                onClear: onClearContactFilter,
+                onCancel: {
+                    contactSearchText = ""
+                    withAnimation {
+                        isExpanded = false
+                        isFocused = false
+                    }
+                }
+            )
         }
     }
 
