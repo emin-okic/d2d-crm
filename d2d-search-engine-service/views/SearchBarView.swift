@@ -17,6 +17,7 @@ struct SearchBarView: View {
     @ObservedObject var viewModel: SearchCompleterViewModel
     var onSubmit: () -> Void
     var onSelectResult: (MKLocalSearchCompletion) -> Void
+    var showsCancelButton: Bool = true
 
     var onCancel: () -> Void
 
@@ -53,14 +54,16 @@ struct SearchBarView: View {
             .textInputAutocapitalization(.words)
             .submitLabel(.search)
 
-            Button(action: cancelOrClearSearch) {
-                Image(systemName: searchText.isEmpty ? "xmark" : "xmark.circle.fill")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.secondary)
-                    .frame(width: 30, height: 30)
-                    .contentShape(Rectangle())
+            if showsCancelButton {
+                Button(action: cancelOrClearSearch) {
+                    Image(systemName: searchText.isEmpty ? "xmark" : "xmark.circle.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.secondary)
+                        .frame(width: 30, height: 30)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity)
         .padding(.leading, 8)
@@ -87,6 +90,7 @@ struct MapContactFilterSearchView: View {
     @Binding var searchText: String
     @Binding var selectedField: ContactSearchField
     @FocusState.Binding var isFocused: Bool
+    var showsCancelButton: Bool = true
     var onSubmit: () -> Void
     var onClear: () -> Void
     var onCancel: () -> Void
@@ -131,14 +135,16 @@ struct MapContactFilterSearchView: View {
                 .autocorrectionDisabled()
                 .submitLabel(.search)
 
-                Button(action: clearOrCancel) {
-                    Image(systemName: searchText.isEmpty ? "xmark" : "xmark.circle.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.secondary)
-                        .frame(width: 30, height: 30)
-                        .contentShape(Rectangle())
+                if showsCancelButton {
+                    Button(action: clearOrCancel) {
+                        Image(systemName: searchText.isEmpty ? "xmark" : "xmark.circle.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.secondary)
+                            .frame(width: 30, height: 30)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
             .frame(maxWidth: .infinity)
             .padding(.leading, 8)

@@ -14,6 +14,7 @@ struct QRCodeCardView: View {
     @State private var qrSheetDetent: PresentationDetent = .fraction(0.58)
 
     var isEditing: Bool = false
+    var controlSize: CGFloat = 60
     var onBeginEditing: () -> Void = {}
     var onCancelEditing: () -> Void = {}
     var onRemove: () -> Void = {}
@@ -29,8 +30,8 @@ struct QRCodeCardView: View {
             qrButton
         }
         .frame(
-            width: isEditing ? 260 : 60,
-            height: isEditing ? 210 : 60,
+            width: isEditing ? 260 : controlSize,
+            height: isEditing ? 210 : controlSize,
             alignment: .bottomTrailing
         )
         .sheet(isPresented: $showQRCodeSheet) {
@@ -56,12 +57,11 @@ struct QRCodeCardView: View {
                 Image(systemName: "qrcode")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 40, height: 40)
+                    .frame(width: controlSize * 0.52, height: controlSize * 0.52)
                     .foregroundColor(.blue)
             }
-            .padding()
-            .frame(width: 60, height: 60)
-            .background(.ultraThinMaterial)
+            .frame(width: controlSize, height: controlSize)
+            .background(Color(.systemBackground).opacity(0.88))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay {
                 if isEditing {
