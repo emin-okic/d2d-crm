@@ -23,10 +23,6 @@ struct FloatingSearchAndMicButtons: View {
     var onSubmitContactFilter: () -> Void
     var onClearContactFilter: () -> Void
     var onSelectResult: (MKLocalSearchCompletion) -> Void
-    var activeContactFilter: ContactSearchFilter?
-    var contactFilterResultCount: Int = 0
-    var selectedListName: String = "Prospects"
-    
     var userLocationManager: UserLocationManager
     var mapController: MapController
     var isShowingPreviousRegionButton: Bool = false
@@ -81,9 +77,6 @@ struct FloatingSearchAndMicButtons: View {
             isExpanded: $isExpanded,
             isFocused: $isFocused,
             viewModel: viewModel,
-            activeContactFilter: activeContactFilter,
-            contactFilterResultCount: contactFilterResultCount,
-            selectedListName: selectedListName,
             animationNamespace: animationNamespace,
             onSubmit: onSubmit,
             onSubmitContactFilter: onSubmitContactFilter,

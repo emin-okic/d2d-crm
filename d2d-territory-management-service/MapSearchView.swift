@@ -137,7 +137,7 @@ struct MapSearchView: View {
 
     private var mapBottomContentInset: CGFloat {
         if isSearchExpanded { return 360 }
-        return activeContactFilter == nil ? 140 : 184
+        return 140
     }
     
     private var hasNoSavedContacts: Bool {
@@ -163,12 +163,45 @@ struct MapSearchView: View {
     @ViewBuilder
     private var contactFilterBanner: some View {
         if let filter = activeContactFilter {
-            ContactFilterBanner(
-                filter: filter,
-                resultCount: filteredMapContactCount,
-                listName: selectedList,
-                onClear: clearContactFilter
+            HStack(spacing: 9) {
+                Image(systemName: filter.field.systemImage)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.blue)
+                    .frame(width: 28, height: 28)
+                    .background(Color.blue.opacity(0.12), in: Circle())
+
+                Text("\(selectedList): \(filteredMapContactCount) match\(filteredMapContactCount == 1 ? "" : "es")")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
+
+                Text(filter.displayText)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.76)
+
+                Button(action: clearContactFilter) {
+                    Image(systemName: "xmark")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 24, height: 24)
+                        .background(Color(.secondarySystemBackground), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear Contact Filter")
+            }
+            .padding(.leading, 8)
+            .padding(.trailing, 6)
+            .frame(height: 44)
+            .frame(maxWidth: 420)
+            .background(.regularMaterial, in: Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(Color.white.opacity(0.26), lineWidth: 1)
             )
+            .shadow(color: Color.black.opacity(0.14), radius: 12, x: 0, y: 6)
         }
     }
 
@@ -197,6 +230,15 @@ struct MapSearchView: View {
 
                 ScorecardBar(isCustomizingScorecards: $isCustomizingMapScorecards)
 
+                if isContactFilterActive {
+                    contactFilterBanner
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 102)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .zIndex(1200)
+                }
+
                 FloatingSearchAndMicButtons(
                     searchText: $searchText,
                     contactSearchText: $contactSearchDraft,
@@ -210,9 +252,6 @@ struct MapSearchView: View {
                     onSubmitContactFilter: { submitContactFilter() },
                     onClearContactFilter: { clearContactFilter() },
                     onSelectResult: { handleCompletionTap($0) },
-                    activeContactFilter: activeContactFilter,
-                    contactFilterResultCount: filteredMapContactCount,
-                    selectedListName: selectedList,
                     userLocationManager: userLocationManager,
                     mapController: controller,
                     isShowingPreviousRegionButton: previousRegionBeforeUserLocationJump != nil,

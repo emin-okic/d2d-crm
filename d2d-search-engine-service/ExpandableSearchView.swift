@@ -39,9 +39,6 @@ struct ExpandableSearchView: View {
 
     @ObservedObject var viewModel: SearchCompleterViewModel
 
-    var activeContactFilter: ContactSearchFilter?
-    var contactFilterResultCount: Int = 0
-    var selectedListName: String = "Prospects"
     var animationNamespace: Namespace.ID
     var onSubmit: () -> Void
     var onSubmitContactFilter: () -> Void
@@ -134,10 +131,6 @@ struct ExpandableSearchView: View {
                 }
             }
 
-            if !isExpanded, let activeContactFilter, !activeContactFilter.isEmpty {
-                appliedFilterChip(activeContactFilter)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
         }
     }
 
@@ -160,12 +153,12 @@ struct ExpandableSearchView: View {
                     .background(Color.blue, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(activeContactFilter == nil ? "Search map" : "Search or refine")
+                    Text("Search map")
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
-                    Text(activeContactFilter == nil ? "Address, prospect, or referral" : "\(selectedListName): \(contactFilterResultCount) match\(contactFilterResultCount == 1 ? "" : "es")")
+                    Text("Address, prospect, or referral")
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -186,45 +179,6 @@ struct ExpandableSearchView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Open Map Search")
-    }
-
-    private func appliedFilterChip(_ filter: ContactSearchFilter) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: filter.field.systemImage)
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.blue)
-
-            Text(filter.displayText)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-
-            Text("\(contactFilterResultCount)")
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(.blue)
-                .padding(.horizontal, 7)
-                .padding(.vertical, 4)
-                .background(Color.blue.opacity(0.12), in: Capsule())
-
-            Button(action: onClearContactFilter) {
-                Image(systemName: "xmark")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 22, height: 22)
-                    .background(Color(.secondarySystemBackground), in: Circle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Clear Contact Filter")
-        }
-        .padding(.horizontal, 12)
-        .frame(height: 34)
-        .background(.regularMaterial, in: Capsule())
-        .overlay(
-            Capsule()
-                .stroke(Color.white.opacity(0.24), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
     }
 
     private var searchScopeMenu: some View {
