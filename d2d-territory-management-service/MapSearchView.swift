@@ -135,6 +135,11 @@ struct MapSearchView: View {
         !hasCompletedInitialPropertyTutorial && prospects.isEmpty && customers.isEmpty
     }
 
+    private var mapBottomContentInset: CGFloat {
+        if isSearchExpanded { return 360 }
+        return activeContactFilter == nil ? 140 : 184
+    }
+    
     private var hasNoSavedContacts: Bool {
         prospects.isEmpty && customers.isEmpty
     }
@@ -184,7 +189,8 @@ struct MapSearchView: View {
                     },
                     onRegionChange: { newRegion, isUserDriven in
                         handleRegionChange(newRegion, isUserDriven: isUserDriven)
-                    }
+                    },
+                    bottomContentInset: mapBottomContentInset
                 )
                 .frame(maxHeight: .infinity)
                 .edgesIgnoringSafeArea(.horizontal)
@@ -204,21 +210,15 @@ struct MapSearchView: View {
                     onSubmitContactFilter: { submitContactFilter() },
                     onClearContactFilter: { clearContactFilter() },
                     onSelectResult: { handleCompletionTap($0) },
+                    activeContactFilter: activeContactFilter,
+                    contactFilterResultCount: filteredMapContactCount,
+                    selectedListName: selectedList,
                     userLocationManager: userLocationManager,
                     mapController: controller,
                     isShowingPreviousRegionButton: previousRegionBeforeUserLocationJump != nil,
                     onNavigateToUserLocation: navigateToUserLocation,
                     onRevertToPreviousRegion: revertToPreviousRegion
                 )
-
-                if isContactFilterActive {
-                    contactFilterBanner
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 118)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                        .zIndex(1200)
-                }
 
                 if shouldShowInitialPropertyTutorialOverlay {
                     InitialPropertyTutorialOverlayView(step: initialPropertyTutorialStep)

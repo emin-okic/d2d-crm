@@ -39,6 +39,9 @@ struct ExpandableSearchView: View {
 
     @ObservedObject var viewModel: SearchCompleterViewModel
 
+    var activeContactFilter: ContactSearchFilter?
+    var contactFilterResultCount: Int = 0
+    var selectedListName: String = "Prospects"
     var animationNamespace: Namespace.ID
     var onSubmit: () -> Void
     var onSubmitContactFilter: () -> Void
@@ -46,8 +49,7 @@ struct ExpandableSearchView: View {
     var onSelectResult: (MKLocalSearchCompletion) -> Void
 
     var body: some View {
-        VStack {
-            
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
 
                 if isExpanded {
@@ -112,9 +114,8 @@ struct ExpandableSearchView: View {
                     .matchedGeometryEffect(id: "search", in: animationNamespace)
                     .transition(.move(edge: .leading).combined(with: .opacity))
                 } else {
-                    compactSearchField
+                    smartSearchPill
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(10)
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -132,59 +133,98 @@ struct ExpandableSearchView: View {
                         }
                 }
             }
+
+            if !isExpanded, let activeContactFilter, !activeContactFilter.isEmpty {
+                appliedFilterChip(activeContactFilter)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
     }
 
-    @ViewBuilder
-    private var compactSearchField: some View {
-        if searchMode == .property {
-            SearchBarView(
-                searchText: $searchText,
-                isFocused: $isFocused,
-                viewModel: viewModel,
-                onSubmit: {
-                    onSubmit()
-                    resetPropertySearchState()
-                    withAnimation { isExpanded = false }
-                },
-                onSelectResult: {
-                    onSelectResult($0)
-                    resetPropertySearchState()
+    private var smartSearchPill: some View {
+        Button {
+            MapScreenHapticsController.shared.lightTap()
+            MapScreenSoundController.shared.playPropertyOpen()
+            withAnimation(.spring(response: 0.26, dampingFraction: 0.82)) {
+                isExpanded = true
+            }
+            DispatchQueue.main.async {
+                isFocused = true
+            }
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 19, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 38, height: 38)
+                    .background(Color.blue, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        isExpanded = false
-                        isFocused = false
-                    }
-                },
-                showsCancelButton: false,
-                onCancel: {
-                    resetPropertySearchState()
-                    withAnimation {
-                        isExpanded = false
-                        isFocused = false
-                    }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(activeContactFilter == nil ? "Search map" : "Search or refine")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+
+                    Text(activeContactFilter == nil ? "Address, prospect, or referral" : "\(selectedListName): \(contactFilterResultCount) match\(contactFilterResultCount == 1 ? "" : "es")")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.82)
                 }
-            )
-        } else {
-            MapContactFilterSearchView(
-                searchText: $contactSearchText,
-                selectedField: $selectedContactSearchField,
-                isFocused: $isFocused,
-                showsCancelButton: false,
-                onSubmit: {
-                    onSubmitContactFilter()
-                    withAnimation { isExpanded = false }
-                },
-                onClear: onClearContactFilter,
-                onCancel: {
-                    contactSearchText = ""
-                    withAnimation {
-                        isExpanded = false
-                        isFocused = false
-                    }
-                }
-            )
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.up")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 30, height: 30)
+                    .background(Color(.secondarySystemBackground), in: Circle())
+            }
+            .padding(.horizontal, 9)
+            .frame(height: 54)
+            .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Open Map Search")
+    }
+
+    private func appliedFilterChip(_ filter: ContactSearchFilter) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: filter.field.systemImage)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.blue)
+
+            Text(filter.displayText)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+
+            Text("\(contactFilterResultCount)")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.blue)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 4)
+                .background(Color.blue.opacity(0.12), in: Capsule())
+
+            Button(action: onClearContactFilter) {
+                Image(systemName: "xmark")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 22, height: 22)
+                    .background(Color(.secondarySystemBackground), in: Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Clear Contact Filter")
+        }
+        .padding(.horizontal, 12)
+        .frame(height: 34)
+        .background(.regularMaterial, in: Capsule())
+        .overlay(
+            Capsule()
+                .stroke(Color.white.opacity(0.24), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
     }
 
     private var searchScopeMenu: some View {

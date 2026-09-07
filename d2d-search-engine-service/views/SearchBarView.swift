@@ -21,14 +21,25 @@ struct SearchBarView: View {
 
     var onCancel: () -> Void
 
+    @AppStorage("recentMapPropertySearches") private var recentSearchesStorage: String = ""
+
+    private var recentSearches: [String] {
+        recentSearchesStorage
+            .split(separator: "|")
+            .map(String.init)
+            .filter { !$0.isEmpty }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             searchField
 
+            propertySuggestionChips
+
             SearchSuggestionsListView(
                 isVisible: isFocused,
                 results: viewModel.results,
-                onSelect: onSelectResult
+                onSelect: selectResult
             )
             .padding(.top, 4)
             .padding(.bottom, isFocused && !viewModel.results.isEmpty ? 12 : 0)
@@ -39,14 +50,14 @@ struct SearchBarView: View {
 
     private var searchField: some View {
         HStack(spacing: 10) {
-            Image(systemName: "building.2.crop.circle")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(.blue)
-                .frame(width: 34, height: 34)
-                .background(Color.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 36, height: 36)
+                .background(Color.blue, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
 
-            TextField("Search properties or addresses", text: $searchText, onCommit: {
-                onSubmit()
+            TextField("Search address", text: $searchText, onCommit: {
+                submitSearch()
             })
             .focused($isFocused)
             .font(.subheadline.weight(.medium))
@@ -76,6 +87,41 @@ struct SearchBarView: View {
         )
     }
 
+    @ViewBuilder
+    private var propertySuggestionChips: some View {
+        if isFocused {
+            let chips = recentSearches.isEmpty ? ["Nearby homes", "Current street", "Referral address"] : Array(recentSearches.prefix(3))
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(chips, id: \.self) { chip in
+                        Button {
+                            searchText = chip
+                            isFocused = true
+                            viewModel.updateQuery(chip)
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: recentSearches.contains(chip) ? "clock.arrow.circlepath" : "sparkle.magnifyingglass")
+                                    .font(.caption.weight(.semibold))
+
+                                Text(chip)
+                                    .font(.caption.weight(.semibold))
+                                    .lineLimit(1)
+                            }
+                            .foregroundStyle(.blue)
+                            .padding(.horizontal, 10)
+                            .frame(height: 30)
+                            .background(Color.blue.opacity(0.1), in: Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 2)
+            }
+            .transition(.opacity.combined(with: .move(edge: .bottom)))
+        }
+    }
+
     private func cancelOrClearSearch() {
         if searchText.isEmpty {
             onCancel()
@@ -83,6 +129,25 @@ struct SearchBarView: View {
             searchText = ""
             viewModel.clear()
         }
+    }
+
+    private func submitSearch() {
+        storeRecentSearch(searchText)
+        onSubmit()
+    }
+
+    private func selectResult(_ result: MKLocalSearchCompletion) {
+        storeRecentSearch(result.title)
+        onSelectResult(result)
+    }
+
+    private func storeRecentSearch(_ value: String) {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        var values = recentSearches.filter { $0.localizedCaseInsensitiveCompare(trimmed) != .orderedSame }
+        values.insert(trimmed, at: 0)
+        recentSearchesStorage = values.prefix(5).joined(separator: "|")
     }
 }
 
@@ -94,6 +159,10 @@ struct MapContactFilterSearchView: View {
     var onSubmit: () -> Void
     var onClear: () -> Void
     var onCancel: () -> Void
+
+    private var priorityFields: [ContactSearchField] {
+        [.all, .name, .address, .phone, .notes]
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -125,7 +194,7 @@ struct MapContactFilterSearchView: View {
                 }
                 .menuOrder(.fixed)
 
-                TextField("Filter properties", text: $searchText, onCommit: {
+                TextField("Filter referrals or contacts", text: $searchText, onCommit: {
                     onSubmit()
                 })
                 .focused($isFocused)
@@ -155,7 +224,40 @@ struct MapContactFilterSearchView: View {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(Color.primary.opacity(0.08), lineWidth: 1)
             )
+
+            if isFocused {
+                filterChips
+            }
         }
+    }
+
+    private var filterChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(priorityFields) { field in
+                    Button {
+                        selectedField = field
+                        isFocused = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: field.systemImage)
+                                .font(.caption.weight(.semibold))
+
+                            Text(field.label)
+                                .font(.caption.weight(.semibold))
+                                .lineLimit(1)
+                        }
+                        .foregroundStyle(selectedField == field ? .white : .blue)
+                        .padding(.horizontal, 10)
+                        .frame(height: 30)
+                        .background(selectedField == field ? Color.blue : Color.blue.opacity(0.1), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 2)
+        }
+        .transition(.opacity.combined(with: .move(edge: .bottom)))
     }
 
     private func clearOrCancel() {

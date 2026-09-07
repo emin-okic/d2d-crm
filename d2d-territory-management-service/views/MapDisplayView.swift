@@ -21,6 +21,7 @@ struct MapDisplayView: UIViewRepresentable {
     var onMarkerTapped: (IdentifiablePlace) -> Void
     var onMapTapped: (CLLocationCoordinate2D) -> Void
     var onRegionChange: ((MKCoordinateRegion, Bool) -> Void)?
+    var bottomContentInset: CGFloat = 140
 
     static var cachedMapView: MKMapView?
 
@@ -49,6 +50,7 @@ struct MapDisplayView: UIViewRepresentable {
         mapView.showsUserLocation = true
         mapView.userTrackingMode = .none
         mapView.isRotateEnabled = true
+        mapView.layoutMargins = UIEdgeInsets(top: 0, left: 0, bottom: bottomContentInset, right: 0)
         
         MapDisplayView.cachedMapView = mapView
 
@@ -94,6 +96,9 @@ struct MapDisplayView: UIViewRepresentable {
     }
 
     func updateUIView(_ mapView: MKMapView, context: Context) {
+        if abs(mapView.layoutMargins.bottom - bottomContentInset) > 0.5 {
+            mapView.layoutMargins.bottom = bottomContentInset
+        }
         
         // 🔄 Sync selected marker
         if context.coordinator.selectedPlaceID != selectedPlaceID {

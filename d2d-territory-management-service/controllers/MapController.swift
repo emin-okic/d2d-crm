@@ -207,11 +207,13 @@ class MapController: ObservableObject {
         let latDelta = (maxLat - minLat) * 1.5
         let lonDelta = (maxLon - minLon) * 1.5
 
-        region = MKCoordinateRegion(
+        let baseRegion = MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon),
             span: MKCoordinateSpan(latitudeDelta: max(latDelta, 0.01),
                                    longitudeDelta: max(lonDelta, 0.01))
         )
+
+        region = bottomAwareRegion(baseRegion)
     }
     
     /// Geocodes and adds map markers for the given list of prospects.
@@ -269,7 +271,8 @@ class MapController: ObservableObject {
     
     func centerMapForNewProperty(coordinate: CLLocationCoordinate2D) {
         let mapHeight = MapDisplayView.cachedMapView?.bounds.height ?? 0
-        let visibleHeight = mapHeight > 0 ? max(mapHeight - 250, 1) : 1
+        let bottomInset = MapDisplayView.cachedMapView?.layoutMargins.bottom ?? 250
+        let visibleHeight = mapHeight > 0 ? max(mapHeight - bottomInset, 1) : 1
         let targetYRatio = mapHeight > 0 ? (visibleHeight / 2) / mapHeight : 0.5
 
         moveMap(
@@ -280,6 +283,26 @@ class MapController: ObservableObject {
                 targetYRatio: targetYRatio
             )
         )
+    }
+
+    private func bottomAwareRegion(_ baseRegion: MKCoordinateRegion) -> MKCoordinateRegion {
+        guard
+            let mapView = MapDisplayView.cachedMapView,
+            mapView.bounds.height > 0
+        else {
+            return baseRegion
+        }
+
+        let bottomInset = min(mapView.layoutMargins.bottom, mapView.bounds.height * 0.4)
+        let visibleHeight = max(mapView.bounds.height - bottomInset, 1)
+        let targetYRatio = (visibleHeight / 2) / mapView.bounds.height
+        let latitudeOffset = baseRegion.span.latitudeDelta * (0.5 - targetYRatio)
+        let adjustedCenter = CLLocationCoordinate2D(
+            latitude: baseRegion.center.latitude - latitudeOffset,
+            longitude: baseRegion.center.longitude
+        )
+
+        return MKCoordinateRegion(center: adjustedCenter, span: baseRegion.span)
     }
     
     func reverseGeocode(
