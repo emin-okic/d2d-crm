@@ -163,45 +163,87 @@ struct MapSearchView: View {
     @ViewBuilder
     private var contactFilterBanner: some View {
         if let filter = activeContactFilter {
-            HStack(spacing: 9) {
-                Image(systemName: filter.field.systemImage)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(.blue)
-                    .frame(width: 28, height: 28)
-                    .background(Color.blue.opacity(0.12), in: Circle())
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.blue.opacity(0.95),
+                                    Color.teal.opacity(0.85)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
 
-                Text("\(selectedList): \(filteredMapContactCount) match\(filteredMapContactCount == 1 ? "" : "es")")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.82)
+                    Image(systemName: filter.field.systemImage)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+                .frame(width: 34, height: 34)
+                .shadow(color: Color.blue.opacity(0.24), radius: 8, x: 0, y: 4)
 
-                Text(filter.displayText)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.76)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 7) {
+                        Text("Filtered \(selectedList)")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+
+                        Text("\(filteredMapContactCount)")
+                            .font(.caption2.weight(.heavy))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .background(Color.blue, in: Capsule())
+                            .accessibilityLabel("\(filteredMapContactCount) matches")
+                    }
+
+                    Text(filter.displayText)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.76)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 Button(action: clearContactFilter) {
                     Image(systemName: "xmark")
-                        .font(.caption2.weight(.bold))
+                        .font(.system(size: 11, weight: .heavy))
                         .foregroundStyle(.secondary)
-                        .frame(width: 24, height: 24)
-                        .background(Color(.secondarySystemBackground), in: Circle())
+                        .frame(width: 30, height: 30)
+                        .background(.thinMaterial, in: Circle())
+                        .overlay(
+                            Circle()
+                                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                        )
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Clear Contact Filter")
             }
-            .padding(.leading, 8)
-            .padding(.trailing, 6)
-            .frame(height: 44)
+            .padding(.leading, 10)
+            .padding(.trailing, 8)
+            .padding(.vertical, 8)
+            .frame(minHeight: 56)
             .frame(maxWidth: 420)
-            .background(.regularMaterial, in: Capsule())
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay(
-                Capsule()
-                    .stroke(Color.white.opacity(0.26), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.55),
+                                Color.blue.opacity(0.18)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
             )
-            .shadow(color: Color.black.opacity(0.14), radius: 12, x: 0, y: 6)
+            .shadow(color: Color.black.opacity(0.16), radius: 18, x: 0, y: 10)
+            .shadow(color: Color.blue.opacity(0.08), radius: 10, x: 0, y: 4)
         }
     }
 
