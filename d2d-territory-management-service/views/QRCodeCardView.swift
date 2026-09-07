@@ -15,6 +15,7 @@ struct QRCodeCardView: View {
 
     var isEditing: Bool = false
     var controlSize: CGFloat = 60
+    var showsButtonChrome: Bool = true
     var onBeginEditing: () -> Void = {}
     var onCancelEditing: () -> Void = {}
     var onRemove: () -> Void = {}
@@ -57,11 +58,11 @@ struct QRCodeCardView: View {
                 Image(systemName: "qrcode")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: controlSize * 0.52, height: controlSize * 0.52)
+                    .frame(width: controlSize * 0.48, height: controlSize * 0.48)
                     .foregroundColor(.blue)
             }
             .frame(width: controlSize, height: controlSize)
-            .background(Color(.systemBackground).opacity(0.88))
+            .background(Color(.systemBackground).opacity(showsButtonChrome ? 0.88 : 0))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay {
                 if isEditing {
@@ -72,7 +73,7 @@ struct QRCodeCardView: View {
                         )
                 }
             }
-            .shadow(radius: 2)
+            .shadow(color: showsButtonChrome ? Color.black.opacity(0.16) : .clear, radius: showsButtonChrome ? 2 : 0)
         }
         .buttonStyle(.plain)
         .contentShape(Rectangle())

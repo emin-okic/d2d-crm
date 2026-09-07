@@ -37,7 +37,7 @@ struct FloatingSearchAndMicButtons: View {
     @State private var isEditingWidgets: Bool = false
     @State private var isShowingQRCodeRestoreTarget: Bool = false
 
-    private let floatingControlSize: CGFloat = 44
+    private let floatingControlSize: CGFloat = 46
 
     var body: some View {
         VStack {
@@ -98,18 +98,17 @@ struct FloatingSearchAndMicButtons: View {
             qrWidgetSlot
 
             Divider()
-                .frame(width: 26)
-                .padding(.vertical, 2)
+                .frame(width: 30)
 
             locationControlButton
         }
-        .padding(4)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .frame(width: 48)
+        .background(.ultraThinMaterial, in: Capsule())
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color.white.opacity(0.22), lineWidth: 1)
+            Capsule()
+                .stroke(Color.white.opacity(0.28), lineWidth: 1)
         )
-        .shadow(color: Color.black.opacity(0.24), radius: 14, x: 0, y: 7)
+        .shadow(color: Color.black.opacity(0.22), radius: 14, x: 0, y: 7)
     }
 
     private var locationControlButton: some View {
@@ -123,10 +122,9 @@ struct FloatingSearchAndMicButtons: View {
             }
         } label: {
             Image(systemName: isShowingPreviousRegionButton ? "arrow.uturn.backward" : "location.fill")
-                .font(.system(size: 22, weight: .semibold))
+                .font(.system(size: 21, weight: .semibold))
                 .foregroundStyle(.blue)
                 .frame(width: floatingControlSize, height: floatingControlSize)
-                .background(Color(.systemBackground).opacity(0.88), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(
@@ -142,6 +140,7 @@ struct FloatingSearchAndMicButtons: View {
             QRCodeCardView(
                 isEditing: isEditingWidgets,
                 controlSize: floatingControlSize,
+                showsButtonChrome: false,
                 onBeginEditing: beginWidgetEditing,
                 onCancelEditing: cancelWidgetEditing,
                 onRemove: removeQRCodeWidget
