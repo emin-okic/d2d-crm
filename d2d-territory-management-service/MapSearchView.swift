@@ -270,13 +270,15 @@ struct MapSearchView: View {
                 .frame(maxHeight: .infinity)
                 .edgesIgnoringSafeArea(.horizontal)
 
-                ScorecardBar(isCustomizingScorecards: $isCustomizingMapScorecards)
-
                 if isContactFilterActive {
                     contactFilterBanner
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.horizontal, 16)
-                        .padding(.top, 102)
+                        .padding(.top, 10)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .zIndex(1200)
+                } else {
+                    ScorecardBar(isCustomizingScorecards: $isCustomizingMapScorecards)
                         .transition(.move(edge: .top).combined(with: .opacity))
                         .zIndex(1200)
                 }
@@ -314,7 +316,13 @@ struct MapSearchView: View {
             .onChange(of: prospects) { updateMarkers() }
             .onChange(of: customers) { updateMarkers() }
             .onChange(of: selectedList) { updateMarkers() }
-            .onChange(of: contactSearchFilter) { updateMarkers() }
+            .onChange(of: contactSearchFilter) {
+                if isContactFilterActive {
+                    isCustomizingMapScorecards = false
+                }
+                updateMarkers()
+            }
+            .animation(.spring(response: 0.32, dampingFraction: 0.86), value: isContactFilterActive)
             
             // Prospect Popup Stuff
             .sheet(item: $selectedUnitGroup, onDismiss: resetSelectedMapMarker) { group in
