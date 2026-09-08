@@ -167,6 +167,29 @@ struct MapSearchView: View {
         }
     }
 
+    @ViewBuilder
+    private var mapTopOverlay: some View {
+        if isContactFilterActive {
+            VStack(spacing: 8) {
+                ScorecardBar(
+                    isCustomizingScorecards: $isCustomizingMapScorecards,
+                    isCompact: true
+                )
+
+                contactFilterBanner
+                    .frame(maxWidth: 420)
+                    .padding(.horizontal, 16)
+            }
+            .frame(maxWidth: .infinity, alignment: .top)
+            .transition(.move(edge: .top).combined(with: .opacity))
+            .zIndex(1200)
+        } else {
+            ScorecardBar(isCustomizingScorecards: $isCustomizingMapScorecards)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .zIndex(1200)
+        }
+    }
+
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .topLeading) {
@@ -189,7 +212,7 @@ struct MapSearchView: View {
                 .frame(maxHeight: .infinity)
                 .edgesIgnoringSafeArea(.horizontal)
 
-                ScorecardBar(isCustomizingScorecards: $isCustomizingMapScorecards)
+                mapTopOverlay
 
                 FloatingSearchAndMicButtons(
                     searchText: $searchText,
@@ -211,15 +234,6 @@ struct MapSearchView: View {
                     onRevertToPreviousRegion: revertToPreviousRegion
                 )
 
-                if isContactFilterActive {
-                    contactFilterBanner
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 118)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                        .zIndex(1200)
-                }
-
                 if shouldShowInitialPropertyTutorialOverlay {
                     InitialPropertyTutorialOverlayView(step: initialPropertyTutorialStep)
                         .allowsHitTesting(false)
@@ -234,6 +248,7 @@ struct MapSearchView: View {
             .onChange(of: customers) { updateMarkers() }
             .onChange(of: selectedList) { updateMarkers() }
             .onChange(of: contactSearchFilter) { updateMarkers() }
+            .animation(.spring(response: 0.32, dampingFraction: 0.84), value: isContactFilterActive)
             
             // Prospect Popup Stuff
             .sheet(item: $selectedUnitGroup, onDismiss: resetSelectedMapMarker) { group in

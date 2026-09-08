@@ -12,6 +12,7 @@ struct MapAnalyticsTrackerView: View {
     let definition: MapScorecardDefinition
     var isExpanded: Bool = false
     var isCustomizationActive: Bool = false
+    var isCompact: Bool = false
 
     @Query private var allKnocks: [Knock]
     @State private var showSheet = false
@@ -24,6 +25,26 @@ struct MapAnalyticsTrackerView: View {
         return MapAnalyticsCalculator.totalCount(from: allKnocks, for: definition)
     }
 
+    private var iconSize: CGFloat {
+        isCompact ? 28 : (isExpanded ? 50 : 36)
+    }
+
+    private var iconFontSize: CGFloat {
+        isCompact ? 15 : (isExpanded ? 24 : 19)
+    }
+
+    private var horizontalPadding: CGFloat {
+        isCompact ? 11 : (isExpanded ? 18 : 16)
+    }
+
+    private var verticalPadding: CGFloat {
+        isCompact ? 7 : (isExpanded ? 14 : 10)
+    }
+
+    private var cornerRadius: CGFloat {
+        isCompact ? 15 : 18
+    }
+
     var body: some View {
         Button {
             guard !isCustomizationActive else { return }
@@ -32,39 +53,39 @@ struct MapAnalyticsTrackerView: View {
             MapScreenSoundController.shared.playPropertyOpen()
             showSheet = true
         } label: {
-            HStack(spacing: isExpanded ? 16 : 12) {
+            HStack(spacing: isCompact ? 8 : (isExpanded ? 16 : 12)) {
                 Image(systemName: definition.icon)
-                    .font(.system(size: isExpanded ? 24 : 19, weight: .semibold))
+                    .font(.system(size: iconFontSize, weight: .semibold))
                     .foregroundStyle(definition.color)
-                    .frame(width: isExpanded ? 50 : 36, height: isExpanded ? 50 : 36)
+                    .frame(width: iconSize, height: iconSize)
                     .background(Circle().fill(definition.color.opacity(0.14)))
 
-                VStack(alignment: .leading, spacing: isExpanded ? 4 : 2) {
+                VStack(alignment: .leading, spacing: isCompact ? 1 : (isExpanded ? 4 : 2)) {
                     Text(definition.title)
-                        .font(isExpanded ? .subheadline : .caption)
+                        .font(isCompact ? .caption2.weight(.semibold) : (isExpanded ? .subheadline : .caption))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
 
                     Text("\(count)")
-                        .font(isExpanded ? .largeTitle.weight(.bold) : .title2.weight(.bold))
+                        .font(isCompact ? .headline.weight(.bold) : (isExpanded ? .largeTitle.weight(.bold) : .title2.weight(.bold)))
                         .foregroundStyle(.primary)
                         .contentTransition(.numericText())
                 }
 
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, isExpanded ? 18 : 16)
-            .padding(.vertical, isExpanded ? 14 : 10)
-            .frame(maxWidth: isExpanded ? .infinity : nil, minHeight: isExpanded ? 88 : nil, alignment: .leading)
+            .padding(.horizontal, horizontalPadding)
+            .padding(.vertical, verticalPadding)
+            .frame(maxWidth: isExpanded ? .infinity : nil, minHeight: isCompact ? 46 : (isExpanded ? 88 : nil), alignment: .leading)
             .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .fill(.regularMaterial)
-                    .shadow(color: Color.black.opacity(0.18), radius: 16, x: 0, y: 10)
-                    .shadow(color: definition.color.opacity(0.14), radius: 8, x: 0, y: 3)
+                    .shadow(color: Color.black.opacity(isCompact ? 0.13 : 0.18), radius: isCompact ? 10 : 16, x: 0, y: isCompact ? 5 : 10)
+                    .shadow(color: definition.color.opacity(isCompact ? 0.1 : 0.14), radius: isCompact ? 5 : 8, x: 0, y: 3)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .stroke(
                         LinearGradient(
                             colors: [Color.white.opacity(0.55), definition.color.opacity(0.22)],
