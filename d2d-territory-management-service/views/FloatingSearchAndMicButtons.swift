@@ -35,6 +35,7 @@ struct FloatingSearchAndMicButtons: View {
     @State private var isShowingQRCodeRestoreTarget: Bool = false
 
     private let floatingButtonSize: CGFloat = 50
+    private let toolbarButtonSize: CGFloat = 46
 
     var body: some View {
         VStack {
@@ -61,46 +62,7 @@ struct FloatingSearchAndMicButtons: View {
                         .padding(.trailing, 20)
                         .padding(.bottom, 20)
                     } else {
-                        MapScreenToolbarLiquidGlass {
-                            VStack(spacing: 10) {
-                                Button {
-                                    MapScreenHapticsController.shared.lightTap()
-                                    MapScreenSoundController.shared.playPropertyOpen()
-                                    if isShowingPreviousRegionButton {
-                                        onRevertToPreviousRegion()
-                                    } else {
-                                        onNavigateToUserLocation()
-                                    }
-                                } label: {
-                                    Image(systemName: isShowingPreviousRegionButton ? "arrow.uturn.backward" : "location.fill")
-                                        .foregroundColor(.white)
-                                        .frame(width: floatingButtonSize, height: floatingButtonSize)
-                                        .background(Circle().fill(Color.blue))
-                                        .shadow(radius: 4)
-                                }
-                                .transition(.opacity)
-                                .accessibilityLabel(
-                                    isShowingPreviousRegionButton
-                                    ? "Return to Previous Map View"
-                                    : "Navigate to Current Location"
-                                )
-
-                                ExpandableSearchView(
-                                    searchText: $searchText,
-                                    contactSearchText: $contactSearchText,
-                                    selectedContactSearchField: $selectedContactSearchField,
-                                    searchMode: $searchMode,
-                                    isExpanded: $isExpanded,
-                                    isFocused: $isFocused,
-                                    viewModel: viewModel,
-                                    animationNamespace: animationNamespace,
-                                    onSubmit: onSubmit,
-                                    onSubmitContactFilter: onSubmitContactFilter,
-                                    onClearContactFilter: onClearContactFilter,
-                                    onSelectResult: onSelectResult
-                                )
-                            }
-                        }
+                        appleMapsStyleToolbar
                         .onLongPressGesture(minimumDuration: 0.5) {
                             beginWidgetEditing()
                         }
@@ -131,6 +93,68 @@ struct FloatingSearchAndMicButtons: View {
         .animation(.spring(response: 0.28, dampingFraction: 0.78), value: isEditingWidgets)
         .animation(.spring(response: 0.28, dampingFraction: 0.78), value: isQRCodeWidgetVisible)
         .animation(.spring(response: 0.24, dampingFraction: 0.78), value: isShowingQRCodeRestoreTarget)
+    }
+
+    private var appleMapsStyleToolbar: some View {
+        VStack(spacing: 0) {
+            searchToolbarButton
+
+            Divider()
+                .frame(width: 30)
+
+            locationToolbarButton
+        }
+        .frame(width: 52)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay(
+            Capsule()
+                .stroke(Color.white.opacity(0.28), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.22), radius: 14, x: 0, y: 7)
+    }
+
+    private var searchToolbarButton: some View {
+        Button {
+            MapScreenHapticsController.shared.lightTap()
+            MapScreenSoundController.shared.playPropertyOpen()
+
+            withAnimation(.easeInOut(duration: 0.25)) {
+                isExpanded = true
+                isFocused = true
+            }
+        } label: {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 21, weight: .semibold))
+                .foregroundStyle(.blue)
+                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
+        }
+        .buttonStyle(.plain)
+        .matchedGeometryEffect(id: "search", in: animationNamespace)
+        .accessibilityLabel("Open Map Search")
+    }
+
+    private var locationToolbarButton: some View {
+        Button {
+            MapScreenHapticsController.shared.lightTap()
+            MapScreenSoundController.shared.playPropertyOpen()
+            if isShowingPreviousRegionButton {
+                onRevertToPreviousRegion()
+            } else {
+                onNavigateToUserLocation()
+            }
+        } label: {
+            Image(systemName: isShowingPreviousRegionButton ? "arrow.uturn.backward" : "location.fill")
+                .font(.system(size: 21, weight: .semibold))
+                .foregroundStyle(.blue)
+                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
+        }
+        .buttonStyle(.plain)
+        .transition(.opacity)
+        .accessibilityLabel(
+            isShowingPreviousRegionButton
+            ? "Return to Previous Map View"
+            : "Navigate to Current Location"
+        )
     }
 
     @ViewBuilder

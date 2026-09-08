@@ -8,6 +8,7 @@ import SwiftUI
 
 struct ScorecardBar: View {
     @Binding var isCustomizingScorecards: Bool
+    var isCompact: Bool = false
 
     @AppStorage("mapScorecardSelectionIDs") private var selectedScorecardIDs: String = ""
     @AppStorage("mapScorecardKnocksVisible") private var legacyKnocksVisible: Bool = true
@@ -20,7 +21,7 @@ struct ScorecardBar: View {
     private let maxScorecardCount = 4
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: isCompact ? 0 : 10) {
             if visibleDefinitions.isEmpty && isShowingRestoreTargets == false {
                 emptyScorecardRestoreZone
                     .transition(.opacity)
@@ -29,7 +30,7 @@ struct ScorecardBar: View {
                     .transition(.scale(scale: 0.98).combined(with: .opacity))
             }
 
-            if isShowingRestoreTargets {
+            if !isCompact && isShowingRestoreTargets {
                 selectorPanel
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
@@ -42,11 +43,17 @@ struct ScorecardBar: View {
         .animation(.spring(response: 0.32, dampingFraction: 0.82), value: visibleDefinitions.map(\.id))
         .animation(.spring(response: 0.24, dampingFraction: 0.8), value: editingScorecard?.id)
         .animation(.spring(response: 0.24, dampingFraction: 0.8), value: isShowingRestoreTargets)
+        .onChange(of: isCompact) { _, newValue in
+            guard newValue else { return }
+            closeCustomizationImmediately()
+        }
     }
 
     private var scorecardGrid: some View {
         Group {
-            if visibleDefinitions.count == 3 {
+            if isCompact {
+                compactScorecardRow
+            } else if visibleDefinitions.count == 3 {
                 VStack(spacing: 12) {
                     HStack(spacing: 12) {
                         ForEach(visibleDefinitions.prefix(2)) { definition in
@@ -70,6 +77,20 @@ struct ScorecardBar: View {
             }
         }
         .frame(maxWidth: visibleDefinitions.count == 1 ? .infinity : 420, alignment: .center)
+    }
+
+    private var compactScorecardRow: some View {
+        HStack(spacing: 8) {
+            ForEach(Array(visibleDefinitions.prefix(2))) { definition in
+                MapAnalyticsTrackerView(
+                    definition: definition,
+                    isCustomizationActive: isCustomizingScorecards,
+                    isCompact: true
+                )
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .frame(maxWidth: 420, alignment: .center)
     }
 
     private func scorecardSlot(for definition: MapScorecardDefinition, isExpanded: Bool) -> some View {
@@ -353,5 +374,12 @@ struct ScorecardBar: View {
 
     private func updateCustomizationState() {
         isCustomizingScorecards = editingScorecard != nil || confirmingRemoval != nil || isShowingRestoreTargets
+    }
+
+    private func closeCustomizationImmediately() {
+        editingScorecard = nil
+        confirmingRemoval = nil
+        isShowingRestoreTargets = false
+        updateCustomizationState()
     }
 }
