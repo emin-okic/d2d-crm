@@ -85,6 +85,10 @@ struct RootView: View {
         .onChange(of: allKnocks.map(\.date)) { _, _ in
             StreakNotificationController.shared.refreshSchedule(for: allKnocks)
         }
+        .onChange(of: contactSearchFilter) { _, newValue in
+            guard newValue != nil else { return }
+            contactSearchDraft = ""
+        }
         .onReceive(NotificationCenter.default.publisher(for: .openFollowUpAssistant)) { notification in
             selectedTab = 2 // Pipeline tab
 
@@ -99,6 +103,10 @@ struct RootView: View {
             RootViewHapticsController.shared.lightTap()
             RootViewSoundController.shared.playSound1()
             
+            if newValue == 1, contactSearchFilter != nil {
+                contactSearchDraft = ""
+            }
+
             if newValue == 0 {
                 guard mapContactSelection == nil else { return }
 
