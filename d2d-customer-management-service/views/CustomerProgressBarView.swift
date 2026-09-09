@@ -15,6 +15,10 @@ struct CustomerProgressBarView: View {
     let current: Int
     let listType: CustomerListType
 
+    private var contactLabel: String {
+        current == 1 ? "1 Customer" : "\(current) Customers"
+    }
+
     private var breakpoints: [Int] {
         switch listType {
         case .customers:
@@ -50,40 +54,40 @@ struct CustomerProgressBarView: View {
             let totalWidth = proxy.size.width
 
             ZStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    
-                    // Tier bounds
-                    HStack {
-                        Text("\(displayedPrev)")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(.secondary)
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color(.secondarySystemGroupedBackground))
+                        .shadow(color: .black.opacity(0.08), radius: 3, y: 1)
 
-                        Spacer()
+                    Capsule()
+                        .fill((current >= displayedNext ? Color.green : Color.blue).opacity(0.18))
+                        .frame(width: max(totalWidth * effectiveFraction, 0), height: 36)
+                        .scaleEffect(animateLevelUp ? 1.03 : 1.0, anchor: .leading)
+                        .animation(.easeInOut(duration: 0.3), value: animateLevelUp)
 
-                        Text("\(displayedNext)")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(.secondary)
+                    HStack(spacing: 10) {
+                        Label(contactLabel, systemImage: "person.2.fill")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.78)
+
+                        Spacer(minLength: 8)
+
+                        Text("Next: \(displayedNext)")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                            .lineLimit(1)
                     }
-
-                    // Progress bar
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(Color.gray.opacity(0.3))
-                            .frame(height: 12)
-                            .shadow(color: .black.opacity(0.08), radius: 2, y: 1)
-
-                        Capsule()
-                            .fill(current >= displayedNext ? .green : .blue)
-                            .frame(width: totalWidth * effectiveFraction, height: 12)
-                            .scaleEffect(animateLevelUp ? 1.1 : 1.0, anchor: .center)
-                            .animation(.easeInOut(duration: 0.3), value: animateLevelUp)
-                    }
+                    .padding(.horizontal, 14)
                 }
-                .padding(.horizontal, 20)
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule()
+                        .stroke(Color.secondary.opacity(0.14), lineWidth: 1)
+                )
 
-                // Confetti
                 if showConfetti {
                     ConfettiView()
                         .allowsHitTesting(false)
@@ -91,11 +95,10 @@ struct CustomerProgressBarView: View {
                 }
             }
             .onAppear {
-                // Initialize to the correct tier
                 setTier(for: current)
             }
             .onChange(of: current) { _, newValue in
-                if newValue == displayedNext {   // ✅ Only fire when exactly hitting milestone
+                if newValue == displayedNext {
                     if let idx = breakpoints.firstIndex(of: displayedNext),
                        idx + 1 < breakpoints.count {
                         let newPrev = displayedNext
@@ -129,7 +132,7 @@ struct CustomerProgressBarView: View {
                 }
             }
         }
-        .frame(height: 40)
+        .frame(height: 36)
     }
 
     // Helper to pick the right tier based on current value

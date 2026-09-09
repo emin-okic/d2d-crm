@@ -11,14 +11,10 @@ struct ProspectHeaderView: View {
     let totalProspects: Int
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 8) {
             Text("Contacts")
-                .font(.largeTitle).fontWeight(.bold)
-                .padding(.top, 10)
-
-            Text("\(totalProspects) Prospects")
-                .font(.title2)
-                .foregroundColor(.secondary)
+                .font(.title.weight(.bold))
+                .padding(.top, 6)
 
             ProspectProgressBarView(
                 current: totalProspects,

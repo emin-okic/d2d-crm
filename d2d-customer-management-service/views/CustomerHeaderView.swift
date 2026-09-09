@@ -11,21 +11,16 @@ struct CustomerHeaderView: View {
     let totalCustomers: Int
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 8) {
             Text("Contacts")
-                .font(.largeTitle).fontWeight(.bold)
-                .padding(.top, 10)
+                .font(.title.weight(.bold))
+                .padding(.top, 6)
 
-            Text("\(totalCustomers) Customers")
-                .font(.title2)
-                .foregroundColor(.secondary)
-            
             CustomerProgressBarView(
                 current: totalCustomers,
                 listType: .customers
             )
             .padding(.horizontal, 20)
-
         }
     }
 }
