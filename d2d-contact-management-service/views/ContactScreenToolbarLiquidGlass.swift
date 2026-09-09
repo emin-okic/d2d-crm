@@ -15,18 +15,27 @@ struct ContactScreenToolbarLiquidGlass<Content: View>: View {
     }
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 0) {
             content
         }
-        .padding(12)
+        .frame(width: 52)
         .background(
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .fill(.ultraThinMaterial)
+            Capsule()
+                .fill(.regularMaterial)
+                .background(
+                    Capsule()
+                        .fill(Color(.systemBackground).opacity(0.58))
+                )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 26, style: .continuous)
-                        .stroke(Color.white.opacity(0.18), lineWidth: 1)
+                    Capsule()
+                        .stroke(Color.white.opacity(0.45), lineWidth: 1)
+                )
+                .overlay(
+                    Capsule()
+                        .stroke(Color.black.opacity(0.08), lineWidth: 0.5)
                 )
         )
-        .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 6)
+        .shadow(color: Color.black.opacity(0.24), radius: 16, x: 0, y: 8)
+        .shadow(color: Color.blue.opacity(0.08), radius: 6, x: 0, y: 2)
     }
 }

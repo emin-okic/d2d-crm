@@ -21,20 +21,17 @@ struct ContactsToolbarView: View {
                 Spacer()
 
                 HStack {
-                    // 🔹 Liquid glass only wraps the buttons
                     ContactScreenToolbarLiquidGlass {
-                        VStack(spacing: 10) {
+                        CreateContactButton(action: onAddTapped)
 
-                            CreateContactButton(action: onAddTapped)
-                            
-                            
-                            DeleteContactButton(
-                                isDeleting: $isDeleting,
-                                selectedCount: selectedCount,
-                                onDeleteConfirmed: onDeleteConfirmed
-                            )
+                        Divider()
+                            .frame(width: 30)
 
-                        }
+                        DeleteContactButton(
+                            isDeleting: $isDeleting,
+                            selectedCount: selectedCount,
+                            onDeleteConfirmed: onDeleteConfirmed
+                        )
                     }
 
                     Spacer()

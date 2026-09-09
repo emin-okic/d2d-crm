@@ -46,12 +46,9 @@ struct DeleteContactButton: View {
             }
         } label: {
             Image(systemName: "trash.fill")
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundColor(.white)
-                .frame(width: 50, height: 50)
-                .background(
-                    Circle().fill(isDeleting ? Color.red : Color.blue)
-                )
+                .font(.system(size: 21, weight: .semibold))
+                .foregroundStyle(isDeleting ? .red : .blue)
+                .frame(width: 46, height: 46)
                 .scaleEffect(isDeleting ? (trashPulse ? 1.06 : 1.0) : 1.0)
                 .rotationEffect(.degrees(isDeleting ? (trashPulse ? 2 : -2) : 0))
                 .animation(
@@ -61,6 +58,8 @@ struct DeleteContactButton: View {
                     value: trashPulse
                 )
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isDeleting ? "Confirm Delete Contacts" : "Delete Contacts")
     }
 }
 
