@@ -23,14 +23,13 @@ struct CreateContactButton: View {
         } label: {
             
             Image(systemName: "plus")
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.white)
-                .frame(width: 50, height: 50)
-                .background(Circle().fill(Color.blue))
-                .shadow(radius: 4)
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(.blue)
+                .frame(width: 46, height: 46)
 
         }
-        
+        .buttonStyle(.plain)
+        .accessibilityLabel("Add Contact")
     }
 }
 
