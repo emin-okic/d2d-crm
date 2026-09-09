@@ -42,6 +42,9 @@ struct ProspectDetailsView: View {
     @State private var showKnocksSheet = false
     @State private var showDemographicsSheet = false
     @State private var demographicsSheetDetent: PresentationDetent = .fraction(0.68)
+    @State private var selectedRecording: Recording?
+    
+    private let recordingManager = RecordingManager()
 
     var body: some View {
         ZStack {
@@ -119,6 +122,27 @@ struct ProspectDetailsView: View {
                     )
                 }
                 
+                Section("Recordings") {
+                    if prospectRecordings.isEmpty {
+                        ContentUnavailableView(
+                            "No Recordings",
+                            systemImage: "waveform",
+                            description: Text("Recordings assigned to this prospect will appear here.")
+                        )
+                    } else {
+                        ForEach(prospectRecordings) { recording in
+                            Button {
+                                ContactScreenHapticsController.shared.lightTap()
+                                ContactScreenSoundController.shared.playSound1()
+                                selectedRecording = recording
+                            } label: {
+                                ContactRecordingRow(recording: recording)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                
             }
         }
         .sheet(isPresented: $showDeleteConfirmation) {
@@ -137,6 +161,12 @@ struct ProspectDetailsView: View {
         }
         .sheet(isPresented: $controller.showNotesSheet) {
             ProspectNotesScreen(prospect: prospect)
+        }
+        .sheet(item: $selectedRecording) { recording in
+            RecordingDetailView(recording: recording) {
+                recordingManager.delete(recording: recording, context: modelContext)
+                selectedRecording = nil
+            }
         }
         .sheet(isPresented: $showDemographicsSheet) {
             DemographicsEditorView(
@@ -398,6 +428,10 @@ struct ProspectDetailsView: View {
                 }
             )
         ]
+    }
+    
+    private var prospectRecordings: [Recording] {
+        prospect.recordings.sorted { $0.date > $1.date }
     }
 
     private func navigateToMap() {

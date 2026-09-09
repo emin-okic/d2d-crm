@@ -338,6 +338,11 @@ struct ProspectActionsToolbar: View {
             email.recipientUUID = customer.uuid
             email.recipientType = .customer
         }
+        
+        for recording in prospect.recordings {
+            recording.prospect = nil
+            recording.customer = customer
+        }
 
         // Insert new customer and delete old prospect
         modelContext.insert(customer)

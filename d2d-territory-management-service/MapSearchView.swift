@@ -326,12 +326,19 @@ struct MapSearchView: View {
                             obj.timesHeard += 1
                             if recordingFeaturesActive,
                                let name = pendingRecordingFileName {
+                                let contact = recordingContact(
+                                    address: state.ctx.address,
+                                    isCustomer: state.ctx.isCustomer,
+                                    selectedContact: pendingSelectedContact
+                                )
                                 let rec = Recording(
                                     fileName: name,
                                     title: obj.text,
                                     date: .now,
                                     objection: obj,
-                                    rating: 3
+                                    rating: 3,
+                                    prospect: contact.prospect,
+                                    customer: contact.customer
                                 )
                                 modelContext.insert(rec)
                                 pendingRecordingFileName = nil
@@ -1111,12 +1118,19 @@ struct MapSearchView: View {
 
                         if recordingFeaturesActive,
                            let name = pendingRecordingFileName {
+                            let contact = recordingContact(
+                                address: s.ctx.address,
+                                isCustomer: s.ctx.isCustomer,
+                                selectedContact: pendingSelectedContact
+                            )
                             let rec = Recording(
                                 fileName: name,
                                 title: obj.text,
                                 date: .now,
                                 objection: obj,
-                                rating: 3
+                                rating: 3,
+                                prospect: contact.prospect,
+                                customer: contact.customer
                             )
                             modelContext.insert(rec)
                             pendingRecordingFileName = nil
@@ -1601,6 +1615,27 @@ struct MapSearchView: View {
         return prospects.first { prospect in
             prospect.uuid == selection.contactID || addressesMatch(prospect.address, selection.address)
         }.map(UnitContact.prospect)
+    }
+    
+    private func recordingContact(
+        address: String,
+        isCustomer: Bool,
+        selectedContact: UnitContact?
+    ) -> (prospect: Prospect?, customer: Customer?) {
+        if let selectedContact {
+            switch selectedContact {
+            case .prospect(let prospect):
+                return (prospect, nil)
+            case .customer(let customer):
+                return (nil, customer)
+            }
+        }
+        
+        if isCustomer {
+            return (nil, customers.first { addressesMatch($0.address, address) })
+        }
+        
+        return (prospects.first { addressesMatch($0.address, address) }, nil)
     }
 
     private func selectedMapPlace(for contact: UnitContact) -> IdentifiablePlace {

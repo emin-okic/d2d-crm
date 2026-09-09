@@ -45,6 +45,9 @@ final class Customer: ContactProtocol {
     
     var phoneCalls: [PhoneCall]
     
+    @Relationship(deleteRule: .nullify, inverse: \Recording.customer)
+    var recordings: [Recording]
+    
     /// Stored coordinates for marker annotation generation
     var latitude: Double?
     var longitude: Double?
@@ -76,6 +79,8 @@ final class Customer: ContactProtocol {
         self.emailsSent = []
         
         self.phoneCalls = []
+        
+        self.recordings = []
         
         self.latitude = nil
         self.longitude = nil

@@ -31,6 +31,11 @@ final class CustomerController {
         customer.notes = prospect.notes
         customer.appointments = prospect.appointments
         customer.knockHistory = prospect.knockHistory
+        
+        for recording in prospect.recordings {
+            recording.prospect = nil
+            recording.customer = customer
+        }
 
         // Preserve spatial identity
         customer.latitude = prospect.latitude
