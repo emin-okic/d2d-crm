@@ -83,13 +83,10 @@ struct FollowUpAssistantView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
                         // MARK: - Header
-                        HStack {
-                            Text("Follow Up Assistant")
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                            Spacer()
-                        }
+                        Text("Follow-Up Pipeline")
+                            .font(.largeTitle)
+                            .fontWeight(.semibold)
+                            .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.horizontal, 20)
                         .padding(.top, 20)
 
