@@ -48,6 +48,38 @@ struct AppointmentRowView: View {
         return appt.location
     }
 
+    private var isCompleted: Bool {
+        appt.isCompleted
+    }
+
+    private var statusColor: Color {
+        isCompleted ? .green : accentColor
+    }
+
+    private var rowFillColor: Color {
+        if isEditing && isSelected {
+            return Color.red.opacity(0.08)
+        }
+
+        return isCompleted ? Color(.secondarySystemGroupedBackground) : accentColor.opacity(0.14)
+    }
+
+    private var rowStrokeColor: Color {
+        if isEditing && isSelected {
+            return Color.red.opacity(0.45)
+        }
+
+        return isCompleted ? Color.green.opacity(0.26) : accentColor.opacity(0.24)
+    }
+
+    private var completedStatusText: String {
+        if let completedAt = appt.completedAt {
+            return "Completed \(completedAt.formatted(date: .omitted, time: .shortened))"
+        }
+
+        return "Completed"
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             if isEditing {
@@ -58,21 +90,32 @@ struct AppointmentRowView: View {
             }
 
             RoundedRectangle(cornerRadius: 4)
-                .fill(accentColor)
+                .fill(statusColor)
                 .frame(width: 5)
+                .opacity(isCompleted ? 0.62 : 1)
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(rowTitle)
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
+                    HStack(alignment: .firstTextBaseline, spacing: 7) {
+                        if isCompleted {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(.green)
+                                .accessibilityHidden(true)
+                        }
+
+                        Text(rowTitle)
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(isCompleted ? .secondary : .primary)
+                            .strikethrough(isCompleted, color: .secondary)
+                            .lineLimit(1)
+                    }
 
                     Spacer(minLength: 8)
 
                     Text(appt.date.formatted(date: .omitted, time: .shortened))
                         .font(.caption.weight(.bold))
-                        .foregroundStyle(accentColor)
+                        .foregroundStyle(isCompleted ? .secondary : accentColor)
                         .lineLimit(1)
                 }
 
@@ -80,11 +123,20 @@ struct AppointmentRowView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .opacity(isCompleted ? 0.72 : 1)
 
                 if !rowLocation.isEmpty {
                     Label(rowLocation, systemImage: "mappin.and.ellipse")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .opacity(isCompleted ? 0.72 : 1)
+                }
+
+                if isCompleted {
+                    Label(completedStatusText, systemImage: "checkmark.seal")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.green)
                         .lineLimit(1)
                 }
             }
@@ -93,16 +145,17 @@ struct AppointmentRowView: View {
         .frame(maxWidth: .infinity, minHeight: minRowHeight, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(isEditing && isSelected ? Color.red.opacity(0.08) : accentColor.opacity(0.14))
+                .fill(rowFillColor)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(isEditing && isSelected ? Color.red.opacity(0.45) : accentColor.opacity(0.24), lineWidth: 1)
+                        .stroke(rowStrokeColor, lineWidth: 1)
                 )
-                .shadow(color: accentColor.opacity(0.16), radius: 10, x: 0, y: 6)
+                .shadow(color: statusColor.opacity(isCompleted ? 0.08 : 0.16), radius: 10, x: 0, y: 6)
                 .shadow(color: Color.black.opacity(0.04), radius: 3, x: 0, y: 1)
         )
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .contentShape(RoundedRectangle(cornerRadius: 14))
+        .accessibilityHint(isCompleted ? "Completed meeting" : "")
     }
 }
