@@ -49,6 +49,7 @@ struct CustomerDetailsView: View {
     @State private var showKnocksSheet = false
     @State private var showDemographicsSheet = false
     @State private var demographicsSheetDetent: PresentationDetent = .fraction(0.68)
+    @State private var showRecordingsHistory = false
 
     var body: some View {
         ZStack {
@@ -126,7 +127,6 @@ struct CustomerDetailsView: View {
                         modelContext: modelContext
                     )
                 }
-                
             }
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
@@ -136,6 +136,13 @@ struct CustomerDetailsView: View {
                     ContactScreenHapticsController.shared.lightTap()
                     ContactScreenSoundController.shared.playSound1()
                 }
+        }
+        .sheet(isPresented: $showRecordingsHistory) {
+            ContactRecordingsHistoryView(
+                contactName: customer.fullName,
+                contactType: "Customer",
+                recordings: customerRecordings
+            )
         }
         .sheet(isPresented: $showAppointmentsSheet) {
             NavigationStack {
@@ -212,6 +219,15 @@ struct CustomerDetailsView: View {
             
             if !hasUnsavedEdits {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
+
+                    Button {
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+                        showRecordingsHistory = true
+                    } label: {
+                        Image(systemName: "waveform")
+                    }
+                    .accessibilityLabel("Recording History")
 
                     Button {
                         ContactScreenHapticsController.shared.lightTap()
@@ -373,6 +389,10 @@ struct CustomerDetailsView: View {
                 }
             )
         ]
+    }
+    
+    private var customerRecordings: [Recording] {
+        customer.recordings.sorted { $0.date > $1.date }
     }
 
     private func navigateToMap() {

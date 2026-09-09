@@ -42,6 +42,7 @@ struct ProspectDetailsView: View {
     @State private var showKnocksSheet = false
     @State private var showDemographicsSheet = false
     @State private var demographicsSheetDetent: PresentationDetent = .fraction(0.68)
+    @State private var showRecordingsHistory = false
 
     var body: some View {
         ZStack {
@@ -118,7 +119,6 @@ struct ProspectDetailsView: View {
                         modelContext: modelContext
                     )
                 }
-                
             }
         }
         .sheet(isPresented: $showDeleteConfirmation) {
@@ -137,6 +137,13 @@ struct ProspectDetailsView: View {
         }
         .sheet(isPresented: $controller.showNotesSheet) {
             ProspectNotesScreen(prospect: prospect)
+        }
+        .sheet(isPresented: $showRecordingsHistory) {
+            ContactRecordingsHistoryView(
+                contactName: prospect.fullName,
+                contactType: "Prospect",
+                recordings: prospectRecordings
+            )
         }
         .sheet(isPresented: $showDemographicsSheet) {
             DemographicsEditorView(
@@ -185,6 +192,15 @@ struct ProspectDetailsView: View {
             // Export + Share (hidden while editing)
             if !hasUnsavedEdits {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
+
+                    Button {
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+                        showRecordingsHistory = true
+                    } label: {
+                        Image(systemName: "waveform")
+                    }
+                    .accessibilityLabel("Recording History")
 
                     Button {
                         ContactScreenHapticsController.shared.lightTap()
@@ -398,6 +414,10 @@ struct ProspectDetailsView: View {
                 }
             )
         ]
+    }
+    
+    private var prospectRecordings: [Recording] {
+        prospect.recordings.sorted { $0.date > $1.date }
     }
 
     private func navigateToMap() {

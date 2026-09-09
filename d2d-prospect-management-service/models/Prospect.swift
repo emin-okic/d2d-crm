@@ -44,6 +44,9 @@ final class Prospect: ContactProtocol {
     var emailsSent: [Email]
     
     var phoneCalls: [PhoneCall]
+    
+    @Relationship(deleteRule: .nullify, inverse: \Recording.prospect)
+    var recordings: [Recording]
 
     /// keep your list flag if you still use it elsewhere
     var list: String
@@ -83,6 +86,8 @@ final class Prospect: ContactProtocol {
         
         self.phoneCalls = []
         
+        self.recordings = []
+
         self.latitude = nil
         self.longitude = nil
         
