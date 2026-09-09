@@ -42,9 +42,7 @@ struct ProspectDetailsView: View {
     @State private var showKnocksSheet = false
     @State private var showDemographicsSheet = false
     @State private var demographicsSheetDetent: PresentationDetent = .fraction(0.68)
-    @State private var selectedRecording: Recording?
-    
-    private let recordingManager = RecordingManager()
+    @State private var showRecordingsHistory = false
 
     var body: some View {
         ZStack {
@@ -121,28 +119,6 @@ struct ProspectDetailsView: View {
                         modelContext: modelContext
                     )
                 }
-                
-                Section("Recordings") {
-                    if prospectRecordings.isEmpty {
-                        ContentUnavailableView(
-                            "No Recordings",
-                            systemImage: "waveform",
-                            description: Text("Recordings assigned to this prospect will appear here.")
-                        )
-                    } else {
-                        ForEach(prospectRecordings) { recording in
-                            Button {
-                                ContactScreenHapticsController.shared.lightTap()
-                                ContactScreenSoundController.shared.playSound1()
-                                selectedRecording = recording
-                            } label: {
-                                ContactRecordingRow(recording: recording)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-                
             }
         }
         .sheet(isPresented: $showDeleteConfirmation) {
@@ -162,11 +138,12 @@ struct ProspectDetailsView: View {
         .sheet(isPresented: $controller.showNotesSheet) {
             ProspectNotesScreen(prospect: prospect)
         }
-        .sheet(item: $selectedRecording) { recording in
-            RecordingDetailView(recording: recording) {
-                recordingManager.delete(recording: recording, context: modelContext)
-                selectedRecording = nil
-            }
+        .sheet(isPresented: $showRecordingsHistory) {
+            ContactRecordingsHistoryView(
+                contactName: prospect.fullName,
+                contactType: "Prospect",
+                recordings: prospectRecordings
+            )
         }
         .sheet(isPresented: $showDemographicsSheet) {
             DemographicsEditorView(
@@ -215,6 +192,15 @@ struct ProspectDetailsView: View {
             // Export + Share (hidden while editing)
             if !hasUnsavedEdits {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
+
+                    Button {
+                        ContactScreenHapticsController.shared.lightTap()
+                        ContactScreenSoundController.shared.playSound1()
+                        showRecordingsHistory = true
+                    } label: {
+                        Image(systemName: "waveform")
+                    }
+                    .accessibilityLabel("Recording History")
 
                     Button {
                         ContactScreenHapticsController.shared.lightTap()

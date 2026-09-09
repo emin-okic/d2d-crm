@@ -7,6 +7,68 @@
 
 import SwiftUI
 
+struct ContactRecordingsHistoryView: View {
+    let contactName: String
+    let contactType: String
+    let recordings: [Recording]
+    
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @State private var selectedRecording: Recording?
+    
+    private let recordingManager = RecordingManager()
+    
+    var body: some View {
+        NavigationStack {
+            List {
+                if recordings.isEmpty {
+                    ContentUnavailableView(
+                        "No Recordings",
+                        systemImage: "waveform",
+                        description: Text("Recordings assigned to this \(contactType.lowercased()) will appear here.")
+                    )
+                } else {
+                    Section {
+                        ForEach(recordings) { recording in
+                            Button {
+                                ContactScreenHapticsController.shared.lightTap()
+                                ContactScreenSoundController.shared.playSound1()
+                                selectedRecording = recording
+                            } label: {
+                                ContactRecordingRow(recording: recording)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    } header: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(contactType)
+                            Text(contactName)
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                                .textCase(nil)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Recordings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+            .sheet(item: $selectedRecording) { recording in
+                RecordingDetailView(recording: recording) {
+                    recordingManager.delete(recording: recording, context: modelContext)
+                    selectedRecording = nil
+                }
+            }
+        }
+    }
+}
+
 struct ContactRecordingRow: View {
     let recording: Recording
     
