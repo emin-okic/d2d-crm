@@ -27,6 +27,6 @@ struct AppointmentsContainerView: View {
             )
             .padding()
         }
-        .frame(height: 550) // 3 rows + padding
+        .frame(height: 610)
     }
 }

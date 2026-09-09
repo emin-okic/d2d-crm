@@ -83,13 +83,6 @@ struct FollowUpAssistantView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
                         // MARK: - Header
-                        Text("Follow-Up Pipeline")
-                            .font(.largeTitle)
-                            .fontWeight(.semibold)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 20)
-
                         // MARK: - Summary Cards
                         VStack(spacing: 12) {
                             HStack(spacing: 12) {
@@ -115,6 +108,7 @@ struct FollowUpAssistantView: View {
                             }
                         }
                         .padding(.horizontal, 20)
+                        .padding(.top, 20)
 
                         // MARK: - Appointments
                         // AppointmentsSectionView already scrolls and is clamped to 300pt
@@ -126,7 +120,7 @@ struct FollowUpAssistantView: View {
                                     filteredAppointments: $filteredAppointments
                                 )
                                 .padding(.horizontal, 20)
-                                .frame(maxHeight: 550)
+                                .frame(maxHeight: 610)
                                 
                             }
                         }
