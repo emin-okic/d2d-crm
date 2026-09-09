@@ -142,9 +142,10 @@ struct FollowUpAssistantView: View {
                     showProspectPicker: $showAppointmentsPicker,
                     isEditing: $isEditingAppointments,
                     selectedAppointments: $selectedAppointments,
-                    showDeleteConfirm: $showDeleteAppointmentsConfirm,
-                    todaysAppointments: filteredAppointments
+                    showDeleteConfirm: $showDeleteAppointmentsConfirm
                 )
+
+                routeOverlay
                 
             }
             .onAppear {
@@ -263,6 +264,22 @@ struct FollowUpAssistantView: View {
                 }
             }
         }
+    }
+
+    private var routeOverlay: some View {
+        VStack {
+            Spacer()
+
+            HStack {
+                Spacer()
+
+                OpenInAppleMapsButton(appointments: filteredAppointments)
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 16)
+            }
+        }
+        .allowsHitTesting(true)
+        .zIndex(999)
     }
     
     private func deleteSelectedAppointments() {

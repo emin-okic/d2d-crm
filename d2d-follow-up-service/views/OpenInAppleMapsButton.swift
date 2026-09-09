@@ -26,14 +26,29 @@ struct OpenInAppleMapsButton: View {
             }
         } label: {
             Image(systemName: "car.fill")
-                .font(.system(size: 20, weight: .bold))
-                .foregroundColor(.white)
-                .frame(width: 48, height: 48)
+                .font(.system(size: 24, weight: .semibold))
+                .foregroundStyle(isEnabled ? .blue : .secondary)
+                .frame(width: 60, height: 60)
                 .background(
-                    Circle()
-                        .fill(isEnabled ? Color.blue : Color.gray.opacity(0.45))
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(.regularMaterial)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color(.systemBackground).opacity(0.58))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(Color.white.opacity(0.45), lineWidth: 1)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(Color.black.opacity(0.08), lineWidth: 0.5)
+                        )
                 )
+                .shadow(color: Color.black.opacity(0.24), radius: 16, x: 0, y: 8)
+                .shadow(color: Color.blue.opacity(isEnabled ? 0.08 : 0), radius: 6, x: 0, y: 2)
         }
+        .buttonStyle(.plain)
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1 : 0.55)
         .animation(.easeInOut(duration: 0.2), value: isEnabled)
