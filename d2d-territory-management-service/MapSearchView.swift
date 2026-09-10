@@ -493,8 +493,8 @@ struct MapSearchView: View {
                     .transition(.scale(scale: 0.86).combined(with: .opacity))
                     .zIndex(5001)
                     .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
-                            withAnimation(.easeOut(duration: 0.22)) {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.85) {
+                            withAnimation(.easeOut(duration: 0.16)) {
                                 followUpScheduledConfirmation = nil
                             }
                         }
