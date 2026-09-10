@@ -12,7 +12,7 @@ import Speech
 
 struct RecordingsView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var recordings: [Recording]
+    @Query(sort: \Recording.date, order: .reverse) private var recordings: [Recording]
     @Query private var objections: [Objection]
 
     @State private var isRecording = false
