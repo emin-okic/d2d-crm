@@ -12,7 +12,7 @@ import Speech
 
 struct RecordingsView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var recordings: [Recording]
+    @Query(sort: \Recording.date, order: .reverse) private var recordings: [Recording]
     @Query private var objections: [Objection]
 
     @State private var isRecording = false
@@ -361,6 +361,9 @@ struct RecordingsView: View {
     }
 
     func stopRecording(fileName: String) {
+        let recordedObjection = selectedObjection
+        let expectedResponse = recordedObjection?.response.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
         recorder.stop()
         isRecording = false
         recordingStart = nil
@@ -372,18 +375,19 @@ struct RecordingsView: View {
 
         transcriber.transcribe(url: url) { transcription in
             DispatchQueue.main.async {
-                let expected = selectedObjection?.response ?? ""
-                let score = transcription.map { scorer.score(user: $0, expected: expected) }
+                let trimmedTranscription = transcription?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                let score = scorer.score(user: trimmedTranscription, expected: expectedResponse)
 
                 let newRecording = Recording(
                     fileName: fileName,
                     title: "New Recording",
                     date: Date(),
-                    objection: selectedObjection,
+                    objection: recordedObjection,
                     rating: score
                 )
 
                 modelContext.insert(newRecording)
+                try? modelContext.save()
             }
         }
 

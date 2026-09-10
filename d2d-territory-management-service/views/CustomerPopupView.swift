@@ -19,7 +19,6 @@ struct CustomerPopupView: View {
     @State private var isRecording = false
     @State private var currentFileName: String?
 
-    private let recorder = RecordingManager()
     private var recordingFeaturesActive: Bool { studioUnlocked && recordingModeEnabled }
 
     var body: some View {
@@ -219,18 +218,16 @@ struct CustomerPopupView: View {
     }
 
     private func startRecording() {
-        let result = recorder.start()
-        if result.started {
-            isRecording = true
-            currentFileName = result.fileName
-        }
+        guard recordingFeaturesActive else { return }
+
+        isRecording = true
+        currentFileName = "rolling-follow-up"
     }
 
     private func stopAndHandleOutcome(_ outcome: String) {
         MapScreenHapticsController.shared.propertyAdded()
         MapScreenSoundController.shared.playPropertyAdded()
 
-        recorder.stop()
         isRecording = false
 
         if outcome == "Wasn't Home" {
@@ -244,10 +241,6 @@ struct CustomerPopupView: View {
     }
 
     private func discardRecording() {
-        if let file = currentFileName {
-            let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                .appendingPathComponent(file)
-            try? FileManager.default.removeItem(at: url)
-        }
+        currentFileName = nil
     }
 }

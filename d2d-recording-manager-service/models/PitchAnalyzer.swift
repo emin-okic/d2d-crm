@@ -9,8 +9,13 @@ import SwiftData
 
 class PitchAnalyzer {
     func score(user: String, expected: String) -> Int {
-        let userWords = Set(user.lowercased().split(separator: " "))
-        let expectedWords = Set(expected.lowercased().split(separator: " "))
+        let userWords = words(in: user)
+        let expectedWords = words(in: expected)
+
+        guard !userWords.isEmpty, !expectedWords.isEmpty else {
+            return 1
+        }
+
         let intersection = userWords.intersection(expectedWords)
 
         let similarity = Double(intersection.count) / Double(expectedWords.count)
@@ -22,5 +27,14 @@ class PitchAnalyzer {
         case ..<0.8: return 4
         default: return 5
         }
+    }
+
+    private func words(in text: String) -> Set<String> {
+        let words = text
+            .lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+
+        return Set(words)
     }
 }
