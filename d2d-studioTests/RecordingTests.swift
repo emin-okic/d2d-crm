@@ -47,4 +47,23 @@ final class RecordingTests: XCTestCase {
         // Assert
         XCTAssertNil(recording.rating)
     }
+
+    func testPitchAnalyzerRatesCloseMatchHighly() {
+        let analyzer = PitchAnalyzer()
+
+        let rating = analyzer.score(
+            user: "I understand the price concern, but the long term value is worth it.",
+            expected: "I understand the price concern but the long term value is worth it"
+        )
+
+        XCTAssertEqual(rating, 5)
+    }
+
+    func testPitchAnalyzerReturnsNeedsWorkRatingForEmptyInput() {
+        let analyzer = PitchAnalyzer()
+
+        let rating = analyzer.score(user: "", expected: "Here is the expected objection response")
+
+        XCTAssertEqual(rating, 1)
+    }
 }
