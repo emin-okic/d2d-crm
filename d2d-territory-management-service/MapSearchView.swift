@@ -84,6 +84,7 @@ struct MapSearchView: View {
     
     @State private var selectedUnitGroup: UnitGroup?
     @State private var selectedMultiContactState: MultiContactState?
+    @State private var isReplacingMapPopup = false
     @State private var selectedProspect: Prospect?
     @State private var selectedCustomer: Customer?
     @State private var pendingSelectedContact: UnitContact? = nil
@@ -254,33 +255,33 @@ struct MapSearchView: View {
             .animation(.spring(response: 0.32, dampingFraction: 0.84), value: isContactFilterActive)
             
             // Prospect Popup Stuff
-            .sheet(item: $selectedUnitGroup, onDismiss: resetSelectedMapMarker) { group in
+            .sheet(item: $selectedUnitGroup, onDismiss: handleMapPopupDismiss) { group in
                 UnitSelectorPopupView(
                     baseAddress: group.base,
                     units: group.units,
                     onSelect: { unitGroup in
+                        isReplacingMapPopup = true
                         selectedUnitGroup = nil
                         openUnitContactGroup(unitGroup, baseAddress: group.base)
                     },
                     onClose: {
-                        selectedUnitGroup = nil
-                        resetSelectedMapMarker()
+                        closeAllMapPopupsAndResetSelection()
                     }
                 )
                 .presentationDetents([.fraction(0.46)])
                 .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.46)))
                 .presentationDragIndicator(.visible)
             }
-            .sheet(item: $selectedMultiContactState, onDismiss: resetSelectedMapMarker) { state in
+            .sheet(item: $selectedMultiContactState, onDismiss: handleMapPopupDismiss) { state in
                 MultiContactPopupView(
                     state: state,
                     onSelect: { contact in
+                        isReplacingMapPopup = true
                         selectedMultiContactState = nil
                         showPopup(for: place(for: contact))
                     },
                     onClose: {
-                        selectedMultiContactState = nil
-                        resetSelectedMapMarker()
+                        closeAllMapPopupsAndResetSelection()
                     }
                 )
                 .presentationDetents([.fraction(0.42)])
@@ -288,7 +289,7 @@ struct MapSearchView: View {
                 .presentationDragIndicator(.visible)
             }
             // This is for the contact popup display
-            .sheet(item: $popupState, onDismiss: resetSelectedMapMarker) { popup in
+            .sheet(item: $popupState, onDismiss: handleMapPopupDismiss) { popup in
                 popupSheet(for: popup)
             }
             .sheet(item: $stepperState) { state in
@@ -691,10 +692,7 @@ struct MapSearchView: View {
 
             if isUserDriven {
                 previousRegionBeforeUserLocationJump = nil
-
-                if popupState != nil {
-                    popupState = nil
-                }
+                dismissActiveMapPopup()
             }
         }
     }
@@ -735,7 +733,9 @@ struct MapSearchView: View {
     
     private func handleMarkerTap(place: IdentifiablePlace, geo: GeometryProxy) {
         
+        replaceActiveMapPopupIfNeeded()
         selectedPlaceID = place.id
+        refreshSelectedMarker(for: place)
         
         // 🔹 STEP for Apartment / multi-unit interception
         let parts = parseAddress(place.address)
@@ -911,7 +911,42 @@ struct MapSearchView: View {
         }
     }
 
-    private func dismissActiveMapPopup() -> Bool {
+    private func handleMapPopupDismiss() {
+        guard isReplacingMapPopup else {
+            closeAllMapPopupsAndResetSelection()
+            return
+        }
+
+        DispatchQueue.main.async {
+            if popupState != nil || selectedUnitGroup != nil || selectedMultiContactState != nil {
+                isReplacingMapPopup = false
+            } else {
+                closeAllMapPopupsAndResetSelection()
+            }
+        }
+    }
+
+    private func closeAllMapPopupsAndResetSelection() {
+        popupState = nil
+        selectedUnitGroup = nil
+        selectedMultiContactState = nil
+        popupScreenPosition = nil
+        isReplacingMapPopup = false
+        resetSelectedMapMarker()
+    }
+
+    private func replaceActiveMapPopupIfNeeded() {
+        guard popupState != nil || selectedUnitGroup != nil || selectedMultiContactState != nil else { return }
+
+        isReplacingMapPopup = true
+        popupState = nil
+        selectedUnitGroup = nil
+        selectedMultiContactState = nil
+        popupScreenPosition = nil
+    }
+
+    @discardableResult
+    private func dismissActiveMapPopup(resetSelection: Bool = true) -> Bool {
         guard popupState != nil || selectedUnitGroup != nil || selectedMultiContactState != nil else {
             return false
         }
@@ -919,7 +954,13 @@ struct MapSearchView: View {
         popupState = nil
         selectedUnitGroup = nil
         selectedMultiContactState = nil
-        resetSelectedMapMarker()
+        popupScreenPosition = nil
+
+        if resetSelection {
+            isReplacingMapPopup = false
+            resetSelectedMapMarker()
+        }
+
         return true
     }
 
@@ -970,8 +1011,7 @@ struct MapSearchView: View {
         CustomerPopupView(
             place: place,
             onClose: {
-                popupState = nil
-                resetSelectedMapMarker()
+                closeAllMapPopupsAndResetSelection()
             },
             onOutcomeSelected: { outcome, fileName in
                 handlePopupOutcome(for: place, outcome: outcome, fileName: fileName)
@@ -991,8 +1031,7 @@ struct MapSearchView: View {
             place: place,
             isCustomer: false,
             onClose: {
-                popupState = nil
-                resetSelectedMapMarker()
+                closeAllMapPopupsAndResetSelection()
             },
             onOutcomeSelected: { outcome, fileName in
                 handlePopupOutcome(for: place, outcome: outcome, fileName: fileName)
@@ -1391,17 +1430,7 @@ struct MapSearchView: View {
     
     @MainActor
     private func closePopup() {
-        popupState = nil
-        selectedPlaceID = nil
-
-        // Force MapKit to deselect the annotation
-        if let mapView = MapDisplayView.cachedMapView {
-            DispatchQueue.main.async {
-                mapView.selectedAnnotations.forEach {
-                    mapView.deselectAnnotation($0, animated: false)
-                }
-            }
-        }
+        closeAllMapPopupsAndResetSelection()
     }
     
     private func unitContactGroupsForBaseAddress(_ base: String) -> [UnitContactGroup] {
