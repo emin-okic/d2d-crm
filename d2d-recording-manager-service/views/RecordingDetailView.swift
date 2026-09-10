@@ -71,6 +71,20 @@ struct RecordingDetailView: View {
                         }
                         .padding()
                         .background(cardBackground)
+
+                        // MARK: - Recorded At Card
+                        VStack(alignment: .leading, spacing: 10) {
+                            Label("Recorded At", systemImage: "calendar.badge.clock")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.secondary)
+
+                            Text(recording.date.formatted(date: .abbreviated, time: .shortened))
+                                .font(.title3.weight(.semibold))
+                                .foregroundStyle(.primary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .padding()
+                        .background(cardBackground)
                         
                         // MARK: - Playback Card
                         VStack(spacing: 16) {
