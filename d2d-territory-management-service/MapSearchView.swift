@@ -55,10 +55,13 @@ struct MapSearchView: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var pendingRecordingFileName: String?
+    @StateObject private var rollingRecordingManager = RollingRecordingManager()
 
     @AppStorage("recordingModeEnabled") private var recordingModeEnabled: Bool = true
     @AppStorage("studioUnlocked") private var studioUnlocked: Bool = false
     private var recordingFeaturesActive: Bool { studioUnlocked && recordingModeEnabled }
+    private let transcriber = Transcriber()
+    private let scorer = PitchAnalyzer()
 
     @State private var prospectKnockingController: ProspectKnockActionController? = nil
 
@@ -325,22 +328,17 @@ struct MapSearchView: View {
                         incrementObjection: { obj in
                             obj.timesHeard += 1
                             if recordingFeaturesActive,
-                               let name = pendingRecordingFileName {
+                               pendingRecordingFileName != nil {
                                 let contact = recordingContact(
                                     address: state.ctx.address,
                                     isCustomer: state.ctx.isCustomer,
                                     selectedContact: pendingSelectedContact
                                 )
-                                let rec = Recording(
-                                    fileName: name,
-                                    title: obj.text,
-                                    date: .now,
+                                saveRatedFollowUpRecording(
                                     objection: obj,
-                                    rating: 3,
                                     prospect: contact.prospect,
                                     customer: contact.customer
                                 )
-                                modelContext.insert(rec)
                                 pendingRecordingFileName = nil
                             }
                             try? modelContext.save()
@@ -537,6 +535,7 @@ struct MapSearchView: View {
             updateMarkers()
             prospectKnockingController = ProspectKnockActionController(modelContext: modelContext, controller: controller)
             centerEmptyMapOnUserLocationIfNeeded()
+            updateMapRecordingBuffer()
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 if mapContactSelection == nil {
@@ -552,6 +551,15 @@ struct MapSearchView: View {
 
             startInitialPropertyTutorialIfNeeded()
             
+        }
+        .onDisappear {
+            rollingRecordingManager.stopAndDiscard()
+        }
+        .onChange(of: recordingModeEnabled) { _, _ in
+            updateMapRecordingBuffer()
+        }
+        .onChange(of: studioUnlocked) { _, _ in
+            updateMapRecordingBuffer()
         }
         .onChange(of: addressToCenter) { _, newValue in handleMapCenterChange(newAddress: newValue) }
         .onChange(of: mapContactSelection) { _, newValue in handleMapContactSelectionChange(newValue) }
@@ -1007,7 +1015,7 @@ struct MapSearchView: View {
         resetSelectedMapMarker()
 
         if outcome == "Follow Up Later" {
-            pendingRecordingFileName = fileName
+            pendingRecordingFileName = recordingFeaturesActive ? "rolling-follow-up" : fileName
             stepperState = .init(
                 ctx: .init(
                     address: place.address,
@@ -1017,6 +1025,48 @@ struct MapSearchView: View {
             )
         } else {
             handleOutcome(outcome, recordingFileName: fileName)
+        }
+    }
+
+    private func updateMapRecordingBuffer() {
+        if recordingFeaturesActive {
+            rollingRecordingManager.startIfNeeded()
+        } else {
+            rollingRecordingManager.stopAndDiscard()
+        }
+    }
+
+    private func saveRatedFollowUpRecording(objection: Objection, prospect: Prospect?, customer: Customer?) {
+        let expectedResponse = objection.response.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        Task { @MainActor in
+            guard let fileName = await rollingRecordingManager.stopAndExportRecentClip() else {
+                updateMapRecordingBuffer()
+                return
+            }
+
+            let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent(fileName)
+
+            transcriber.transcribe(url: url) { transcription in
+                DispatchQueue.main.async {
+                    let trimmedTranscription = transcription?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    let rating = scorer.score(user: trimmedTranscription, expected: expectedResponse)
+                    let recording = Recording(
+                        fileName: fileName,
+                        title: objection.text,
+                        date: .now,
+                        objection: objection,
+                        rating: rating,
+                        prospect: prospect,
+                        customer: customer
+                    )
+
+                    modelContext.insert(recording)
+                    try? modelContext.save()
+                    updateMapRecordingBuffer()
+                }
+            }
         }
     }
     
@@ -1117,22 +1167,17 @@ struct MapSearchView: View {
                         obj.timesHeard += 1
 
                         if recordingFeaturesActive,
-                           let name = pendingRecordingFileName {
+                           pendingRecordingFileName != nil {
                             let contact = recordingContact(
                                 address: s.ctx.address,
                                 isCustomer: s.ctx.isCustomer,
                                 selectedContact: pendingSelectedContact
                             )
-                            let rec = Recording(
-                                fileName: name,
-                                title: obj.text,
-                                date: .now,
+                            saveRatedFollowUpRecording(
                                 objection: obj,
-                                rating: 3,
                                 prospect: contact.prospect,
                                 customer: contact.customer
                             )
-                            modelContext.insert(rec)
                             pendingRecordingFileName = nil
                         }
 
@@ -1222,7 +1267,7 @@ struct MapSearchView: View {
                 )
 
             case "Follow Up Later":
-                pendingRecordingFileName = recordingFileName
+                pendingRecordingFileName = recordingFeaturesActive ? "rolling-follow-up" : recordingFileName
                 stepperState = .init(
                     ctx: .init(
                         address: addr,
@@ -1265,7 +1310,7 @@ struct MapSearchView: View {
             }
 
         case "Follow Up Later":
-            pendingRecordingFileName = recordingFileName
+            pendingRecordingFileName = recordingFeaturesActive ? "rolling-follow-up" : recordingFileName
             stepperState = .init(
                 ctx: .init(
                     address: addr,

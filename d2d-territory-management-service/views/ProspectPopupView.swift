@@ -28,8 +28,6 @@ struct ProspectPopupView: View {
     @State private var isRecording = false
     @State private var showOutcomeButtons = false
     @State private var currentFileName: String?
-
-    private let recorder = RecordingManager()
     
     var onViewDetails: () -> Void
 
@@ -385,12 +383,9 @@ struct ProspectPopupView: View {
             return
         }
 
-        let result = recorder.start()
-        if result.started {
-            isRecording = true
-            currentFileName = result.fileName
-            showOutcomeButtons = true   // show outcomes alongside recording
-        }
+        isRecording = true
+        currentFileName = "rolling-follow-up"
+        showOutcomeButtons = true
     }
 
     private func stopAndHandleOutcome(_ outcome: String) {
@@ -399,7 +394,6 @@ struct ProspectPopupView: View {
         MapScreenHapticsController.shared.propertyAdded()
         MapScreenSoundController.shared.playPropertyAdded()
         
-        recorder.stop()
         isRecording = false
 
         if outcome == "Wasn't Home" {
@@ -414,11 +408,7 @@ struct ProspectPopupView: View {
     }
 
     private func discardRecording() {
-        if let file = currentFileName {
-            let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                .appendingPathComponent(file)
-            try? FileManager.default.removeItem(at: url)
-        }
+        currentFileName = nil
     }
 
     private func findProspectName() -> String {
