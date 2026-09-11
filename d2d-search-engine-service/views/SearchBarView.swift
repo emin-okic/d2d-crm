@@ -15,8 +15,12 @@ struct SearchBarView: View {
     @Binding var searchText: String
     @FocusState.Binding var isFocused: Bool
     @ObservedObject var viewModel: SearchCompleterViewModel
+    var nearbyHomeSuggestions: [PropertySearchSuggestion] = []
+    var isLoadingNearbyHomes = false
     var onSubmit: () -> Void
+    var onNearbyHomes: () -> Void = {}
     var onSelectResult: (MKLocalSearchCompletion) -> Void
+    var onSelectNearbyHome: (MKMapItem) -> Void = { _ in }
 
     var onCancel: () -> Void
 
@@ -29,6 +33,14 @@ struct SearchBarView: View {
             .filter { !$0.isEmpty }
     }
 
+    private var visibleSuggestions: [PropertySearchSuggestion] {
+        nearbyHomeSuggestions.isEmpty ? viewModel.results.map(PropertySearchSuggestion.init(completion:)) : nearbyHomeSuggestions
+    }
+
+    private var hasVisibleSuggestions: Bool {
+        !visibleSuggestions.isEmpty || isLoadingNearbyHomes
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             searchField
@@ -37,11 +49,12 @@ struct SearchBarView: View {
 
             SearchSuggestionsListView(
                 isVisible: isFocused,
-                results: viewModel.results,
-                onSelect: selectResult
+                suggestions: visibleSuggestions,
+                isLoading: isLoadingNearbyHomes,
+                onSelect: selectSuggestion
             )
             .padding(.top, 4)
-            .padding(.bottom, isFocused && !viewModel.results.isEmpty ? 12 : 0)
+            .padding(.bottom, isFocused && hasVisibleSuggestions ? 12 : 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .animation(.easeInOut(duration: 0.22), value: viewModel.results.count)
@@ -93,9 +106,7 @@ struct SearchBarView: View {
                 HStack(spacing: 8) {
                     ForEach(chips, id: \.self) { chip in
                         Button {
-                            searchText = chip
-                            isFocused = true
-                            viewModel.updateQuery(chip)
+                            selectChip(chip)
                         } label: {
                             HStack(spacing: 6) {
                                 Image(systemName: recentSearches.contains(chip) ? "clock.arrow.circlepath" : "sparkle.magnifyingglass")
@@ -133,9 +144,26 @@ struct SearchBarView: View {
         onSubmit()
     }
 
-    private func selectResult(_ result: MKLocalSearchCompletion) {
-        storeRecentSearch(result.title)
-        onSelectResult(result)
+    private func selectChip(_ chip: String) {
+        searchText = chip
+        isFocused = true
+
+        if chip == "Nearby homes" {
+            viewModel.clear()
+            onNearbyHomes()
+        } else {
+            viewModel.updateQuery(chip)
+        }
+    }
+
+    private func selectSuggestion(_ suggestion: PropertySearchSuggestion) {
+        if let completion = suggestion.completion {
+            storeRecentSearch(completion.title)
+            onSelectResult(completion)
+        } else if let mapItem = suggestion.mapItem {
+            storeRecentSearch(suggestion.title)
+            onSelectNearbyHome(mapItem)
+        }
     }
 
     private func storeRecentSearch(_ value: String) {

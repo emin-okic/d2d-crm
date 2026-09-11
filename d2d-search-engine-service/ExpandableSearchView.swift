@@ -40,10 +40,14 @@ struct ExpandableSearchView: View {
     @ObservedObject var viewModel: SearchCompleterViewModel
 
     var animationNamespace: Namespace.ID
+    var nearbyHomeSuggestions: [PropertySearchSuggestion] = []
+    var isLoadingNearbyHomes = false
     var onSubmit: () -> Void
+    var onNearbyHomes: () -> Void = {}
     var onSubmitContactFilter: () -> Void
     var onClearContactFilter: () -> Void
     var onSelectResult: (MKLocalSearchCompletion) -> Void
+    var onSelectNearbyHome: (MKMapItem) -> Void = { _ in }
     
     private let floatingButtonSize: CGFloat = 50
 
@@ -62,16 +66,28 @@ struct ExpandableSearchView: View {
                                 searchText: $searchText,
                                 isFocused: $isFocused,
                                 viewModel: viewModel,
+                                nearbyHomeSuggestions: nearbyHomeSuggestions,
+                                isLoadingNearbyHomes: isLoadingNearbyHomes,
                                 onSubmit: {
                                     onSubmit()
                                     resetPropertySearchState()
                                     withAnimation { isExpanded = false }
                                 },
+                                onNearbyHomes: onNearbyHomes,
                                 onSelectResult: {
                                     onSelectResult($0)
                                     resetPropertySearchState()
                                     
                                     // Collapse search bar
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        isExpanded = false
+                                        isFocused = false
+                                    }
+                                },
+                                onSelectNearbyHome: {
+                                    onSelectNearbyHome($0)
+                                    resetPropertySearchState()
+
                                     withAnimation(.easeInOut(duration: 0.2)) {
                                         isExpanded = false
                                         isFocused = false
