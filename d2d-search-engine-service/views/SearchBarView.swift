@@ -87,7 +87,7 @@ struct SearchBarView: View {
     @ViewBuilder
     private var propertySuggestionChips: some View {
         if isFocused {
-            let chips = recentSearches.isEmpty ? ["Nearby homes", "Current street", "Referral address"] : Array(recentSearches.prefix(3))
+            let chips = recentSearches.isEmpty ? ["Nearby homes"] : Array(recentSearches.prefix(3))
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
