@@ -8,15 +8,45 @@
 import SwiftUI
 import MapKit
 
+struct PropertySearchSuggestion: Identifiable {
+    let id = UUID()
+    let title: String
+    let subtitle: String
+    let badge: String
+    let completion: MKLocalSearchCompletion?
+    let mapItem: MKMapItem?
+
+    init(completion: MKLocalSearchCompletion) {
+        self.title = completion.title
+        self.subtitle = completion.subtitle.isEmpty ? "Address match" : completion.subtitle
+        self.badge = "Property"
+        self.completion = completion
+        self.mapItem = nil
+    }
+
+    init(mapItem: MKMapItem, fallbackTitle: String) {
+        let placemarkTitle = mapItem.name?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let address = SearchBarController.displayAddress(for: mapItem, fallback: fallbackTitle)
+        let title = placemarkTitle.flatMap { $0.isEmpty ? nil : $0 } ?? address
+
+        self.title = title
+        self.subtitle = address == self.title ? "Nearby address" : address
+        self.badge = "Nearby"
+        self.completion = nil
+        self.mapItem = mapItem
+    }
+}
+
 struct SearchSuggestionsListView: View {
     var isVisible: Bool
-    var results: [MKLocalSearchCompletion]
-    var onSelect: (MKLocalSearchCompletion) -> Void
+    var suggestions: [PropertySearchSuggestion]
+    var isLoading: Bool = false
+    var onSelect: (PropertySearchSuggestion) -> Void
 
     private let maxVisibleResults = 5
 
     var body: some View {
-        if isVisible && !results.isEmpty {
+        if isVisible && (!suggestions.isEmpty || isLoading) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 8) {
                     Text("Suggested properties")
@@ -26,20 +56,25 @@ struct SearchSuggestionsListView: View {
 
                     Spacer()
 
-                    Text("\(min(results.count, maxVisibleResults))")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(.blue)
-                        .frame(minWidth: 22, minHeight: 22)
-                        .background(Color.blue.opacity(0.12), in: Capsule())
+                    if isLoading {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Text("\(min(suggestions.count, maxVisibleResults))")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.blue)
+                            .frame(minWidth: 22, minHeight: 22)
+                            .background(Color.blue.opacity(0.12), in: Capsule())
+                    }
                 }
                 .padding(.horizontal, 12)
                 .padding(.top, 11)
                 .padding(.bottom, 7)
 
-                ForEach(Array(results.prefix(maxVisibleResults).enumerated()), id: \.element) { index, result in
-                    suggestionButton(for: result)
+                ForEach(Array(suggestions.prefix(maxVisibleResults).enumerated()), id: \.element.id) { index, suggestion in
+                    suggestionButton(for: suggestion)
 
-                    if index < min(results.count, maxVisibleResults) - 1 {
+                    if index < min(suggestions.count, maxVisibleResults) - 1 {
                         Divider()
                             .padding(.leading, 58)
                     }
@@ -56,9 +91,9 @@ struct SearchSuggestionsListView: View {
         }
     }
 
-    private func suggestionButton(for result: MKLocalSearchCompletion) -> some View {
+    private func suggestionButton(for suggestion: PropertySearchSuggestion) -> some View {
         Button {
-            onSelect(result)
+            onSelect(suggestion)
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: "mappin.and.ellipse")
@@ -68,19 +103,19 @@ struct SearchSuggestionsListView: View {
                     .background(Color.blue, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(result.title)
+                    Text(suggestion.title)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
-                    Text(result.subtitle.isEmpty ? "Address match" : result.subtitle)
+                    Text(suggestion.subtitle)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                Text("Property")
+                Text(suggestion.badge)
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 8)

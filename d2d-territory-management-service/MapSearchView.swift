@@ -35,6 +35,8 @@ struct MapSearchView: View {
 
     @StateObject private var tapManager = MapTapAddressManager()
     @StateObject private var searchVM = SearchCompleterViewModel()
+    @State private var nearbyHomeSuggestions: [PropertySearchSuggestion] = []
+    @State private var isLoadingNearbyHomes = false
     @FocusState private var isSearchFocused: Bool
 
     @State private var isTappedAddressCustomer = false
@@ -227,10 +229,14 @@ struct MapSearchView: View {
                     isFocused: $isSearchFocused,
                     viewModel: searchVM,
                     animationNamespace: animationNamespace,
+                    nearbyHomeSuggestions: nearbyHomeSuggestions,
+                    isLoadingNearbyHomes: isLoadingNearbyHomes,
                     onSubmit: { submitSearch() },
+                    onNearbyHomes: { loadNearbyHomes() },
                     onSubmitContactFilter: { submitContactFilter() },
                     onClearContactFilter: { clearContactFilter() },
                     onSelectResult: { handleCompletionTap($0) },
+                    onSelectNearbyHome: { handleNearbyHomeSelection($0) },
                     userLocationManager: userLocationManager,
                     mapController: controller,
                     isShowingPreviousRegionButton: previousRegionBeforeUserLocationJump != nil,
@@ -517,12 +523,22 @@ struct MapSearchView: View {
         }
         .onChange(of: searchText) { _, newValue in
             guard mapSearchMode == .property else { return }
-            searchVM.updateQuery(newValue)
-        }
-        .onChange(of: mapSearchMode) { _, newValue in
-            if newValue == .filter {
+
+            if newValue == "Nearby homes" {
                 searchVM.clear()
             } else {
+                nearbyHomeSuggestions = []
+                isLoadingNearbyHomes = false
+                searchVM.updateQuery(newValue)
+            }
+        }
+        .onChange(of: mapSearchMode) { _, newValue in
+            nearbyHomeSuggestions = []
+            isLoadingNearbyHomes = false
+
+            if newValue == .filter {
+                searchVM.clear()
+            } else if searchText != "Nearby homes" {
                 searchVM.updateQuery(searchText)
             }
         }
@@ -1769,10 +1785,71 @@ struct MapSearchView: View {
     }
 
     private func displayAddress(for item: MKMapItem, fallback: String) -> String {
-        item.addressRepresentations?.fullAddress(includingRegion: true, singleLine: true)
-        ?? item.address?.fullAddress.replacingOccurrences(of: "\n", with: ", ")
-        ?? item.name
-        ?? fallback
+        SearchBarController.displayAddress(for: item, fallback: fallback)
+    }
+
+    private func loadNearbyHomes() {
+        searchVM.clear()
+        nearbyHomeSuggestions = []
+
+        guard let coordinate = userLocationManager.location?.coordinate else {
+            isLoadingNearbyHomes = false
+            return
+        }
+
+        isLoadingNearbyHomes = true
+
+        Task { @MainActor in
+            let items = await SearchBarController.nearbyHomeSearchResults(near: coordinate)
+            nearbyHomeSuggestions = items.map { item in
+                PropertySearchSuggestion(mapItem: item, fallbackTitle: "Nearby home")
+            }
+            isLoadingNearbyHomes = false
+        }
+    }
+
+    private func handleNearbyHomeSelection(_ item: MKMapItem) {
+        handleResolvedMapItem(item, fallback: "Nearby home")
+    }
+
+    private func handleResolvedMapItem(_ item: MKMapItem, fallback: String) {
+        let addr = displayAddress(for: item, fallback: fallback)
+        let coordinate = item.location.coordinate
+
+        clearMapSearchState()
+        pendingAddress = addr
+
+        controller.moveMap(
+            to: coordinate,
+            latitudinalMeters: 500,
+            longitudinalMeters: 500
+        )
+
+        if let existingProspect = prospects.first(where: { addressesMatch($0.address, addr) }) {
+            let place = IdentifiablePlace(
+                address: existingProspect.address,
+                location: CLLocationCoordinate2D(
+                    latitude: existingProspect.latitude ?? controller.region.center.latitude,
+                    longitude: existingProspect.longitude ?? controller.region.center.longitude
+                ),
+                count: existingProspect.knockHistory.count,
+                list: existingProspect.list
+            )
+            showPopup(for: place)
+        } else if let existingCustomer = customers.first(where: { addressesMatch($0.address, addr) }) {
+            let place = IdentifiablePlace(
+                address: existingCustomer.address,
+                location: CLLocationCoordinate2D(
+                    latitude: existingCustomer.latitude ?? controller.region.center.latitude,
+                    longitude: existingCustomer.longitude ?? controller.region.center.longitude
+                ),
+                count: existingCustomer.knockHistory.count,
+                list: "Customers"
+            )
+            showPopup(for: place)
+        } else {
+            presentPendingAddProperty(address: addr, coordinate: coordinate)
+        }
     }
 
     private func handleCompletionTap(_ result: MKLocalSearchCompletion) {
@@ -1895,6 +1972,8 @@ struct MapSearchView: View {
     private func clearMapSearchState() {
         searchText = ""
         searchVM.clear()
+        nearbyHomeSuggestions = []
+        isLoadingNearbyHomes = false
         isSearchFocused = false
         isSearchExpanded = false
     }

@@ -7,11 +7,12 @@
 
 import Foundation
 import MapKit
+import CoreLocation
 import Contacts
 
-@MainActor
 enum SearchBarController {
     /// Resolves a selected search completion to a general address string (e.g., map title).
+    @MainActor
     static func resolveAddress(from completion: MKLocalSearchCompletion) async -> String? {
         let request = MKLocalSearch.Request(completion: completion)
         let search = MKLocalSearch(request: request)
@@ -45,6 +46,7 @@ enum SearchBarController {
         }
     }
     
+    @MainActor
     static func resolveAndSelectAddress(
         from completion: MKLocalSearchCompletion,
         onResolved: @escaping (String) -> Void
@@ -55,7 +57,48 @@ enum SearchBarController {
         }
     }
 
-    private static func displayAddress(for mapItem: MKMapItem, fallback: String) -> String {
+    static func nearbyHomeSearchResults(
+        near coordinate: CLLocationCoordinate2D,
+        limit: Int = 5
+    ) async -> [MKMapItem] {
+        let searchRegion = MKCoordinateRegion(
+            center: coordinate,
+            latitudinalMeters: 450,
+            longitudinalMeters: 450
+        )
+        let queries = ["home", "house", "residential address", "address"]
+        var uniqueItems: [String: MKMapItem] = [:]
+
+        for query in queries where uniqueItems.count < limit {
+            let request = MKLocalSearch.Request()
+            request.naturalLanguageQuery = query
+            request.resultTypes = .address
+            request.region = searchRegion
+
+            do {
+                let response = try await MKLocalSearch(request: request).start()
+                for item in response.mapItems {
+                    let address = displayAddress(for: item, fallback: item.name ?? query)
+                    guard !address.isEmpty else { continue }
+                    uniqueItems[address.lowercased()] = item
+                }
+            } catch {
+                print("❌ Nearby home search failed:", error.localizedDescription)
+            }
+        }
+
+        let origin = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        return uniqueItems.values
+            .sorted { lhs, rhs in
+                let lhsDistance = lhs.location.distance(from: origin)
+                let rhsDistance = rhs.location.distance(from: origin)
+                return lhsDistance < rhsDistance
+            }
+            .prefix(limit)
+            .map { $0 }
+    }
+
+    static func displayAddress(for mapItem: MKMapItem, fallback: String) -> String {
         if let fullAddress = mapItem.addressRepresentations?.fullAddress(includingRegion: true, singleLine: true) {
             return fullAddress
         }

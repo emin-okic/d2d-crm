@@ -19,10 +19,14 @@ struct FloatingSearchAndMicButtons: View {
 
     var viewModel: SearchCompleterViewModel
     var animationNamespace: Namespace.ID
+    var nearbyHomeSuggestions: [PropertySearchSuggestion] = []
+    var isLoadingNearbyHomes = false
     var onSubmit: () -> Void
+    var onNearbyHomes: () -> Void = {}
     var onSubmitContactFilter: () -> Void
     var onClearContactFilter: () -> Void
     var onSelectResult: (MKLocalSearchCompletion) -> Void
+    var onSelectNearbyHome: (MKMapItem) -> Void = { _ in }
     
     var userLocationManager: UserLocationManager
     var mapController: MapController
@@ -53,10 +57,14 @@ struct FloatingSearchAndMicButtons: View {
                             isFocused: $isFocused,
                             viewModel: viewModel,
                             animationNamespace: animationNamespace,
+                            nearbyHomeSuggestions: nearbyHomeSuggestions,
+                            isLoadingNearbyHomes: isLoadingNearbyHomes,
                             onSubmit: onSubmit,
+                            onNearbyHomes: onNearbyHomes,
                             onSubmitContactFilter: onSubmitContactFilter,
                             onClearContactFilter: onClearContactFilter,
-                            onSelectResult: onSelectResult
+                            onSelectResult: onSelectResult,
+                            onSelectNearbyHome: onSelectNearbyHome
                         )
                         .frame(maxWidth: 420, alignment: .leading)
                         .padding(.trailing, 20)
