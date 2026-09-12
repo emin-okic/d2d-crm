@@ -79,6 +79,8 @@ struct CallActionBottomSheet: View {
             .padding(.horizontal, 18)
             .padding(.bottom, 16)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color(.systemBackground))
+        .presentationBackground(Color(.systemBackground))
     }
 }
