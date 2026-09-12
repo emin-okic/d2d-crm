@@ -245,8 +245,10 @@ struct MapSearchView: View {
                 )
 
                 if shouldShowInitialPropertyTutorialOverlay {
-                    InitialPropertyTutorialOverlayView(step: initialPropertyTutorialStep)
-                        .allowsHitTesting(false)
+                    InitialPropertyTutorialOverlayView(
+                        step: initialPropertyTutorialStep,
+                        onSkip: skipInitialPropertyTutorial
+                    )
                         .transition(.opacity)
                         .zIndex(4200)
                 }
@@ -609,6 +611,7 @@ struct MapSearchView: View {
                     pendingAddProperty = nil
                     resetInitialPropertyTutorialToMapStep()
                 },
+                onSkipTutorial: skipInitialPropertyTutorial,
                 isTutorialActive: isInitialPropertyTutorialVisible && initialPropertyTutorialStep == .confirmAdd
             )
             .presentationDetents([isInitialPropertyTutorialVisible ? .height(340) : .height(250)])
@@ -878,6 +881,20 @@ struct MapSearchView: View {
         guard isInitialPropertyTutorialVisible else { return }
 
         withAnimation(.easeOut(duration: 0.24)) {
+            initialPropertyTutorialStep = .tapMap
+        }
+    }
+
+    private func skipInitialPropertyTutorial() {
+        guard !hasCompletedInitialPropertyTutorial else { return }
+
+        MapScreenHapticsController.shared.lightTap()
+        pendingAddProperty = nil
+        showConfetti = false
+        hasCompletedInitialPropertyTutorial = true
+
+        withAnimation(.easeOut(duration: 0.24)) {
+            isInitialPropertyTutorialVisible = false
             initialPropertyTutorialStep = .tapMap
         }
     }
