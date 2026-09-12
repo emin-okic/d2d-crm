@@ -102,7 +102,6 @@ struct AddPhoneBottomSheet: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 12)
-                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(error == nil ? Color(.systemGray5) : Color.red.opacity(0.65), lineWidth: 1)
@@ -145,7 +144,9 @@ struct AddPhoneBottomSheet: View {
             .padding(.horizontal, 18)
             .padding(.bottom, 16)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color(.systemBackground))
+        .presentationBackground(Color(.systemBackground))
     }
 
     private func cancelTapped() {
