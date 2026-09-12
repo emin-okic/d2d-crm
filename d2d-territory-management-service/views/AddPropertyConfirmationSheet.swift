@@ -13,6 +13,7 @@ struct AddPropertyConfirmationSheet: View {
     let coordinate: CLLocationCoordinate2D
     let onConfirm: () -> Void
     let onCancel: () -> Void
+    let onSkipTutorial: () -> Void
     var isTutorialActive = false
 
     @State private var addPulse = false
@@ -74,7 +75,7 @@ struct AddPropertyConfirmationSheet: View {
             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
 
             if isTutorialActive {
-                InitialPropertyAddSheetTutorialBanner()
+                InitialPropertyAddSheetTutorialBanner(onSkip: onSkipTutorial)
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
 

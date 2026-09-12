@@ -15,6 +15,7 @@ enum InitialPropertyTutorialStep {
 
 struct InitialPropertyTutorialOverlayView: View {
     let step: InitialPropertyTutorialStep
+    let onSkip: () -> Void
 
     @State private var pulse = false
     @State private var tapBounce = false
@@ -26,6 +27,7 @@ struct InitialPropertyTutorialOverlayView: View {
                     Color.black.opacity(0.54)
                         .ignoresSafeArea()
                         .transition(.opacity)
+                        .allowsHitTesting(false)
 
                     tapTarget(in: geometry)
 
@@ -44,6 +46,7 @@ struct InitialPropertyTutorialOverlayView: View {
                     Color.black.opacity(0.34)
                         .ignoresSafeArea()
                         .transition(.opacity)
+                        .allowsHitTesting(false)
 
                     completionCard
                         .frame(maxWidth: 330)
@@ -120,14 +123,22 @@ struct InitialPropertyTutorialOverlayView: View {
                 .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
 
-            HStack(spacing: 8) {
-                Capsule()
-                    .fill(Color(red: 0.02, green: 0.60, blue: 1.0))
-                    .frame(width: 34, height: 5)
+            HStack(spacing: 10) {
+                Button("Skip", action: onSkip)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.70))
 
-                Capsule()
-                    .fill(Color.white.opacity(0.22))
-                    .frame(width: 18, height: 5)
+                Spacer(minLength: 0)
+
+                HStack(spacing: 8) {
+                    Capsule()
+                        .fill(Color(red: 0.02, green: 0.60, blue: 1.0))
+                        .frame(width: 34, height: 5)
+
+                    Capsule()
+                        .fill(Color.white.opacity(0.22))
+                        .frame(width: 18, height: 5)
+                }
             }
             .padding(.top, 2)
         }
@@ -142,7 +153,6 @@ struct InitialPropertyTutorialOverlayView: View {
         )
         .shadow(color: Color.black.opacity(0.32), radius: 22, x: 0, y: 12)
         .padding(.horizontal, 22)
-        .allowsHitTesting(false)
     }
 
     private var completionCard: some View {
@@ -196,34 +206,42 @@ struct InitialPropertyTutorialOverlayView: View {
 }
 
 struct InitialPropertyAddSheetTutorialBanner: View {
+    let onSkip: () -> Void
+
     @State private var pulse = false
 
     var body: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .stroke(Color(red: 0.02, green: 0.60, blue: 1.0).opacity(pulse ? 0.12 : 0.45), lineWidth: 5)
-                    .frame(width: 46, height: 46)
-                    .scaleEffect(pulse ? 1.18 : 0.88)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .stroke(Color(red: 0.02, green: 0.60, blue: 1.0).opacity(pulse ? 0.12 : 0.45), lineWidth: 5)
+                        .frame(width: 46, height: 46)
+                        .scaleEffect(pulse ? 1.18 : 0.88)
 
-                Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundStyle(Color(red: 0.02, green: 0.60, blue: 1.0))
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundStyle(Color(red: 0.02, green: 0.60, blue: 1.0))
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Step 2 of 2")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Color(red: 0.02, green: 0.60, blue: 1.0))
+                        .textCase(.uppercase)
+
+                    Text("Tap Add to save this as your first prospect.")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 0)
             }
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Step 2 of 2")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(Color(red: 0.02, green: 0.60, blue: 1.0))
-                    .textCase(.uppercase)
-
-                Text("Tap Add to save this as your first prospect.")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Spacer(minLength: 0)
+            Button("Skip", action: onSkip)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
         }
         .padding(14)
         .background(
