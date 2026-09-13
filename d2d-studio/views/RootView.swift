@@ -34,6 +34,7 @@ struct RootView: View {
     @State private var showingAddProspect = false
     
     @State private var selectedTab = 0
+    @State private var mapSearchResetTrigger = 0
     @State private var addressToCenter: String? = nil
     @State private var mapContactSelection: MapContactSelection?
     
@@ -52,7 +53,8 @@ struct RootView: View {
                 region: $region,
                 selectedList: $selectedList,
                 addressToCenter: $addressToCenter,
-                mapContactSelection: $mapContactSelection
+                mapContactSelection: $mapContactSelection,
+                searchResetTrigger: mapSearchResetTrigger
             )
             .tabItem {
                 Label("Map", systemImage: "map.fill")
@@ -97,12 +99,16 @@ struct RootView: View {
                 followUpFilter = filter
             }
         }
-        .onChange(of: selectedTab) { _, newValue in
+        .onChange(of: selectedTab) { oldValue, newValue in
             
             // ✅ Haptics + sound for tab switching
             RootViewHapticsController.shared.lightTap()
             RootViewSoundController.shared.playSound1()
             
+            if oldValue == 0, newValue != 0 {
+                mapSearchResetTrigger += 1
+            }
+
             if newValue == 1, contactSearchFilter != nil {
                 contactSearchDraft = ""
             }
