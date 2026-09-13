@@ -62,7 +62,7 @@ struct MapAnalyticsChartView: View {
             progressChart
             densityGrid
         }
-        .padding(.top, 25)
+        .padding(.top, 30)
         .padding(.horizontal, 18)
         .padding(.bottom, 12)
         .background(Color(.systemGroupedBackground))
