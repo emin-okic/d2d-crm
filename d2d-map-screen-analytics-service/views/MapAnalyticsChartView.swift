@@ -65,6 +65,7 @@ struct MapAnalyticsChartView: View {
         .padding(.top, 30)
         .padding(.horizontal, 18)
         .padding(.bottom, 12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Color(.systemGroupedBackground))
     }
 

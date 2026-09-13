@@ -107,6 +107,7 @@ struct MapAnalyticsTrackerView: View {
                 MapAnalyticsChartView(definition: definition)
                     .presentationDetents([.fraction(0.78), .large])
                     .presentationContentInteraction(.resizes)
+                    .presentationBackground(Color(.systemGroupedBackground))
                     .presentationDragIndicator(.visible)
             }
         }
