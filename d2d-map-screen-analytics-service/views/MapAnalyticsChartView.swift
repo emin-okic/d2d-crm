@@ -57,14 +57,14 @@ struct MapAnalyticsChartView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                header
-                progressChart
-                densityGrid
-            }
-            .padding(18)
+        VStack(alignment: .leading, spacing: 18) {
+            header
+            progressChart
+            densityGrid
         }
+        .padding(.top, 18)
+        .padding(.horizontal, 18)
+        .padding(.bottom, 12)
         .background(Color(.systemGroupedBackground))
     }
 
@@ -96,8 +96,9 @@ struct MapAnalyticsChartView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(chartTitle)
                     .font(.title2.weight(.bold))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.78)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.84)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Text(chartSubtitle)
                     .font(.subheadline)
@@ -260,7 +261,7 @@ struct MapAnalyticsChartView: View {
         case .knocks:
             "\(definition.period.titlePrefix) Knock Progress"
         case .sales:
-            "\(definition.period.titlePrefix) Sales Progress"
+            "\(definition.period.titlePrefix) Sales"
         case .streak:
             "Knock Streak"
         }
