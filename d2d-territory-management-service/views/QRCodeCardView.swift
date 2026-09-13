@@ -11,7 +11,7 @@ import CoreImage.CIFilterBuiltins
 struct QRCodeCardView: View {
     @State private var qrURL: String = "https://example.com"
     @State private var showQRCodeSheet: Bool = false
-    @State private var qrSheetDetent: PresentationDetent = .fraction(0.58)
+    @State private var qrSheetDetent: PresentationDetent = QRCodeDetailView.compactSheetDetent
 
     var isEditing: Bool = false
     var onBeginEditing: () -> Void = {}
@@ -35,7 +35,10 @@ struct QRCodeCardView: View {
         )
         .sheet(isPresented: $showQRCodeSheet) {
             QRCodeDetailView(qrURL: $qrURL, sheetDetent: $qrSheetDetent)
-                .presentationDetents([.fraction(0.58), .fraction(0.76)], selection: $qrSheetDetent)
+                .presentationDetents(
+                    [QRCodeDetailView.compactSheetDetent, QRCodeDetailView.editingSheetDetent],
+                    selection: $qrSheetDetent
+                )
                 .presentationDragIndicator(.visible)
         }
     }

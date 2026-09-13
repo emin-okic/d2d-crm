@@ -17,8 +17,11 @@ struct QRCodeDetailView: View {
     @State private var draftURL = ""
     @FocusState private var isURLFieldFocused: Bool
 
-    private let compactSheetDetent = PresentationDetent.fraction(0.58)
-    private let editingSheetDetent = PresentationDetent.fraction(0.76)
+    static let compactSheetDetent = PresentationDetent.height(450)
+    static let editingSheetDetent = PresentationDetent.height(470)
+
+    private let compactSheetDetent = Self.compactSheetDetent
+    private let editingSheetDetent = Self.editingSheetDetent
     private let context = CIContext()
 
     private var shareMessage: String {
@@ -38,11 +41,13 @@ struct QRCodeDetailView: View {
                 ZStack {
                     backgroundView
 
-                    VStack(spacing: isEditingURL ? 14 : 16) {
+                    let metrics = layoutMetrics(for: geo.size)
+
+                    VStack(spacing: metrics.sectionSpacing) {
                         headerView
 
                         if let qrImage = generateQRCode(from: qrURL) {
-                            qrCodeView(qrImage, size: qrCodeSize(for: geo.size))
+                            qrCodeView(qrImage, metrics: metrics)
                                 .contextMenu {
                                     Button {
                                         UIPasteboard.general.image = renderShareCard(qrImage: qrImage)
@@ -68,9 +73,9 @@ struct QRCodeDetailView: View {
                             urlField
                         }
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 16)
-                    .padding(.bottom, 18)
+                    .padding(.horizontal, metrics.horizontalPadding)
+                    .padding(.top, metrics.topPadding)
+                    .padding(.bottom, metrics.bottomPadding)
                     .frame(maxWidth: 520)
                     .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
                 }
@@ -79,6 +84,8 @@ struct QRCodeDetailView: View {
             .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showShareSheet) {
                 ShareSheet(activityItems: shareItems)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
             }
             .onAppear {
                 draftURL = qrURL
@@ -127,23 +134,18 @@ struct QRCodeDetailView: View {
         }
     }
 
-    private func qrCodeView(_ image: UIImage, size: CGFloat) -> some View {
-        let imagePadding: CGFloat = isEditingURL ? 10 : 18
-        let imageCornerRadius: CGFloat = isEditingURL ? 18 : 24
-        let cardPadding: CGFloat = isEditingURL ? 12 : 18
-        let cardCornerRadius: CGFloat = isEditingURL ? 22 : 28
-
-        return VStack(spacing: isEditingURL ? 0 : 14) {
+    private func qrCodeView(_ image: UIImage, metrics: LayoutMetrics) -> some View {
+        VStack(spacing: isEditingURL ? 0 : metrics.cardContentSpacing) {
             Image(uiImage: image)
                 .interpolation(.none)
                 .resizable()
                 .scaledToFit()
-                .frame(width: size, height: size)
-                .padding(imagePadding)
+                .frame(width: metrics.qrCodeSize, height: metrics.qrCodeSize)
+                .padding(metrics.imagePadding)
                 .background(Color.white)
-                .clipShape(RoundedRectangle(cornerRadius: imageCornerRadius, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: metrics.imageCornerRadius, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: imageCornerRadius, style: .continuous)
+                    RoundedRectangle(cornerRadius: metrics.imageCornerRadius, style: .continuous)
                         .stroke(Color.black.opacity(0.06), lineWidth: 1)
                 )
 
@@ -169,12 +171,12 @@ struct QRCodeDetailView: View {
                     .frame(maxWidth: .infinity)
             }
         }
-        .padding(cardPadding)
+        .padding(metrics.cardPadding)
         .background(
-            RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
+            RoundedRectangle(cornerRadius: metrics.cardCornerRadius, style: .continuous)
                 .fill(.ultraThinMaterial)
                 .overlay(
-                    RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
+                    RoundedRectangle(cornerRadius: metrics.cardCornerRadius, style: .continuous)
                         .stroke(Color.white.opacity(0.35), lineWidth: 1)
                 )
         )
@@ -191,7 +193,7 @@ struct QRCodeDetailView: View {
                         Label("Revert", systemImage: "arrow.uturn.backward")
                             .font(.headline.weight(.semibold))
                             .frame(maxWidth: .infinity)
-                            .frame(height: 50)
+                            .frame(height: isEditingURL ? 46 : 50)
                     }
                     .buttonStyle(.plain)
                     .foregroundStyle(.secondary)
@@ -208,7 +210,7 @@ struct QRCodeDetailView: View {
                     Label("Save", systemImage: "checkmark")
                         .font(.headline.weight(.semibold))
                         .frame(maxWidth: .infinity)
-                        .frame(height: 50)
+                        .frame(height: isEditingURL ? 46 : 50)
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.white)
@@ -319,7 +321,7 @@ struct QRCodeDetailView: View {
             }
             .font(.body)
             .padding(.horizontal, 16)
-            .frame(height: 52)
+            .frame(height: 48)
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .fill(Color(.secondarySystemBackground))
@@ -331,9 +333,30 @@ struct QRCodeDetailView: View {
         }
     }
 
-    private func qrCodeSize(for sheetSize: CGSize) -> CGFloat {
-        let maxSize: CGFloat = isEditingURL ? 132 : 150
-        return min(sheetSize.width * 0.44, maxSize)
+    private func layoutMetrics(for sheetSize: CGSize) -> LayoutMetrics {
+        let isTightHeight = sheetSize.height < 500
+        let horizontalPadding: CGFloat = sheetSize.width < 380 ? 16 : 20
+        let topPadding: CGFloat = isTightHeight ? 10 : 12
+        let bottomPadding: CGFloat = isTightHeight ? 18 : 20
+        let sectionSpacing: CGFloat = isEditingURL ? 8 : (isTightHeight ? 10 : 12)
+        let cardPadding: CGFloat = isEditingURL ? 8 : (isTightHeight ? 10 : 12)
+        let imagePadding: CGFloat = isEditingURL ? 6 : (isTightHeight ? 8 : 10)
+        let maxQRCodeSize: CGFloat = isEditingURL ? (isTightHeight ? 112 : 122) : (isTightHeight ? 144 : 154)
+        let availableWidth = sheetSize.width - (horizontalPadding * 2) - (cardPadding * 2) - (imagePadding * 2)
+        let qrCodeSize = min(max(availableWidth, 96), maxQRCodeSize)
+
+        return LayoutMetrics(
+            horizontalPadding: horizontalPadding,
+            topPadding: topPadding,
+            bottomPadding: bottomPadding,
+            sectionSpacing: sectionSpacing,
+            cardPadding: cardPadding,
+            imagePadding: imagePadding,
+            cardContentSpacing: isTightHeight ? 6 : 8,
+            qrCodeSize: qrCodeSize,
+            imageCornerRadius: isEditingURL ? 16 : 22,
+            cardCornerRadius: isEditingURL ? 20 : 26
+        )
     }
 
     private func generateQRCode(from string: String) -> UIImage? {
@@ -429,5 +452,18 @@ struct QRCodeDetailView: View {
         ]
 
         text.draw(with: rect, options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: attributes, context: nil)
+    }
+
+    private struct LayoutMetrics {
+        let horizontalPadding: CGFloat
+        let topPadding: CGFloat
+        let bottomPadding: CGFloat
+        let sectionSpacing: CGFloat
+        let cardPadding: CGFloat
+        let imagePadding: CGFloat
+        let cardContentSpacing: CGFloat
+        let qrCodeSize: CGFloat
+        let imageCornerRadius: CGFloat
+        let cardCornerRadius: CGFloat
     }
 }
