@@ -62,7 +62,7 @@ struct MapAnalyticsChartView: View {
             progressChart
             densityGrid
         }
-        .padding(.top, 18)
+        .padding(.top, 25)
         .padding(.horizontal, 18)
         .padding(.bottom, 12)
         .background(Color(.systemGroupedBackground))
@@ -272,7 +272,7 @@ struct MapAnalyticsChartView: View {
         case .knocks:
             definition.period == .daily ? "Pace and responses today" : "Pace and response quality across \(definition.period.chartScopeText)"
         case .sales:
-            "Closed deals and conversion pace for \(definition.period.chartScopeText)"
+            "Closed deals \(definition.period.chartScopeText)"
         case .streak:
             "Consecutive days with at least one knock"
         }
