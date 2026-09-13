@@ -106,7 +106,7 @@ struct MapAnalyticsTrackerView: View {
             } else {
                 MapAnalyticsChartView(definition: definition)
                     .presentationDetents([.fraction(0.78), .large])
-                    .presentationContentInteraction(.scrolls)
+                    .presentationContentInteraction(.resizes)
                     .presentationDragIndicator(.visible)
             }
         }
