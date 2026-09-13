@@ -259,7 +259,7 @@ struct MapAnalyticsChartView: View {
     private var chartTitle: String {
         switch definition.metric {
         case .knocks:
-            "\(definition.period.titlePrefix) Knock Progress"
+            definition.period == .daily ? "Today's Knocks" : "\(definition.period.titlePrefix) Knock Progress"
         case .sales:
             "\(definition.period.titlePrefix) Sales"
         case .streak:
@@ -270,7 +270,7 @@ struct MapAnalyticsChartView: View {
     private var chartSubtitle: String {
         switch definition.metric {
         case .knocks:
-            "Pace and response quality across \(definition.period.chartScopeText)"
+            definition.period == .daily ? "Pace and responses today" : "Pace and response quality across \(definition.period.chartScopeText)"
         case .sales:
             "Closed deals and conversion pace for \(definition.period.chartScopeText)"
         case .streak:
