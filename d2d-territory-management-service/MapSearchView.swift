@@ -21,6 +21,7 @@ struct MapSearchView: View {
     @Binding var selectedList: String
     @Binding var addressToCenter: String?
     @Binding var mapContactSelection: MapContactSelection?
+    let searchResetTrigger: Int
 
     @Query private var prospects: [Prospect]
     @Query private var customers: [Customer]
@@ -97,7 +98,8 @@ struct MapSearchView: View {
          region: Binding<MKCoordinateRegion>,
          selectedList: Binding<String>,
          addressToCenter: Binding<String?>,
-         mapContactSelection: Binding<MapContactSelection?>) {
+         mapContactSelection: Binding<MapContactSelection?>,
+         searchResetTrigger: Int) {
         _searchText = searchText
         _contactSearchDraft = contactSearchDraft
         _contactSearchFilter = contactSearchFilter
@@ -105,6 +107,7 @@ struct MapSearchView: View {
         _selectedList = selectedList
         _addressToCenter = addressToCenter
         _mapContactSelection = mapContactSelection
+        self.searchResetTrigger = searchResetTrigger
         _controller = StateObject(wrappedValue: MapController(region: region.wrappedValue))
     }
 
@@ -260,6 +263,9 @@ struct MapSearchView: View {
             .onChange(of: customers) { updateMarkers() }
             .onChange(of: selectedList) { updateMarkers() }
             .onChange(of: contactSearchFilter) { updateMarkers() }
+            .onChange(of: searchResetTrigger) { _, _ in
+                clearMapSearchState()
+            }
             .animation(.spring(response: 0.32, dampingFraction: 0.84), value: isContactFilterActive)
             
             // Prospect Popup Stuff
