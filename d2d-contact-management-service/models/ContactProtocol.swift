@@ -95,7 +95,7 @@ extension ContactProtocol {
     }
 
     var demographicsSearchText: String {
-        ([demographicsSummary, demographicCompanyDomain ?? "", demographicNotes ?? ""])
+        ([demographicsSummary, demographicCompanyDomain ?? ""])
             .joined(separator: " ")
     }
 

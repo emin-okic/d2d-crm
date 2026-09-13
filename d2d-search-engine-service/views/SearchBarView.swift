@@ -185,7 +185,7 @@ struct MapContactFilterSearchView: View {
     var onCancel: () -> Void
 
     private var priorityFields: [ContactSearchField] {
-        [.all, .name, .address, .phone, .notes]
+        [.all, .name, .address, .phone, .email]
     }
 
     var body: some View {
