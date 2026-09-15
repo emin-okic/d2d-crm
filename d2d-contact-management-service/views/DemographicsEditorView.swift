@@ -238,20 +238,66 @@ struct DemographicsEditorView: View {
     private var currentStep: some View {
         switch stepIndex {
         case 0:
-            optionCard(title: "Identity") {
-                optionPicker("Age Range", selection: $ageRange, options: ageOptions)
-                optionPicker("Gender", selection: $gender, options: genderOptions)
-                optionPicker("Race / Ethnicity", selection: $raceEthnicity, options: ethnicityOptions)
-            }
+            identityStep
         case 1:
-            optionCard(title: "Household") {
-                optionPicker("Primary Language", selection: $primaryLanguage, options: languageOptions)
-                optionPicker("Household Type", selection: $householdType, options: householdOptions)
-                optionPicker("Homeownership", selection: $homeownership, options: homeownershipOptions)
-            }
+            householdStep
         default:
             companyInfoStep
         }
+    }
+
+    private var identityStep: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            demographicsProfileHeader(
+                title: "Identity Profile",
+                subtitle: completedCount(for: [ageRange, gender, raceEthnicity]),
+                systemImage: "person.crop.circle.fill",
+                accent: .indigo
+            ) {
+                demographicSummaryChips([
+                    ("Age", ageRange, "calendar"),
+                    ("Gender", gender, "person.fill"),
+                    ("Culture", raceEthnicity, "person.2.fill")
+                ])
+            }
+
+            crmPickerField("Age Range", systemImage: "calendar", selection: $ageRange, options: ageOptions)
+            crmPickerField("Gender", systemImage: "person.fill", selection: $gender, options: genderOptions)
+            crmPickerField("Race / Ethnicity", systemImage: "person.2.fill", selection: $raceEthnicity, options: ethnicityOptions)
+            demographicInsightPanel(
+                systemImage: "chart.line.uptrend.xyaxis",
+                title: "Lead Context",
+                values: [ageRange, gender, raceEthnicity]
+            )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var householdStep: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            demographicsProfileHeader(
+                title: "Household Profile",
+                subtitle: completedCount(for: [primaryLanguage, householdType, homeownership]),
+                systemImage: "house.fill",
+                accent: .teal
+            ) {
+                demographicSummaryChips([
+                    ("Language", primaryLanguage, "bubble.left.and.bubble.right.fill"),
+                    ("Household", householdType, "house.fill"),
+                    ("Ownership", homeownership, "key.fill")
+                ])
+            }
+
+            crmPickerField("Primary Language", systemImage: "bubble.left.and.bubble.right", selection: $primaryLanguage, options: languageOptions)
+            crmPickerField("Household Type", systemImage: "house", selection: $householdType, options: householdOptions)
+            crmPickerField("Homeownership", systemImage: "key", selection: $homeownership, options: homeownershipOptions)
+            demographicInsightPanel(
+                systemImage: "rectangle.3.group.fill",
+                title: "Household Snapshot",
+                values: [primaryLanguage, householdType, homeownership]
+            )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var companyInfoStep: some View {
@@ -477,6 +523,144 @@ struct DemographicsEditorView: View {
                 )
         )
         .accessibilityElement(children: .contain)
+    }
+
+    private func demographicsProfileHeader<Content: View>(
+        title: String,
+        subtitle: String,
+        systemImage: String,
+        accent: Color,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(accent.opacity(0.14))
+                        .frame(width: 52, height: 52)
+
+                    Image(systemName: systemImage)
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(accent)
+                }
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(title)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.82)
+
+                    crmStatusChip(title: subtitle, systemImage: "checkmark.circle.fill", tint: accent)
+                }
+
+                Spacer(minLength: 0)
+            }
+
+            content()
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.92))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(accent.opacity(0.14), lineWidth: 1)
+                )
+        )
+    }
+
+    private func demographicSummaryChips(_ items: [(label: String, value: String, systemImage: String)]) -> some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 8)], spacing: 8) {
+            ForEach(items, id: \.label) { item in
+                VStack(alignment: .leading, spacing: 6) {
+                    Label(item.label, systemImage: item.systemImage)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.78)
+
+                    Text(item.value.isEmpty ? "Not set" : item.value)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(item.value.isEmpty ? .secondary : .primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 9)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color(.secondarySystemBackground).opacity(0.72))
+                )
+            }
+        }
+    }
+
+    private func crmPickerField(
+        _ title: String,
+        systemImage: String,
+        selection: Binding<String>,
+        options: [String]
+    ) -> some View {
+        crmField(label: title, systemImage: systemImage) {
+            Picker(title, selection: selection) {
+                Text("Not Set").tag("")
+                ForEach(options.filter { !$0.isEmpty }, id: \.self) { option in
+                    Text(option).tag(option)
+                }
+            }
+            .pickerStyle(.menu)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private func demographicInsightPanel(systemImage: String, title: String, values: [String]) -> some View {
+        let completed = values.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }.count
+        let progress = Double(completed) / Double(max(values.count, 1))
+
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 28, height: 28)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(Color.secondary.opacity(0.12))
+                    )
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.subheadline.weight(.semibold))
+                    Text(completed == values.count ? "All core fields are captured." : "\(values.count - completed) field\(values.count - completed == 1 ? "" : "s") left to complete.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 0)
+            }
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule(style: .continuous)
+                        .fill(Color.secondary.opacity(0.14))
+                    Capsule(style: .continuous)
+                        .fill(Color.accentColor.opacity(0.74))
+                        .frame(width: proxy.size.width * progress)
+                }
+            }
+            .frame(height: 7)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.72))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                )
+        )
     }
 
     private func crmStatusChip(title: String, systemImage: String, tint: Color) -> some View {
@@ -835,6 +1019,11 @@ struct DemographicsEditorView: View {
         let suffix = String(title[typedRange.upperBound...])
         guard !suffix.isEmpty else { return nil }
         return JobTitleCompletion(title: title, prefix: typedTitle, suffix: suffix)
+    }
+
+    private func completedCount(for values: [String]) -> String {
+        let completed = values.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }.count
+        return "\(completed) of \(values.count) complete"
     }
 
     private var brandPrimaryColor: Color {
