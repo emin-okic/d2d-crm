@@ -28,6 +28,7 @@ struct DemographicsFormData: Equatable {
 struct DemographicsEditorView: View {
     let title: String
     let initialData: DemographicsFormData
+    let knownCompanyData: [DemographicsFormData]
     let onSave: (DemographicsFormData) -> Void
     let onCancel: () -> Void
     var onExpandedContentChange: (Bool) -> Void = { _ in }
@@ -50,9 +51,12 @@ struct DemographicsEditorView: View {
     @State private var companyLookupTask: Task<Void, Never>?
     @State private var completedCompanyFields: Set<CompanyField> = []
     @State private var isApplyingCompanySuggestion = false
+    @State private var isAddingManualCompany = false
+    @State private var settledCompanyQuery = ""
     @State private var selectedCompanyName: String
     @State private var selectedCompanyDomain: String
     @FocusState private var isCompanyNameFocused: Bool
+    @FocusState private var isCompanyDomainFocused: Bool
     @FocusState private var isJobTitleFocused: Bool
     @StateObject private var companySuggestionService = LogoDevCompanySuggestionService()
 
@@ -67,12 +71,14 @@ struct DemographicsEditorView: View {
     init(
         title: String,
         initialData: DemographicsFormData,
+        knownCompanyData: [DemographicsFormData] = [],
         onSave: @escaping (DemographicsFormData) -> Void,
         onCancel: @escaping () -> Void,
         onExpandedContentChange: @escaping (Bool) -> Void = { _ in }
     ) {
         self.title = title
         self.initialData = initialData
+        self.knownCompanyData = knownCompanyData
         self.onSave = onSave
         self.onCancel = onCancel
         self.onExpandedContentChange = onExpandedContentChange
@@ -112,7 +118,9 @@ struct DemographicsEditorView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     currentStep
                 }
-                .padding()
+                .padding(.horizontal, 18)
+                .padding(.top, 14)
+                .padding(.bottom, 20)
             }
             .background(companyStepBackground)
             .animation(.spring(response: 0.32, dampingFraction: 0.86), value: stepIndex)
@@ -125,6 +133,8 @@ struct DemographicsEditorView: View {
                 .background(.ultraThinMaterial)
         }
         .onChange(of: companyName) { _, newValue in
+            guard !isApplyingCompanySuggestion else { return }
+
             if newValue.trimmingCharacters(in: .whitespacesAndNewlines) == selectedCompanyName {
                 return
             }
@@ -228,30 +238,87 @@ struct DemographicsEditorView: View {
     private var currentStep: some View {
         switch stepIndex {
         case 0:
-            optionCard(title: "Identity") {
-                optionPicker("Age Range", selection: $ageRange, options: ageOptions)
-                optionPicker("Gender", selection: $gender, options: genderOptions)
-                optionPicker("Race / Ethnicity", selection: $raceEthnicity, options: ethnicityOptions)
-            }
+            identityStep
         case 1:
-            optionCard(title: "Household") {
-                optionPicker("Primary Language", selection: $primaryLanguage, options: languageOptions)
-                optionPicker("Household Type", selection: $householdType, options: householdOptions)
-                optionPicker("Homeownership", selection: $homeownership, options: homeownershipOptions)
-            }
+            householdStep
         default:
-            optionCard(title: "Company Info") {
-                companyBrandHeader
-                companyField
-                jobTitleField
-                industryDropdown
-            }
+            companyInfoStep
         }
     }
 
+    private var identityStep: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            demographicsProfileHeader(
+                title: "Identity Profile",
+                subtitle: completedCount(for: [ageRange, gender, raceEthnicity]),
+                systemImage: "person.crop.circle.fill",
+                accent: .indigo
+            ) {
+                demographicSummaryChips([
+                    ("Age", ageRange, "calendar"),
+                    ("Gender", gender, "person.fill"),
+                    ("Culture", raceEthnicity, "person.2.fill")
+                ])
+            }
+
+            crmPickerField("Age Range", systemImage: "calendar", selection: $ageRange, options: ageOptions)
+            crmPickerField("Gender", systemImage: "person.fill", selection: $gender, options: genderOptions)
+            crmPickerField("Race / Ethnicity", systemImage: "person.2.fill", selection: $raceEthnicity, options: ethnicityOptions)
+            demographicInsightPanel(
+                systemImage: "chart.line.uptrend.xyaxis",
+                title: "Lead Context",
+                values: [ageRange, gender, raceEthnicity]
+            )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var householdStep: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            demographicsProfileHeader(
+                title: "Household Profile",
+                subtitle: completedCount(for: [primaryLanguage, householdType, homeownership]),
+                systemImage: "house.fill",
+                accent: .teal
+            ) {
+                demographicSummaryChips([
+                    ("Language", primaryLanguage, "bubble.left.and.bubble.right.fill"),
+                    ("Household", householdType, "house.fill"),
+                    ("Ownership", homeownership, "key.fill")
+                ])
+            }
+
+            crmPickerField("Primary Language", systemImage: "bubble.left.and.bubble.right", selection: $primaryLanguage, options: languageOptions)
+            crmPickerField("Household Type", systemImage: "house", selection: $householdType, options: householdOptions)
+            crmPickerField("Homeownership", systemImage: "key", selection: $homeownership, options: homeownershipOptions)
+            demographicInsightPanel(
+                systemImage: "rectangle.3.group.fill",
+                title: "Household Snapshot",
+                values: [primaryLanguage, householdType, homeownership]
+            )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var companyInfoStep: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            companyBrandHeader
+            companyField
+            manualCompanyCreationView
+            jobTitleField
+            industryDropdown
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     private var companyBrandHeader: some View {
-        Group {
-            if shouldShowCompanyLogo, let logoURL = URL(string: companyLogoURL) {
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(brandSecondaryColor.opacity(0.72))
+                    .frame(width: 52, height: 52)
+
+                if shouldShowCompanyLogo, let logoURL = URL(string: companyLogoURL) {
                 AsyncImage(url: logoURL) { phase in
                     switch phase {
                     case .success(let image):
@@ -264,27 +331,50 @@ struct DemographicsEditorView: View {
                             .foregroundStyle(brandPrimaryColor)
                     }
                 }
-                .frame(width: 82, height: 82)
-                .padding(12)
-                .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .shadow(color: brandPrimaryColor.opacity(0.18), radius: 10, y: 5)
+                    .frame(width: 34, height: 34)
                 .transition(.scale.combined(with: .opacity))
-            } else if !companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                Text(companyName)
-                    .font(.headline)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
+                } else {
+                    Image(systemName: "building.2.fill")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(brandPrimaryColor)
+                }
             }
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(trimmedCompanyName.isEmpty ? "Company Profile" : trimmedCompanyName)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+
+                HStack(spacing: 6) {
+                    crmStatusChip(
+                        title: isResolvedCompanyInput ? "Matched" : "Manual",
+                        systemImage: isResolvedCompanyInput ? "checkmark.seal.fill" : "square.and.pencil",
+                        tint: brandPrimaryColor
+                    )
+
+                    if !companyDomain.isEmpty {
+                        crmStatusChip(title: companyDomain, systemImage: "globe", tint: .secondary)
+                    }
+                }
+            }
+
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.92))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(brandPrimaryColor.opacity(0.14), lineWidth: 1)
+                )
+        )
     }
 
     private var companyField: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Company")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
+        crmField(label: "Company", systemImage: "building.2") {
             ZStack(alignment: .leading) {
                 TextField("Company name", text: $companyName)
                     .focused($isCompanyNameFocused)
@@ -318,10 +408,311 @@ struct DemographicsEditorView: View {
                     .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
             }
-            .padding(12)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemBackground)))
-            .animation(.spring(response: 0.24, dampingFraction: 0.86), value: companyNameCompletion?.suggestion.id)
         }
+        .animation(.spring(response: 0.24, dampingFraction: 0.86), value: companyNameCompletion?.suggestion.id)
+    }
+
+    @ViewBuilder
+    private var manualCompanyCreationView: some View {
+        if isAddingManualCompany {
+            manualCompanyEditor
+                .transition(.move(edge: .top).combined(with: .opacity))
+        } else if shouldOfferManualCompanyCreation {
+            Button {
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+                    isAddingManualCompany = true
+                }
+                isCompanyNameFocused = false
+                isCompanyDomainFocused = true
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(brandPrimaryColor)
+                        .frame(width: 26)
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Add \"\(trimmedCompanyName)\"")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.82)
+
+                        Text("Create a local company with the details you know.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color(.systemBackground))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(brandPrimaryColor.opacity(0.22), lineWidth: 1)
+                        )
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Add \(trimmedCompanyName) as a new company")
+            .transition(.move(edge: .top).combined(with: .opacity))
+        }
+    }
+
+    private var manualCompanyEditor: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "building.2")
+                    .foregroundStyle(brandPrimaryColor)
+
+                Text("New company")
+                    .font(.subheadline.weight(.semibold))
+
+                Spacer()
+
+                Button {
+                    withAnimation(.spring(response: 0.24, dampingFraction: 0.86)) {
+                        isAddingManualCompany = false
+                    }
+                    isCompanyDomainFocused = false
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, height: 28)
+                        .background(Circle().fill(Color.secondary.opacity(0.14)))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Cancel new company")
+            }
+
+            crmField(label: "Website", systemImage: "globe") {
+                TextField("Domain optional", text: $companyDomain)
+                    .focused($isCompanyDomainFocused)
+                    .font(.body)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .keyboardType(.URL)
+                    .submitLabel(.done)
+                    .onSubmit(applyManualCompany)
+            }
+
+            Button(action: applyManualCompany) {
+                Label("Use Company", systemImage: "checkmark.circle.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemBackground).opacity(0.92))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(brandPrimaryColor.opacity(0.18), lineWidth: 1)
+                )
+        )
+        .accessibilityElement(children: .contain)
+    }
+
+    private func demographicsProfileHeader<Content: View>(
+        title: String,
+        subtitle: String,
+        systemImage: String,
+        accent: Color,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(accent.opacity(0.14))
+                        .frame(width: 52, height: 52)
+
+                    Image(systemName: systemImage)
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(accent)
+                }
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(title)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.82)
+
+                    crmStatusChip(title: subtitle, systemImage: "checkmark.circle.fill", tint: accent)
+                }
+
+                Spacer(minLength: 0)
+            }
+
+            content()
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.92))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(accent.opacity(0.14), lineWidth: 1)
+                )
+        )
+    }
+
+    private func demographicSummaryChips(_ items: [(label: String, value: String, systemImage: String)]) -> some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 8)], spacing: 8) {
+            ForEach(items, id: \.label) { item in
+                VStack(alignment: .leading, spacing: 6) {
+                    Label(item.label, systemImage: item.systemImage)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.78)
+
+                    Text(item.value.isEmpty ? "Not set" : item.value)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(item.value.isEmpty ? .secondary : .primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 9)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color(.secondarySystemBackground).opacity(0.72))
+                )
+            }
+        }
+    }
+
+    private func crmPickerField(
+        _ title: String,
+        systemImage: String,
+        selection: Binding<String>,
+        options: [String]
+    ) -> some View {
+        crmField(label: title, systemImage: systemImage) {
+            Picker(title, selection: selection) {
+                Text("Not Set").tag("")
+                ForEach(options.filter { !$0.isEmpty }, id: \.self) { option in
+                    Text(option).tag(option)
+                }
+            }
+            .pickerStyle(.menu)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private func demographicInsightPanel(systemImage: String, title: String, values: [String]) -> some View {
+        let completed = values.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }.count
+        let progress = Double(completed) / Double(max(values.count, 1))
+
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 28, height: 28)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(Color.secondary.opacity(0.12))
+                    )
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.subheadline.weight(.semibold))
+                    Text(completed == values.count ? "All core fields are captured." : "\(values.count - completed) field\(values.count - completed == 1 ? "" : "s") left to complete.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 0)
+            }
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule(style: .continuous)
+                        .fill(Color.secondary.opacity(0.14))
+                    Capsule(style: .continuous)
+                        .fill(Color.accentColor.opacity(0.74))
+                        .frame(width: proxy.size.width * progress)
+                }
+            }
+            .frame(height: 7)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.72))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                )
+        )
+    }
+
+    private func crmStatusChip(title: String, systemImage: String, tint: Color) -> some View {
+        Label(title, systemImage: systemImage)
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(tint)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(tint.opacity(0.12))
+            )
+    }
+
+    private func crmField<Content: View>(
+        label: String,
+        systemImage: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(brandPrimaryColor)
+                .frame(width: 28, height: 28)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(brandPrimaryColor.opacity(0.1))
+                )
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(label)
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+
+                content()
+                    .font(.body)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.94))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.primary.opacity(0.07), lineWidth: 1)
+                )
+        )
     }
 
     private var companyNameCompletion: CompanyNameCompletion? {
@@ -340,13 +731,23 @@ struct DemographicsEditorView: View {
 
     private var companySuggestionsToShow: [LogoDevCompanySuggestion] {
         guard !isResolvedCompanyInput else { return [] }
+        return Array(combinedCompanySuggestions.prefix(6))
+    }
 
-        let remoteSuggestions = remoteCompanySuggestions
-        if !remoteSuggestions.isEmpty {
-            return Array(remoteSuggestions.prefix(6))
+    private var trimmedCompanyName: String {
+        companyName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var shouldOfferManualCompanyCreation: Bool {
+        guard trimmedCompanyName.count >= 2,
+              !isResolvedCompanyInput,
+              !companySuggestionService.isLoading,
+              settledCompanyQuery.normalizedCompanyName == trimmedCompanyName.normalizedCompanyName,
+              exactCompanySuggestion(for: trimmedCompanyName, in: companySuggestionsToShow) == nil else {
+            return false
         }
 
-        return Array(localCompanySuggestions.prefix(6))
+        return true
     }
 
     private var remoteCompanySuggestions: [LogoDevCompanySuggestion] {
@@ -363,14 +764,45 @@ struct DemographicsEditorView: View {
         let query = companyName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard query.count >= 2 else { return [] }
 
-        return Self.commonCompanySuggestions.filter { suggestion in
+        return locallyKnownCompanySuggestions.filter { suggestion in
             suggestion.name.localizedCaseInsensitiveContains(query) ||
                 suggestion.domain.localizedCaseInsensitiveContains(query)
         }
     }
 
+    private var locallyKnownCompanySuggestions: [LogoDevCompanySuggestion] {
+        var seenNames: Set<String> = []
+        var suggestions: [LogoDevCompanySuggestion] = []
+
+        for companyData in knownCompanyData + [initialData] {
+            guard let suggestion = Self.companySuggestion(from: companyData) else { continue }
+            guard seenNames.insert(suggestion.name.normalizedCompanyName).inserted else { continue }
+            suggestions.append(suggestion)
+        }
+
+        for suggestion in Self.commonCompanySuggestions {
+            guard seenNames.insert(suggestion.name.normalizedCompanyName).inserted else { continue }
+            suggestions.append(suggestion)
+        }
+
+        return suggestions
+    }
+
+    private var combinedCompanySuggestions: [LogoDevCompanySuggestion] {
+        var seenKeys: Set<String> = []
+        var suggestions: [LogoDevCompanySuggestion] = []
+
+        for suggestion in localCompanySuggestions + remoteCompanySuggestions {
+            let key = suggestion.normalizedDeduplicationKey
+            guard seenKeys.insert(key).inserted else { continue }
+            suggestions.append(suggestion)
+        }
+
+        return suggestions
+    }
+
     private func bestCompanyNameCompletionSuggestion(for query: String) -> LogoDevCompanySuggestion? {
-        let suggestions = remoteCompanySuggestions.isEmpty ? localCompanySuggestions : remoteCompanySuggestions
+        let suggestions = combinedCompanySuggestions
 
         if let namePrefixMatch = suggestions.first(where: {
             $0.name.range(of: query, options: [.caseInsensitive, .anchored]) != nil &&
@@ -402,11 +834,7 @@ struct DemographicsEditorView: View {
     }
 
     private var jobTitleField: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Job Title")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
+        crmField(label: "Job Title", systemImage: "person.text.rectangle") {
             ZStack(alignment: .leading) {
                 TextField("Job title", text: $jobTitle)
                     .focused($isJobTitleFocused)
@@ -440,18 +868,12 @@ struct DemographicsEditorView: View {
                     .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
             }
-            .padding(12)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemBackground)))
-            .animation(.spring(response: 0.24, dampingFraction: 0.86), value: jobTitleCompletion?.title)
         }
+        .animation(.spring(response: 0.24, dampingFraction: 0.86), value: jobTitleCompletion?.title)
     }
 
     private var industryDropdown: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Industry")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
+        VStack(alignment: .leading, spacing: 10) {
             Button {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.86)) {
                     isIndustryExpanded.toggle()
@@ -460,18 +882,22 @@ struct DemographicsEditorView: View {
                 ContactScreenHapticsController.shared.lightTap()
                 ContactScreenSoundController.shared.playSound1()
             } label: {
-                HStack {
-                    Text(industry.isEmpty ? "Select industry" : industry)
-                        .font(.subheadline)
-                        .foregroundStyle(industry.isEmpty ? .secondary : .primary)
-                    Spacer()
-                    Image(systemName: "chevron.down")
-                        .font(.caption.weight(.bold))
-                        .rotationEffect(.degrees(isIndustryExpanded ? 180 : 0))
-                        .foregroundStyle(.secondary)
+                crmField(label: "Industry", systemImage: "briefcase") {
+                    HStack(spacing: 8) {
+                        Text(industry.isEmpty ? "Select industry" : industry)
+                            .font(.body)
+                            .foregroundStyle(industry.isEmpty ? .secondary : .primary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.82)
+
+                        Spacer(minLength: 8)
+
+                        Image(systemName: "chevron.down")
+                            .font(.caption.weight(.bold))
+                            .rotationEffect(.degrees(isIndustryExpanded ? 180 : 0))
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                .padding(12)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemBackground)))
             }
             .buttonStyle(.plain)
 
@@ -491,7 +917,7 @@ struct DemographicsEditorView: View {
                                 .foregroundStyle(option == industry ? .white : brandPrimaryColor)
                                 .lineLimit(2)
                                 .minimumScaleFactor(0.82)
-                                .frame(maxWidth: .infinity, minHeight: 34)
+                                .frame(maxWidth: .infinity, minHeight: 32)
                                 .padding(.horizontal, 8)
                                 .background(
                                     RoundedRectangle(cornerRadius: 9)
@@ -501,7 +927,11 @@ struct DemographicsEditorView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(.top, 2)
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color(.systemBackground).opacity(0.88))
+                )
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
@@ -589,6 +1019,11 @@ struct DemographicsEditorView: View {
         let suffix = String(title[typedRange.upperBound...])
         guard !suffix.isEmpty else { return nil }
         return JobTitleCompletion(title: title, prefix: typedTitle, suffix: suffix)
+    }
+
+    private func completedCount(for values: [String]) -> String {
+        let completed = values.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }.count
+        return "\(completed) of \(values.count) complete"
     }
 
     private var brandPrimaryColor: Color {
@@ -682,6 +1117,8 @@ struct DemographicsEditorView: View {
 
     private func scheduleCompanyLookup(for value: String) {
         companyLookupTask?.cancel()
+        settledCompanyQuery = ""
+        isAddingManualCompany = false
         let query = value.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard query.count >= 2 else {
@@ -700,6 +1137,9 @@ struct DemographicsEditorView: View {
             guard !Task.isCancelled else { return }
             await companySuggestionService.searchCompanies(matching: query)
             guard !Task.isCancelled else { return }
+            withAnimation(.spring(response: 0.24, dampingFraction: 0.86)) {
+                settledCompanyQuery = query
+            }
 
             if let exactSuggestion = exactCompanySuggestion(for: query, in: companySuggestionService.suggestions) {
                 applyCompanySuggestion(exactSuggestion)
@@ -715,6 +1155,33 @@ struct DemographicsEditorView: View {
         companyLogoURL = ""
         companyPrimaryColorHex = ""
         companySecondaryColorHex = ""
+    }
+
+    private func applyManualCompany() {
+        let trimmedName = trimmedCompanyName
+        guard !trimmedName.isEmpty else { return }
+
+        let sanitizedDomain = companyDomain.sanitizedCompanyDomain
+        isApplyingCompanySuggestion = true
+        companyLookupTask?.cancel()
+
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+            companyName = trimmedName
+            selectedCompanyName = trimmedName
+            selectedCompanyDomain = sanitizedDomain
+            companyDomain = sanitizedDomain
+            companyLogoURL = sanitizedDomain.isEmpty ? "" : LogoDevCompanySuggestionService.logoURL(forDomain: sanitizedDomain)
+            companyPrimaryColorHex = ""
+            companySecondaryColorHex = ""
+            isAddingManualCompany = false
+            companySuggestionService.clearSuggestions()
+            settledCompanyQuery = trimmedName
+        }
+
+        isApplyingCompanySuggestion = false
+        isCompanyNameFocused = false
+        isCompanyDomainFocused = false
+        markCompleted(.company, value: trimmedName, force: true)
     }
 
     private func exactCompanySuggestion(
@@ -832,6 +1299,11 @@ private struct LogoDevCompanySuggestion: Identifiable, Decodable, Equatable {
     let secondaryColorHex: String?
 
     var id: String { domain }
+
+    var normalizedDeduplicationKey: String {
+        let normalizedDomain = domain.sanitizedCompanyDomain.normalizedCompanyName
+        return normalizedDomain.isEmpty ? name.normalizedCompanyName : normalizedDomain
+    }
 
     private enum CodingKeys: String, CodingKey {
         case name
@@ -961,6 +1433,31 @@ private extension String {
             .filter { !$0.isEmpty }
             .joined()
     }
+
+    var sanitizedCompanyDomain: String {
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "" }
+
+        let prefixed = trimmed.contains("://") ? trimmed : "https://\(trimmed)"
+        if let host = URLComponents(string: prefixed)?.host {
+            return host
+                .lowercased()
+                .replacingOccurrences(of: "www.", with: "")
+        }
+
+        return trimmed
+            .lowercased()
+            .replacingOccurrences(of: "https://", with: "")
+            .replacingOccurrences(of: "http://", with: "")
+            .replacingOccurrences(of: "www.", with: "")
+            .components(separatedBy: "/")
+            .first ?? trimmed.lowercased()
+    }
+
+    var trimmedNilIfBlank: String? {
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
 }
 
 private extension DemographicsEditorView {
@@ -1031,6 +1528,22 @@ private extension DemographicsEditorView {
             logoURL: LogoDevCompanySuggestionService.logoURL(forDomain: domain),
             primaryColorHex: nil,
             secondaryColorHex: nil
+        )
+    }
+
+    static func companySuggestion(from data: DemographicsFormData) -> LogoDevCompanySuggestion? {
+        let name = data.companyName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return nil }
+
+        let domain = data.companyDomain.sanitizedCompanyDomain
+        let logoURL = data.companyLogoURL.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return LogoDevCompanySuggestion(
+            name: name,
+            domain: domain,
+            logoURL: logoURL.isEmpty && !domain.isEmpty ? LogoDevCompanySuggestionService.logoURL(forDomain: domain) : logoURL,
+            primaryColorHex: data.companyPrimaryColorHex.trimmedNilIfBlank,
+            secondaryColorHex: data.companySecondaryColorHex.trimmedNilIfBlank
         )
     }
 

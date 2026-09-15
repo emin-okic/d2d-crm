@@ -16,6 +16,8 @@ struct ProspectDetailsView: View {
     var onNavigateToMap: (MapContactSelection) -> Void = { _ in }
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.modelContext) private var modelContext
+    @Query private var allProspects: [Prospect]
+    @Query private var allCustomers: [Customer]
 
     @StateObject private var controller = ProspectDetailsController()
     
@@ -41,7 +43,7 @@ struct ProspectDetailsView: View {
     @State private var showAppointmentsSheet = false
     @State private var showKnocksSheet = false
     @State private var showDemographicsSheet = false
-    @State private var demographicsSheetDetent: PresentationDetent = .fraction(0.68)
+    @State private var demographicsSheetDetent: PresentationDetent = .fraction(0.82)
     @State private var showRecordingsHistory = false
 
     var body: some View {
@@ -149,6 +151,7 @@ struct ProspectDetailsView: View {
             DemographicsEditorView(
                 title: "Prospect Demographics",
                 initialData: prospect.demographicsFormData,
+                knownCompanyData: knownCompanyData,
                 onSave: { data in
                     let oldData = prospect.demographicsFormData
                     prospect.applyDemographics(data)
@@ -163,11 +166,11 @@ struct ProspectDetailsView: View {
                 },
                 onExpandedContentChange: { isExpanded in
                     withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
-                        demographicsSheetDetent = isExpanded ? .large : .fraction(0.68)
+                        demographicsSheetDetent = isExpanded ? .large : .fraction(0.82)
                     }
                 }
             )
-            .presentationDetents([.fraction(0.68), .large], selection: $demographicsSheetDetent)
+            .presentationDetents([.fraction(0.82), .large], selection: $demographicsSheetDetent)
             .presentationDragIndicator(.visible)
         }
         // .navigationTitle("Edit Contact")
@@ -385,6 +388,11 @@ struct ProspectDetailsView: View {
                 }
             }
         }
+    }
+
+    private var knownCompanyData: [DemographicsFormData] {
+        (allProspects.map(\.demographicsFormData) + allCustomers.map(\.demographicsFormData))
+            .filter { !$0.companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
     
     private var prospectScorecardItems: [DetailsScorecardItem] {

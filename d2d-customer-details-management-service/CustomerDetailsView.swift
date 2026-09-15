@@ -16,6 +16,8 @@ struct CustomerDetailsView: View {
     var onNavigateToMap: (MapContactSelection) -> Void = { _ in }
     @Environment(\.presentationMode) private var presentationMode
     @Environment(\.modelContext) private var modelContext
+    @Query private var allProspects: [Prospect]
+    @Query private var allCustomers: [Customer]
 
     @State private var selectedTab: CustomerDetailsTab = .appointments
 
@@ -48,7 +50,7 @@ struct CustomerDetailsView: View {
     @State private var showAppointmentsSheet = false
     @State private var showKnocksSheet = false
     @State private var showDemographicsSheet = false
-    @State private var demographicsSheetDetent: PresentationDetent = .fraction(0.68)
+    @State private var demographicsSheetDetent: PresentationDetent = .fraction(0.82)
     @State private var showRecordingsHistory = false
 
     var body: some View {
@@ -177,6 +179,7 @@ struct CustomerDetailsView: View {
             DemographicsEditorView(
                 title: "Customer Demographics",
                 initialData: customer.demographicsFormData,
+                knownCompanyData: knownCompanyData,
                 onSave: { data in
                     let oldData = customer.demographicsFormData
                     customer.applyDemographics(data)
@@ -191,11 +194,11 @@ struct CustomerDetailsView: View {
                 },
                 onExpandedContentChange: { isExpanded in
                     withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
-                        demographicsSheetDetent = isExpanded ? .large : .fraction(0.68)
+                        demographicsSheetDetent = isExpanded ? .large : .fraction(0.82)
                     }
                 }
             )
-            .presentationDetents([.fraction(0.68), .large], selection: $demographicsSheetDetent)
+            .presentationDetents([.fraction(0.82), .large], selection: $demographicsSheetDetent)
             .presentationDragIndicator(.visible)
         }
         .toolbar {
@@ -360,6 +363,11 @@ struct CustomerDetailsView: View {
             tempFullName = customer.fullName
             tempAddress = customer.address
         }
+    }
+
+    private var knownCompanyData: [DemographicsFormData] {
+        (allProspects.map(\.demographicsFormData) + allCustomers.map(\.demographicsFormData))
+            .filter { !$0.companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
     
     private var customerScorecardItems: [DetailsScorecardItem] {
