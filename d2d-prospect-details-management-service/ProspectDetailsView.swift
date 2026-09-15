@@ -16,6 +16,8 @@ struct ProspectDetailsView: View {
     var onNavigateToMap: (MapContactSelection) -> Void = { _ in }
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.modelContext) private var modelContext
+    @Query private var allProspects: [Prospect]
+    @Query private var allCustomers: [Customer]
 
     @StateObject private var controller = ProspectDetailsController()
     
@@ -149,6 +151,7 @@ struct ProspectDetailsView: View {
             DemographicsEditorView(
                 title: "Prospect Demographics",
                 initialData: prospect.demographicsFormData,
+                knownCompanyData: knownCompanyData,
                 onSave: { data in
                     let oldData = prospect.demographicsFormData
                     prospect.applyDemographics(data)
@@ -385,6 +388,11 @@ struct ProspectDetailsView: View {
                 }
             }
         }
+    }
+
+    private var knownCompanyData: [DemographicsFormData] {
+        (allProspects.map(\.demographicsFormData) + allCustomers.map(\.demographicsFormData))
+            .filter { !$0.companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
     
     private var prospectScorecardItems: [DetailsScorecardItem] {

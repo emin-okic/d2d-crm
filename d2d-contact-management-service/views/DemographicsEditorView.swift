@@ -28,6 +28,7 @@ struct DemographicsFormData: Equatable {
 struct DemographicsEditorView: View {
     let title: String
     let initialData: DemographicsFormData
+    let knownCompanyData: [DemographicsFormData]
     let onSave: (DemographicsFormData) -> Void
     let onCancel: () -> Void
     var onExpandedContentChange: (Bool) -> Void = { _ in }
@@ -70,12 +71,14 @@ struct DemographicsEditorView: View {
     init(
         title: String,
         initialData: DemographicsFormData,
+        knownCompanyData: [DemographicsFormData] = [],
         onSave: @escaping (DemographicsFormData) -> Void,
         onCancel: @escaping () -> Void,
         onExpandedContentChange: @escaping (Bool) -> Void = { _ in }
     ) {
         self.title = title
         self.initialData = initialData
+        self.knownCompanyData = knownCompanyData
         self.onSave = onSave
         self.onCancel = onCancel
         self.onExpandedContentChange = onExpandedContentChange
@@ -459,13 +462,7 @@ struct DemographicsEditorView: View {
 
     private var companySuggestionsToShow: [LogoDevCompanySuggestion] {
         guard !isResolvedCompanyInput else { return [] }
-
-        let remoteSuggestions = remoteCompanySuggestions
-        if !remoteSuggestions.isEmpty {
-            return Array(remoteSuggestions.prefix(6))
-        }
-
-        return Array(localCompanySuggestions.prefix(6))
+        return Array(combinedCompanySuggestions.prefix(6))
     }
 
     private var trimmedCompanyName: String {
@@ -498,14 +495,45 @@ struct DemographicsEditorView: View {
         let query = companyName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard query.count >= 2 else { return [] }
 
-        return Self.commonCompanySuggestions.filter { suggestion in
+        return locallyKnownCompanySuggestions.filter { suggestion in
             suggestion.name.localizedCaseInsensitiveContains(query) ||
                 suggestion.domain.localizedCaseInsensitiveContains(query)
         }
     }
 
+    private var locallyKnownCompanySuggestions: [LogoDevCompanySuggestion] {
+        var seenNames: Set<String> = []
+        var suggestions: [LogoDevCompanySuggestion] = []
+
+        for companyData in knownCompanyData + [initialData] {
+            guard let suggestion = Self.companySuggestion(from: companyData) else { continue }
+            guard seenNames.insert(suggestion.name.normalizedCompanyName).inserted else { continue }
+            suggestions.append(suggestion)
+        }
+
+        for suggestion in Self.commonCompanySuggestions {
+            guard seenNames.insert(suggestion.name.normalizedCompanyName).inserted else { continue }
+            suggestions.append(suggestion)
+        }
+
+        return suggestions
+    }
+
+    private var combinedCompanySuggestions: [LogoDevCompanySuggestion] {
+        var seenKeys: Set<String> = []
+        var suggestions: [LogoDevCompanySuggestion] = []
+
+        for suggestion in localCompanySuggestions + remoteCompanySuggestions {
+            let key = suggestion.normalizedDeduplicationKey
+            guard seenKeys.insert(key).inserted else { continue }
+            suggestions.append(suggestion)
+        }
+
+        return suggestions
+    }
+
     private func bestCompanyNameCompletionSuggestion(for query: String) -> LogoDevCompanySuggestion? {
-        let suggestions = remoteCompanySuggestions.isEmpty ? localCompanySuggestions : remoteCompanySuggestions
+        let suggestions = combinedCompanySuggestions
 
         if let namePrefixMatch = suggestions.first(where: {
             $0.name.range(of: query, options: [.caseInsensitive, .anchored]) != nil &&
@@ -1000,6 +1028,11 @@ private struct LogoDevCompanySuggestion: Identifiable, Decodable, Equatable {
 
     var id: String { domain }
 
+    var normalizedDeduplicationKey: String {
+        let normalizedDomain = domain.sanitizedCompanyDomain.normalizedCompanyName
+        return normalizedDomain.isEmpty ? name.normalizedCompanyName : normalizedDomain
+    }
+
     private enum CodingKeys: String, CodingKey {
         case name
         case domain
@@ -1148,6 +1181,11 @@ private extension String {
             .components(separatedBy: "/")
             .first ?? trimmed.lowercased()
     }
+
+    var trimmedNilIfBlank: String? {
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
 }
 
 private extension DemographicsEditorView {
@@ -1218,6 +1256,22 @@ private extension DemographicsEditorView {
             logoURL: LogoDevCompanySuggestionService.logoURL(forDomain: domain),
             primaryColorHex: nil,
             secondaryColorHex: nil
+        )
+    }
+
+    static func companySuggestion(from data: DemographicsFormData) -> LogoDevCompanySuggestion? {
+        let name = data.companyName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return nil }
+
+        let domain = data.companyDomain.sanitizedCompanyDomain
+        let logoURL = data.companyLogoURL.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return LogoDevCompanySuggestion(
+            name: name,
+            domain: domain,
+            logoURL: logoURL.isEmpty && !domain.isEmpty ? LogoDevCompanySuggestionService.logoURL(forDomain: domain) : logoURL,
+            primaryColorHex: data.companyPrimaryColorHex.trimmedNilIfBlank,
+            secondaryColorHex: data.companySecondaryColorHex.trimmedNilIfBlank
         )
     }
 
