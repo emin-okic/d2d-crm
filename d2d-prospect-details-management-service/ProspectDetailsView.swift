@@ -43,7 +43,7 @@ struct ProspectDetailsView: View {
     @State private var showAppointmentsSheet = false
     @State private var showKnocksSheet = false
     @State private var showDemographicsSheet = false
-    @State private var demographicsSheetDetent: PresentationDetent = .fraction(0.68)
+    @State private var demographicsSheetDetent: PresentationDetent = .fraction(0.82)
     @State private var showRecordingsHistory = false
 
     var body: some View {
@@ -166,11 +166,11 @@ struct ProspectDetailsView: View {
                 },
                 onExpandedContentChange: { isExpanded in
                     withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
-                        demographicsSheetDetent = isExpanded ? .large : .fraction(0.68)
+                        demographicsSheetDetent = isExpanded ? .large : .fraction(0.82)
                     }
                 }
             )
-            .presentationDetents([.fraction(0.68), .large], selection: $demographicsSheetDetent)
+            .presentationDetents([.fraction(0.82), .large], selection: $demographicsSheetDetent)
             .presentationDragIndicator(.visible)
         }
         // .navigationTitle("Edit Contact")

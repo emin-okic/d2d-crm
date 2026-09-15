@@ -118,7 +118,9 @@ struct DemographicsEditorView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     currentStep
                 }
-                .padding()
+                .padding(.horizontal, 18)
+                .padding(.top, 14)
+                .padding(.bottom, 20)
             }
             .background(companyStepBackground)
             .animation(.spring(response: 0.32, dampingFraction: 0.86), value: stepIndex)
@@ -248,19 +250,29 @@ struct DemographicsEditorView: View {
                 optionPicker("Homeownership", selection: $homeownership, options: homeownershipOptions)
             }
         default:
-            optionCard(title: "Company Info") {
-                companyBrandHeader
-                companyField
-                manualCompanyCreationView
-                jobTitleField
-                industryDropdown
-            }
+            companyInfoStep
         }
     }
 
+    private var companyInfoStep: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            companyBrandHeader
+            companyField
+            manualCompanyCreationView
+            jobTitleField
+            industryDropdown
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     private var companyBrandHeader: some View {
-        Group {
-            if shouldShowCompanyLogo, let logoURL = URL(string: companyLogoURL) {
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(brandSecondaryColor.opacity(0.72))
+                    .frame(width: 52, height: 52)
+
+                if shouldShowCompanyLogo, let logoURL = URL(string: companyLogoURL) {
                 AsyncImage(url: logoURL) { phase in
                     switch phase {
                     case .success(let image):
@@ -273,27 +285,50 @@ struct DemographicsEditorView: View {
                             .foregroundStyle(brandPrimaryColor)
                     }
                 }
-                .frame(width: 82, height: 82)
-                .padding(12)
-                .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .shadow(color: brandPrimaryColor.opacity(0.18), radius: 10, y: 5)
+                    .frame(width: 34, height: 34)
                 .transition(.scale.combined(with: .opacity))
-            } else if !companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                Text(companyName)
-                    .font(.headline)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
+                } else {
+                    Image(systemName: "building.2.fill")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(brandPrimaryColor)
+                }
             }
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(trimmedCompanyName.isEmpty ? "Company Profile" : trimmedCompanyName)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+
+                HStack(spacing: 6) {
+                    crmStatusChip(
+                        title: isResolvedCompanyInput ? "Matched" : "Manual",
+                        systemImage: isResolvedCompanyInput ? "checkmark.seal.fill" : "square.and.pencil",
+                        tint: brandPrimaryColor
+                    )
+
+                    if !companyDomain.isEmpty {
+                        crmStatusChip(title: companyDomain, systemImage: "globe", tint: .secondary)
+                    }
+                }
+            }
+
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.92))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(brandPrimaryColor.opacity(0.14), lineWidth: 1)
+                )
+        )
     }
 
     private var companyField: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Company")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
+        crmField(label: "Company", systemImage: "building.2") {
             ZStack(alignment: .leading) {
                 TextField("Company name", text: $companyName)
                     .focused($isCompanyNameFocused)
@@ -327,10 +362,8 @@ struct DemographicsEditorView: View {
                     .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
             }
-            .padding(12)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemBackground)))
-            .animation(.spring(response: 0.24, dampingFraction: 0.86), value: companyNameCompletion?.suggestion.id)
         }
+        .animation(.spring(response: 0.24, dampingFraction: 0.86), value: companyNameCompletion?.suggestion.id)
     }
 
     @ViewBuilder
@@ -416,16 +449,16 @@ struct DemographicsEditorView: View {
                 .accessibilityLabel("Cancel new company")
             }
 
-            TextField("Website or domain (optional)", text: $companyDomain)
-                .focused($isCompanyDomainFocused)
-                .font(.body)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .keyboardType(.URL)
-                .submitLabel(.done)
-                .onSubmit(applyManualCompany)
-                .padding(12)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color(.secondarySystemBackground)))
+            crmField(label: "Website", systemImage: "globe") {
+                TextField("Domain optional", text: $companyDomain)
+                    .focused($isCompanyDomainFocused)
+                    .font(.body)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .keyboardType(.URL)
+                    .submitLabel(.done)
+                    .onSubmit(applyManualCompany)
+            }
 
             Button(action: applyManualCompany) {
                 Label("Use Company", systemImage: "checkmark.circle.fill")
@@ -444,6 +477,58 @@ struct DemographicsEditorView: View {
                 )
         )
         .accessibilityElement(children: .contain)
+    }
+
+    private func crmStatusChip(title: String, systemImage: String, tint: Color) -> some View {
+        Label(title, systemImage: systemImage)
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(tint)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(tint.opacity(0.12))
+            )
+    }
+
+    private func crmField<Content: View>(
+        label: String,
+        systemImage: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(brandPrimaryColor)
+                .frame(width: 28, height: 28)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(brandPrimaryColor.opacity(0.1))
+                )
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(label)
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+
+                content()
+                    .font(.body)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.94))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.primary.opacity(0.07), lineWidth: 1)
+                )
+        )
     }
 
     private var companyNameCompletion: CompanyNameCompletion? {
@@ -565,11 +650,7 @@ struct DemographicsEditorView: View {
     }
 
     private var jobTitleField: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Job Title")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
+        crmField(label: "Job Title", systemImage: "person.text.rectangle") {
             ZStack(alignment: .leading) {
                 TextField("Job title", text: $jobTitle)
                     .focused($isJobTitleFocused)
@@ -603,18 +684,12 @@ struct DemographicsEditorView: View {
                     .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
             }
-            .padding(12)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemBackground)))
-            .animation(.spring(response: 0.24, dampingFraction: 0.86), value: jobTitleCompletion?.title)
         }
+        .animation(.spring(response: 0.24, dampingFraction: 0.86), value: jobTitleCompletion?.title)
     }
 
     private var industryDropdown: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Industry")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
+        VStack(alignment: .leading, spacing: 10) {
             Button {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.86)) {
                     isIndustryExpanded.toggle()
@@ -623,18 +698,22 @@ struct DemographicsEditorView: View {
                 ContactScreenHapticsController.shared.lightTap()
                 ContactScreenSoundController.shared.playSound1()
             } label: {
-                HStack {
-                    Text(industry.isEmpty ? "Select industry" : industry)
-                        .font(.subheadline)
-                        .foregroundStyle(industry.isEmpty ? .secondary : .primary)
-                    Spacer()
-                    Image(systemName: "chevron.down")
-                        .font(.caption.weight(.bold))
-                        .rotationEffect(.degrees(isIndustryExpanded ? 180 : 0))
-                        .foregroundStyle(.secondary)
+                crmField(label: "Industry", systemImage: "briefcase") {
+                    HStack(spacing: 8) {
+                        Text(industry.isEmpty ? "Select industry" : industry)
+                            .font(.body)
+                            .foregroundStyle(industry.isEmpty ? .secondary : .primary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.82)
+
+                        Spacer(minLength: 8)
+
+                        Image(systemName: "chevron.down")
+                            .font(.caption.weight(.bold))
+                            .rotationEffect(.degrees(isIndustryExpanded ? 180 : 0))
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                .padding(12)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemBackground)))
             }
             .buttonStyle(.plain)
 
@@ -654,7 +733,7 @@ struct DemographicsEditorView: View {
                                 .foregroundStyle(option == industry ? .white : brandPrimaryColor)
                                 .lineLimit(2)
                                 .minimumScaleFactor(0.82)
-                                .frame(maxWidth: .infinity, minHeight: 34)
+                                .frame(maxWidth: .infinity, minHeight: 32)
                                 .padding(.horizontal, 8)
                                 .background(
                                     RoundedRectangle(cornerRadius: 9)
@@ -664,7 +743,11 @@ struct DemographicsEditorView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(.top, 2)
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color(.systemBackground).opacity(0.88))
+                )
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
