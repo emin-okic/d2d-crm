@@ -50,9 +50,12 @@ struct DemographicsEditorView: View {
     @State private var companyLookupTask: Task<Void, Never>?
     @State private var completedCompanyFields: Set<CompanyField> = []
     @State private var isApplyingCompanySuggestion = false
+    @State private var isAddingManualCompany = false
+    @State private var settledCompanyQuery = ""
     @State private var selectedCompanyName: String
     @State private var selectedCompanyDomain: String
     @FocusState private var isCompanyNameFocused: Bool
+    @FocusState private var isCompanyDomainFocused: Bool
     @FocusState private var isJobTitleFocused: Bool
     @StateObject private var companySuggestionService = LogoDevCompanySuggestionService()
 
@@ -125,6 +128,8 @@ struct DemographicsEditorView: View {
                 .background(.ultraThinMaterial)
         }
         .onChange(of: companyName) { _, newValue in
+            guard !isApplyingCompanySuggestion else { return }
+
             if newValue.trimmingCharacters(in: .whitespacesAndNewlines) == selectedCompanyName {
                 return
             }
@@ -243,6 +248,7 @@ struct DemographicsEditorView: View {
             optionCard(title: "Company Info") {
                 companyBrandHeader
                 companyField
+                manualCompanyCreationView
                 jobTitleField
                 industryDropdown
             }
@@ -324,6 +330,119 @@ struct DemographicsEditorView: View {
         }
     }
 
+    @ViewBuilder
+    private var manualCompanyCreationView: some View {
+        if isAddingManualCompany {
+            manualCompanyEditor
+                .transition(.move(edge: .top).combined(with: .opacity))
+        } else if shouldOfferManualCompanyCreation {
+            Button {
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+                    isAddingManualCompany = true
+                }
+                isCompanyNameFocused = false
+                isCompanyDomainFocused = true
+                ContactScreenHapticsController.shared.lightTap()
+                ContactScreenSoundController.shared.playSound1()
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(brandPrimaryColor)
+                        .frame(width: 26)
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Add \"\(trimmedCompanyName)\"")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.82)
+
+                        Text("Create a local company with the details you know.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color(.systemBackground))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(brandPrimaryColor.opacity(0.22), lineWidth: 1)
+                        )
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Add \(trimmedCompanyName) as a new company")
+            .transition(.move(edge: .top).combined(with: .opacity))
+        }
+    }
+
+    private var manualCompanyEditor: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "building.2")
+                    .foregroundStyle(brandPrimaryColor)
+
+                Text("New company")
+                    .font(.subheadline.weight(.semibold))
+
+                Spacer()
+
+                Button {
+                    withAnimation(.spring(response: 0.24, dampingFraction: 0.86)) {
+                        isAddingManualCompany = false
+                    }
+                    isCompanyDomainFocused = false
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, height: 28)
+                        .background(Circle().fill(Color.secondary.opacity(0.14)))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Cancel new company")
+            }
+
+            TextField("Website or domain (optional)", text: $companyDomain)
+                .focused($isCompanyDomainFocused)
+                .font(.body)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .keyboardType(.URL)
+                .submitLabel(.done)
+                .onSubmit(applyManualCompany)
+                .padding(12)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color(.secondarySystemBackground)))
+
+            Button(action: applyManualCompany) {
+                Label("Use Company", systemImage: "checkmark.circle.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemBackground).opacity(0.92))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(brandPrimaryColor.opacity(0.18), lineWidth: 1)
+                )
+        )
+        .accessibilityElement(children: .contain)
+    }
+
     private var companyNameCompletion: CompanyNameCompletion? {
         let typedCompanyName = companyName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !typedCompanyName.isEmpty, !isResolvedCompanyInput else { return nil }
@@ -347,6 +466,22 @@ struct DemographicsEditorView: View {
         }
 
         return Array(localCompanySuggestions.prefix(6))
+    }
+
+    private var trimmedCompanyName: String {
+        companyName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var shouldOfferManualCompanyCreation: Bool {
+        guard trimmedCompanyName.count >= 2,
+              !isResolvedCompanyInput,
+              !companySuggestionService.isLoading,
+              settledCompanyQuery.normalizedCompanyName == trimmedCompanyName.normalizedCompanyName,
+              exactCompanySuggestion(for: trimmedCompanyName, in: companySuggestionsToShow) == nil else {
+            return false
+        }
+
+        return true
     }
 
     private var remoteCompanySuggestions: [LogoDevCompanySuggestion] {
@@ -682,6 +817,8 @@ struct DemographicsEditorView: View {
 
     private func scheduleCompanyLookup(for value: String) {
         companyLookupTask?.cancel()
+        settledCompanyQuery = ""
+        isAddingManualCompany = false
         let query = value.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard query.count >= 2 else {
@@ -700,6 +837,9 @@ struct DemographicsEditorView: View {
             guard !Task.isCancelled else { return }
             await companySuggestionService.searchCompanies(matching: query)
             guard !Task.isCancelled else { return }
+            withAnimation(.spring(response: 0.24, dampingFraction: 0.86)) {
+                settledCompanyQuery = query
+            }
 
             if let exactSuggestion = exactCompanySuggestion(for: query, in: companySuggestionService.suggestions) {
                 applyCompanySuggestion(exactSuggestion)
@@ -715,6 +855,33 @@ struct DemographicsEditorView: View {
         companyLogoURL = ""
         companyPrimaryColorHex = ""
         companySecondaryColorHex = ""
+    }
+
+    private func applyManualCompany() {
+        let trimmedName = trimmedCompanyName
+        guard !trimmedName.isEmpty else { return }
+
+        let sanitizedDomain = companyDomain.sanitizedCompanyDomain
+        isApplyingCompanySuggestion = true
+        companyLookupTask?.cancel()
+
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+            companyName = trimmedName
+            selectedCompanyName = trimmedName
+            selectedCompanyDomain = sanitizedDomain
+            companyDomain = sanitizedDomain
+            companyLogoURL = sanitizedDomain.isEmpty ? "" : LogoDevCompanySuggestionService.logoURL(forDomain: sanitizedDomain)
+            companyPrimaryColorHex = ""
+            companySecondaryColorHex = ""
+            isAddingManualCompany = false
+            companySuggestionService.clearSuggestions()
+            settledCompanyQuery = trimmedName
+        }
+
+        isApplyingCompanySuggestion = false
+        isCompanyNameFocused = false
+        isCompanyDomainFocused = false
+        markCompleted(.company, value: trimmedName, force: true)
     }
 
     private func exactCompanySuggestion(
@@ -960,6 +1127,26 @@ private extension String {
             .components(separatedBy: CharacterSet.alphanumerics.inverted)
             .filter { !$0.isEmpty }
             .joined()
+    }
+
+    var sanitizedCompanyDomain: String {
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "" }
+
+        let prefixed = trimmed.contains("://") ? trimmed : "https://\(trimmed)"
+        if let host = URLComponents(string: prefixed)?.host {
+            return host
+                .lowercased()
+                .replacingOccurrences(of: "www.", with: "")
+        }
+
+        return trimmed
+            .lowercased()
+            .replacingOccurrences(of: "https://", with: "")
+            .replacingOccurrences(of: "http://", with: "")
+            .replacingOccurrences(of: "www.", with: "")
+            .components(separatedBy: "/")
+            .first ?? trimmed.lowercased()
     }
 }
 
