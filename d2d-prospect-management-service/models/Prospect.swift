@@ -36,6 +36,7 @@ final class Prospect: ContactProtocol {
     var demographicCompanySecondaryColorHex: String?
     
     var notes: [Note]
+    var lastViewedNotesDate: Date?
     
     var appointments: [Appointment]
     
@@ -77,6 +78,7 @@ final class Prospect: ContactProtocol {
         self.contactPhone = ""
         
         self.notes = []
+        self.lastViewedNotesDate = nil
         
         self.appointments = []
         

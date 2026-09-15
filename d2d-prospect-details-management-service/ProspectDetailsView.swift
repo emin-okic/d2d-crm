@@ -137,8 +137,9 @@ struct ProspectDetailsView: View {
                 ContactScreenSoundController.shared.playSound1()
             }
         }
-        .sheet(isPresented: $controller.showNotesSheet) {
+        .sheet(isPresented: $controller.showNotesSheet, onDismiss: markProspectNotesRead) {
             ProspectNotesScreen(prospect: prospect)
+                .onAppear(perform: markProspectNotesRead)
         }
         .sheet(isPresented: $showRecordingsHistory) {
             ContactRecordingsHistoryView(
@@ -210,8 +211,9 @@ struct ProspectDetailsView: View {
                         ContactScreenSoundController.shared.playSound1()
                         controller.showNotesSheet = true
                     } label: {
-                        Image(systemName: "note.text")
+                        NotesToolbarIcon(unreadCount: unreadNotesCount)
                     }
+                    .accessibilityLabel(notesButtonAccessibilityLabel)
 
                     Button(role: .destructive) {
                         ContactScreenHapticsController.shared.lightTap()
@@ -428,6 +430,34 @@ struct ProspectDetailsView: View {
         prospect.recordings.sorted { $0.date > $1.date }
     }
 
+    private var unreadNotesCount: Int {
+        guard let lastViewedNotesDate = prospect.lastViewedNotesDate else {
+            return prospect.notes.count
+        }
+
+        return prospect.notes.filter { $0.date > lastViewedNotesDate }.count
+    }
+
+    private var notesButtonAccessibilityLabel: String {
+        if unreadNotesCount == 1 {
+            return "Notes, 1 unread note"
+        }
+
+        if unreadNotesCount > 1 {
+            return "Notes, \(unreadNotesCount) unread notes"
+        }
+
+        return "Notes"
+    }
+
+    private func markProspectNotesRead() {
+        guard let newestNoteDate = prospect.notes.map(\.date).max() else { return }
+        guard prospect.lastViewedNotesDate != newestNoteDate else { return }
+
+        prospect.lastViewedNotesDate = newestNoteDate
+        try? modelContext.save()
+    }
+
     private func navigateToMap() {
         ContactScreenHapticsController.shared.successConfirmationTap()
         ContactScreenSoundController.shared.playSound1()
@@ -641,4 +671,39 @@ struct ProspectDetailsView: View {
         }
     }
     
+}
+
+private struct NotesToolbarIcon: View {
+    let unreadCount: Int
+
+    private var badgeText: String {
+        unreadCount > 99 ? "99+" : "\(unreadCount)"
+    }
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            Image(systemName: "note.text")
+                .imageScale(.large)
+                .frame(width: 28, height: 28)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+
+            if unreadCount > 0 {
+                Text(badgeText)
+                    .font(.caption2.weight(.bold))
+                    .monospacedDigit()
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .padding(.horizontal, unreadCount > 9 ? 5 : 0)
+                    .frame(minWidth: 17, minHeight: 17)
+                    .background(Capsule().fill(Color.red))
+                    .overlay(
+                        Capsule()
+                            .stroke(Color(.systemBackground), lineWidth: 1.5)
+                    )
+            }
+        }
+        .frame(width: 38, height: 34)
+        .contentShape(Rectangle())
+    }
 }
