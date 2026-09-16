@@ -1,0 +1,9 @@
+{
+  "id" : "c23537c4-3477-4d6c-974d-076c367bf90a",
+  "targets" : [
+    {
+      "id" : "DCEF1F3E-0346-4500-A05E-43CC85F3EA90",
+      "name" : "d2d-map-service"
+    }
+  ]
+}
