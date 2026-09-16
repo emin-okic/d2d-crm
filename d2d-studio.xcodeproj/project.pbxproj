@@ -699,7 +699,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = Y3JJD7DBP3;
 				ENABLE_PREVIEWS = YES;
@@ -709,7 +709,9 @@
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
-				INFOPLIST_KEY_NSCalendarsUsageDescription = "This app uses your calendar to schedule follow-up appointments.";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "This app needs access to create calendar events for appointments.";
+				INFOPLIST_KEY_NSCalendarsWriteOnlyAccessUsageDescription = "This app needs access to create calendar events for appointments.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs access to the camera to scan business cards.";
 				INFOPLIST_KEY_NSContactsUsageDescription = "This app uses contacts to export prospects.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "\"This app needs access to your location to show it on the map.\"";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app uses the microphone to record knock conversations for training and review.";
@@ -749,7 +751,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = Y3JJD7DBP3;
 				ENABLE_PREVIEWS = YES;
@@ -759,7 +761,9 @@
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
-				INFOPLIST_KEY_NSCalendarsUsageDescription = "This app uses your calendar to schedule follow-up appointments.";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "This app needs access to create calendar events for appointments.";
+				INFOPLIST_KEY_NSCalendarsWriteOnlyAccessUsageDescription = "This app needs access to create calendar events for appointments.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs access to the camera to scan business cards.";
 				INFOPLIST_KEY_NSContactsUsageDescription = "This app uses contacts to export prospects.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "\"This app needs access to your location to show it on the map.\"";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app uses the microphone to record knock conversations for training and review.";
