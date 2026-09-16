@@ -66,7 +66,7 @@ struct ManualKnockLogSheet: View {
     @State private var isAddingNote = false
     @State private var isEditingDate = false
     @State private var newObjectionText = ""
-    @State private var objectionSuggestions: [String] = CommonObjections.all.shuffled().prefix(5).map { $0 }
+    @State private var objectionSuggestions: [String] = []
     @State private var tripStartAddress = ""
     @State private var tripEndAddress = ""
     @State private var tripDate: Date = .now
@@ -362,6 +362,7 @@ struct ManualKnockLogSheet: View {
             .padding(.top, 28)
         }
         .onAppear {
+            refreshObjectionSuggestions()
             focusedField = .objection
         }
     }
@@ -676,8 +677,23 @@ struct ManualKnockLogSheet: View {
         if returnToFollowUp {
             step = .followUp
         } else {
-            objectionSuggestions = CommonObjections.all.shuffled().prefix(5).map { $0 }
+            refreshObjectionSuggestions()
         }
+    }
+
+    private func refreshObjectionSuggestions() {
+        let existingTexts = Set((pendingObjections + objections).map { normalizedObjectionText($0.text) })
+        objectionSuggestions = CommonObjections.all
+            .filter { !existingTexts.contains(normalizedObjectionText($0)) }
+            .shuffled()
+            .prefix(5)
+            .map { $0 }
+    }
+
+    private func normalizedObjectionText(_ value: String) -> String {
+        value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
     }
 
     private func tripAddressRow(

@@ -10,6 +10,7 @@ import SwiftData
 struct AddObjectionView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Query private var existingObjections: [Objection]
 
     @State private var text: String = ""
     @State private var response: String = ""
@@ -139,8 +140,23 @@ struct AddObjectionView: View {
                 }
             }
             .onAppear {
-                suggestions = CommonObjections.all.shuffled().prefix(5).map { $0 }
+                refreshSuggestions()
             }
         }
+    }
+
+    private func refreshSuggestions() {
+        let existingTexts = Set(existingObjections.map { normalizedText($0.text) })
+        suggestions = CommonObjections.all
+            .filter { !existingTexts.contains(normalizedText($0)) }
+            .shuffled()
+            .prefix(5)
+            .map { $0 }
+    }
+
+    private func normalizedText(_ value: String) -> String {
+        value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
     }
 }
