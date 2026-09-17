@@ -63,6 +63,7 @@ struct ManualKnockLogSheet: View {
     @State private var selectedObjection: Objection?
     @State private var pendingObjections: [Objection] = []
     @State private var noteText = ""
+    @State private var noteDraft = ""
     @State private var isAddingNote = false
     @State private var isEditingDate = false
     @State private var newObjectionText = ""
@@ -158,6 +159,8 @@ struct ManualKnockLogSheet: View {
             .clipped()
             .padding(.horizontal, 24)
             .onChange(of: selectedOutcomeID) { _, _ in
+                commitNoteDraft()
+                focusedField = nil
                 KnockingFormHapticsController.shared.lightTap()
             }
 
@@ -175,22 +178,54 @@ struct ManualKnockLogSheet: View {
             }
 
             if isAddingNote {
-                TextEditor(text: $noteText)
-                    .focused($focusedField, equals: .note)
-                    .frame(minHeight: 104, maxHeight: 128)
-                    .padding(10)
-                    .scrollContentBackground(.hidden)
-                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .stroke(Color(.separator), lineWidth: 1)
-                    )
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 14)
+                VStack(spacing: 0) {
+                    TextEditor(text: $noteDraft)
+                        .focused($focusedField, equals: .note)
+                        .frame(minHeight: 82, maxHeight: 106)
+                        .padding(.horizontal, 10)
+                        .padding(.top, 8)
+                        .scrollContentBackground(.hidden)
+                        .onChange(of: noteDraft) { _, newValue in
+                            noteText = newValue
+                        }
+
+                    Rectangle()
+                        .fill(Color.primary.opacity(0.14))
+                        .frame(height: 1)
+                        .padding(.horizontal, 10)
+
+                    HStack {
+                        Text("Note saved with this knock")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Spacer()
+
+                        Button("Done") {
+                            noteText = noteDraft
+                            focusedField = nil
+                            commitNoteDraft()
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(Color(.tertiarySystemBackground).opacity(0.7))
+                }
+                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(Color(.separator), lineWidth: 1)
+                )
+                .padding(.horizontal, 24)
+                .padding(.bottom, 14)
             }
 
             HStack(spacing: 12) {
                 Button {
+                    commitNoteDraft()
                     withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
                         isEditingDate.toggle()
                     }
@@ -203,6 +238,11 @@ struct ManualKnockLogSheet: View {
 
                 Button {
                     let shouldOpenNote = !isAddingNote
+                    if shouldOpenNote {
+                        noteDraft = noteText
+                    } else {
+                        noteText = noteDraft
+                    }
                     withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
                         isAddingNote = shouldOpenNote
                     }
@@ -544,6 +584,8 @@ struct ManualKnockLogSheet: View {
     }
 
     private func primaryAction() {
+        commitNoteDraft()
+        focusedField = nil
         playSuccessFeedback()
 
         switch step {
@@ -571,6 +613,8 @@ struct ManualKnockLogSheet: View {
     }
 
     private func closeOrBack() {
+        commitNoteDraft()
+        focusedField = nil
         playLightFeedback()
 
         switch step {
@@ -594,13 +638,14 @@ struct ManualKnockLogSheet: View {
     }
 
     private func finish() {
+        commitNoteDraft()
         persistPendingObjections()
 
         onLog(
             ManualKnockLogResult(
                 outcome: selectedOutcome,
                 date: knockDate,
-                note: noteText.trimmingCharacters(in: .whitespacesAndNewlines),
+                note: currentNoteText.trimmingCharacters(in: .whitespacesAndNewlines),
                 followUpDate: followUpDateForResult,
                 objection: selectedObjection,
                 tripStartAddress: tripStartAddress.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -609,6 +654,19 @@ struct ManualKnockLogSheet: View {
                 completionAction: selectedAction
             )
         )
+    }
+
+    private var currentNoteText: String {
+        isAddingNote ? noteDraft : noteText
+    }
+
+    private func commitNoteDraft() {
+        guard isAddingNote else { return }
+
+        noteText = noteDraft
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+            isAddingNote = false
+        }
     }
 
     private func defaultFollowUpNote() -> String {
