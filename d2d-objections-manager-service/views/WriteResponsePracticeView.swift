@@ -72,15 +72,16 @@ struct WriteResponsePracticeView: View {
                     )
                     .foregroundColor(.white)
             }
-            .disabled(userResponse.trimmingCharacters(in: .whitespaces).isEmpty)
+            .disabled(
+                didSubmit || userResponse.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            )
         }
         .padding()
         .navigationBarBackButtonHidden()
     }
 
     private func submit() {
-        objection.addResponse(userResponse)   // add user-written response
-        objection.rotateResponse()            // pick a random one from the set
+        guard objection.recordPracticeResponse(userResponse) else { return }
         try? modelContext.save()
 
         withAnimation {
