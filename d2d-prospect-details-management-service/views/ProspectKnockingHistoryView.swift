@@ -19,72 +19,72 @@ struct ProspectKnockingHistoryView: View {
     @State private var showDeleteConfirm = false
 
     var body: some View {
-        ZStack {
-            VStack(spacing: 12) {
-
-                if prospect.knockHistory.isEmpty {
-                    Text("No knocks recorded yet.")
-                        .foregroundColor(.secondary)
-                        .font(.callout)
-                        .padding(.top, 20)
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 10) {
-                            ForEach(prospect.sortedKnocks) { knock in
-                                HStack(spacing: 10) {
-
-                                    if isDeleting {
-                                        Image(systemName:
-                                                selectedKnocks.contains(knock)
-                                                ? "checkmark.circle.fill"
-                                                : "circle"
-                                        )
-                                        .foregroundColor(.red)
-                                    }
-
-                                    knockRow(knock)
+        Group {
+            if prospect.knockHistory.isEmpty {
+                ContentUnavailableView(
+                    "No Knocks Yet",
+                    systemImage: "hand.tap",
+                    description: Text("Recorded knocks will appear here.")
+                )
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 10) {
+                        ForEach(prospect.sortedKnocks) { knock in
+                            HStack(spacing: 10) {
+                                if isDeleting {
+                                    Image(
+                                        systemName: selectedKnocks.contains(knock)
+                                            ? "checkmark.circle.fill"
+                                            : "circle"
+                                    )
+                                    .font(.title3)
+                                    .foregroundStyle(.red)
+                                    .accessibilityHidden(true)
                                 }
-                                .padding(10)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(isDeleting && selectedKnocks.contains(knock)
-                                              ? Color.red.opacity(0.06)
-                                              : Color(.secondarySystemBackground))
-                                )
-                                .onTapGesture {
-                                    if isDeleting {
-                                        toggleSelection(knock)
-                                    }
+
+                                knockRow(knock)
+                            }
+                            .padding(10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(
+                                        isDeleting && selectedKnocks.contains(knock)
+                                            ? Color.red.opacity(0.08)
+                                            : Color(.secondarySystemBackground)
+                                    )
+                            )
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                if isDeleting {
+                                    toggleSelection(knock)
                                 }
                             }
+                            .accessibilityAddTraits(isDeleting ? .isButton : [])
+                            .accessibilityValue(
+                                isDeleting && selectedKnocks.contains(knock)
+                                    ? "Selected"
+                                    : ""
+                            )
                         }
-                        .padding(.horizontal, 10)
-                        .padding(.top, 10)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 10)
+                }
+                .scrollDisabled(prospect.knockHistory.count <= 3)
+            }
+        }
+        .toolbar {
+            if !prospect.knockHistory.isEmpty {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(isDeleting ? "Done" : "Select") {
+                        toggleDeleteMode()
                     }
                 }
             }
-
-            // Floating delete button (bottom-left)
-            VStack {
-                Spacer()
-                HStack {
-                    Button {
-                        handleTrashTap()
-                    } label: {
-                        Image(systemName: "trash.fill")
-                            .font(.title2)
-                            .foregroundColor(.white)
-                            .frame(width: 50, height: 50)
-                            .background(
-                                Circle().fill(isDeleting ? Color.red : Color.blue)
-                            )
-                            .shadow(radius: 5)
-                    }
-                    .padding(.leading, 16)
-                    .padding(.bottom, 16)
-
-                    Spacer()
-                }
+        }
+        .safeAreaInset(edge: .bottom) {
+            if isDeleting {
+                deleteActionBar
             }
         }
         .alert(
@@ -92,23 +92,50 @@ struct ProspectKnockingHistoryView: View {
             isPresented: $showDeleteConfirm
         ) {
             Button("Delete", role: .destructive) {
-                
                 ContactScreenHapticsController.shared.mediumTap()
                 ContactScreenSoundController.shared.playSound1()
-                
                 deleteSelectedKnocks()
-                
             }
             Button("Cancel", role: .cancel) {
-                
                 ContactScreenHapticsController.shared.lightTap()
-                
                 ContactScreenSoundController.shared.playSound1()
-                
             }
         } message: {
             Text("This action cannot be undone.")
         }
+    }
+
+    private var deleteActionBar: some View {
+        VStack(spacing: 8) {
+            Text(
+                selectedKnocks.isEmpty
+                    ? "Select the knocks you want to remove"
+                    : "\(selectedKnocks.count) selected"
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+
+            Button(role: .destructive) {
+                ContactScreenHapticsController.shared.mediumTap()
+                ContactScreenSoundController.shared.playSound1()
+                showDeleteConfirm = true
+            } label: {
+                Label(
+                    selectedKnocks.isEmpty
+                        ? "Delete Knocks"
+                        : "Delete \(selectedKnocks.count) Knock\(selectedKnocks.count == 1 ? "" : "s")",
+                    systemImage: "trash"
+                )
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.red)
+            .disabled(selectedKnocks.isEmpty)
+        }
+        .padding(.horizontal)
+        .padding(.top, 10)
+        .padding(.bottom, 6)
+        .background(.bar)
     }
 
     // MARK: - Row UI
@@ -149,38 +176,16 @@ struct ProspectKnockingHistoryView: View {
         }
     }
 
-    private func handleTrashTap() {
-        
-        if isDeleting {
-            
-            if selectedKnocks.isEmpty {
-                
-                ContactScreenHapticsController.shared.lightTap()
-                ContactScreenSoundController.shared.playSound1()
-                
-                // exit delete mode
-                withAnimation {
-                    isDeleting = false
-                }
-                
-            } else {
-                
-                ContactScreenHapticsController.shared.mediumTap()
-                ContactScreenSoundController.shared.playSound1()
-                
-                showDeleteConfirm = true
-                
+    private func toggleDeleteMode() {
+        ContactScreenHapticsController.shared.lightTap()
+        ContactScreenSoundController.shared.playSound1()
+
+        withAnimation {
+            isDeleting.toggle()
+
+            if !isDeleting {
+                selectedKnocks.removeAll()
             }
-            
-        } else {
-            
-            ContactScreenHapticsController.shared.lightTap()
-            ContactScreenSoundController.shared.playSound1()
-            
-            withAnimation {
-                isDeleting = true
-            }
-            
         }
     }
 
