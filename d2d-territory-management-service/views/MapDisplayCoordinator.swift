@@ -903,6 +903,24 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             view.alpha = selectedPlaceID == nil || annotation.place.id == selectedPlaceID ? 1.0 : 0.42
             return
         }
+
+        if annotation.place.isUnqualified {
+            let isSelected = annotation.place.id == selectedPlaceID
+            configurePropertyToken(
+                view,
+                for: annotation.place,
+                size: markerSize(
+                    for: annotation.place,
+                    isSelected: isSelected,
+                    minimumSize: 42,
+                    selectedMinimumSize: 66
+                ),
+                isSelected: isSelected,
+                symbolName: "xmark"
+            )
+            view.alpha = selectedPlaceID == nil || isSelected ? 1.0 : 0.42
+            return
+        }
         
         let isSelected = annotation.place.id == selectedPlaceID
         let size = markerSize(for: annotation.place, isSelected: isSelected)
