@@ -1768,6 +1768,7 @@ struct MapSearchView: View {
             count: marker.count,
             unitCount: marker.unitCount,
             contactCount: marker.contactCount,
+            upcomingFollowUpCount: marker.upcomingFollowUpCount,
             list: contact.list,
             isUnqualified: contact.isUnqualified,
             isMultiUnit: marker.isMultiUnit,

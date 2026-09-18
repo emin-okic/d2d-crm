@@ -368,12 +368,6 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             view.addSubview(badge)
         }
 
-        addFollowUpBadge(
-            to: view,
-            count: annotation.place.upcomingFollowUpCount,
-            size: max(19, size * 0.28)
-        )
-
     }
 
     // MARK: - Helpers
@@ -932,11 +926,13 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             view.layer.add(pulse, forKey: "selectPulse")
         }
 
-        addFollowUpBadge(
-            to: view,
-            count: place.upcomingFollowUpCount,
-            size: max(19, size * 0.28)
-        )
+        if !place.isMultiUnit && !place.showsMultiContact {
+            addFollowUpBadge(
+                to: view,
+                count: place.upcomingFollowUpCount,
+                size: max(19, size * 0.28)
+            )
+        }
     }
     
     private func configure(
