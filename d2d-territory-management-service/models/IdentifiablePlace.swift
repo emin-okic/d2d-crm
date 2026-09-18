@@ -64,6 +64,9 @@ struct IdentifiablePlace: Identifiable {
     let showsMultiContact: Bool
     
     var contactCount: Int
+
+    /// Number of incomplete follow-ups scheduled for today or later across this property.
+    let upcomingFollowUpCount: Int
     
     let selectedContact: UnitContact?
 
@@ -81,6 +84,7 @@ struct IdentifiablePlace: Identifiable {
         count: Int = 1,
         unitCount: Int = 1,
         contactCount: Int = 1,   // 👈 add
+        upcomingFollowUpCount: Int = 0,
         list: String = "Prospects",
         isUnqualified: Bool = false,
         isMultiUnit: Bool = false,
@@ -93,6 +97,7 @@ struct IdentifiablePlace: Identifiable {
         self.count = count
         self.unitCount = unitCount
         self.contactCount = contactCount
+        self.upcomingFollowUpCount = upcomingFollowUpCount
         self.list = list
         self.isUnqualified = isUnqualified
         self.isMultiUnit = isMultiUnit

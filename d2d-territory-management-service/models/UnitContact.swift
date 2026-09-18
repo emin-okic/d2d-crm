@@ -55,6 +55,23 @@ enum UnitContact: Identifiable {
         }
     }
 
+    func upcomingFollowUpCount(
+        onOrAfter date: Date = Calendar.current.startOfDay(for: .now)
+    ) -> Int {
+        let appointments: [Appointment]
+
+        switch self {
+        case .prospect(let prospect):
+            appointments = prospect.appointments
+        case .customer(let customer):
+            appointments = customer.appointments
+        }
+
+        return appointments.count { appointment in
+            !appointment.isCompleted && appointment.date >= date
+        }
+    }
+
     var list: String {
         isCustomer ? "Customers" : "Prospects"
     }
