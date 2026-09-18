@@ -80,6 +80,10 @@ class MapController: ObservableObject {
             let totalKnocks = unitsDict.values
                 .flatMap { $0 }
                 .reduce(0) { $0 + $1.knockCount }
+
+            let upcomingFollowUpCount = unitsDict.values
+                .flatMap { $0 }
+                .reduce(0) { $0 + $1.upcomingFollowUpCount() }
             
             markers.append(
                 IdentifiablePlace(
@@ -88,6 +92,7 @@ class MapController: ObservableObject {
                     count: totalKnocks,
                     unitCount: unitCount,
                     contactCount: contactCount,
+                    upcomingFollowUpCount: upcomingFollowUpCount,
                     list: list,
                     isUnqualified: isUnqualified,
                     isMultiUnit: isMultiUnit,

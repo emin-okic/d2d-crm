@@ -29,6 +29,10 @@ struct UnitContactGroup: Identifiable {
         contacts.reduce(0) { $0 + $1.knockCount }
     }
 
+    var upcomingFollowUpCount: Int {
+        contacts.reduce(0) { $0 + $1.upcomingFollowUpCount() }
+    }
+
     var primaryContact: UnitContact? {
         contacts.first
     }

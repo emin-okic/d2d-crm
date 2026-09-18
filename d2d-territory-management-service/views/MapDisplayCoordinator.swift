@@ -367,6 +367,7 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
 
             view.addSubview(badge)
         }
+
     }
 
     // MARK: - Helpers
@@ -724,6 +725,48 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         )
         view.addSubview(badge)
     }
+
+    private func addFollowUpBadge(to view: MKAnnotationView, count: Int, size: CGFloat) {
+        guard count > 0 else { return }
+
+        let countText = count > 99 ? "99+" : "\(count)"
+        let badgeWidth = size * (countText.count > 1 ? 1.9 : 1.65)
+        let badge = UIView()
+        badge.backgroundColor = .systemOrange
+        badge.layer.cornerRadius = size / 2
+        badge.layer.borderWidth = 1.5
+        badge.layer.borderColor = UIColor.white.withAlphaComponent(0.95).cgColor
+        badge.layer.shadowColor = UIColor.black.cgColor
+        badge.layer.shadowOpacity = 0.2
+        badge.layer.shadowRadius = 3
+        badge.layer.shadowOffset = CGSize(width: 0, height: 1)
+        badge.frame = CGRect(x: -badgeWidth * 0.28, y: -2, width: badgeWidth, height: size)
+
+        let calendar = UIImageView(image: UIImage(systemName: "calendar"))
+        calendar.tintColor = .white
+        calendar.contentMode = .scaleAspectFit
+        calendar.frame = CGRect(
+            x: size * 0.20,
+            y: size * 0.22,
+            width: size * 0.56,
+            height: size * 0.56
+        )
+        badge.addSubview(calendar)
+
+        let countLabel = UILabel()
+        countLabel.text = countText
+        countLabel.textColor = .white
+        countLabel.font = .boldSystemFont(ofSize: max(9, size * 0.52))
+        countLabel.textAlignment = .center
+        countLabel.frame = CGRect(
+            x: size * 0.72,
+            y: 0,
+            width: badgeWidth - size * 0.84,
+            height: size
+        )
+        badge.addSubview(countLabel)
+        view.addSubview(badge)
+    }
     
     func refreshAllAnnotations(on mapView: MKMapView) {
         for annotation in mapView.annotations {
@@ -881,6 +924,14 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             pulse.toValue = 1.0
             pulse.duration = 0.2
             view.layer.add(pulse, forKey: "selectPulse")
+        }
+
+        if !place.isMultiUnit && !place.showsMultiContact {
+            addFollowUpBadge(
+                to: view,
+                count: place.upcomingFollowUpCount,
+                size: max(19, size * 0.28)
+            )
         }
     }
     

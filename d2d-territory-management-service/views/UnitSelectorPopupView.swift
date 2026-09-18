@@ -173,6 +173,10 @@ struct UnitSelectorPopupView: View {
 
             Spacer(minLength: 0)
 
+            if unit.upcomingFollowUpCount > 0 {
+                followUpLabel(count: unit.upcomingFollowUpCount)
+            }
+
             Image(systemName: "chevron.right")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(.tertiary)
@@ -180,6 +184,16 @@ struct UnitSelectorPopupView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
+    private func followUpLabel(count: Int) -> some View {
+        Label("\(count)", systemImage: "calendar")
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.orange)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(Color.orange.opacity(0.12), in: Capsule())
+            .accessibilityLabel("\(count) scheduled follow-ups")
     }
 
     private func summaryTile(value: String, label: String, systemName: String, tint: Color) -> some View {
