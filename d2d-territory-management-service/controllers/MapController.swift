@@ -42,14 +42,14 @@ class MapController: ObservableObject {
         
         for p in prospects {
             let parsed = parseAddress(p.address)
-            groups[parsed.base, default: AddressGroup(base: parsed.base, units: [:])]
+            groups[parsed.baseKey, default: AddressGroup(base: parsed.base, units: [:])]
                 .units[parsed.unit, default: []]
                 .append(.prospect(p))
         }
         
         for c in customers {
             let parsed = parseAddress(c.address)
-            groups[parsed.base, default: AddressGroup(base: parsed.base, units: [:])]
+            groups[parsed.baseKey, default: AddressGroup(base: parsed.base, units: [:])]
                 .units[parsed.unit, default: []]
                 .append(.customer(c))
         }
@@ -66,10 +66,11 @@ class MapController: ObservableObject {
             let contactCount = unitsDict.values.reduce(0) { $0 + $1.count }
             
             let unitCount = unitsDict.keys.count
-            
-            let isMultiUnit = unitCount > 1
-            
-            let showsMultiContact = (!isMultiUnit && contactCount > 1)
+            let hasSecondaryUnits = unitsDict.keys.contains { $0 != nil }
+
+            // A known unit means this is a building even when only one unit is saved.
+            let isMultiUnit = hasSecondaryUnits
+            let showsMultiContact = !isMultiUnit && contactCount > 1
             
             let hasCustomer = unitsDict.values.flatMap { $0 }.contains { $0.isCustomer }
             let hasUnqualified = unitsDict.values.flatMap { $0 }.contains { $0.isUnqualified }

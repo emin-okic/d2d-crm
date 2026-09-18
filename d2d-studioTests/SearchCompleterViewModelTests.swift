@@ -33,13 +33,35 @@ struct SearchCompleterViewModelTests {
         #expect(components.secondaryAddress.isEmpty)
     }
 
-    @Test
-    func insertsSecondaryAddressBeforeCityAndRegion() {
+    @Test(arguments: ["Unit 1", "Unit #1", "Apt 1", "Apartment #1", "Suite 1", "Ste. #1"])
+    func standardizesEquivalentUnitFormats(_ secondaryAddress: String) {
         let result = SearchCompleterViewModel.appendingSecondaryAddress(
-            "Unit 5",
-            to: "10320 Norfolk Dr, Omaha, NE 68114"
+            secondaryAddress,
+            to: "1661 Mission St, San Francisco, CA 94103"
         )
 
-        #expect(result == "10320 Norfolk Dr Unit 5, Omaha, NE 68114")
+        #expect(result == "1661 Mission St Unit 1, San Francisco, CA 94103")
+    }
+
+    @Test(arguments: [
+        "1661 Mission St Unit 1, San Francisco, CA 94103",
+        "1661 Mission St Unit #1, San Francisco, CA 94103",
+        "1661 Mission St Apt 1, San Francisco, CA 94103",
+        "1661 Mission St Apartment #1, San Francisco, CA 94103"
+    ])
+    func createsTheSameIdentityForEquivalentUnitFormats(_ address: String) {
+        let parts = AddressCanonicalizer.parse(address)
+
+        #expect(parts.base == "1661 Mission St, San Francisco, CA 94103")
+        #expect(parts.unit == "1")
+        #expect(parts.identityKey == AddressCanonicalizer.parse("1661 Mission St Unit 1, San Francisco, CA 94103").identityKey)
+    }
+
+    @Test
+    func keepsDifferentUnitsDistinct() {
+        #expect(!AddressCanonicalizer.addressesMatch(
+            "1661 Mission St Apt 1",
+            "1661 Mission St Unit 10"
+        ))
     }
 }

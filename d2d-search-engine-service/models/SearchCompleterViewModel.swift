@@ -26,7 +26,7 @@ class SearchCompleterViewModel: NSObject, ObservableObject, MKLocalSearchComplet
 
     func updateQuery(_ query: String) {
         let components = Self.addressComponents(from: query)
-        secondaryAddress = components.secondaryAddress
+        secondaryAddress = Self.canonicalSecondaryAddress(components.secondaryAddress)
 
         if components.baseAddress.isEmpty {
             clear()
@@ -70,14 +70,18 @@ class SearchCompleterViewModel: NSObject, ObservableObject, MKLocalSearchComplet
     }
 
     nonisolated static func appendingSecondaryAddress(_ secondaryAddress: String, to address: String) -> String {
-        let suffix = secondaryAddress.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !suffix.isEmpty else { return address }
-
-        if let commaIndex = address.firstIndex(of: ",") {
-            return "\(address[..<commaIndex]) \(suffix)\(address[commaIndex...])"
+        let syntheticAddress = "1 Main St \(secondaryAddress)"
+        guard let unit = AddressCanonicalizer.parse(syntheticAddress).unit else {
+            return AddressCanonicalizer.standardizedAddress(address)
         }
 
-        return "\(address) \(suffix)"
+        return AddressCanonicalizer.appendingUnit(unit, to: address)
+    }
+
+    nonisolated private static func canonicalSecondaryAddress(_ secondaryAddress: String) -> String {
+        let syntheticAddress = "1 Main St \(secondaryAddress)"
+        guard let unit = AddressCanonicalizer.parse(syntheticAddress).unit else { return "" }
+        return "Unit \(unit)"
     }
 
     nonisolated func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {

@@ -24,10 +24,13 @@ enum ContactAddressPredictionController {
         }
 
         guard let mapItem = await SearchBarController.resolveFreeformSearch(query: trimmedAddress) else {
-            return nil
+            return AddressCanonicalizer.standardizedAddress(trimmedAddress)
         }
 
-        return displayAddress(for: mapItem, fallback: trimmedAddress)
+        let resolvedAddress = displayAddress(for: mapItem, fallback: trimmedAddress)
+        let unit = AddressCanonicalizer.parse(trimmedAddress).unit
+        return unit.map { AddressCanonicalizer.appendingUnit($0, to: resolvedAddress) }
+            ?? AddressCanonicalizer.standardizedAddress(resolvedAddress)
     }
 
     private static func displayAddress(for mapItem: MKMapItem, fallback: String) -> String {

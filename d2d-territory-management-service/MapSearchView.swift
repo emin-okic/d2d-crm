@@ -1476,13 +1476,13 @@ struct MapSearchView: View {
 
         let prospectUnits = filteredProspectsForMap
             .filter {
-                parseAddress($0.address).base.lowercased() == base.lowercased()
+                parseAddress($0.address).baseKey == AddressCanonicalizer.normalizedBaseKey(base)
             }
             .map { UnitContact.prospect($0) }
 
         let customerUnits = filteredCustomersForMap
             .filter {
-                parseAddress($0.address).base.lowercased() == base.lowercased()
+                parseAddress($0.address).baseKey == AddressCanonicalizer.normalizedBaseKey(base)
             }
             .map { UnitContact.customer($0) }
 
@@ -1934,17 +1934,7 @@ struct MapSearchView: View {
     }
     
     private func addressesMatch(_ a: String, _ b: String) -> Bool {
-        let normalize: (String) -> String = {
-            $0.lowercased()
-              .replacingOccurrences(of: ",", with: "")
-              .replacingOccurrences(of: "  ", with: " ")
-              .trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-
-        let na = normalize(a)
-        let nb = normalize(b)
-
-        return na.contains(nb) || nb.contains(na)
+        AddressCanonicalizer.addressesMatch(a, b)
     }
 
     private func showFollowUpScheduledConfirmation(for address: String, in geo: GeometryProxy) {
