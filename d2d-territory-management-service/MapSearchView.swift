@@ -1876,12 +1876,13 @@ struct MapSearchView: View {
     }
 
     private func handleCompletionTap(_ result: MKLocalSearchCompletion) {
-        
+        let secondaryAddress = searchVM.secondaryAddress
         let req = MKLocalSearch.Request(completion: result)
         
         MKLocalSearch(request: req).start { resp, _ in
             guard let item = resp?.mapItems.first else { return }
-            let addr = displayAddress(for: item, fallback: result.title)
+            let baseAddress = displayAddress(for: item, fallback: result.title)
+            let addr = SearchCompleterViewModel.appendingSecondaryAddress(secondaryAddress, to: baseAddress)
             let coordinate = item.location.coordinate
 
             DispatchQueue.main.async {

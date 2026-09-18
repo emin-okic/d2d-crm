@@ -42,7 +42,7 @@ struct ContactAddressPredictiveTextField: View {
                             .padding(.top, 1)
 
                         VStack(alignment: .leading, spacing: 1) {
-                            Text(prediction.title)
+                            Text(searchVM.addressByAppendingSecondaryAddress(to: prediction.title))
                                 .font(.subheadline.weight(.medium))
                                 .lineLimit(2)
 
@@ -79,7 +79,7 @@ struct ContactAddressPredictiveTextField: View {
     private func acceptPrediction(_ prediction: MKLocalSearchCompletion) {
         Task {
             if let resolved = await SearchBarController.resolveAddress(from: prediction) {
-                address = resolved
+                address = searchVM.addressByAppendingSecondaryAddress(to: resolved)
                 searchVM.clear()
                 isFocused = false
                 onPredictionAccepted?()

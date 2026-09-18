@@ -16,8 +16,8 @@ struct PropertySearchSuggestion: Identifiable {
     let completion: MKLocalSearchCompletion?
     let mapItem: MKMapItem?
 
-    init(completion: MKLocalSearchCompletion) {
-        self.title = completion.title
+    init(completion: MKLocalSearchCompletion, secondaryAddress: String = "") {
+        self.title = SearchCompleterViewModel.appendingSecondaryAddress(secondaryAddress, to: completion.title)
         self.subtitle = completion.subtitle.isEmpty ? "Address match" : completion.subtitle
         self.badge = "Property"
         self.completion = completion

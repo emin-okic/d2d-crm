@@ -19,7 +19,8 @@ enum ContactAddressPredictionController {
 
         if let firstCompletion = completions.first,
            let resolvedAddress = await SearchBarController.resolveAddress(from: firstCompletion) {
-            return resolvedAddress
+            let secondaryAddress = SearchCompleterViewModel.addressComponents(from: trimmedAddress).secondaryAddress
+            return SearchCompleterViewModel.appendingSecondaryAddress(secondaryAddress, to: resolvedAddress)
         }
 
         guard let mapItem = await SearchBarController.resolveFreeformSearch(query: trimmedAddress) else {

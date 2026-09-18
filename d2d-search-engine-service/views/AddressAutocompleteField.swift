@@ -34,7 +34,8 @@ struct AddressAutocompleteField: View {
                     ForEach(searchViewModel.results.prefix(5), id: \.self) { result in
                         Button {
                             SearchBarController.resolveAndSelectAddress(from: result) { resolved in
-                                addressText = resolved
+                                addressText = searchViewModel.addressByAppendingSecondaryAddress(to: resolved)
+                                searchViewModel.clear()
                                 isFocused = false
                             }
                         } label: {
@@ -44,7 +45,7 @@ struct AddressAutocompleteField: View {
                                     .foregroundStyle(.tint)
 
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(result.title)
+                                    Text(searchViewModel.addressByAppendingSecondaryAddress(to: result.title))
                                         .font(.callout)
                                         .fontWeight(.medium)
                                         .lineLimit(1)

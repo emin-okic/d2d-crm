@@ -34,7 +34,9 @@ struct SearchBarView: View {
     }
 
     private var visibleSuggestions: [PropertySearchSuggestion] {
-        nearbyHomeSuggestions.isEmpty ? viewModel.results.map(PropertySearchSuggestion.init(completion:)) : nearbyHomeSuggestions
+        nearbyHomeSuggestions.isEmpty
+            ? viewModel.results.map { PropertySearchSuggestion(completion: $0, secondaryAddress: viewModel.secondaryAddress) }
+            : nearbyHomeSuggestions
     }
 
     private var hasVisibleSuggestions: Bool {
@@ -158,7 +160,7 @@ struct SearchBarView: View {
 
     private func selectSuggestion(_ suggestion: PropertySearchSuggestion) {
         if let completion = suggestion.completion {
-            storeRecentSearch(completion.title)
+            storeRecentSearch(suggestion.title)
             onSelectResult(completion)
         } else if let mapItem = suggestion.mapItem {
             storeRecentSearch(suggestion.title)
