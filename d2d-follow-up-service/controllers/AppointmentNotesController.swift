@@ -31,20 +31,30 @@ struct AppointmentNotesController {
         try? modelContext.save()
     }
 
-    func closePastAppointmentIfNeeded(_ appointment: Appointment, now: Date = Date()) async {
-        guard appointment.date < now else { return }
-        await completeIfNeeded(appointment, at: appointment.completedAt ?? appointment.date)
+    func restoreAppointmentsAutomaticallyCompletedWhenPast(_ appointments: [Appointment]) {
+        let appointmentsToRestore = appointments.filter(\.wasAutomaticallyCompletedWhenPast)
+        guard appointmentsToRestore.isEmpty == false else { return }
+
+        for appointment in appointmentsToRestore {
+            restoreAsOpen(appointment)
+        }
+
+        try? modelContext.save()
     }
 
     func reopenIfAllowed(_ appointment: Appointment, now: Date = Date()) {
         guard appointment.canReopen(now: now) else { return }
 
+        restoreAsOpen(appointment)
+        try? modelContext.save()
+    }
+
+    private func restoreAsOpen(_ appointment: Appointment) {
         removeSummaryFromContactNotesIfNeeded(for: appointment)
         appointment.isCompleted = false
         appointment.completedAt = nil
         appointment.meetingSummary = nil
         appointment.summaryAddedAt = nil
-        try? modelContext.save()
     }
 
     private func addSummaryToContactNotesIfNeeded(for appointment: Appointment, completedAt: Date) async {

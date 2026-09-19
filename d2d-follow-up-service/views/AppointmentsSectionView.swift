@@ -26,6 +26,10 @@ struct AppointmentsSectionView: View {
 
     private var calendar: Calendar { Calendar.current }
 
+    private var notesController: AppointmentNotesController {
+        AppointmentNotesController(modelContext: modelContext)
+    }
+
     private var selectedDayAppointments: [Appointment] {
         appointments
             .filter { calendar.isDate($0.date, inSameDayAs: selectedDate) }
@@ -77,7 +81,10 @@ struct AppointmentsSectionView: View {
         } message: { _ in
             Text("Are you sure you want to delete this appointment? This action cannot be undone.")
         }
-        .onAppear(perform: syncFilteredAppointments)
+        .onAppear {
+            notesController.restoreAppointmentsAutomaticallyCompletedWhenPast(appointments)
+            syncFilteredAppointments()
+        }
         .onChange(of: selectedDate) {
             selectedAppointments.removeAll()
             isEditing = false
@@ -216,37 +223,40 @@ struct AppointmentsSectionView: View {
     }
 
     private var appointmentsContent: some View {
-        Group {
-            if selectedDayAppointments.isEmpty {
-                emptyState
-            } else {
-                List {
-                    ForEach(selectedDayAppointments) { appt in
-                        AppointmentRowView(
-                            appt: appt,
-                            isEditing: isEditing,
-                            isSelected: selectedAppointments.contains(appt)
-                        )
-                        .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
-                        .onTapGesture {
-                            handleTap(on: appt)
-                        }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button(role: .destructive) {
-                                FollowUpScreenHapticsController.shared.mediumTap()
-                                FollowUpScreenSoundController.shared.playSound1()
-                                appointmentToDelete = appt
-                                showDeleteConfirmation = true
-                            } label: {
-                                Label("Delete", systemImage: "trash.fill")
+        TimelineView(.periodic(from: .now, by: 30)) { timeline in
+            Group {
+                if selectedDayAppointments.isEmpty {
+                    emptyState
+                } else {
+                    List {
+                        ForEach(selectedDayAppointments) { appt in
+                            AppointmentRowView(
+                                appt: appt,
+                                now: timeline.date,
+                                isEditing: isEditing,
+                                isSelected: selectedAppointments.contains(appt)
+                            )
+                            .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                            .onTapGesture {
+                                handleTap(on: appt)
+                            }
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    FollowUpScreenHapticsController.shared.mediumTap()
+                                    FollowUpScreenSoundController.shared.playSound1()
+                                    appointmentToDelete = appt
+                                    showDeleteConfirmation = true
+                                } label: {
+                                    Label("Delete", systemImage: "trash.fill")
+                                }
                             }
                         }
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                 }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

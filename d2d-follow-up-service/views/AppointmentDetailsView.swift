@@ -22,8 +22,45 @@ struct AppointmentDetailsView: View {
         AppointmentNotesController(modelContext: context)
     }
 
+    private var status: AppointmentStatus {
+        appointment.status()
+    }
+
     private var canReopenAppointment: Bool {
         appointment.canReopen()
+    }
+
+    private var statusTitle: LocalizedStringResource {
+        switch status {
+        case .upcoming:
+            "Open"
+        case .missed:
+            "Missed"
+        case .completed:
+            "Done"
+        }
+    }
+
+    private var statusIcon: String {
+        switch status {
+        case .upcoming:
+            "calendar"
+        case .missed:
+            "exclamationmark.circle.fill"
+        case .completed:
+            "checkmark.seal.fill"
+        }
+    }
+
+    private var statusColor: Color {
+        switch status {
+        case .upcoming:
+            .blue
+        case .missed:
+            .orange
+        case .completed:
+            .green
+        }
     }
 
     private var isCompletionButtonDisabled: Bool {
@@ -39,7 +76,7 @@ struct AppointmentDetailsView: View {
             return "Reopen Meeting"
         }
 
-        return appointment.isClosed ? "Meeting Done" : "Confirm Meeting Done"
+        return appointment.isClosed ? "Meeting Done" : "Confirm Meeting Completed"
     }
 
     private var completionButtonIcon: String {
@@ -127,22 +164,17 @@ struct AppointmentDetailsView: View {
                 .presentationDetents([.fraction(0.35)])
                 .presentationDragIndicator(.visible)
             }
-            .onAppear {
-                Task {
-                    await notesController.closePastAppointmentIfNeeded(appointment)
-                }
-            }
         }
     }
 
     private func headerCard(isCompact: Bool) -> some View {
         card {
             HStack(alignment: .center, spacing: 12) {
-                Image(systemName: appointment.isClosed ? "checkmark.seal.fill" : "calendar")
+                Image(systemName: statusIcon)
                     .font(.system(size: isCompact ? 16 : 18, weight: .semibold))
-                    .foregroundColor(appointment.isClosed ? .secondary : .blue)
+                    .foregroundStyle(statusColor)
                     .frame(width: 36, height: 36)
-                    .background((appointment.isClosed ? Color.gray : Color.blue).opacity(0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                    .background(statusColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(appointment.type)
@@ -159,12 +191,12 @@ struct AppointmentDetailsView: View {
 
                 Spacer(minLength: 0)
 
-                Text(appointment.isClosed ? "Done" : "Open")
+                Text(statusTitle)
                     .font(.caption.weight(.bold))
-                    .foregroundColor(appointment.isClosed ? .secondary : .blue)
+                    .foregroundStyle(statusColor)
                     .padding(.horizontal, 9)
                     .padding(.vertical, 6)
-                    .background((appointment.isClosed ? Color.gray : Color.blue).opacity(0.10), in: Capsule())
+                    .background(statusColor.opacity(0.10), in: Capsule())
             }
         }
     }

@@ -62,21 +62,35 @@ class Appointment: Identifiable {
     }
 }
 
+enum AppointmentStatus: Equatable {
+    case upcoming
+    case missed
+    case completed
+}
+
 extension Appointment {
-    var isPastDue: Bool {
-        date < Date()
+    var isClosed: Bool {
+        isCompleted
     }
 
-    var isClosed: Bool {
-        isCompleted || isPastDue
+    var wasAutomaticallyCompletedWhenPast: Bool {
+        isCompleted && completedAt == date
+    }
+
+    func status(at now: Date = Date()) -> AppointmentStatus {
+        if isCompleted {
+            return .completed
+        }
+
+        return date < now ? .missed : .upcoming
     }
 
     func isUpcomingBucket(now: Date = Date()) -> Bool {
-        isCompleted == false && date >= now
+        status(at: now) == .upcoming
     }
 
     func isPastBucket(now: Date = Date()) -> Bool {
-        isCompleted || date < now
+        status(at: now) != .upcoming
     }
 
     func canReopen(now: Date = Date()) -> Bool {
