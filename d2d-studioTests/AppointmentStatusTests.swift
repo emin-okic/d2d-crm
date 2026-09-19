@@ -39,6 +39,37 @@ struct AppointmentStatusTests {
         #expect(appointment.isPastBucket(now: now))
     }
 
+    @Test
+    func meetingSummaryUsesAuthoritativeContactAddress() {
+        let input = AppointmentMeetingSummaryInput(
+            clientName: "New",
+            contactAddress: "1647 Mission St, San Francisco, CA 94103, United States",
+            appointmentType: "Meeting",
+            appointmentDate: now,
+            meetingNotes: ["Moving in one month and wants a follow up then."]
+        )
+
+        let summary = AppointmentMeetingSummaryGenerator.fallbackSummary(for: input, completedAt: now)
+
+        #expect(summary.contains(input.contactAddress))
+        #expect(summary.contains("Ames") == false)
+    }
+
+    @Test
+    func meetingSummaryWithoutNotesStillIncludesContactAddress() {
+        let input = AppointmentMeetingSummaryInput(
+            clientName: "New",
+            contactAddress: "1647 Mission St, San Francisco, CA 94103, United States",
+            appointmentType: "Meeting",
+            appointmentDate: now,
+            meetingNotes: []
+        )
+
+        let summary = AppointmentMeetingSummaryGenerator.fallbackSummary(for: input, completedAt: now)
+
+        #expect(summary.contains(input.contactAddress))
+    }
+
     private func makeAppointment(
         date: Date,
         isCompleted: Bool = false,
