@@ -9,6 +9,7 @@ import SwiftData
 
 struct AppointmentRowView: View {
     let appt: Appointment
+    let now: Date
     var isEditing: Bool = false
     var isSelected: Bool = false
 
@@ -48,12 +49,27 @@ struct AppointmentRowView: View {
         return appt.location
     }
 
+    private var status: AppointmentStatus {
+        appt.status(at: now)
+    }
+
     private var isCompleted: Bool {
-        appt.isCompleted
+        status == .completed
+    }
+
+    private var isMissed: Bool {
+        status == .missed
     }
 
     private var statusColor: Color {
-        isCompleted ? .green : accentColor
+        switch status {
+        case .upcoming:
+            accentColor
+        case .missed:
+            .orange
+        case .completed:
+            .green
+        }
     }
 
     private var rowFillColor: Color {
@@ -61,7 +77,14 @@ struct AppointmentRowView: View {
             return Color.red.opacity(0.08)
         }
 
-        return isCompleted ? Color(.secondarySystemGroupedBackground) : accentColor.opacity(0.14)
+        switch status {
+        case .upcoming:
+            return accentColor.opacity(0.14)
+        case .missed:
+            return Color.orange.opacity(0.12)
+        case .completed:
+            return Color(.secondarySystemGroupedBackground)
+        }
     }
 
     private var rowStrokeColor: Color {
@@ -69,15 +92,33 @@ struct AppointmentRowView: View {
             return Color.red.opacity(0.45)
         }
 
-        return isCompleted ? Color.green.opacity(0.26) : accentColor.opacity(0.24)
+        switch status {
+        case .upcoming:
+            return accentColor.opacity(0.24)
+        case .missed:
+            return Color.orange.opacity(0.42)
+        case .completed:
+            return Color.green.opacity(0.26)
+        }
     }
 
-    private var completedStatusText: String {
-        if let completedAt = appt.completedAt {
-            return "Completed \(completedAt.formatted(date: .omitted, time: .shortened))"
-        }
+    private var statusText: String {
+        switch status {
+        case .upcoming:
+            return ""
+        case .missed:
+            return "Missed — completion not confirmed"
+        case .completed:
+            if let completedAt = appt.completedAt {
+                return "Completed \(completedAt.formatted(date: .omitted, time: .shortened))"
+            }
 
-        return "Completed"
+            return "Completed"
+        }
+    }
+
+    private var statusIcon: String {
+        isMissed ? "exclamationmark.circle.fill" : "checkmark.seal"
     }
 
     var body: some View {
@@ -97,10 +138,10 @@ struct AppointmentRowView: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     HStack(alignment: .firstTextBaseline, spacing: 7) {
-                        if isCompleted {
-                            Image(systemName: "checkmark.circle.fill")
+                        if status != .upcoming {
+                            Image(systemName: isMissed ? "exclamationmark.circle.fill" : "checkmark.circle.fill")
                                 .font(.caption.weight(.bold))
-                                .foregroundStyle(.green)
+                                .foregroundStyle(statusColor)
                                 .accessibilityHidden(true)
                         }
 
@@ -115,7 +156,7 @@ struct AppointmentRowView: View {
 
                     Text(appt.date.formatted(date: .omitted, time: .shortened))
                         .font(.caption.weight(.bold))
-                        .foregroundStyle(isCompleted ? .secondary : accentColor)
+                        .foregroundStyle(status == .upcoming ? accentColor : statusColor)
                         .lineLimit(1)
                 }
 
@@ -133,10 +174,10 @@ struct AppointmentRowView: View {
                         .opacity(isCompleted ? 0.72 : 1)
                 }
 
-                if isCompleted {
-                    Label(completedStatusText, systemImage: "checkmark.seal")
+                if status != .upcoming {
+                    Label(statusText, systemImage: statusIcon)
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(statusColor)
                         .lineLimit(1)
                 }
             }
@@ -156,6 +197,17 @@ struct AppointmentRowView: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .contentShape(RoundedRectangle(cornerRadius: 14))
-        .accessibilityHint(isCompleted ? "Completed meeting" : "")
+        .accessibilityHint(accessibilityStatusHint)
+    }
+
+    private var accessibilityStatusHint: String {
+        switch status {
+        case .upcoming:
+            return "Upcoming meeting"
+        case .missed:
+            return "Missed meeting. Completion has not been confirmed."
+        case .completed:
+            return "Completed meeting"
+        }
     }
 }
