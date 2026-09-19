@@ -17,7 +17,6 @@ struct AppointmentActionsToolbar: View {
     let appointment: Appointment
 
     // State
-    @State private var showRescheduleConfirm = false
     @State private var showCancelConfirm = false
     @State private var showAddToCalendarConfirm = false
     @State private var showOpenInMapsConfirm = false
@@ -41,7 +40,7 @@ struct AppointmentActionsToolbar: View {
                 FollowUpScreenHapticsController.shared.lightTap()
                 FollowUpScreenSoundController.shared.playSound1()
                 
-                showRescheduleConfirm = true
+                onReschedule()
                 
             }
 
@@ -98,23 +97,6 @@ struct AppointmentActionsToolbar: View {
     // MARK: - Confirmation dialogs
     private var confirmationDialogs: some View {
         EmptyView()
-            .alert("Reschedule Appointment?",
-                   isPresented: $showRescheduleConfirm) {
-                Button("Continue") {
-                    
-                    FollowUpScreenHapticsController.shared.mediumTap()
-                    FollowUpScreenSoundController.shared.playSound1()
-                    
-                    onReschedule()
-                }
-                Button("Cancel", role: .cancel) {
-                    
-                    FollowUpScreenHapticsController.shared.mediumTap()
-                    FollowUpScreenSoundController.shared.playSound1()
-                    
-                }
-            }
-
             .alert("Open in Apple Maps?",
                    isPresented: $showOpenInMapsConfirm) {
                 Button("Open Maps") {
