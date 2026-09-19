@@ -33,6 +33,7 @@ struct ContactManagementView: View {
     }
 
     @Environment(\.modelContext) private var modelContext
+    let isSelected: Bool
     @Binding var selectedList: String
     @Binding var searchText: String
     @Binding var activeSearchFilter: ContactSearchFilter?
@@ -167,6 +168,10 @@ struct ContactManagementView: View {
                     ContactScreenSoundController.shared.playSound1()
                     
                 }
+            }
+            .onChange(of: isSelected) { _, isSelected in
+                guard !isSelected else { return }
+                showingImportFromContacts = false
             }
             .onChange(of: selectedList) { _, newValue in
                 if newValue == "Prospects" {
