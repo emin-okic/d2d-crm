@@ -62,6 +62,7 @@ struct RootView: View {
             .tag(0)
 
             ContactManagementView(
+                isSelected: selectedTab == 1,
                 selectedList: $selectedList,
                 searchText: $contactSearchDraft,
                 activeSearchFilter: $contactSearchFilter,
