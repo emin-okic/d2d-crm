@@ -60,8 +60,12 @@ struct AppointmentNotesController {
     private func addSummaryToContactNotesIfNeeded(for appointment: Appointment, completedAt: Date) async {
         guard appointment.summaryAddedAt == nil else { return }
 
+        let contactAddress = appointment.prospect?.address
+            ?? appointment.customer?.address
+            ?? appointment.location
         let summaryInput = AppointmentMeetingSummaryInput(
             clientName: appointment.clientName,
+            contactAddress: contactAddress,
             appointmentType: appointment.type,
             appointmentDate: appointment.date,
             meetingNotes: appointment.meetingNotes

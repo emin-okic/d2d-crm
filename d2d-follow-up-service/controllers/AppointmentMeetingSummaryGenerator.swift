@@ -12,6 +12,7 @@ import FoundationModels
 
 struct AppointmentMeetingSummaryInput: Sendable {
     let clientName: String
+    let contactAddress: String
     let appointmentType: String
     let appointmentDate: Date
     let meetingNotes: [String]
@@ -37,17 +38,18 @@ struct AppointmentMeetingSummaryGenerator {
             .filter { $0.isEmpty == false }
 
         guard trimmedNotes.isEmpty == false else {
-            return "No notes were taken for \(input.clientName)'s meeting on \(completedDate)."
+            return "No notes were taken for \(input.clientName)'s meeting at \(input.contactAddress) on \(completedDate)."
         }
 
         return interpretedFallback(
             from: trimmedNotes,
             clientName: input.clientName,
+            contactAddress: input.contactAddress,
             completedAt: completedAt
         )
     }
 
-    private static func interpretedFallback(from notes: [String], clientName: String, completedAt: Date) -> String {
+    private static func interpretedFallback(from notes: [String], clientName: String, contactAddress: String, completedAt: Date) -> String {
         let combined = notes.joined(separator: " ")
         let lower = combined.lowercased()
         let explicitTimeline = followUpTimeline(from: lower, completedAt: completedAt)
@@ -55,7 +57,7 @@ struct AppointmentMeetingSummaryGenerator {
         let moveMonth = moveMonthText(from: lower, completedAt: completedAt)
         let isRelocation = containsAny(lower, ["moving", "moves", "move", "college", "new address", "go to"])
         let displayName = firstName(from: clientName)
-        var sentences = ["You met with \(displayName) on \(completedAt.formatted(date: .long, time: .shortened))."]
+        var sentences = ["You met with \(displayName) at \(contactAddress) on \(completedAt.formatted(date: .long, time: .shortened))."]
 
         if isRelocation {
             sentences.append(relocationSentence(displayName: displayName, lower: lower, moveAddress: moveAddress, moveMonth: moveMonth))
@@ -297,7 +299,7 @@ struct AppointmentMeetingSummaryGenerator {
         let isRelocation = Self.containsAny(combinedNotes.lowercased(), ["moving", "moves", "move", "college", "new address", "go to"])
 
         guard notes.isEmpty == false else {
-            return "No notes were taken for \(input.clientName)'s meeting on \(completedAt.formatted(date: .abbreviated, time: .shortened))."
+            return "No notes were taken for \(input.clientName)'s meeting at \(input.contactAddress) on \(completedAt.formatted(date: .abbreviated, time: .shortened))."
         }
 
         let instructions = """
@@ -307,6 +309,7 @@ struct AppointmentMeetingSummaryGenerator {
         let prompt = """
         Client full name: \(input.clientName)
         Client first name: \(Self.firstName(from: input.clientName))
+        Authoritative contact address: \(input.contactAddress)
         Appointment type: \(input.appointmentType)
         Scheduled time: \(input.appointmentDate.formatted(date: .abbreviated, time: .shortened))
         Completed time: \(completedAt.formatted(date: .long, time: .shortened))
@@ -326,7 +329,7 @@ struct AppointmentMeetingSummaryGenerator {
         Relocation or college situation:
         \(isRelocation ? "Yes" : "No")
 
-        Create a polished CRM note in 2 to 3 sentences. Sentence 1 must start with "You met with" and include the completed time. If this is a relocation or college situation, do not write generic buying-interest language. Say it is not a fit right now because the client is moving or leaving for college. If move address and move timing are present, include that exact address and month. If required follow-up timing is not None, the final sentence must use that exact timing or a more specific calendar date from it. For notes about a minor, parent, cancer treatment, or chemo, summarize professionally as a decision maker and timing blocker. Example college style: "You met with David on August 7, 2026 at 7:11 PM. Not a fit right now because David is leaving for college and will need internet at 1244 Ames St Ames IA 50014 around September 2026. Follow up at 1244 Ames St Ames IA 50014 at the start of September 2026." Example moving style: "You met with Kate on August 7, 2026 at 7:05 PM. Kate is moving to 10320 Norfolk Dr Los Angeles CA 90066 around October 2026. Follow up then."
+        Create a polished CRM note in 2 to 3 sentences. Sentence 1 must start with "You met with", include the authoritative contact address exactly as provided, and include the completed time. Never substitute or invent an address. If this is a relocation or college situation, do not write generic buying-interest language. Say it is not a fit right now because the client is moving or leaving for college. If a move address was extracted from the meeting notes and move timing are present, include that exact move address and month. If required follow-up timing is not None, the final sentence must use that exact timing or a more specific calendar date from it. For notes about a minor, parent, cancer treatment, or chemo, summarize professionally as a decision maker and timing blocker.
         """
 
         do {
@@ -334,6 +337,7 @@ struct AppointmentMeetingSummaryGenerator {
             let response = try await session.respond(to: prompt)
             return cleaned(
                 response.content,
+                contactAddress: input.contactAddress,
                 requiredTimeline: requiredTimeline,
                 moveAddress: moveAddress,
                 moveMonth: moveMonth
@@ -346,6 +350,7 @@ struct AppointmentMeetingSummaryGenerator {
 
     private func cleaned(
         _ summary: String,
+        contactAddress: String,
         requiredTimeline: String?,
         moveAddress: String?,
         moveMonth: String?
@@ -355,6 +360,7 @@ struct AppointmentMeetingSummaryGenerator {
 
         let lower = trimmed.lowercased()
         guard lower.contains("timeline mentioned") == false else { return nil }
+        guard lower.contains(contactAddress.lowercased()) else { return nil }
 
         if let requiredTimeline {
             let requiredMonth = Self.monthYear(from: requiredTimeline)
