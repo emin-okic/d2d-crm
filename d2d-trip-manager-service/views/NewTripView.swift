@@ -12,19 +12,42 @@ struct NewTripView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     
-    var onSave: () -> Void
+    let onSave: () -> Void
+    let onSkip: (() -> Void)?
 
-    @State private var startAddress = ""
-    @State private var endAddress = ""
+    @State private var startAddress: String
+    @State private var endAddress: String
     @State private var tripDate = Date()
+    @State private var isSaving = false
     
     @StateObject private var searchVM = SearchCompleterViewModel()
     @FocusState private var focusedField: Field?
 
+    init(
+        initialStartAddress: String = "",
+        initialEndAddress: String = "",
+        onSkip: (() -> Void)? = nil,
+        onSave: @escaping () -> Void
+    ) {
+        _startAddress = State(initialValue: initialStartAddress)
+        _endAddress = State(initialValue: initialEndAddress)
+        self.onSkip = onSkip
+        self.onSave = onSave
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Record mileage for this appointment")
+                            .font(.subheadline.weight(.semibold))
+
+                        Text("Add your route, or skip if there is no mileage.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     
                     // MARK: - Start Address
                     AddressInputField(
@@ -45,23 +68,24 @@ struct NewTripView: View {
                     )
                     
                     // MARK: - Trip Date
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Trip Date & Time")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        DatePicker("Select Date & Time", selection: $tripDate, displayedComponents: [.date, .hourAndMinute])
-                            .labelsHidden()
-                            .padding(14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(.secondarySystemBackground))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
+                    HStack(spacing: 12) {
+                        Label("Trip Date", systemImage: "calendar")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.secondary)
+
+                        Spacer(minLength: 0)
+
+                        DatePicker(
+                            "Trip Date",
+                            selection: $tripDate,
+                            displayedComponents: [.date, .hourAndMinute]
+                        )
+                        .labelsHidden()
+                        .datePickerStyle(.compact)
                     }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
                     
                     // MARK: - Save Button
                     Button {
@@ -72,35 +96,61 @@ struct NewTripView: View {
                         saveTrip()
                         
                     } label: {
-                        Text("Save Trip")
+                        Label(isSaving ? "Calculating Mileage" : "Save Trip", systemImage: isSaving ? "car" : "checkmark")
                             .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(startAddress.isEmpty || endAddress.isEmpty ? Color.gray.opacity(0.3) : Color.blue)
+                            .frame(height: 46)
+                            .background(startAddress.isEmpty || endAddress.isEmpty || isSaving ? Color.gray.opacity(0.3) : Color.blue)
                             .foregroundColor(.white)
                             .font(.headline)
-                            .cornerRadius(12)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
-                    .disabled(startAddress.isEmpty || endAddress.isEmpty)
+                    .disabled(startAddress.isEmpty || endAddress.isEmpty || isSaving)
                     
                 }
-                .padding()
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
+                .padding(.bottom, 16)
             }
-            .navigationTitle("New Trip")
+            .scrollDismissesKeyboard(.interactively)
+            .navigationTitle("Record Trip")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if let onSkip {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Skip") {
+                            TripManagerHapticsController.shared.lightTap()
+                            TripManagerSoundController.shared.playSound1()
+                            onSkip()
+                            dismiss()
+                        }
+                    }
+                }
+            }
         }
     }
 
     private func saveTrip() {
-        guard !startAddress.isEmpty && !endAddress.isEmpty else { return }
+        let trimmedStartAddress = startAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedEndAddress = endAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmedStartAddress.isEmpty == false, trimmedEndAddress.isEmpty == false else { return }
+
+        isSaving = true
         Task {
-            let distance = await TripsController.shared.calculateMiles(from: startAddress, to: endAddress)
-            let trip = Trip(startAddress: startAddress, endAddress: endAddress, miles: distance, date: tripDate)
-            await MainActor.run {
-                context.insert(trip)
-                try? context.save()
-                onSave()
-                dismiss()
-            }
+            let distance = await TripsController.shared.calculateMiles(
+                from: trimmedStartAddress,
+                to: trimmedEndAddress
+            )
+            let trip = Trip(
+                startAddress: trimmedStartAddress,
+                endAddress: trimmedEndAddress,
+                miles: distance,
+                date: tripDate
+            )
+            context.insert(trip)
+            try? context.save()
+            isSaving = false
+            onSave()
+            dismiss()
         }
     }
 }
