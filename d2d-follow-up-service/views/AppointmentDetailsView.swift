@@ -15,6 +15,7 @@ struct AppointmentDetailsView: View {
     @Bindable var appointment: Appointment
 
     @State private var showRescheduleSheet = false
+    @State private var showTripSheet = false
     @State private var newDate: Date = Date()
     @State private var isGeneratingSummary = false
 
@@ -164,6 +165,19 @@ struct AppointmentDetailsView: View {
                 .presentationDetents([.fraction(0.35)])
                 .presentationDragIndicator(.visible)
             }
+            .sheet(isPresented: $showTripSheet) {
+                NewTripView(
+                    initialEndAddress: appointment.location,
+                    onSkip: {
+                        showTripSheet = false
+                    },
+                    onSave: {
+                        showTripSheet = false
+                    }
+                )
+                .presentationDetents([.fraction(0.5)])
+                .presentationDragIndicator(.visible)
+            }
         }
     }
 
@@ -311,6 +325,7 @@ struct AppointmentDetailsView: View {
                 Task {
                     await notesController.completeIfNeeded(appointment)
                     isGeneratingSummary = false
+                    showTripSheet = true
                 }
             }
         } label: {

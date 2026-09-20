@@ -34,42 +34,42 @@ struct AddressInputField: View {
                             searchVM.updateQuery(newValue)
                         }
                     
-                    if focusedField == field && !searchVM.results.isEmpty {
-                        VStack(spacing: 0) {
-                            ForEach(searchVM.results.prefix(5), id: \.self) { result in
-                                Button {
-                                    
-                                    TripManagerHapticsController.shared.lightTap()
-                                    TripManagerSoundController.shared.playSound1()
-                                    
-                                    SearchBarController.resolveAndSelectAddress(from: result) { resolved in
-                                        text = resolved
-                                        searchVM.results = []
-                                        focusedField = nil
-                                    }
-                                } label: {
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(result.title).bold()
-                                        Text(result.subtitle)
-                                            .font(.subheadline)
-                                            .foregroundColor(.gray)
-                                    }
-                                    .padding(12)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(Color(.systemBackground))
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                                
-                                if result != searchVM.results.prefix(5).last {
-                                    Divider().padding(.leading, 12)
-                                }
+                    if focusedField == field,
+                       let suggestion = searchVM.results.first,
+                       text.isEmpty == false {
+                        Button {
+                            TripManagerHapticsController.shared.lightTap()
+                            TripManagerSoundController.shared.playSound1()
+                            
+                            SearchBarController.resolveAndSelectAddress(from: suggestion) { resolved in
+                                text = resolved
+                                searchVM.results = []
+                                focusedField = nil
                             }
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "sparkles")
+                                    .foregroundStyle(.blue)
+
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text("Use suggested address")
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+
+                                    Text(suggestion.title)
+                                        .font(.caption.weight(.medium))
+                                        .foregroundStyle(.primary)
+                                        .lineLimit(1)
+                                }
+
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(.systemBackground))
                         }
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(.systemBackground))
-                                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-                        )
+                        .buttonStyle(.plain)
                         .padding(.top, -8)
                     }
                 }
