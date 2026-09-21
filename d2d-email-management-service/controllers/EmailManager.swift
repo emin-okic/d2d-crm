@@ -21,8 +21,7 @@ final class EmailManager {
     }
 
     func send(template: EmailTemplate) {
-        let renderedBody = template.body
-            .replacingOccurrences(of: "{{name}}", with: context.displayName)
+        let renderedBody = context.render(template.body)
 
         EmailComposer.compose(
             to: context.getEmail(),
