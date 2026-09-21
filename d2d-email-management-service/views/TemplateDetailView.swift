@@ -5,6 +5,7 @@
 //  Created by Emin Okic on 1/22/26.
 //
 import SwiftUI
+import SwiftData
 
 struct TemplateDetailView: View {
     @Environment(\.modelContext) private var modelContext
@@ -22,6 +23,7 @@ struct TemplateDetailView: View {
     @State private var originalBody: String
 
     @State private var showDeleteConfirmation = false
+    @State private var showMissingEmailAlert = false
 
     init(template: EmailTemplate, emailContext: EmailContactContext) {
         self.template = template
@@ -151,7 +153,6 @@ struct TemplateDetailView: View {
                                 
                                 sendEmail()
                             }
-                            .disabled(emailContext.getEmail().isEmpty)
                             .bold()
                         }
                     }
@@ -204,9 +205,19 @@ struct TemplateDetailView: View {
         } message: {
             Text("This template will be permanently deleted.")
         }
+        .alert("Email Address Required", isPresented: $showMissingEmailAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Enter and save an email address for this contact before sending an email.")
+        }
     }
 
     private func sendEmail() {
+        guard !emailContext.getEmail().trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            showMissingEmailAlert = true
+            return
+        }
+
         let manager = EmailManager(
             context: emailContext,
             modelContext: modelContext

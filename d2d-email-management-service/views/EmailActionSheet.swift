@@ -37,6 +37,7 @@ struct EmailActionSheet: View {
     @State private var emailError: String?
     @State private var showCreateTemplate = false
     @State private var showRevertConfirmation = false
+    @State private var showMissingEmailAlert = false
 
     @Query(sort: \EmailTemplate.createdAt)
     private var templates: [EmailTemplate]
@@ -175,6 +176,11 @@ struct EmailActionSheet: View {
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text("This will discard unsaved changes.")
+            }
+            .alert("Email Address Required", isPresented: $showMissingEmailAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Enter and save an email address for this contact before sending an email.")
             }
             .onAppear {
                 tempEmail = context.getEmail()
@@ -341,8 +347,12 @@ struct EmailActionSheet: View {
     }
 
     private func sendBlankEmail() {
+        guard !context.getEmail().trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            showMissingEmailAlert = true
+            return
+        }
+
         let manager = EmailManager(context: context, modelContext: modelContext)
-        
         manager.sendBlank()
     }
 
