@@ -14,6 +14,7 @@ struct EmailContactContext {
     let recipientType: EmailRecipientType
     
     let displayName: String
+    let address: String
     let getEmail: () -> String
     let setEmail: (String) -> Void
     let appendNote: (Note) -> Void
@@ -25,6 +26,7 @@ extension EmailContactContext {
             id: prospect.uuid,
             recipientType: .prospect,
             displayName: prospect.fullName,
+            address: prospect.address,
             getEmail: { prospect.contactEmail },
             setEmail: { prospect.contactEmail = $0 },
             appendNote: { prospect.notes.append($0) }
@@ -36,6 +38,7 @@ extension EmailContactContext {
             id: customer.uuid,
             recipientType: .customer,
             displayName: customer.fullName,
+            address: customer.address,
             getEmail: { customer.contactEmail },
             setEmail: { customer.contactEmail = $0 },
             appendNote: { customer.notes.append($0) }
@@ -45,14 +48,25 @@ extension EmailContactContext {
 
 extension EmailContactContext {
     func render(_ text: String) -> String {
-        [
-            "{{name}}",
+        let legacyNamePlaceholders = [
             "{prospect.name}",
             "{{prospect.name}}",
             "{customer.name}",
             "{{customer.name}}"
-        ].reduce(text) { renderedText, placeholder in
-            renderedText.replacingOccurrences(of: placeholder, with: displayName)
+        ]
+
+        let normalizedText = legacyNamePlaceholders.reduce(text) { renderedText, placeholder in
+            renderedText.replacingOccurrences(of: placeholder, with: EmailMergeField.name.token)
+        }
+
+        let values: [EmailMergeField: String] = [
+            .name: displayName,
+            .address: address,
+            .email: getEmail()
+        ]
+
+        return values.reduce(normalizedText) { renderedText, entry in
+            renderedText.replacingOccurrences(of: entry.key.token, with: entry.value)
         }
     }
 

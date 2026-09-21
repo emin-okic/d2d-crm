@@ -45,20 +45,10 @@ struct CreateEmailTemplateSheet: View {
                             .cornerRadius(12)
                     }
 
-                    // Email Body
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Body")
-                            .font(.headline)
-                        TextEditor(text: $emailBody)
-                            .frame(minHeight: 180)
-                            .padding(8)
-                            .background(Color(.secondarySystemBackground))
-                            .cornerRadius(12)
-                        
-                        Text("Use {{name}} to insert the prospect’s name.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                    EmailMergeFieldEditor(
+                        text: $emailBody,
+                        minimumHeight: 180
+                    )
                 }
                 .padding()
             }
