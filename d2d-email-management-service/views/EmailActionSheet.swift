@@ -31,6 +31,7 @@ struct EmailActionSheet: View {
 
     @State private var tempEmail: String = ""
     @State private var selectedTemplate: EmailTemplate?
+    @State private var selectedEmail: Email?
     @State private var selectedSection: EmailSheetSection = .templates
     @State private var selectedDetent: PresentationDetent = .fraction(0.72)
 
@@ -169,6 +170,9 @@ struct EmailActionSheet: View {
                 )
                 .environment(\.modelContext, modelContext)
             }
+            .sheet(item: $selectedEmail) { email in
+                SentEmailPreviewSheet(email: email, context: context)
+            }
             .alert("Revert Changes?", isPresented: $showRevertConfirmation) {
                 Button("Revert", role: .destructive) {
                     tempEmail = context.getEmail()
@@ -249,12 +253,26 @@ struct EmailActionSheet: View {
     }
 
     private var emailHistoryList: some View {
-        VStack(spacing: 6) {
+        LazyVStack(spacing: 10) {
             if sentEmails.isEmpty {
                 emptyHistoryView
             } else {
                 ForEach(sentEmails) { email in
-                    historyRow(email)
+                    Button {
+                        selectedEmail = email
+                    } label: {
+                        historyRow(email)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(
+                        email.subject.isEmpty
+                        ? "Sent email without a subject"
+                        : email.subject
+                    )
+                    .accessibilityValue(
+                        email.sentAt.formatted(date: .abbreviated, time: .shortened)
+                    )
+                    .accessibilityHint("Shows the sent email")
                 }
             }
         }
@@ -306,44 +324,44 @@ struct EmailActionSheet: View {
     }
 
     private func historyRow(_ email: Email) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(email.subject.isEmpty ? "Blank email" : email.subject)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .lineLimit(1)
+        HStack(spacing: 12) {
+            Image(systemName: "paperplane.fill")
+                .font(.subheadline)
+                .foregroundStyle(.purple)
+                .frame(width: 36, height: 36)
+                .background(Color.purple.opacity(0.12), in: Circle())
+                .accessibilityHidden(true)
 
-                    Text(email.sentAt.formatted(date: .abbreviated, time: .shortened))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Text(email.templateUUID == nil ? "No template" : "Template")
-                    .font(.caption2)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(email.subject.isEmpty ? "No subject" : context.render(email.subject))
+                    .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color(.tertiarySystemFill))
-                    .cornerRadius(8)
-            }
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
 
-            if !email.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                Text(email.body)
+                Text(email.sentAt.formatted(date: .abbreviated, time: .shortened))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(2)
             }
+
+            Spacer(minLength: 8)
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.tertiary)
+                .accessibilityHidden(true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .frame(minHeight: 64)
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .padding(.vertical, 12)
+        .frame(minHeight: 68)
+        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+        }
+        .contentShape(Rectangle())
     }
 
     private func sendBlankEmail() {
@@ -381,5 +399,82 @@ struct EmailActionSheet: View {
 
     private func validateEmail() {
         emailError = isEmailValid() ? nil : "Invalid email address."
+    }
+}
+
+private struct SentEmailPreviewSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let email: Email
+    let context: EmailContactContext
+
+    private var subject: String {
+        let renderedSubject = context.render(email.subject)
+        return renderedSubject.isEmpty ? "No subject" : renderedSubject
+    }
+
+    private var bodyText: String {
+        let renderedBody = context.render(email.body)
+        return renderedBody.isEmpty ? "This email did not include a message." : renderedBody
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        emailField(label: "To", value: context.getEmail())
+                        emailField(
+                            label: "Sent",
+                            value: email.sentAt.formatted(date: .long, time: .shortened)
+                        )
+                    }
+
+                    Divider()
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Subject")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Text(subject)
+                            .font(.headline)
+                            .textSelection(.enabled)
+                    }
+
+                    Divider()
+
+                    Text(bodyText)
+                        .font(.body)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .textSelection(.enabled)
+                }
+                .padding()
+            }
+            .navigationTitle("Sent Email")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func emailField(label: LocalizedStringKey, value: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(label)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .frame(width: 40, alignment: .leading)
+
+            Text(value)
+                .font(.subheadline)
+                .textSelection(.enabled)
+        }
     }
 }

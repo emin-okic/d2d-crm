@@ -44,6 +44,18 @@ extension EmailContactContext {
 }
 
 extension EmailContactContext {
+    func render(_ text: String) -> String {
+        [
+            "{{name}}",
+            "{prospect.name}",
+            "{{prospect.name}}",
+            "{customer.name}",
+            "{{customer.name}}"
+        ].reduce(text) { renderedText, placeholder in
+            renderedText.replacingOccurrences(of: placeholder, with: displayName)
+        }
+    }
+
     func lastEmailSent(modelContext: ModelContext) -> Email? {
         switch recipientType {
         case .prospect:
