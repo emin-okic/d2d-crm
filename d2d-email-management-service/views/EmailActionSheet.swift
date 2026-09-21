@@ -253,7 +253,7 @@ struct EmailActionSheet: View {
     }
 
     private var emailHistoryList: some View {
-        VStack(spacing: 6) {
+        LazyVStack(spacing: 10) {
             if sentEmails.isEmpty {
                 emptyHistoryView
             } else {
@@ -264,6 +264,14 @@ struct EmailActionSheet: View {
                         historyRow(email)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(
+                        email.subject.isEmpty
+                        ? "Sent email without a subject"
+                        : email.subject
+                    )
+                    .accessibilityValue(
+                        email.sentAt.formatted(date: .abbreviated, time: .shortened)
+                    )
                     .accessibilityHint("Shows the sent email")
                 }
             }
@@ -316,49 +324,44 @@ struct EmailActionSheet: View {
     }
 
     private func historyRow(_ email: Email) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(email.subject.isEmpty ? "Blank email" : email.subject)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .lineLimit(1)
+        HStack(spacing: 12) {
+            Image(systemName: "paperplane.fill")
+                .font(.subheadline)
+                .foregroundStyle(.purple)
+                .frame(width: 36, height: 36)
+                .background(Color.purple.opacity(0.12), in: Circle())
+                .accessibilityHidden(true)
 
-                    Text(email.sentAt.formatted(date: .abbreviated, time: .shortened))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Text(email.templateUUID == nil ? "No template" : "Template")
-                    .font(.caption2)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(email.subject.isEmpty ? "No subject" : context.render(email.subject))
+                    .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color(.tertiarySystemFill))
-                    .cornerRadius(8)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
 
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .accessibilityHidden(true)
-            }
-
-            if !email.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                Text(email.body)
+                Text(email.sentAt.formatted(date: .abbreviated, time: .shortened))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(2)
             }
+
+            Spacer(minLength: 8)
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.tertiary)
+                .accessibilityHidden(true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .frame(minHeight: 64)
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .padding(.vertical, 12)
+        .frame(minHeight: 68)
+        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+        }
+        .contentShape(Rectangle())
     }
 
     private func sendBlankEmail() {
