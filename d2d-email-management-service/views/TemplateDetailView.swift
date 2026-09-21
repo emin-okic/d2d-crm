@@ -29,16 +29,13 @@ struct TemplateDetailView: View {
         self.template = template
         self.emailContext = emailContext
 
-        let personalizedBody = template.body
-            .replacingOccurrences(of: "{{name}}", with: emailContext.displayName)
-
         _title = State(initialValue: template.title)
         _subject = State(initialValue: template.subject)
-        _emailBody = State(initialValue: personalizedBody)
+        _emailBody = State(initialValue: template.body)
 
         originalTitle = template.title
         originalSubject = template.subject
-        originalBody = personalizedBody
+        originalBody = template.body
     }
 
     private var hasEdits: Bool {
@@ -78,22 +75,10 @@ struct TemplateDetailView: View {
                                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                         }
 
-                        // Body
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Email Body")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                            TextEditor(text: $emailBody)
-                                .frame(minHeight: 200)
-                                .padding()
-                                .background(.ultraThinMaterial)
-                                .cornerRadius(12)
-                                .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-                            Text("Use {{name}} to insert the prospect’s name automatically.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .padding(.top, 2)
-                        }
+                        EmailMergeFieldEditor(
+                            text: $emailBody,
+                            minimumHeight: 200
+                        )
 
                         Spacer()
                     }
@@ -231,10 +216,7 @@ struct TemplateDetailView: View {
         template.title = title
         template.subject = subject
 
-        template.body = emailBody.replacingOccurrences(
-            of: emailContext.displayName,
-            with: "{{name}}"
-        )
+        template.body = emailBody
 
         try? modelContext.save()
 
