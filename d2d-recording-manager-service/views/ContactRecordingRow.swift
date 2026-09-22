@@ -28,29 +28,19 @@ struct ContactRecordingsHistoryView: View {
                         description: Text("Recordings assigned to this \(contactType.lowercased()) will appear here.")
                     )
                 } else {
-                    Section {
-                        ForEach(recordings) { recording in
-                            Button {
-                                ContactScreenHapticsController.shared.lightTap()
-                                ContactScreenSoundController.shared.playSound1()
-                                selectedRecording = recording
-                            } label: {
-                                ContactRecordingRow(recording: recording)
-                            }
-                            .buttonStyle(.plain)
+                    ForEach(recordings) { recording in
+                        Button {
+                            ContactScreenHapticsController.shared.lightTap()
+                            ContactScreenSoundController.shared.playSound1()
+                            selectedRecording = recording
+                        } label: {
+                            ContactRecordingRow(recording: recording)
                         }
-                    } header: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(contactType)
-                            Text(contactName)
-                                .font(.headline)
-                                .foregroundStyle(.primary)
-                                .textCase(nil)
-                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
-            .navigationTitle("Recordings")
+            .navigationTitle("\(contactName) Recordings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
