@@ -18,7 +18,10 @@ struct ObjectionLeaderboardCard: View {
             HStack(spacing: 12) {
                 if isEditing {
                     Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                        .foregroundColor(.blue)
+                        .font(.title3)
+                        .foregroundStyle(isSelected ? Color.blue : Color.secondary)
+                        .symbolEffect(.bounce, value: isSelected)
+                        .transition(.scale.combined(with: .opacity))
                 }
 
                 RankBadge(rank: ranked.rank)
@@ -34,16 +37,31 @@ struct ObjectionLeaderboardCard: View {
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.secondary)
+                if !isEditing {
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.secondary)
+                        .transition(.scale.combined(with: .opacity))
+                }
             }
             .padding()
+            .contentShape(Rectangle())
             .background(
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
+                    .fill(isSelected ? Color.blue.opacity(0.10) : Color(.systemBackground))
+                    .shadow(
+                        color: isSelected ? Color.blue.opacity(0.12) : Color.black.opacity(0.06),
+                        radius: isSelected ? 7 : 4,
+                        y: 2
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(isSelected ? Color.blue.opacity(0.75) : Color.clear, lineWidth: 1.5)
             )
         }
         .buttonStyle(.plain)
+        .animation(.easeInOut(duration: 0.2), value: isEditing)
+        .animation(.easeInOut(duration: 0.16), value: isSelected)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }

@@ -59,6 +59,9 @@ struct ObjectionsSectionView: View {
                 onAddTapped: { showingAddObjection = true },
                 isDeleting: $isEditing,
                 selectedCount: selectedObjections.count,
+                onCancelDelete: {
+                    selectedObjections.removeAll()
+                },
                 onDeleteConfirmed: {
                     showDeleteConfirm = true
                 }
@@ -72,7 +75,12 @@ struct ObjectionsSectionView: View {
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }
-        .alert("Delete selected objections?", isPresented: $showDeleteConfirm) {
+        .alert(
+            selectedObjections.count == 1
+                ? "Delete selected objection?"
+                : "Delete \(selectedObjections.count) selected objections?",
+            isPresented: $showDeleteConfirm
+        ) {
             Button("Delete", role: .destructive) {
                 
                 // NORMAL MODE: open objection details
