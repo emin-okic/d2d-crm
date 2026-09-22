@@ -81,6 +81,9 @@ struct SalesforceExportView: View {
     @State private var isWorking = false
     @State private var statusMessage: String?
     @State private var showingSetupHelp = false
+    @State private var connectionAlertTitle = ""
+    @State private var connectionAlertMessage = ""
+    @State private var showingConnectionAlert = false
 
     init(records: [SalesforceExportRecord], listName: String) {
         self.records = records
@@ -135,6 +138,11 @@ struct SalesforceExportView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } } }
             .sheet(isPresented: $showingSetupHelp) { SalesforceSetupHelpView() }
+            .alert(connectionAlertTitle, isPresented: $showingConnectionAlert) {
+                Button("OK") {}
+            } message: {
+                Text(connectionAlertMessage)
+            }
             .task {
                 guard client.isConnected, fields.isEmpty, !clientID.isEmpty else { return }
                 loadFields()
@@ -153,8 +161,13 @@ struct SalesforceExportView: View {
             do {
                 try await client.connect(clientID: clientID, environment: environment)
                 try await refreshFields()
+                showConnectionAlert(
+                    title: "Salesforce Connected",
+                    message: "Your Salesforce fields are ready to map and export."
+                )
             } catch {
                 statusMessage = error.localizedDescription
+                showConnectionAlert(title: "Connection Failed", message: error.localizedDescription)
             }
             isWorking = false
         }
@@ -164,6 +177,12 @@ struct SalesforceExportView: View {
         client.disconnect()
         fields = []
         statusMessage = nil
+    }
+
+    private func showConnectionAlert(title: String, message: String) {
+        connectionAlertTitle = title
+        connectionAlertMessage = message
+        showingConnectionAlert = true
     }
 
     private func loadFields() {

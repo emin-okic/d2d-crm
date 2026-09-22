@@ -8,6 +8,7 @@ enum SalesforceClientError: LocalizedError {
     case invalidConfiguration
     case authenticationCancelled
     case invalidCallback
+    case authorizationDenied(String)
     case invalidResponse
     case server(String)
     case notConnected
@@ -17,6 +18,7 @@ enum SalesforceClientError: LocalizedError {
         case .invalidConfiguration: "Enter the Consumer Key from your Salesforce External Client App."
         case .authenticationCancelled: "Salesforce sign-in was cancelled."
         case .invalidCallback: "Salesforce returned an invalid sign-in response. Check the callback URL."
+        case .authorizationDenied(let message): message
         case .invalidResponse: "Salesforce returned an unexpected response."
         case .server(let message): message
         case .notConnected: "Connect to Salesforce before exporting."
@@ -76,9 +78,18 @@ final class SalesforceClient: NSObject, ObservableObject, ASWebAuthenticationPre
         guard let authorizationURL = components?.url else { throw SalesforceClientError.invalidConfiguration }
 
         let callback = try await authenticate(at: authorizationURL)
-        guard let callbackComponents = URLComponents(url: callback, resolvingAgainstBaseURL: false),
-              callbackComponents.queryValue(named: "state") == state,
-              let code = callbackComponents.queryValue(named: "code") else {
+        guard callback.scheme == "d2dcrm",
+              callback.host == "oauth",
+              callback.path == "/salesforce",
+              let callbackComponents = URLComponents(url: callback, resolvingAgainstBaseURL: false),
+              callbackComponents.queryValue(named: "state") == state else {
+            throw SalesforceClientError.invalidCallback
+        }
+        if let oauthError = callbackComponents.queryValue(named: "error") {
+            let description = callbackComponents.queryValue(named: "error_description") ?? oauthError
+            throw SalesforceClientError.authorizationDenied(description)
+        }
+        guard let code = callbackComponents.queryValue(named: "code") else {
             throw SalesforceClientError.invalidCallback
         }
 
@@ -185,7 +196,8 @@ final class SalesforceClient: NSObject, ObservableObject, ASWebAuthenticationPre
 
     private func authenticate(at url: URL) async throws -> URL {
         try await withCheckedThrowingContinuation { continuation in
-            let webSession = ASWebAuthenticationSession(url: url, callbackURLScheme: "d2dcrm") { callback, error in
+            let webSession = ASWebAuthenticationSession(url: url, callback: .customScheme("d2dcrm")) { [weak self] callback, error in
+                self?.authenticationSession = nil
                 if let authenticationError = error as? ASWebAuthenticationSessionError,
                    authenticationError.code == .canceledLogin {
                     continuation.resume(throwing: SalesforceClientError.authenticationCancelled)
@@ -200,7 +212,11 @@ final class SalesforceClient: NSObject, ObservableObject, ASWebAuthenticationPre
             webSession.presentationContextProvider = self
             webSession.prefersEphemeralWebBrowserSession = false
             authenticationSession = webSession
-            webSession.start()
+            guard webSession.start() else {
+                authenticationSession = nil
+                continuation.resume(throwing: SalesforceClientError.server("Salesforce sign-in could not be opened."))
+                return
+            }
         }
     }
 
