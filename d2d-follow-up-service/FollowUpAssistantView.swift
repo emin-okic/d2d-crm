@@ -137,6 +137,10 @@ struct FollowUpAssistantView: View {
                 )
 
                 routeOverlay
+                    .opacity(isEditingAppointments ? 0 : 1)
+                    .allowsHitTesting(!isEditingAppointments)
+                    .accessibilityHidden(isEditingAppointments)
+                    .animation(.easeInOut(duration: 0.22), value: isEditingAppointments)
                 
             }
             .onAppear {
