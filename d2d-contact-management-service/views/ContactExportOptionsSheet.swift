@@ -9,6 +9,7 @@ struct ContactExportOptionsSheet: View {
     let contactName: String
     let onSaveToContacts: () -> Void
     let onShareContact: () -> Void
+    let onSalesforce: () -> Void
     let onCancel: () -> Void
 
     var body: some View {
@@ -40,6 +41,14 @@ struct ContactExportOptionsSheet: View {
                     subtitle: "Send an import link to a friend.",
                     tint: .green,
                     action: onShareContact
+                )
+
+                ContactExportOptionButton(
+                    iconName: "cloud.fill",
+                    title: "Export to Salesforce",
+                    subtitle: "Add this person to Salesforce Contacts.",
+                    tint: .cyan,
+                    action: onSalesforce
                 )
             }
 
@@ -159,6 +168,7 @@ private struct ContactExportOptionButton: View {
         contactName: "Taylor Morgan",
         onSaveToContacts: {},
         onShareContact: {},
+        onSalesforce: {},
         onCancel: {}
     )
 }
