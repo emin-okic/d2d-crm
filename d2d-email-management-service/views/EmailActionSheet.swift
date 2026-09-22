@@ -29,14 +29,29 @@ struct EmailActionSheet: View {
         var id: Self { self }
     }
 
+    private enum PresentedSheet: Identifiable {
+        case createTemplate
+        case template(EmailTemplate)
+        case sentEmail(Email)
+
+        var id: String {
+            switch self {
+            case .createTemplate:
+                "create-template"
+            case .template(let template):
+                "template-\(template.id)"
+            case .sentEmail(let email):
+                "sent-email-\(email.id)"
+            }
+        }
+    }
+
     @State private var tempEmail: String = ""
-    @State private var selectedTemplate: EmailTemplate?
-    @State private var selectedEmail: Email?
+    @State private var presentedSheet: PresentedSheet?
     @State private var selectedSection: EmailSheetSection = .templates
     @State private var selectedDetent: PresentationDetent = .fraction(0.72)
 
     @State private var emailError: String?
-    @State private var showCreateTemplate = false
     @State private var showRevertConfirmation = false
     @State private var showMissingEmailAlert = false
 
@@ -157,21 +172,20 @@ struct EmailActionSheet: View {
                     }
                 }
             }
-            .sheet(isPresented: $showCreateTemplate) {
-                CreateEmailTemplateSheet { newTemplate in
-                    selectedTemplate = newTemplate
+            .sheet(item: $presentedSheet) { sheet in
+                switch sheet {
+                case .createTemplate:
+                    CreateEmailTemplateSheet()
+                        .environment(\.modelContext, modelContext)
+                case .template(let template):
+                    TemplateDetailView(
+                        template: template,
+                        emailContext: context
+                    )
+                    .environment(\.modelContext, modelContext)
+                case .sentEmail(let email):
+                    SentEmailPreviewSheet(email: email, context: context)
                 }
-                .environment(\.modelContext, modelContext)
-            }
-            .sheet(item: $selectedTemplate) { template in
-                TemplateDetailView(
-                    template: template,
-                    emailContext: context
-                )
-                .environment(\.modelContext, modelContext)
-            }
-            .sheet(item: $selectedEmail) { email in
-                SentEmailPreviewSheet(email: email, context: context)
             }
             .alert("Revert Changes?", isPresented: $showRevertConfirmation) {
                 Button("Revert", role: .destructive) {
@@ -219,7 +233,7 @@ struct EmailActionSheet: View {
 
             ForEach(templates) { template in
                 Button {
-                    selectedTemplate = template
+                    presentedSheet = .template(template)
                 } label: {
                     templateRow(
                         title: template.title,
@@ -234,7 +248,7 @@ struct EmailActionSheet: View {
         Button {
             haptics.lightTap()
             sounds.playSound1()
-            showCreateTemplate = true
+            presentedSheet = .createTemplate
         } label: {
             Label("Create New Template", systemImage: "plus")
                 .font(.subheadline)
@@ -259,7 +273,7 @@ struct EmailActionSheet: View {
             } else {
                 ForEach(sentEmails) { email in
                     Button {
-                        selectedEmail = email
+                        presentedSheet = .sentEmail(email)
                     } label: {
                         historyRow(email)
                     }
