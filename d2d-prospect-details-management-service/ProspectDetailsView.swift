@@ -35,6 +35,7 @@ struct ProspectDetailsView: View {
     @State private var actionsToolbarProxy: ProspectActionsToolbar?
     
     @State private var showContactExportOptions = false
+    @State private var showSalesforceExport = false
     @State private var showExportPrompt = false
     @State private var contactSharePayload: ContactSharePayload?
     @State private var showExportSuccessBanner = false
@@ -288,14 +289,28 @@ struct ProspectDetailsView: View {
                     ContactScreenSoundController.shared.playSound1()
                     shareProspectAfterOptionsDismiss()
                 },
+                onSalesforce: {
+                    showContactExportOptions = false
+                    ContactScreenHapticsController.shared.successConfirmationTap()
+                    ContactScreenSoundController.shared.playSound1()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                        showSalesforceExport = true
+                    }
+                },
                 onCancel: {
                     ContactScreenHapticsController.shared.lightTap()
                     ContactScreenSoundController.shared.playSound1()
                     showContactExportOptions = false
                 }
             )
-            .presentationDetents([.height(360)])
+            .presentationDetents([.height(440)])
             .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showSalesforceExport) {
+            SalesforceExportView(
+                records: SalesforceExportModelFactory.prospects([prospect]),
+                listName: "Contact"
+            )
         }
         .sheet(isPresented: $showExportPrompt) {
             ContactExportConfirmationSheet(
