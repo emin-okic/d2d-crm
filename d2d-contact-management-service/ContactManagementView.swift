@@ -17,6 +17,8 @@ struct ContactManagementView: View {
 
     private enum ActiveSheet: Identifiable {
         case export(ExportFile)
+        case exportOptions
+        case salesforce
         case emailGate
         case addProspect
 
@@ -24,6 +26,10 @@ struct ContactManagementView: View {
             switch self {
             case .export(let file):
                 return "export-\(file.id)"
+            case .exportOptions:
+                return "exportOptions"
+            case .salesforce:
+                return "salesforce"
             case .emailGate:
                 return "emailGate"
             case .addProspect:
@@ -126,11 +132,32 @@ struct ContactManagementView: View {
                 switch sheet {
                 case .export(let file):
                     ShareSheet(activityItems: [file.url])
+                case .exportOptions:
+                    BulkContactExportOptionsView(
+                        listName: selectedList,
+                        contactCount: selectedList == "Prospects" ? prospects.count : customers.count,
+                        onCSV: {
+                            activeSheet = nil
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                performExport()
+                            }
+                        },
+                        onSalesforce: {
+                            activeSheet = nil
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                activeSheet = .salesforce
+                            }
+                        }
+                    )
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
+                case .salesforce:
+                    SalesforceExportView(records: salesforceRecords, listName: selectedList)
                 case .emailGate:
                     ExportEmailGateView {
                         activeSheet = nil
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                            performExport()
+                            activeSheet = .exportOptions
                         }
                     }
                     .presentationDetents([.fraction(0.5)])
@@ -206,7 +233,7 @@ struct ContactManagementView: View {
                 if emailGate.isUnlocked {
                     ContactScreenHapticsController.shared.successConfirmationTap()
                     ContactScreenSoundController.shared.playSound1()
-                    performExport()
+                    activeSheet = .exportOptions
                 } else {
                     ContactScreenHapticsController.shared.successConfirmationTap()
                     ContactScreenSoundController.shared.playSound1()
@@ -288,6 +315,14 @@ struct ContactManagementView: View {
             activeSheet = .export(ExportFile(url: url))
         } catch {
             print("❌ Export failed:", error)
+        }
+    }
+
+    private var salesforceRecords: [SalesforceExportRecord] {
+        if selectedList == "Prospects" {
+            SalesforceExportModelFactory.prospects(prospects)
+        } else {
+            SalesforceExportModelFactory.customers(customers)
         }
     }
     
