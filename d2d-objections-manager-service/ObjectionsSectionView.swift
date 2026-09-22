@@ -54,6 +54,7 @@ struct ObjectionsSectionView: View {
                 }
             }
             .padding(.top)
+            .frame(maxHeight: .infinity, alignment: .top)
 
             ObjectionScreenToolbar(
                 onAddTapped: { showingAddObjection = true },
