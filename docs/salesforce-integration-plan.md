@@ -13,7 +13,7 @@ The first release is a one-way export. It creates Salesforce Lead or Contact rec
 3. Add the **Manage user data via APIs (`api`)** and **Perform requests at any time (`refresh_token`, `offline_access`)** scopes.
 4. Require PKCE. Disable the client-secret requirement for the web server and refresh-token flows because an iOS app is a public OAuth client and cannot safely hold a secret.
 5. Configure the app's user policy for the intended Salesforce users or permission sets.
-6. Copy the Consumer Key. In d2d CRM choose Production or Sandbox, paste the key, and sign in through Salesforce.
+6. Copy the Consumer Key. In d2d CRM choose Production, Sandbox, or Developer Edition / My Domain, paste the key, and sign in through Salesforce. Developer Edition organizations should use their `https://...develop.my.salesforce.com` My Domain URL rather than `test.salesforce.com`.
 
 Salesforce can take several minutes to activate a new External Client App. A sandbox needs access to the app configuration; after a sandbox refresh, verify that the app and its policy are still present.
 

@@ -3,6 +3,7 @@ import Foundation
 enum SalesforceEnvironment: String, CaseIterable, Identifiable, Codable {
     case production
     case sandbox
+    case developer
 
     var id: String { rawValue }
 
@@ -10,13 +11,32 @@ enum SalesforceEnvironment: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .production: "Production"
         case .sandbox: "Sandbox"
+        case .developer: "Developer Edition / My Domain"
         }
     }
 
-    var loginURL: URL {
+    func loginURL(customDomain: String) throws -> URL {
         switch self {
-        case .production: URL(string: "https://login.salesforce.com")!
-        case .sandbox: URL(string: "https://test.salesforce.com")!
+        case .production:
+            return URL(string: "https://login.salesforce.com")!
+        case .sandbox:
+            return URL(string: "https://test.salesforce.com")!
+        case .developer:
+            let trimmed = customDomain.trimmingCharacters(in: .whitespacesAndNewlines)
+            let candidate = trimmed.contains("://") ? trimmed : "https://\(trimmed)"
+            guard let components = URLComponents(string: candidate),
+                  components.scheme?.lowercased() == "https",
+                  components.user == nil,
+                  components.password == nil,
+                  let host = components.host?.lowercased(),
+                  host == "salesforce.com" || host.hasSuffix(".salesforce.com") else {
+                throw SalesforceClientError.invalidLoginDomain
+            }
+            var normalized = URLComponents()
+            normalized.scheme = "https"
+            normalized.host = host
+            guard let url = normalized.url else { throw SalesforceClientError.invalidLoginDomain }
+            return url
         }
     }
 }

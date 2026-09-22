@@ -72,7 +72,8 @@ struct SalesforceExportView: View {
     @State private var clientID = UserDefaults.standard.string(forKey: "salesforce.clientID") ?? ""
     @State private var environment = SalesforceEnvironment(
         rawValue: UserDefaults.standard.string(forKey: "salesforce.environment") ?? ""
-    ) ?? .sandbox
+    ) ?? .developer
+    @State private var customDomain = UserDefaults.standard.string(forKey: "salesforce.customDomain") ?? ""
     @State private var objectType: SalesforceObjectType
     @State private var fields: [SalesforceField] = []
     @State private var mappings: [SalesforceFieldMapping] = SalesforceSourceField.allCases.map {
@@ -97,6 +98,7 @@ struct SalesforceExportView: View {
                 SalesforceConnectionSection(
                     clientID: $clientID,
                     environment: $environment,
+                    customDomain: $customDomain,
                     isConnected: client.isConnected,
                     organizationName: client.organizationName,
                     isWorking: isWorking,
@@ -159,7 +161,7 @@ struct SalesforceExportView: View {
         statusMessage = nil
         Task {
             do {
-                try await client.connect(clientID: clientID, environment: environment)
+                try await client.connect(clientID: clientID, environment: environment, customDomain: customDomain)
                 try await refreshFields()
                 showConnectionAlert(
                     title: "Salesforce Connected",
@@ -196,7 +198,12 @@ struct SalesforceExportView: View {
     }
 
     private func refreshFields() async throws {
-        fields = try await client.fields(for: objectType, clientID: clientID, environment: environment)
+        fields = try await client.fields(
+            for: objectType,
+            clientID: clientID,
+            environment: environment,
+            customDomain: customDomain
+        )
         mappings = SalesforceMappingStore.load(object: objectType) ?? defaultMappings(for: fields)
     }
 
@@ -211,7 +218,8 @@ struct SalesforceExportView: View {
                     object: objectType,
                     mappings: mappings,
                     clientID: clientID,
-                    environment: environment
+                    environment: environment,
+                    customDomain: customDomain
                 )
                 statusMessage = result.failedMessages.isEmpty
                     ? "Successfully exported \(result.succeeded) records."
@@ -240,6 +248,7 @@ struct SalesforceExportView: View {
 private struct SalesforceConnectionSection: View {
     @Binding var clientID: String
     @Binding var environment: SalesforceEnvironment
+    @Binding var customDomain: String
     let isConnected: Bool
     let organizationName: String?
     let isWorking: Bool
@@ -251,6 +260,14 @@ private struct SalesforceConnectionSection: View {
         Section {
             Picker("Environment", selection: $environment) {
                 ForEach(SalesforceEnvironment.allCases) { Text($0.title).tag($0) }
+            }
+            .disabled(isConnected)
+            if environment == .developer {
+                TextField("My Domain URL", text: $customDomain)
+                    .textInputAutocapitalization(.never)
+                    .keyboardType(.URL)
+                    .autocorrectionDisabled()
+                    .disabled(isConnected)
             }
             TextField("Consumer Key", text: $clientID)
                 .textInputAutocapitalization(.never)
@@ -264,13 +281,17 @@ private struct SalesforceConnectionSection: View {
                 Button(action: onConnect) {
                     if isWorking { ProgressView() } else { Text("Connect to Salesforce") }
                 }
-                .disabled(isWorking || clientID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(
+                    isWorking ||
+                    clientID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                    (environment == .developer && customDomain.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                )
             }
             Button("How do I get a Consumer Key?", action: onHelp)
         } header: {
             Text("Connection")
         } footer: {
-            Text("Your password never enters d2d CRM. Salesforce handles sign-in, and the refresh token is stored in the iOS Keychain.")
+            Text("Developer Edition uses your org’s My Domain URL. Your password never enters d2d CRM, and the refresh token is stored in the iOS Keychain.")
         }
     }
 }
@@ -324,6 +345,9 @@ private struct SalesforceSetupHelpView: View {
                 }
                 Section("Sandbox Testing") {
                     Text("Choose Sandbox on the connection screen and sign in with a Salesforce Developer sandbox account. Your External Client App must exist in that sandbox.")
+                }
+                Section("Developer Edition") {
+                    Text("Choose Developer Edition / My Domain and paste the URL shown in your browser after signing in, ending in .salesforce.com. Developer Edition organizations do not use test.salesforce.com.")
                 }
             }
             .navigationTitle("One-Time Setup")

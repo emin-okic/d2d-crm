@@ -6,6 +6,7 @@ import UIKit
 
 enum SalesforceClientError: LocalizedError {
     case invalidConfiguration
+    case invalidLoginDomain
     case authenticationCancelled
     case invalidCallback
     case authorizationDenied(String)
@@ -16,6 +17,7 @@ enum SalesforceClientError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidConfiguration: "Enter the Consumer Key from your Salesforce External Client App."
+        case .invalidLoginDomain: "Enter your Salesforce My Domain URL, such as https://your-org.develop.my.salesforce.com."
         case .authenticationCancelled: "Salesforce sign-in was cancelled."
         case .invalidCallback: "Salesforce returned an invalid sign-in response. Check the callback URL."
         case .authorizationDenied(let message): message
@@ -58,14 +60,15 @@ final class SalesforceClient: NSObject, ObservableObject, ASWebAuthenticationPre
         return UIWindow(windowScene: scene)
     }
 
-    func connect(clientID: String, environment: SalesforceEnvironment) async throws {
+    func connect(clientID: String, environment: SalesforceEnvironment, customDomain: String) async throws {
         let trimmedClientID = clientID.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedClientID.isEmpty else { throw SalesforceClientError.invalidConfiguration }
+        let loginURL = try environment.loginURL(customDomain: customDomain)
 
         let verifier = Self.randomURLSafeString()
         let challenge = Self.base64URL(Data(SHA256.hash(data: Data(verifier.utf8))))
         let state = Self.randomURLSafeString()
-        var components = URLComponents(url: environment.loginURL.appending(path: "services/oauth2/authorize"), resolvingAgainstBaseURL: false)
+        var components = URLComponents(url: loginURL.appending(path: "services/oauth2/authorize"), resolvingAgainstBaseURL: false)
         components?.queryItems = [
             URLQueryItem(name: "response_type", value: "code"),
             URLQueryItem(name: "client_id", value: trimmedClientID),
@@ -94,7 +97,7 @@ final class SalesforceClient: NSObject, ObservableObject, ASWebAuthenticationPre
         }
 
         let token: TokenResponse = try await formRequest(
-            environment.loginURL.appending(path: "services/oauth2/token"),
+            loginURL.appending(path: "services/oauth2/token"),
             values: [
                 "grant_type": "authorization_code",
                 "client_id": trimmedClientID,
@@ -106,6 +109,7 @@ final class SalesforceClient: NSObject, ObservableObject, ASWebAuthenticationPre
         try accept(token: token)
         UserDefaults.standard.set(trimmedClientID, forKey: "salesforce.clientID")
         UserDefaults.standard.set(environment.rawValue, forKey: "salesforce.environment")
+        UserDefaults.standard.set(customDomain, forKey: "salesforce.customDomain")
     }
 
     func disconnect() {
@@ -119,9 +123,10 @@ final class SalesforceClient: NSObject, ObservableObject, ASWebAuthenticationPre
     func fields(
         for object: SalesforceObjectType,
         clientID: String,
-        environment: SalesforceEnvironment
+        environment: SalesforceEnvironment,
+        customDomain: String
     ) async throws -> [SalesforceField] {
-        try await ensureAccessToken(clientID: clientID, environment: environment)
+        try await ensureAccessToken(clientID: clientID, environment: environment, customDomain: customDomain)
         let version = try await latestAPIVersion()
         let response: DescribeResponse = try await authorizedRequest(path: "/services/data/v\(version)/sobjects/\(object.rawValue)/describe")
         organizationName = instanceURL?.host
@@ -139,9 +144,10 @@ final class SalesforceClient: NSObject, ObservableObject, ASWebAuthenticationPre
         object: SalesforceObjectType,
         mappings: [SalesforceFieldMapping],
         clientID: String,
-        environment: SalesforceEnvironment
+        environment: SalesforceEnvironment,
+        customDomain: String
     ) async throws -> SalesforceExportResult {
-        try await ensureAccessToken(clientID: clientID, environment: environment)
+        try await ensureAccessToken(clientID: clientID, environment: environment, customDomain: customDomain)
         let version = try await latestAPIVersion()
         var succeeded = 0
         var failures: [String] = []
@@ -176,11 +182,12 @@ final class SalesforceClient: NSObject, ObservableObject, ASWebAuthenticationPre
         return SalesforceExportResult(succeeded: succeeded, failedMessages: failures)
     }
 
-    private func ensureAccessToken(clientID: String, environment: SalesforceEnvironment) async throws {
+    private func ensureAccessToken(clientID: String, environment: SalesforceEnvironment, customDomain: String) async throws {
         guard accessToken == nil else { return }
         guard let refreshToken else { throw SalesforceClientError.notConnected }
+        let loginURL = try environment.loginURL(customDomain: customDomain)
         let token: TokenResponse = try await formRequest(
-            environment.loginURL.appending(path: "services/oauth2/token"),
+            loginURL.appending(path: "services/oauth2/token"),
             values: ["grant_type": "refresh_token", "client_id": clientID, "refresh_token": refreshToken]
         )
         try accept(token: token)
