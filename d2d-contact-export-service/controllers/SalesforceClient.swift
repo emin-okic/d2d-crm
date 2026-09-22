@@ -141,8 +141,6 @@ final class SalesforceClient: NSObject, ObservableObject, ASWebAuthenticationPre
 
     func export(
         records: [SalesforceExportRecord],
-        object: SalesforceObjectType,
-        mappings: [SalesforceFieldMapping],
         clientID: String,
         environment: SalesforceEnvironment,
         customDomain: String
@@ -154,18 +152,11 @@ final class SalesforceClient: NSObject, ObservableObject, ASWebAuthenticationPre
 
         for batch in records.chunked(into: 200) {
             let payloadRecords: [[String: Any]] = batch.map { record in
-                var payload: [String: Any] = ["attributes": ["type": object.rawValue]]
-                for mapping in mappings {
-                    guard let destination = mapping.destinationName,
-                          let value = record.value(for: mapping.source) else { continue }
-                    payload[destination] = Self.convert(value, for: destination)
-                }
-                if object == .lead {
-                    payload["LastName"] = payload["LastName"] ?? record.value(for: .lastName) ?? "Unknown"
-                    payload["Company"] = payload["Company"] ?? record.value(for: .company) ?? "Individual"
-                } else {
-                    payload["LastName"] = payload["LastName"] ?? record.value(for: .lastName) ?? "Unknown"
-                }
+                var payload: [String: Any] = [
+                    "attributes": ["type": "Contact"],
+                    "LastName": record.value(for: .lastName) ?? "Unknown"
+                ]
+                if let value = record.value(for: .phone) { payload["Phone"] = value }
                 return payload
             }
             let body: [String: Any] = ["allOrNone": false, "records": payloadRecords]
@@ -246,7 +237,11 @@ final class SalesforceClient: NSObject, ObservableObject, ASWebAuthenticationPre
         if let body { request.httpBody = try JSONSerialization.data(withJSONObject: body) }
         let (data, response) = try await session.data(for: request)
         try Self.validate(response: response, data: data)
-        return try JSONDecoder.salesforce.decode(T.self, from: data)
+        do {
+            return try JSONDecoder.salesforce.decode(T.self, from: data)
+        } catch {
+            throw SalesforceClientError.server(Self.decodingMessage(for: error))
+        }
     }
 
     private func formRequest<T: Decodable>(_ url: URL, values: [String: String]) async throws -> T {
@@ -260,7 +255,11 @@ final class SalesforceClient: NSObject, ObservableObject, ASWebAuthenticationPre
             .data(using: .utf8)
         let (data, response) = try await session.data(for: request)
         try Self.validate(response: response, data: data)
-        return try JSONDecoder.salesforce.decode(T.self, from: data)
+        do {
+            return try JSONDecoder().decode(T.self, from: data)
+        } catch {
+            throw SalesforceClientError.server(Self.decodingMessage(for: error))
+        }
     }
 
     private static func validate(response: URLResponse, data: Data) throws {
@@ -270,6 +269,23 @@ final class SalesforceClient: NSObject, ObservableObject, ASWebAuthenticationPre
                 ?? (try? JSONDecoder().decode([APIError].self, from: data).first?.message)
                 ?? "Salesforce request failed (HTTP \(response.statusCode))."
             throw SalesforceClientError.server(message)
+        }
+    }
+
+    private static func decodingMessage(for error: Error) -> String {
+        switch error {
+        case DecodingError.keyNotFound(let key, let context):
+            let path = (context.codingPath + [key]).map(\.stringValue).joined(separator: ".")
+            return "Salesforce response was missing \(path)."
+        case DecodingError.valueNotFound(_, let context),
+             DecodingError.typeMismatch(_, let context),
+             DecodingError.dataCorrupted(let context):
+            let path = context.codingPath.map(\.stringValue).joined(separator: ".")
+            return path.isEmpty
+                ? "Salesforce returned an unreadable response."
+                : "Salesforce returned an unreadable value at \(path)."
+        default:
+            return "Salesforce returned an unreadable response."
         }
     }
 
@@ -300,6 +316,12 @@ private struct TokenResponse: Decodable {
     let accessToken: String
     let refreshToken: String?
     let instanceURL: String
+
+    enum CodingKeys: String, CodingKey {
+        case accessToken = "access_token"
+        case refreshToken = "refresh_token"
+        case instanceURL = "instance_url"
+    }
 }
 
 private struct VersionResponse: Decodable { let version: String }
@@ -317,6 +339,17 @@ private typealias CompositeCreateResponse = [CompositeCreateResult]
 private struct CompositeCreateResult: Decodable {
     let success: Bool
     let errors: [APIError]
+
+    enum CodingKeys: String, CodingKey {
+        case success
+        case errors
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        success = try container.decode(Bool.self, forKey: .success)
+        errors = try container.decodeIfPresent([APIError].self, forKey: .errors) ?? []
+    }
 }
 private struct APIError: Decodable { let message: String }
 private struct OAuthError: Decodable {

@@ -74,11 +74,6 @@ struct SalesforceExportView: View {
         rawValue: UserDefaults.standard.string(forKey: "salesforce.environment") ?? ""
     ) ?? .developer
     @State private var customDomain = UserDefaults.standard.string(forKey: "salesforce.customDomain") ?? ""
-    @State private var objectType: SalesforceObjectType
-    @State private var fields: [SalesforceField] = []
-    @State private var mappings: [SalesforceFieldMapping] = SalesforceSourceField.allCases.map {
-        SalesforceFieldMapping(source: $0, destinationName: nil)
-    }
     @State private var isWorking = false
     @State private var statusMessage: String?
     @State private var showingSetupHelp = false
@@ -89,7 +84,6 @@ struct SalesforceExportView: View {
     init(records: [SalesforceExportRecord], listName: String) {
         self.records = records
         self.listName = listName
-        _objectType = State(initialValue: listName == "Prospects" ? .lead : .contact)
     }
 
     var body: some View {
@@ -108,13 +102,6 @@ struct SalesforceExportView: View {
                 )
 
                 if client.isConnected {
-                    SalesforceMappingSection(
-                        objectType: $objectType,
-                        fields: fields,
-                        mappings: $mappings,
-                        isLoading: isWorking
-                    )
-
                     Section {
                         Button {
                             export()
@@ -122,13 +109,13 @@ struct SalesforceExportView: View {
                             HStack {
                                 Spacer()
                                 if isWorking { ProgressView() }
-                                else { Text("Export \(records.count) Records") }
+                                else { Text("Export \(records.count) to Salesforce Contacts") }
                                 Spacer()
                             }
                         }
-                        .disabled(isWorking || records.isEmpty || fields.isEmpty)
+                        .disabled(isWorking || records.isEmpty)
                     } footer: {
-                        Text("Salesforce permissions and validation rules still apply. A failed record won’t stop the remaining records.")
+                        Text("The current \(listName.lowercased()) list will be added to Salesforce Contacts using last name and phone. A failed record won’t stop the remaining records.")
                     }
                 }
 
@@ -145,14 +132,6 @@ struct SalesforceExportView: View {
             } message: {
                 Text(connectionAlertMessage)
             }
-            .task {
-                guard client.isConnected, fields.isEmpty, !clientID.isEmpty else { return }
-                loadFields()
-            }
-            .onChange(of: objectType) { _, _ in
-                guard client.isConnected else { return }
-                loadFields()
-            }
         }
     }
 
@@ -162,10 +141,9 @@ struct SalesforceExportView: View {
         Task {
             do {
                 try await client.connect(clientID: clientID, environment: environment, customDomain: customDomain)
-                try await refreshFields()
                 showConnectionAlert(
                     title: "Salesforce Connected",
-                    message: "Your Salesforce fields are ready to map and export."
+                    message: "You can now export the current list to Salesforce Contacts."
                 )
             } catch {
                 statusMessage = error.localizedDescription
@@ -177,7 +155,6 @@ struct SalesforceExportView: View {
 
     private func disconnect() {
         client.disconnect()
-        fields = []
         statusMessage = nil
     }
 
@@ -187,36 +164,13 @@ struct SalesforceExportView: View {
         showingConnectionAlert = true
     }
 
-    private func loadFields() {
-        isWorking = true
-        statusMessage = nil
-        Task {
-            do { try await refreshFields() }
-            catch { statusMessage = error.localizedDescription }
-            isWorking = false
-        }
-    }
-
-    private func refreshFields() async throws {
-        fields = try await client.fields(
-            for: objectType,
-            clientID: clientID,
-            environment: environment,
-            customDomain: customDomain
-        )
-        mappings = SalesforceMappingStore.load(object: objectType) ?? defaultMappings(for: fields)
-    }
-
     private func export() {
         isWorking = true
         statusMessage = nil
-        SalesforceMappingStore.save(mappings, object: objectType)
         Task {
             do {
                 let result = try await client.export(
                     records: records,
-                    object: objectType,
-                    mappings: mappings,
                     clientID: clientID,
                     environment: environment,
                     customDomain: customDomain
@@ -231,18 +185,6 @@ struct SalesforceExportView: View {
         }
     }
 
-    private func defaultMappings(for fields: [SalesforceField]) -> [SalesforceFieldMapping] {
-        let available = Set(fields.map(\.name))
-        let defaults: [SalesforceSourceField: String] = [
-            .firstName: "FirstName", .lastName: "LastName", .email: "Email", .phone: "Phone",
-            .address: objectType == .lead ? "Street" : "MailingStreet", .company: "Company",
-            .jobTitle: "Title", .industry: "Industry", .latitude: "Latitude", .longitude: "Longitude"
-        ]
-        return SalesforceSourceField.allCases.map {
-            let destination = defaults[$0]
-            return SalesforceFieldMapping(source: $0, destinationName: destination.flatMap { available.contains($0) ? $0 : nil })
-        }
-    }
 }
 
 private struct SalesforceConnectionSection: View {
@@ -296,40 +238,6 @@ private struct SalesforceConnectionSection: View {
     }
 }
 
-private struct SalesforceMappingSection: View {
-    @Binding var objectType: SalesforceObjectType
-    let fields: [SalesforceField]
-    @Binding var mappings: [SalesforceFieldMapping]
-    let isLoading: Bool
-
-    var body: some View {
-        Section("Destination") {
-            Picker("Salesforce object", selection: $objectType) {
-                ForEach(SalesforceObjectType.allCases) { Text($0.rawValue).tag($0) }
-            }
-        }
-        Section {
-            if isLoading && fields.isEmpty {
-                ProgressView("Loading Salesforce fields…")
-            } else {
-                ForEach($mappings) { $mapping in
-                    Picker(mapping.source.title, selection: $mapping.destinationName) {
-                        Text("Don’t export").tag(String?.none)
-                        ForEach(fields) { field in
-                            Text(field.isRequired ? "\(field.label) (required)" : field.label)
-                                .tag(String?.some(field.name))
-                        }
-                    }
-                }
-            }
-        } header: {
-            Text("Field Mapping")
-        } footer: {
-            Text("Lead last name and company, or Contact last name, are filled automatically when blank.")
-        }
-    }
-}
-
 private struct SalesforceSetupHelpView: View {
     @Environment(\.dismiss) private var dismiss
 
@@ -355,18 +263,4 @@ private struct SalesforceSetupHelpView: View {
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }
     }
-}
-
-private enum SalesforceMappingStore {
-    static func load(object: SalesforceObjectType) -> [SalesforceFieldMapping]? {
-        guard let data = UserDefaults.standard.data(forKey: key(object)) else { return nil }
-        return try? JSONDecoder().decode([SalesforceFieldMapping].self, from: data)
-    }
-
-    static func save(_ mappings: [SalesforceFieldMapping], object: SalesforceObjectType) {
-        guard let data = try? JSONEncoder().encode(mappings) else { return }
-        UserDefaults.standard.set(data, forKey: key(object))
-    }
-
-    private static func key(_ object: SalesforceObjectType) -> String { "salesforce.mapping.\(object.rawValue)" }
 }
