@@ -10,7 +10,6 @@ import SwiftUI
 
 struct LeaderboardHeaderView: View {
     let total: Int
-    let topObjections: [String] = ["Price", "Timing", "Need Approval"] // placeholder for mini chart
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -33,15 +32,6 @@ struct LeaderboardHeaderView: View {
                     .foregroundColor(.secondary)
             }
 
-            // Optional: small sparkline placeholder
-            HStack(spacing: 4) {
-                ForEach(0..<topObjections.count, id: \.self) { idx in
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Color.blue.opacity(0.7))
-                        .frame(width: 12, height: CGFloat.random(in: 20...40))
-                }
-            }
-            .padding(.top, 4)
         }
         .padding()
         .background(
