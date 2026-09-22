@@ -28,39 +28,40 @@ struct ObjectionsSectionView: View {
 
     var body: some View {
         ZStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    LeaderboardHeaderView(total: rankedObjections.count)
+            VStack(spacing: 16) {
+                LeaderboardHeaderView(total: rankedObjections.count)
 
-                    ObjectionsLeaderboardView(
-                        ranked: rankedObjections,
-                        isEditing: isEditing,
-                        selected: selectedObjections
-                    ) { objection in
-                        if isEditing {
-                            
-                            // DELETE / MULTI-SELECT MODE
-                            RecordingScreenHapticsController.shared.mediumTap()
-                            RecordingScreenSoundController.shared.playSound1()
-                            
-                            toggleSelection(objection)
-                        } else {
-                            
-                            // NORMAL MODE: open objection details
-                            RecordingScreenHapticsController.shared.lightTap()
-                            RecordingScreenSoundController.shared.playSound1()
-                            
-                            selectedObjection = objection
-                        }
+                ObjectionsLeaderboardView(
+                    ranked: rankedObjections,
+                    isEditing: isEditing,
+                    selected: selectedObjections
+                ) { objection in
+                    if isEditing {
+                        
+                        // DELETE / MULTI-SELECT MODE
+                        RecordingScreenHapticsController.shared.mediumTap()
+                        RecordingScreenSoundController.shared.playSound1()
+                        
+                        toggleSelection(objection)
+                    } else {
+                        
+                        // NORMAL MODE: open objection details
+                        RecordingScreenHapticsController.shared.lightTap()
+                        RecordingScreenSoundController.shared.playSound1()
+                        
+                        selectedObjection = objection
                     }
                 }
-                .padding(.top)
             }
+            .padding(.top)
 
             ObjectionScreenToolbar(
                 onAddTapped: { showingAddObjection = true },
                 isDeleting: $isEditing,
                 selectedCount: selectedObjections.count,
+                onCancelDelete: {
+                    selectedObjections.removeAll()
+                },
                 onDeleteConfirmed: {
                     showDeleteConfirm = true
                 }
@@ -74,7 +75,12 @@ struct ObjectionsSectionView: View {
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }
-        .alert("Delete selected objections?", isPresented: $showDeleteConfirm) {
+        .alert(
+            selectedObjections.count == 1
+                ? "Delete selected objection?"
+                : "Delete \(selectedObjections.count) selected objections?",
+            isPresented: $showDeleteConfirm
+        ) {
             Button("Delete", role: .destructive) {
                 
                 // NORMAL MODE: open objection details
