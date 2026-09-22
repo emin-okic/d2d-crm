@@ -29,6 +29,16 @@ struct SalesforceExportModelTests {
         #expect(record.value(for: .lastName) == "Prince")
     }
 
+    @Test func everythingAfterFirstSpaceBecomesLastName() throws {
+        let prospect = Prospect(fullName: "Taylor Ann Morgan", address: "456 Oak Street", count: 0)
+
+        let record = try #require(SalesforceExportModelFactory.prospects([prospect]).first)
+
+        #expect(record.value(for: .firstName) == "Taylor")
+        #expect(record.value(for: .lastName) == "Ann Morgan")
+        #expect(record.value(for: .address) == "456 Oak Street")
+    }
+
     @Test func blankValuesAreOmittedFromPayloadInputs() throws {
         let customer = Customer(fullName: "Jamie Doe", address: "", count: 0)
 

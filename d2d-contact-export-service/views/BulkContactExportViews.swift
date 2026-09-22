@@ -19,7 +19,7 @@ struct BulkContactExportOptionsView: View {
                     )
                     ExportDestinationRow(
                         title: "Salesforce",
-                        subtitle: "Connect, map fields, and send records to Salesforce.",
+                        subtitle: "Send all prospects and customers to Salesforce Contacts.",
                         systemImage: "cloud.fill",
                         tint: .blue,
                         action: onSalesforce

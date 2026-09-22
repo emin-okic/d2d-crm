@@ -152,7 +152,7 @@ struct ContactManagementView: View {
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
                 case .salesforce:
-                    SalesforceExportView(records: salesforceRecords, listName: selectedList)
+                    SalesforceExportView(records: salesforceRecords, listName: "Prospects and Customers")
                 case .emailGate:
                     ExportEmailGateView {
                         activeSheet = nil
@@ -319,11 +319,8 @@ struct ContactManagementView: View {
     }
 
     private var salesforceRecords: [SalesforceExportRecord] {
-        if selectedList == "Prospects" {
-            SalesforceExportModelFactory.prospects(prospects)
-        } else {
+        SalesforceExportModelFactory.prospects(prospects) +
             SalesforceExportModelFactory.customers(customers)
-        }
     }
     
     @ViewBuilder

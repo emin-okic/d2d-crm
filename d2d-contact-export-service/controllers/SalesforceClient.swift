@@ -156,7 +156,9 @@ final class SalesforceClient: NSObject, ObservableObject, ASWebAuthenticationPre
                     "attributes": ["type": "Contact"],
                     "LastName": record.value(for: .lastName) ?? "Unknown"
                 ]
+                if let value = record.value(for: .firstName) { payload["FirstName"] = value }
                 if let value = record.value(for: .phone) { payload["Phone"] = value }
+                if let value = record.value(for: .address) { payload["MailingStreet"] = value }
                 return payload
             }
             let body: [String: Any] = ["allOrNone": false, "records": payloadRecords]

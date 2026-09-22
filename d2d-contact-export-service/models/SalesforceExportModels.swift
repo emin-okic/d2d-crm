@@ -189,7 +189,8 @@ enum SalesforceExportModelFactory {
 
     private static func split(_ fullName: String) -> (first: String, last: String) {
         let parts = fullName.split(whereSeparator: \.isWhitespace).map(String.init)
-        guard let last = parts.last else { return ("", "Unknown") }
-        return (parts.dropLast().joined(separator: " "), last)
+        guard let first = parts.first else { return ("", "Unknown") }
+        guard parts.count > 1 else { return ("", first) }
+        return (first, parts.dropFirst().joined(separator: " "))
     }
 }
