@@ -77,7 +77,9 @@ struct MapSearchView: View {
     @State private var pendingAddProperty: PendingAddProperty?
     
     @StateObject private var userLocationManager = UserLocationManager()
-    @State private var previousRegionBeforeUserLocationJump: MKCoordinateRegion?
+    @State private var cameraBeforeUserLocationJump: MKMapCamera?
+    @State private var isWaitingToCenterUserLocation = false
+    @State private var cameraInteractionGeneration = 0
     @State private var hasCenteredEmptyMapOnUserLocation = false
     
     @State private var selectedPlaceID: UUID? = nil
@@ -246,7 +248,7 @@ struct MapSearchView: View {
                     onSelectNearbyHome: { handleNearbyHomeSelection($0) },
                     userLocationManager: userLocationManager,
                     mapController: controller,
-                    isShowingPreviousRegionButton: previousRegionBeforeUserLocationJump != nil,
+                    isShowingPreviousRegionButton: cameraBeforeUserLocationJump != nil,
                     onNavigateToUserLocation: navigateToUserLocation,
                     onRevertToPreviousRegion: revertToPreviousRegion
                 )
@@ -544,7 +546,13 @@ struct MapSearchView: View {
             }
         }
         .onReceive(userLocationManager.$location.compactMap { $0 }) { location in
+            if isWaitingToCenterUserLocation {
+                centerMapOnUserLocation(location)
+            }
             centerEmptyMapOnUserLocationIfNeeded(location: location)
+        }
+        .onChange(of: searchResetTrigger) { _, _ in
+            resetUserLocationButton()
         }
         .onChange(of: searchText) { _, newValue in
             guard mapSearchMode == .property else { return }
@@ -595,6 +603,7 @@ struct MapSearchView: View {
             
         }
         .onDisappear {
+            resetUserLocationButton()
             rollingRecordingManager.stopAndDiscard()
         }
         .onChange(of: recordingModeEnabled) { _, _ in
@@ -725,6 +734,8 @@ struct MapSearchView: View {
     }
 
     private func handleRegionChange(_ newRegion: MKCoordinateRegion, isUserDriven: Bool) {
+        let interactionGeneration = cameraInteractionGeneration
+
         Task { @MainActor in
             await Task.yield()
 
@@ -732,25 +743,58 @@ struct MapSearchView: View {
                 controller.region = newRegion
             }
 
-            if isUserDriven {
-                previousRegionBeforeUserLocationJump = nil
+            if isUserDriven, interactionGeneration == cameraInteractionGeneration {
+                resetUserLocationButton()
                 dismissActiveMapPopup()
             }
         }
     }
 
     private func navigateToUserLocation() {
-        guard let location = userLocationManager.location else { return }
+        guard let location = MapDisplayView.cachedMapView?.userLocation.location ?? userLocationManager.location else {
+            isWaitingToCenterUserLocation = true
+            return
+        }
 
-        previousRegionBeforeUserLocationJump = controller.region
-        controller.centerMapOnUserLocation(location.coordinate)
+        centerMapOnUserLocation(location)
+    }
+
+    private func centerMapOnUserLocation(_ location: CLLocation) {
+        guard let mapView = MapDisplayView.cachedMapView,
+              let mapCoordinator = MapDisplayView.cachedCoordinator else {
+            isWaitingToCenterUserLocation = true
+            return
+        }
+
+        cameraInteractionGeneration += 1
+
+        if cameraBeforeUserLocationJump == nil {
+            cameraBeforeUserLocationJump = mapView.camera.copy() as? MKMapCamera
+        }
+
+        isWaitingToCenterUserLocation = false
+
+        let userCamera = mapView.camera.copy() as? MKMapCamera ?? MKMapCamera()
+        userCamera.centerCoordinate = location.coordinate
+        userCamera.centerCoordinateDistance = 650
+        mapCoordinator.setCamera(userCamera, animated: true)
+    }
+
+    private func resetUserLocationButton() {
+        cameraInteractionGeneration += 1
+        cameraBeforeUserLocationJump = nil
+        isWaitingToCenterUserLocation = false
     }
 
     private func revertToPreviousRegion() {
-        guard let previousRegion = previousRegionBeforeUserLocationJump else { return }
+        guard let previousCamera = cameraBeforeUserLocationJump,
+              let mapCoordinator = MapDisplayView.cachedCoordinator else {
+            resetUserLocationButton()
+            return
+        }
 
-        controller.region = previousRegion
-        previousRegionBeforeUserLocationJump = nil
+        resetUserLocationButton()
+        mapCoordinator.setCamera(previousCamera, animated: true)
     }
 
     private func regionsMatch(_ lhs: MKCoordinateRegion, _ rhs: MKCoordinateRegion) -> Bool {

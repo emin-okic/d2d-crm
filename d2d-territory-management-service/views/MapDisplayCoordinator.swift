@@ -25,6 +25,7 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate, UIGestureRecogni
     
     private var currentZoomSizeBucket: Int?
     private var isUserDrivenRegionChange = false
+    private(set) var isApplyingProgrammaticCamera = false
     private let bulkAddRadius: CLLocationDistance = 35
     private var bulkAddRadiusPreview: BulkAddRadiusOverlayController?
     private var longPressedMarkerID: UUID?
@@ -98,6 +99,12 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate, UIGestureRecogni
     
     func updateSelectedPlaceID(_ id: UUID?) {
         selectedPlaceID = id
+    }
+
+    func setCamera(_ camera: MKMapCamera, animated: Bool) {
+        guard let mapView else { return }
+        isApplyingProgrammaticCamera = true
+        mapView.setCamera(camera, animated: animated)
     }
     
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
@@ -699,12 +706,15 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate, UIGestureRecogni
     }
 
     func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
-        isUserDrivenRegionChange = containsActiveUserGesture(in: mapView)
+        isUserDrivenRegionChange = !isApplyingProgrammaticCamera && containsActiveUserGesture(in: mapView)
     }
 
     func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
-        isUserDrivenRegionChange = isUserDrivenRegionChange || containsActiveUserGesture(in: mapView)
-        onRegionChange?(mapView.region, isUserDrivenRegionChange)
+        let wasProgrammatic = isApplyingProgrammaticCamera
+        let wasUserDriven = !wasProgrammatic &&
+            (isUserDrivenRegionChange || containsActiveUserGesture(in: mapView))
+        onRegionChange?(mapView.region, wasUserDriven)
+        isApplyingProgrammaticCamera = false
         isUserDrivenRegionChange = false
     }
 
@@ -718,7 +728,7 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate, UIGestureRecogni
 
     private func isActiveUserGesture(_ gesture: UIGestureRecognizer) -> Bool {
         switch gesture.state {
-        case .began, .changed, .ended:
+        case .began, .changed:
             return true
         default:
             return false
