@@ -2214,9 +2214,9 @@ private struct DeleteMapPropertySheet: View {
             DeleteMapPropertyHeader(address: address)
             DeleteMapPropertyActions(onCancel: onCancel, onDelete: onDelete)
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 12)
-        .padding(.bottom, 20)
+        .padding(.horizontal, 28)
+        .padding(.top, 24)
+        .padding(.bottom, 28)
     }
 }
 
@@ -2256,21 +2256,21 @@ private struct DeleteMapPropertyActions: View {
     let onDelete: () -> Void
 
     var body: some View {
-        VStack(spacing: 10) {
+        HStack(spacing: 12) {
+            Button("Cancel", action: onCancel)
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+
             Button(role: .destructive, action: onDelete) {
-                Label("Delete Property", systemImage: "trash.fill")
+                Label("Delete", systemImage: "trash.fill")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .tint(.red)
             .controlSize(.large)
-
-            Button("Cancel", action: onCancel)
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .buttonStyle(.bordered)
-                .controlSize(.large)
         }
     }
 }
