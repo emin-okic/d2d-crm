@@ -28,6 +28,7 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate, UIGestureRecogni
     private let bulkAddRadius: CLLocationDistance = 35
     private var bulkAddRadiusPreview: BulkAddRadiusOverlayController?
     private var longPressedMarkerID: UUID?
+    private var longPressedMarkerPlace: IdentifiablePlace?
     private var suppressedMarkerTapID: UUID?
     private var pendingMarkerTapWorkItem: DispatchWorkItem?
     
@@ -201,21 +202,25 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate, UIGestureRecogni
 
         switch gesture.state {
         case .began:
-            if let annotation = markerAnnotation(at: point, in: mapView),
-               isSingleContactProperty(annotation.place) {
+            if let annotation = markerAnnotation(at: point, in: mapView) {
                 pendingMarkerTapWorkItem?.cancel()
                 pendingMarkerTapWorkItem = nil
                 longPressedMarkerID = annotation.place.id
+                longPressedMarkerPlace = annotation.place
                 suppressedMarkerTapID = annotation.place.id
                 mapView.deselectAnnotation(annotation, animated: false)
-                MapScreenHapticsController.shared.deletionArmed()
-                MapScreenSoundController.shared.playDeletionArmed()
-                animateDeletePrompt(for: annotation, on: mapView)
-                onMarkerLongPressed(annotation.place)
+
+                if isSingleContactProperty(annotation.place) {
+                    MapScreenHapticsController.shared.deletionArmed()
+                    MapScreenSoundController.shared.playDeletionArmed()
+                    animateDeletePrompt(for: annotation, on: mapView)
+                    onMarkerLongPressed(annotation.place)
+                }
                 return
             }
 
             longPressedMarkerID = nil
+            longPressedMarkerPlace = nil
             bulkAddRadiusPreview?.begin(at: coord, touchPoint: point, radius: bulkAddRadius)
             zoomToBulkAddArea(center: coord, radius: bulkAddRadius)
             MapScreenHapticsController.shared.propertyAdded()
@@ -226,8 +231,22 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate, UIGestureRecogni
             bulkAddRadiusPreview?.move(to: coord, touchPoint: point)
 
         case .ended:
-            if longPressedMarkerID != nil {
+            if let markerID = longPressedMarkerID {
+                let heldPlace = longPressedMarkerPlace
                 longPressedMarkerID = nil
+                longPressedMarkerPlace = nil
+
+                if let heldPlace,
+                   !isSingleContactProperty(heldPlace),
+                   heldPlace.list != "PendingProperty",
+                   markerAnnotation(at: point, in: mapView)?.place.id == markerID {
+                    selectedPlaceID = markerID
+                    onMarkerTapped(heldPlace)
+                    MapScreenHapticsController.shared.propertyAdded()
+                    MapScreenSoundController.shared.playPropertyAdded()
+                    refreshAllAnnotations(on: mapView)
+                }
+
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
                     self?.suppressedMarkerTapID = nil
                 }
@@ -246,6 +265,7 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate, UIGestureRecogni
 
         case .cancelled, .failed:
             longPressedMarkerID = nil
+            longPressedMarkerPlace = nil
             suppressedMarkerTapID = nil
             bulkAddRadiusPreview?.cancel()
 
