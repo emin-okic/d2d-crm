@@ -664,7 +664,7 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate, UIGestureRecogni
         }
 
         pendingMarkerTapWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.38, execute: workItem)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22, execute: workItem)
     }
 
     func gestureRecognizer(

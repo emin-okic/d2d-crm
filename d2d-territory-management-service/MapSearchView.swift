@@ -92,7 +92,6 @@ struct MapSearchView: View {
     @State private var selectedCustomer: Customer?
     @State private var pendingSelectedContact: UnitContact? = nil
     @State private var contactPendingDeletion: UnitContact?
-    @State private var isShowingDeletePropertyConfirmation = false
     
     init(searchText: Binding<String>,
          contactSearchDraft: Binding<String>,
@@ -523,21 +522,17 @@ struct MapSearchView: View {
             
         }
         
-        .confirmationDialog(
-            "Delete this property?",
-            isPresented: $isShowingDeletePropertyConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Delete Property", role: .destructive) {
-                deletePendingMapContact()
-            }
-            Button("Cancel", role: .cancel) {
-                contactPendingDeletion = nil
-            }
-        } message: {
-            if let contactPendingDeletion {
-                Text("This permanently deletes the contact and property at \(contactPendingDeletion.address).")
-            }
+        .sheet(item: $contactPendingDeletion) { contact in
+            DeleteMapPropertySheet(
+                address: contact.address,
+                onCancel: {
+                    contactPendingDeletion = nil
+                },
+                onDelete: deletePendingMapContact
+            )
+            .presentationDetents([.height(340), .medium])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(28)
         }
 
         // Modifier for markers
@@ -788,7 +783,6 @@ struct MapSearchView: View {
         dismissActiveMapPopup()
         selectedPlaceID = nil
         contactPendingDeletion = contact
-        isShowingDeletePropertyConfirmation = true
     }
 
     private func deletePendingMapContact() {
@@ -2207,5 +2201,76 @@ private struct FollowUpScheduledMapConfirmationView: View {
         let parts = full.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }
         if parts.count >= 2 { return parts[0] + ", " + parts[1] }
         return full
+    }
+}
+
+private struct DeleteMapPropertySheet: View {
+    let address: String
+    let onCancel: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        VStack(spacing: 20) {
+            DeleteMapPropertyHeader(address: address)
+            DeleteMapPropertyActions(onCancel: onCancel, onDelete: onDelete)
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 12)
+        .padding(.bottom, 20)
+    }
+}
+
+private struct DeleteMapPropertyHeader: View {
+    let address: String
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "house.slash.fill")
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(.red)
+                .frame(width: 54, height: 54)
+                .background(Color.red.opacity(0.12), in: Circle())
+                .accessibilityHidden(true)
+
+            VStack(spacing: 6) {
+                Text("Remove Property")
+                    .font(.title3.weight(.semibold))
+
+                Text(address)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+
+                Text("This permanently deletes the contact and their property history.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+        }
+    }
+}
+
+private struct DeleteMapPropertyActions: View {
+    let onCancel: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Button(role: .destructive, action: onDelete) {
+                Label("Delete Property", systemImage: "trash.fill")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.red)
+            .controlSize(.large)
+
+            Button("Cancel", action: onCancel)
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+        }
     }
 }

@@ -65,7 +65,7 @@ struct MapDisplayView: UIViewRepresentable {
             target: context.coordinator,
             action: #selector(Coordinator.handleLongPress(_:))
         )
-        longPress.minimumPressDuration = 0.35
+        longPress.minimumPressDuration = 0.20
         longPress.delegate = context.coordinator
         tapGesture.require(toFail: longPress)
         mapView.addGestureRecognizer(longPress)
