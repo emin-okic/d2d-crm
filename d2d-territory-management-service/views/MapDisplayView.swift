@@ -123,6 +123,18 @@ struct MapDisplayView: UIViewRepresentable {
         let existing = mapView.annotations.compactMap { $0 as? IdentifiableAnnotation }
         let existingIds = Set(existing.map { $0.place.id })
         let newIds = Set(markers.map { $0.id })
+        let markersByID = Dictionary(uniqueKeysWithValues: markers.map { ($0.id, $0) })
+        let retainedMarkerAppearanceChanged = existing.reduce(false) { appearanceChanged, annotation in
+            guard let updatedPlace = markersByID[annotation.place.id] else {
+                return appearanceChanged
+            }
+
+            return annotation.update(with: updatedPlace) || appearanceChanged
+        }
+
+        if retainedMarkerAppearanceChanged {
+            context.coordinator.refreshAllAnnotations(on: mapView)
+        }
         
         if existingIds != newIds {
             let removedAnnotations = existing.filter { !newIds.contains($0.place.id) }

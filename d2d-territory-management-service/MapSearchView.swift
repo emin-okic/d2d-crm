@@ -530,7 +530,7 @@ struct MapSearchView: View {
                 },
                 onDelete: deletePendingMapContact
             )
-            .presentationDetents([.height(340), .medium])
+            .presentationDetents([.height(430), .medium])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(28)
         }
@@ -2210,44 +2210,103 @@ private struct DeleteMapPropertySheet: View {
     let onDelete: () -> Void
 
     var body: some View {
-        VStack(spacing: 20) {
-            DeleteMapPropertyHeader(address: address)
+        VStack(spacing: 18) {
+            DeleteMapPropertyHeader()
+            DeleteMapPropertySummary(address: address)
+            DeleteMapPropertyWarning()
+            Spacer(minLength: 0)
             DeleteMapPropertyActions(onCancel: onCancel, onDelete: onDelete)
         }
-        .padding(.horizontal, 28)
-        .padding(.top, 24)
-        .padding(.bottom, 28)
+        .padding(.horizontal, 24)
+        .padding(.top, 20)
+        .padding(.bottom, 24)
+        .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
     }
 }
 
 private struct DeleteMapPropertyHeader: View {
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            Image(systemName: "person.crop.circle.badge.minus")
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(.red)
+                .frame(width: 52, height: 52)
+                .background(Color.red.opacity(0.11), in: RoundedRectangle(cornerRadius: 15))
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Delete contact?")
+                    .font(.title2.weight(.bold))
+
+                Text("Remove this record from your territory.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+private struct DeleteMapPropertySummary: View {
     let address: String
 
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "house.slash.fill")
-                .font(.title2.weight(.semibold))
-                .foregroundStyle(.red)
-                .frame(width: 54, height: 54)
-                .background(Color.red.opacity(0.12), in: Circle())
+        HStack(spacing: 14) {
+            Image(systemName: "house.fill")
+                .font(.headline)
+                .foregroundStyle(.tint)
+                .frame(width: 40, height: 40)
+                .background(Color.accentColor.opacity(0.10), in: RoundedRectangle(cornerRadius: 11))
                 .accessibilityHidden(true)
 
-            VStack(spacing: 6) {
-                Text("Remove Property")
-                    .font(.title3.weight(.semibold))
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Property")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
 
                 Text(address)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.primary)
                     .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+            }
 
-                Text("This permanently deletes the contact and their property history.")
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.primary.opacity(0.07), lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct DeleteMapPropertyWarning: View {
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.subheadline)
+                .foregroundStyle(.red)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("This action can’t be undone")
+                    .font(.subheadline.weight(.semibold))
+
+                Text("The contact record and its saved appointments will be permanently deleted.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+
+            Spacer(minLength: 0)
         }
+        .padding(14)
+        .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -2256,21 +2315,41 @@ private struct DeleteMapPropertyActions: View {
     let onDelete: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            Button("Cancel", action: onCancel)
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-
-            Button(role: .destructive, action: onDelete) {
-                Label("Delete", systemImage: "trash.fill")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
+        ViewThatFits {
+            HStack(spacing: 12) {
+                cancelButton
+                deleteButton
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.red)
-            .controlSize(.large)
+
+            VStack(spacing: 10) {
+                deleteButton
+                cancelButton
+            }
         }
+    }
+
+    private var cancelButton: some View {
+        Button(action: onCancel) {
+            Text("Cancel")
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .frame(height: 22)
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.large)
+    }
+
+    private var deleteButton: some View {
+        Button(role: .destructive, action: onDelete) {
+            Label("Delete Contact", systemImage: "trash.fill")
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+                .frame(maxWidth: .infinity)
+                .frame(height: 22)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(.red)
+        .controlSize(.large)
     }
 }
