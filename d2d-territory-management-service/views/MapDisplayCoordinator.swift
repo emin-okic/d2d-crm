@@ -706,12 +706,14 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate, UIGestureRecogni
     }
 
     func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
-        isUserDrivenRegionChange = containsActiveUserGesture(in: mapView)
+        isUserDrivenRegionChange = !isApplyingProgrammaticCamera && containsActiveUserGesture(in: mapView)
     }
 
     func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
-        isUserDrivenRegionChange = isUserDrivenRegionChange || containsActiveUserGesture(in: mapView)
-        onRegionChange?(mapView.region, isUserDrivenRegionChange)
+        let wasProgrammatic = isApplyingProgrammaticCamera
+        let wasUserDriven = !wasProgrammatic &&
+            (isUserDrivenRegionChange || containsActiveUserGesture(in: mapView))
+        onRegionChange?(mapView.region, wasUserDriven)
         isApplyingProgrammaticCamera = false
         isUserDrivenRegionChange = false
     }
@@ -726,7 +728,7 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate, UIGestureRecogni
 
     private func isActiveUserGesture(_ gesture: UIGestureRecognizer) -> Bool {
         switch gesture.state {
-        case .began, .changed, .ended:
+        case .began, .changed:
             return true
         default:
             return false

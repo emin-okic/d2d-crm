@@ -79,6 +79,7 @@ struct MapSearchView: View {
     @StateObject private var userLocationManager = UserLocationManager()
     @State private var cameraBeforeUserLocationJump: MKMapCamera?
     @State private var isWaitingToCenterUserLocation = false
+    @State private var cameraInteractionGeneration = 0
     @State private var hasCenteredEmptyMapOnUserLocation = false
     
     @State private var selectedPlaceID: UUID? = nil
@@ -733,6 +734,8 @@ struct MapSearchView: View {
     }
 
     private func handleRegionChange(_ newRegion: MKCoordinateRegion, isUserDriven: Bool) {
+        let interactionGeneration = cameraInteractionGeneration
+
         Task { @MainActor in
             await Task.yield()
 
@@ -740,7 +743,7 @@ struct MapSearchView: View {
                 controller.region = newRegion
             }
 
-            if isUserDriven {
+            if isUserDriven, interactionGeneration == cameraInteractionGeneration {
                 resetUserLocationButton()
                 dismissActiveMapPopup()
             }
@@ -763,6 +766,8 @@ struct MapSearchView: View {
             return
         }
 
+        cameraInteractionGeneration += 1
+
         if cameraBeforeUserLocationJump == nil {
             cameraBeforeUserLocationJump = mapView.camera.copy() as? MKMapCamera
         }
@@ -776,6 +781,7 @@ struct MapSearchView: View {
     }
 
     private func resetUserLocationButton() {
+        cameraInteractionGeneration += 1
         cameraBeforeUserLocationJump = nil
         isWaitingToCenterUserLocation = false
     }
