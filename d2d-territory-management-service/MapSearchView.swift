@@ -91,6 +91,8 @@ struct MapSearchView: View {
     @State private var selectedProspect: Prospect?
     @State private var selectedCustomer: Customer?
     @State private var pendingSelectedContact: UnitContact? = nil
+    @State private var contactPendingDeletion: UnitContact?
+    @State private var isShowingDeletePropertyConfirmation = false
     
     init(searchText: Binding<String>,
          contactSearchDraft: Binding<String>,
@@ -210,6 +212,9 @@ struct MapSearchView: View {
                     userLocationManager: userLocationManager,
                     onMarkerTapped: { place in
                         handleMarkerTap(place: place, geo: geo)
+                    },
+                    onMarkerLongPressed: { place in
+                        handleMarkerLongPress(place)
                     },
                     onMapTapped: { coordinate in
                         handleMapTap(at: coordinate)
@@ -518,6 +523,23 @@ struct MapSearchView: View {
             
         }
         
+        .confirmationDialog(
+            "Delete this property?",
+            isPresented: $isShowingDeletePropertyConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete Property", role: .destructive) {
+                deletePendingMapContact()
+            }
+            Button("Cancel", role: .cancel) {
+                contactPendingDeletion = nil
+            }
+        } message: {
+            if let contactPendingDeletion {
+                Text("This permanently deletes the contact and property at \(contactPendingDeletion.address).")
+            }
+        }
+
         // Modifier for markers
         .onReceive(NotificationCenter.default.publisher(for: .mapShouldRecenterAllMarkers)) { _ in
             if hasNoSavedContacts {
@@ -756,6 +778,46 @@ struct MapSearchView: View {
         
     }
     
+    private func handleMarkerLongPress(_ place: IdentifiablePlace) {
+        guard place.unitCount == 1, place.contactCount == 1 else { return }
+
+        let parts = parseAddress(place.address)
+        let contacts = unitContactGroupsForBaseAddress(parts.base).flatMap(\.contacts)
+        guard contacts.count == 1, let contact = contacts.first else { return }
+
+        dismissActiveMapPopup()
+        selectedPlaceID = nil
+        contactPendingDeletion = contact
+        isShowingDeletePropertyConfirmation = true
+    }
+
+    private func deletePendingMapContact() {
+        guard let contact = contactPendingDeletion else { return }
+
+        contactPendingDeletion = nil
+        closeAllMapPopupsAndResetSelection()
+
+        switch contact {
+        case .prospect(let prospect):
+            prospect.appointments.forEach { modelContext.delete($0) }
+            modelContext.delete(prospect)
+        case .customer(let customer):
+            customer.appointments.forEach { modelContext.delete($0) }
+            modelContext.delete(customer)
+        }
+
+        do {
+            try modelContext.save()
+            withAnimation(.easeInOut(duration: 0.28)) {
+                updateMarkers()
+            }
+            MapScreenHapticsController.shared.propertyDeleted()
+            MapScreenSoundController.shared.playPropertyDeleted()
+        } catch {
+            print("Failed to delete map property: \(error)")
+        }
+    }
+
     private func handleMarkerTap(place: IdentifiablePlace, geo: GeometryProxy) {
         
         replaceActiveMapPopupIfNeeded()

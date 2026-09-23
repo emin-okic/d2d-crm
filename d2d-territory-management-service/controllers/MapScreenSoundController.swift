@@ -25,6 +25,14 @@ final class MapScreenSoundController {
         AudioServicesPlaySystemSound(1104) // rewarding success tap
     }
 
+    func playDeletionArmed() {
+        AudioServicesPlaySystemSound(1157)
+    }
+
+    func playPropertyDeleted() {
+        AudioServicesPlaySystemSound(1155)
+    }
+
     func playScorecardSelectorOpen() {
         AudioServicesPlaySystemSound(1104)
     }

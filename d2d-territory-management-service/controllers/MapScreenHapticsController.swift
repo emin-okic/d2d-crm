@@ -15,6 +15,7 @@ final class MapScreenHapticsController {
     private let lightImpact = UIImpactFeedbackGenerator(style: .light)
     private let mediumImpact = UIImpactFeedbackGenerator(style: .medium)
     private let successFeedback = UINotificationFeedbackGenerator()
+    private let warningFeedback = UINotificationFeedbackGenerator()
 
     private init() {
         prepare()
@@ -24,6 +25,7 @@ final class MapScreenHapticsController {
         lightImpact.prepare()
         mediumImpact.prepare()
         successFeedback.prepare()
+        warningFeedback.prepare()
     }
 
     /// Subtle feedback when user taps the map (feels responsive, not noisy)
@@ -38,6 +40,16 @@ final class MapScreenHapticsController {
     /// Rewarding confirmation when a property is added
     func propertyAdded() {
         successFeedback.notificationOccurred(.success)
+    }
+
+    func deletionArmed() {
+        warningFeedback.notificationOccurred(.warning)
+        warningFeedback.prepare()
+    }
+
+    func propertyDeleted() {
+        successFeedback.notificationOccurred(.success)
+        successFeedback.prepare()
     }
 
     /// Optional: stronger feedback for bulk adds or milestones
