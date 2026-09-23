@@ -35,7 +35,10 @@ class MapController: ObservableObject {
     /// Replaces existing markers with those derived from the provided list of prospects.
     /// - Parameter prospects: Array of `Prospect` objects to display.
     func setMarkers(prospects: [Prospect], customers: [Customer]) {
-        
+        let existingMarkerIDs = markers.reduce(into: [String: UUID]()) { result, marker in
+            result[normalized(marker.address)] = marker.id
+        }
+
         clearMarkers()
         
         var groups: [String: AddressGroup] = [:]
@@ -83,6 +86,7 @@ class MapController: ObservableObject {
             
             markers.append(
                 IdentifiablePlace(
+                    id: existingMarkerIDs[normalized(base)] ?? UUID(),
                     address: base,
                     location: coord,
                     count: totalKnocks,

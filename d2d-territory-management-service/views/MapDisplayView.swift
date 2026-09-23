@@ -19,6 +19,7 @@ struct MapDisplayView: UIViewRepresentable {
     var userLocationManager: UserLocationManager
     
     var onMarkerTapped: (IdentifiablePlace) -> Void
+    var onMarkerLongPressed: (IdentifiablePlace) -> Void
     var onMapTapped: (CLLocationCoordinate2D) -> Void
     var onRegionChange: ((MKCoordinateRegion, Bool) -> Void)?
 
@@ -29,6 +30,7 @@ struct MapDisplayView: UIViewRepresentable {
             userLocationManager: userLocationManager,
             selectedPlaceID: selectedPlaceID,
             onMarkerTapped: onMarkerTapped,
+            onMarkerLongPressed: onMarkerLongPressed,
             onMapTapped: onMapTapped,
             onRegionChange: onRegionChange
         )
@@ -56,13 +58,16 @@ struct MapDisplayView: UIViewRepresentable {
             target: context.coordinator,
             action: #selector(Coordinator.handleTap(_:))
         )
+        tapGesture.delegate = context.coordinator
         mapView.addGestureRecognizer(tapGesture)
         
         let longPress = UILongPressGestureRecognizer(
             target: context.coordinator,
             action: #selector(Coordinator.handleLongPress(_:))
         )
-        longPress.minimumPressDuration = 0.35
+        longPress.minimumPressDuration = 0.20
+        longPress.delegate = context.coordinator
+        tapGesture.require(toFail: longPress)
         mapView.addGestureRecognizer(longPress)
         
         return mapView
@@ -94,7 +99,11 @@ struct MapDisplayView: UIViewRepresentable {
     }
 
     func updateUIView(_ mapView: MKMapView, context: Context) {
-        
+        context.coordinator.onMarkerTapped = onMarkerTapped
+        context.coordinator.onMarkerLongPressed = onMarkerLongPressed
+        context.coordinator.onMapTapped = onMapTapped
+        context.coordinator.onRegionChange = onRegionChange
+
         // 🔄 Sync selected marker
         if context.coordinator.selectedPlaceID != selectedPlaceID {
             
@@ -114,17 +123,42 @@ struct MapDisplayView: UIViewRepresentable {
         let existing = mapView.annotations.compactMap { $0 as? IdentifiableAnnotation }
         let existingIds = Set(existing.map { $0.place.id })
         let newIds = Set(markers.map { $0.id })
+        let markersByID = Dictionary(uniqueKeysWithValues: markers.map { ($0.id, $0) })
+        let retainedMarkerAppearanceChanged = existing.reduce(false) { appearanceChanged, annotation in
+            guard let updatedPlace = markersByID[annotation.place.id] else {
+                return appearanceChanged
+            }
+
+            return annotation.update(with: updatedPlace) || appearanceChanged
+        }
+
+        if retainedMarkerAppearanceChanged {
+            context.coordinator.refreshAllAnnotations(on: mapView)
+        }
         
         if existingIds != newIds {
-            
-            mapView.removeAnnotations(mapView.annotations)
-            
-            for place in markers {
-                
-                let annotation = IdentifiableAnnotation(place: place)
-                
-                mapView.addAnnotation(annotation)
+            let removedAnnotations = existing.filter { !newIds.contains($0.place.id) }
+            let addedPlaces = markers.filter { !existingIds.contains($0.id) }
+
+            for annotation in removedAnnotations {
+                guard let view = mapView.view(for: annotation) else {
+                    mapView.removeAnnotation(annotation)
+                    continue
+                }
+
+                UIView.animate(
+                    withDuration: 0.28,
+                    delay: 0,
+                    options: [.curveEaseIn, .beginFromCurrentState]
+                ) {
+                    view.alpha = 0
+                    view.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+                } completion: { _ in
+                    mapView.removeAnnotation(annotation)
+                }
             }
+
+            addedPlaces.forEach { mapView.addAnnotation(IdentifiableAnnotation(place: $0)) }
         }
     }
 }

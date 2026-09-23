@@ -91,6 +91,7 @@ struct MapSearchView: View {
     @State private var selectedProspect: Prospect?
     @State private var selectedCustomer: Customer?
     @State private var pendingSelectedContact: UnitContact? = nil
+    @State private var contactPendingDeletion: UnitContact?
     
     init(searchText: Binding<String>,
          contactSearchDraft: Binding<String>,
@@ -210,6 +211,9 @@ struct MapSearchView: View {
                     userLocationManager: userLocationManager,
                     onMarkerTapped: { place in
                         handleMarkerTap(place: place, geo: geo)
+                    },
+                    onMarkerLongPressed: { place in
+                        handleMarkerLongPress(place)
                     },
                     onMapTapped: { coordinate in
                         handleMapTap(at: coordinate)
@@ -518,6 +522,19 @@ struct MapSearchView: View {
             
         }
         
+        .sheet(item: $contactPendingDeletion) { contact in
+            DeleteMapPropertySheet(
+                address: contact.address,
+                onCancel: {
+                    contactPendingDeletion = nil
+                },
+                onDelete: deletePendingMapContact
+            )
+            .presentationDetents([.height(430), .medium])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(28)
+        }
+
         // Modifier for markers
         .onReceive(NotificationCenter.default.publisher(for: .mapShouldRecenterAllMarkers)) { _ in
             if hasNoSavedContacts {
@@ -756,6 +773,45 @@ struct MapSearchView: View {
         
     }
     
+    private func handleMarkerLongPress(_ place: IdentifiablePlace) {
+        guard place.unitCount == 1, place.contactCount == 1 else { return }
+
+        let parts = parseAddress(place.address)
+        let contacts = unitContactGroupsForBaseAddress(parts.base).flatMap(\.contacts)
+        guard contacts.count == 1, let contact = contacts.first else { return }
+
+        dismissActiveMapPopup()
+        selectedPlaceID = nil
+        contactPendingDeletion = contact
+    }
+
+    private func deletePendingMapContact() {
+        guard let contact = contactPendingDeletion else { return }
+
+        contactPendingDeletion = nil
+        closeAllMapPopupsAndResetSelection()
+
+        switch contact {
+        case .prospect(let prospect):
+            prospect.appointments.forEach { modelContext.delete($0) }
+            modelContext.delete(prospect)
+        case .customer(let customer):
+            customer.appointments.forEach { modelContext.delete($0) }
+            modelContext.delete(customer)
+        }
+
+        do {
+            try modelContext.save()
+            withAnimation(.easeInOut(duration: 0.28)) {
+                updateMarkers()
+            }
+            MapScreenHapticsController.shared.propertyDeleted()
+            MapScreenSoundController.shared.playPropertyDeleted()
+        } catch {
+            print("Failed to delete map property: \(error)")
+        }
+    }
+
     private func handleMarkerTap(place: IdentifiablePlace, geo: GeometryProxy) {
         
         replaceActiveMapPopupIfNeeded()
@@ -2145,5 +2201,155 @@ private struct FollowUpScheduledMapConfirmationView: View {
         let parts = full.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespaces) }
         if parts.count >= 2 { return parts[0] + ", " + parts[1] }
         return full
+    }
+}
+
+private struct DeleteMapPropertySheet: View {
+    let address: String
+    let onCancel: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        VStack(spacing: 18) {
+            DeleteMapPropertyHeader()
+            DeleteMapPropertySummary(address: address)
+            DeleteMapPropertyWarning()
+            Spacer(minLength: 0)
+            DeleteMapPropertyActions(onCancel: onCancel, onDelete: onDelete)
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 20)
+        .padding(.bottom, 24)
+        .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+    }
+}
+
+private struct DeleteMapPropertyHeader: View {
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            Image(systemName: "person.crop.circle.badge.minus")
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(.red)
+                .frame(width: 52, height: 52)
+                .background(Color.red.opacity(0.11), in: RoundedRectangle(cornerRadius: 15))
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Delete contact?")
+                    .font(.title2.weight(.bold))
+
+                Text("Remove this record from your territory.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+private struct DeleteMapPropertySummary: View {
+    let address: String
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: "house.fill")
+                .font(.headline)
+                .foregroundStyle(.tint)
+                .frame(width: 40, height: 40)
+                .background(Color.accentColor.opacity(0.10), in: RoundedRectangle(cornerRadius: 11))
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Property")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                Text(address)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.primary.opacity(0.07), lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct DeleteMapPropertyWarning: View {
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.subheadline)
+                .foregroundStyle(.red)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("This action can’t be undone")
+                    .font(.subheadline.weight(.semibold))
+
+                Text("The contact record and its saved appointments will be permanently deleted.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct DeleteMapPropertyActions: View {
+    let onCancel: () -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        ViewThatFits {
+            HStack(spacing: 12) {
+                cancelButton
+                deleteButton
+            }
+
+            VStack(spacing: 10) {
+                deleteButton
+                cancelButton
+            }
+        }
+    }
+
+    private var cancelButton: some View {
+        Button(action: onCancel) {
+            Text("Cancel")
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .frame(height: 22)
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.large)
+    }
+
+    private var deleteButton: some View {
+        Button(role: .destructive, action: onDelete) {
+            Label("Delete Contact", systemImage: "trash.fill")
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+                .frame(maxWidth: .infinity)
+                .frame(height: 22)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(.red)
+        .controlSize(.large)
     }
 }

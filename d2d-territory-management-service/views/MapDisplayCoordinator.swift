@@ -9,7 +9,7 @@ import MapKit
 import Combine
 import UIKit
 
-final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
+final class MapDisplayCoordinator: NSObject, MKMapViewDelegate, UIGestureRecognizerDelegate {
 
     let userLocationManager: UserLocationManager
 
@@ -17,6 +17,7 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     weak var mapView: MKMapView?
 
     var onMarkerTapped: (IdentifiablePlace) -> Void
+    var onMarkerLongPressed: (IdentifiablePlace) -> Void
     var onMapTapped: (CLLocationCoordinate2D) -> Void
     var onRegionChange: ((MKCoordinateRegion, Bool) -> Void)?
     
@@ -26,6 +27,10 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
     private var isUserDrivenRegionChange = false
     private let bulkAddRadius: CLLocationDistance = 35
     private var bulkAddRadiusPreview: BulkAddRadiusOverlayController?
+    private var longPressedMarkerID: UUID?
+    private var longPressedMarkerPlace: IdentifiablePlace?
+    private var suppressedMarkerTapID: UUID?
+    private var pendingMarkerTapWorkItem: DispatchWorkItem?
     
     private var pendingSparkleCoordinates: [CLLocationCoordinate2D] = []
 
@@ -33,12 +38,14 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         userLocationManager: UserLocationManager,
         selectedPlaceID: UUID?,
         onMarkerTapped: @escaping (IdentifiablePlace) -> Void,
+        onMarkerLongPressed: @escaping (IdentifiablePlace) -> Void,
         onMapTapped: @escaping (CLLocationCoordinate2D) -> Void,
         onRegionChange: ((MKCoordinateRegion, Bool) -> Void)? = nil
     ) {
         self.userLocationManager = userLocationManager
         self.selectedPlaceID = selectedPlaceID
         self.onMarkerTapped = onMarkerTapped
+        self.onMarkerLongPressed = onMarkerLongPressed
         self.onMapTapped = onMapTapped
         self.onRegionChange = onRegionChange
         super.init()
@@ -195,15 +202,56 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
 
         switch gesture.state {
         case .began:
+            if let annotation = markerAnnotation(at: point, in: mapView) {
+                pendingMarkerTapWorkItem?.cancel()
+                pendingMarkerTapWorkItem = nil
+                longPressedMarkerID = annotation.place.id
+                longPressedMarkerPlace = annotation.place
+                suppressedMarkerTapID = annotation.place.id
+                mapView.deselectAnnotation(annotation, animated: false)
+
+                if isSingleContactProperty(annotation.place) {
+                    MapScreenHapticsController.shared.deletionArmed()
+                    MapScreenSoundController.shared.playDeletionArmed()
+                    animateDeletePrompt(for: annotation, on: mapView)
+                    onMarkerLongPressed(annotation.place)
+                }
+                return
+            }
+
+            longPressedMarkerID = nil
+            longPressedMarkerPlace = nil
             bulkAddRadiusPreview?.begin(at: coord, touchPoint: point, radius: bulkAddRadius)
             zoomToBulkAddArea(center: coord, radius: bulkAddRadius)
             MapScreenHapticsController.shared.propertyAdded()
             MapScreenSoundController.shared.playPropertyAdded()
 
         case .changed:
+            guard longPressedMarkerID == nil else { return }
             bulkAddRadiusPreview?.move(to: coord, touchPoint: point)
 
         case .ended:
+            if let markerID = longPressedMarkerID {
+                let heldPlace = longPressedMarkerPlace
+                longPressedMarkerID = nil
+                longPressedMarkerPlace = nil
+
+                if let heldPlace,
+                   !isSingleContactProperty(heldPlace),
+                   heldPlace.list != "PendingProperty",
+                   markerAnnotation(at: point, in: mapView)?.place.id == markerID {
+                    selectedPlaceID = markerID
+                    onMarkerTapped(heldPlace)
+                    MapScreenHapticsController.shared.propertyAdded()
+                    MapScreenSoundController.shared.playPropertyAdded()
+                    refreshAllAnnotations(on: mapView)
+                }
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+                    self?.suppressedMarkerTapID = nil
+                }
+                return
+            }
             bulkAddRadiusPreview?.move(to: coord, touchPoint: point)
 
             guard let center = bulkAddRadiusPreview?.center else { return }
@@ -216,6 +264,9 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
             bulkAddRadiusPreview?.finish {}
 
         case .cancelled, .failed:
+            longPressedMarkerID = nil
+            longPressedMarkerPlace = nil
+            suppressedMarkerTapID = nil
             bulkAddRadiusPreview?.cancel()
 
         default:
@@ -223,6 +274,42 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
         }
     }
     
+    private func markerAnnotation(at point: CGPoint, in mapView: MKMapView) -> IdentifiableAnnotation? {
+        var hitView: UIView? = mapView.hitTest(point, with: nil)
+        while let currentView = hitView {
+            if let annotationView = currentView as? MKAnnotationView,
+               let annotation = annotationView.annotation as? IdentifiableAnnotation {
+                return annotation
+            }
+            hitView = currentView.superview
+        }
+
+        return mapView.annotations.compactMap { $0 as? IdentifiableAnnotation }.first { annotation in
+            guard let view = mapView.view(for: annotation) else { return false }
+            return view.frame.insetBy(dx: -16, dy: -16).contains(point)
+        }
+    }
+
+    private func isSingleContactProperty(_ place: IdentifiablePlace) -> Bool {
+        place.list != "PendingProperty" && place.unitCount == 1 && place.contactCount == 1
+    }
+
+    private func animateDeletePrompt(for annotation: IdentifiableAnnotation, on mapView: MKMapView) {
+        guard let view = mapView.view(for: annotation) else { return }
+
+        UIView.animate(
+            withDuration: 0.12,
+            delay: 0,
+            options: [.curveEaseOut, .beginFromCurrentState]
+        ) {
+            view.transform = CGAffineTransform(scaleX: 1.18, y: 1.18)
+        } completion: { _ in
+            UIView.animate(withDuration: 0.18, delay: 0, options: .curveEaseInOut) {
+                view.transform = .identity
+            }
+        }
+    }
+
     private func zoomToBulkAddArea(
         center: CLLocationCoordinate2D,
         radius: CLLocationDistance,
@@ -578,15 +665,33 @@ final class MapDisplayCoordinator: NSObject, MKMapViewDelegate {
 
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         guard let annotation = view.annotation as? IdentifiableAnnotation else { return }
+        guard annotation.place.id != suppressedMarkerTapID else {
+            mapView.deselectAnnotation(annotation, animated: false)
+            return
+        }
 
-        selectedPlaceID = annotation.place.id
-        onMarkerTapped(annotation.place)
-        
-        // ✅ Play the same feedback as adding a new property
-        MapScreenHapticsController.shared.propertyAdded()
-        MapScreenSoundController.shared.playPropertyAdded()
+        pendingMarkerTapWorkItem?.cancel()
+        let markerID = annotation.place.id
+        let workItem = DispatchWorkItem { [weak self, weak mapView] in
+            guard let self, let mapView, self.longPressedMarkerID != markerID else { return }
 
-        refreshAllAnnotations(on: mapView)
+            self.selectedPlaceID = markerID
+            self.onMarkerTapped(annotation.place)
+            MapScreenHapticsController.shared.propertyAdded()
+            MapScreenSoundController.shared.playPropertyAdded()
+            self.refreshAllAnnotations(on: mapView)
+            self.pendingMarkerTapWorkItem = nil
+        }
+
+        pendingMarkerTapWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22, execute: workItem)
+    }
+
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+        true
     }
 
     func mapView(_ mapView: MKMapView, didDeselect view: MKAnnotationView) {
