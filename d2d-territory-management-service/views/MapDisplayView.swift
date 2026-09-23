@@ -24,6 +24,7 @@ struct MapDisplayView: UIViewRepresentable {
     var onRegionChange: ((MKCoordinateRegion, Bool) -> Void)?
 
     static var cachedMapView: MKMapView?
+    static var isPerformingStagedCameraTransition = false
 
     func makeCoordinator() -> MapDisplayCoordinator {
         MapDisplayCoordinator(
@@ -113,10 +114,11 @@ struct MapDisplayView: UIViewRepresentable {
         }
         
         // Sync programmatic region changes through MapKit's camera interpolation.
-        if abs(mapView.region.center.latitude - region.center.latitude) > 0.0001 ||
+        if !Self.isPerformingStagedCameraTransition &&
+           (abs(mapView.region.center.latitude - region.center.latitude) > 0.0001 ||
            abs(mapView.region.center.longitude - region.center.longitude) > 0.0001 ||
            abs(mapView.region.span.latitudeDelta - region.span.latitudeDelta) > 0.0001 ||
-           abs(mapView.region.span.longitudeDelta - region.span.longitudeDelta) > 0.0001 {
+           abs(mapView.region.span.longitudeDelta - region.span.longitudeDelta) > 0.0001) {
             mapView.setRegion(region, animated: true)
         }
         // Sync annotations

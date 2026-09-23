@@ -725,6 +725,11 @@ struct MapSearchView: View {
     }
 
     private func handleRegionChange(_ newRegion: MKCoordinateRegion, isUserDriven: Bool) {
+        guard isUserDriven else { return }
+
+        MapDisplayView.cachedMapView?.setUserTrackingMode(.none, animated: false)
+        MapDisplayView.isPerformingStagedCameraTransition = false
+
         Task { @MainActor in
             await Task.yield()
 
@@ -732,23 +737,41 @@ struct MapSearchView: View {
                 controller.region = newRegion
             }
 
-            if isUserDriven {
-                previousRegionBeforeUserLocationJump = nil
-                dismissActiveMapPopup()
-            }
+            previousRegionBeforeUserLocationJump = nil
+            dismissActiveMapPopup()
         }
     }
 
     private func navigateToUserLocation() {
-        guard let location = userLocationManager.location else { return }
+        let previousRegion = MapDisplayView.cachedMapView?.region ?? controller.region
+        previousRegionBeforeUserLocationJump = previousRegion
 
-        previousRegionBeforeUserLocationJump = controller.region
-        controller.centerMapOnUserLocation(location.coordinate)
+        if let mapView = MapDisplayView.cachedMapView {
+            MapDisplayView.isPerformingStagedCameraTransition = true
+            mapView.setUserTrackingMode(.follow, animated: true)
+        }
+
+        Task { @MainActor in
+            var location = userLocationManager.location
+                ?? MapDisplayView.cachedMapView?.userLocation.location
+            if location == nil {
+                location = await userLocationManager.currentLocation()
+            }
+            guard let location else {
+                MapDisplayView.isPerformingStagedCameraTransition = false
+                return
+            }
+
+            MapDisplayView.cachedMapView?.setUserTrackingMode(.none, animated: false)
+            controller.centerMapOnUserLocation(location.coordinate)
+        }
     }
 
     private func revertToPreviousRegion() {
         guard let previousRegion = previousRegionBeforeUserLocationJump else { return }
 
+        MapDisplayView.cachedMapView?.setUserTrackingMode(.none, animated: false)
+        MapDisplayView.isPerformingStagedCameraTransition = false
         controller.region = previousRegion
         previousRegionBeforeUserLocationJump = nil
     }
