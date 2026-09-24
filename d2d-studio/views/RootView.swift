@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import MapKit
+import WidgetKit
 
 /// The main root view for the app, responsible for coordinating top-level navigation
 /// between the map, prospect list, and user profile screens.
@@ -20,6 +21,7 @@ struct RootView: View {
     @Environment(\.modelContext) private var modelContext
 
     @Query private var allKnocks: [Knock]
+    @Query private var allAppointments: [Appointment]
 
     /// The region displayed on the map, initially centered on San Francisco.
     @State private var region = MKCoordinateRegion(
@@ -84,9 +86,13 @@ struct RootView: View {
         }
         .task {
             StreakNotificationController.shared.refreshSchedule(for: allKnocks)
+            refreshAppointmentsWidget()
         }
         .onChange(of: allKnocks.map(\.date)) { _, _ in
             StreakNotificationController.shared.refreshSchedule(for: allKnocks)
+        }
+        .onChange(of: allAppointments.map(\.date)) { _, _ in
+            refreshAppointmentsWidget()
         }
         .onChange(of: contactSearchFilter) { _, newValue in
             guard newValue != nil else { return }
@@ -125,6 +131,13 @@ struct RootView: View {
             
         }
         
+    }
+
+    private func refreshAppointmentsWidget() {
+        let appointmentDates = allAppointments.map(\.date.timeIntervalSince1970)
+        UserDefaults(suiteName: "group.okic.d2dcrm")?
+            .set(appointmentDates, forKey: "appointmentDates")
+        WidgetCenter.shared.reloadTimelines(ofKind: "d2d_widget_service")
     }
 
     private func navigateToMap(_ selection: MapContactSelection) {

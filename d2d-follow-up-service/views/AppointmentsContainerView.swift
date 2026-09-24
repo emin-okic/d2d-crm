@@ -13,6 +13,7 @@ struct AppointmentsContainerView: View {
     @Binding var isEditing: Bool
     @Binding var selectedAppointments: Set<Appointment>
     @Binding var filteredAppointments: [Appointment]
+    @Binding var deepLinkFilter: AppointmentFilter?
 
     var body: some View {
         ZStack {
@@ -23,7 +24,8 @@ struct AppointmentsContainerView: View {
             AppointmentsSectionView(
                 isEditing: $isEditing,
                 selectedAppointments: $selectedAppointments,
-                filteredAppointments: $filteredAppointments
+                filteredAppointments: $filteredAppointments,
+                deepLinkFilter: $deepLinkFilter
             )
             .padding()
         }
