@@ -44,7 +44,7 @@ struct RootView: View {
     @State private var contactSearchDraft: String = ""
     @State private var contactSearchFilter: ContactSearchFilter?
     
-    @State private var followUpFilter: AppointmentFilter? = nil
+    @Binding var followUpFilter: AppointmentFilter?
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -87,6 +87,10 @@ struct RootView: View {
         .task {
             StreakNotificationController.shared.refreshSchedule(for: allKnocks)
             refreshAppointmentsWidget()
+
+            if followUpFilter != nil {
+                selectedTab = 2
+            }
         }
         .onChange(of: allKnocks.map(\.date)) { _, _ in
             StreakNotificationController.shared.refreshSchedule(for: allKnocks)
@@ -98,13 +102,9 @@ struct RootView: View {
             guard newValue != nil else { return }
             contactSearchDraft = ""
         }
-        .onReceive(NotificationCenter.default.publisher(for: .openFollowUpAssistant)) { notification in
-            selectedTab = 2 // Pipeline tab
-
-            if let raw = notification.object as? String,
-               let filter = AppointmentFilter(rawValue: raw.capitalized) {
-                followUpFilter = filter
-            }
+        .onChange(of: followUpFilter) { _, newValue in
+            guard newValue != nil else { return }
+            selectedTab = 2
         }
         .onChange(of: selectedTab) { oldValue, newValue in
             
@@ -157,8 +157,4 @@ struct RootView: View {
 
 extension Notification.Name {
     static let mapShouldRecenterAllMarkers = Notification.Name("MapShouldRecenterAllMarkers")
-}
-
-extension Notification.Name {
-    static let openFollowUpAssistant = Notification.Name("OpenFollowUpAssistant")
 }

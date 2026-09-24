@@ -15,7 +15,7 @@ struct d2d_studioApp: App {
     
     @State private var sessionId = UUID().uuidString
     
-    @State private var deepLinkURL: URL?
+    @State private var followUpFilter: AppointmentFilter?
     @AppStorage("hasSeenInitialWelcome") private var hasSeenInitialWelcome = false
 
     var body: some Scene {
@@ -23,7 +23,7 @@ struct d2d_studioApp: App {
             
             Group {
                 if hasSeenInitialWelcome {
-                    RootView()
+                    RootView(followUpFilter: $followUpFilter)
                 } else {
                     WelcomeOnboardingView {
                         hasSeenInitialWelcome = true
@@ -43,14 +43,12 @@ struct d2d_studioApp: App {
 
         if url.host == "followup" {
             let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-            let filter = components?.queryItems?
+            let rawFilter = components?.queryItems?
                 .first(where: { $0.name == "filter" })?.value
 
-            NotificationCenter.default.post(
-                name: .openFollowUpAssistant,
-                object: filter
-            )
-            return
+            followUpFilter = rawFilter
+                .flatMap { AppointmentFilter(rawValue: $0.capitalized) }
+                ?? .today
         }
     }
     

@@ -84,6 +84,12 @@ struct AppointmentsSectionView: View {
         }
         .onAppear {
             notesController.restoreAppointmentsAutomaticallyCompletedWhenPast(appointments)
+
+            if deepLinkFilter == .today {
+                selectedDate = Date()
+                deepLinkFilter = nil
+            }
+
             syncFilteredAppointments()
         }
         .onChange(of: selectedDate) {
