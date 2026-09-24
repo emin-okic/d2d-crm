@@ -7,7 +7,6 @@
 import SwiftUI
 import Charts
 import SwiftData
-import WidgetKit
 
 struct FollowUpAssistantView: View {
     
@@ -31,12 +30,6 @@ struct FollowUpAssistantView: View {
     @AppStorage("recordingModeEnabled") private var recordingModeEnabled: Bool = true
     @AppStorage("studioUnlocked") private var studioUnlocked: Bool = false
     private var recordingFeaturesActive: Bool { studioUnlocked && recordingModeEnabled }
-
-    private var appointmentsToday: Int {
-        let cal = Calendar.current
-        let today = cal.startOfDay(for: Date())
-        return appointments.filter { cal.isDate($0.date, inSameDayAs: today) }.count
-    }
 
     private var topObjectionText: String {
         objections
@@ -117,7 +110,8 @@ struct FollowUpAssistantView: View {
                                 AppointmentsContainerView(
                                     isEditing: $isEditingAppointments,
                                     selectedAppointments: $selectedAppointments,
-                                    filteredAppointments: $filteredAppointments
+                                    filteredAppointments: $filteredAppointments,
+                                    deepLinkFilter: $deepLinkFilter
                                 )
                                 .padding(.horizontal, 20)
                                 .frame(maxHeight: 610)
@@ -143,14 +137,6 @@ struct FollowUpAssistantView: View {
                 if let deepLinkFilter {
                     UserDefaults.standard.set(deepLinkFilter.rawValue, forKey: "lastSelectedAppointmentFilter")
                 }
-            }
-            .onChange(of: deepLinkFilter) {
-                deepLinkFilter = nil
-            }
-            .onAppear {
-                let defaults = UserDefaults(suiteName: "group.okic.d2dcrm")
-                defaults?.set(appointmentsToday, forKey: "appointmentsToday")
-                WidgetCenter.shared.reloadAllTimelines()
             }
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)

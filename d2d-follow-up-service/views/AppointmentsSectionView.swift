@@ -17,6 +17,7 @@ struct AppointmentsSectionView: View {
     @Binding var isEditing: Bool
     @Binding var selectedAppointments: Set<Appointment>
     @Binding var filteredAppointments: [Appointment]
+    @Binding var deepLinkFilter: AppointmentFilter?
 
     @State private var selectedAppointment: Appointment?
     @State private var appointmentToDelete: Appointment?
@@ -83,6 +84,12 @@ struct AppointmentsSectionView: View {
         }
         .onAppear {
             notesController.restoreAppointmentsAutomaticallyCompletedWhenPast(appointments)
+
+            if deepLinkFilter == .today {
+                selectedDate = Date()
+                deepLinkFilter = nil
+            }
+
             syncFilteredAppointments()
         }
         .onChange(of: selectedDate) {
@@ -92,6 +99,11 @@ struct AppointmentsSectionView: View {
         }
         .onChange(of: appointments) { _, _ in
             syncFilteredAppointments()
+        }
+        .onChange(of: deepLinkFilter) { _, newValue in
+            guard newValue == .today else { return }
+            moveToToday()
+            deepLinkFilter = nil
         }
     }
 

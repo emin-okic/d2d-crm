@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import MapKit
+import WidgetKit
 
 /// The main root view for the app, responsible for coordinating top-level navigation
 /// between the map, prospect list, and user profile screens.
@@ -20,6 +21,7 @@ struct RootView: View {
     @Environment(\.modelContext) private var modelContext
 
     @Query private var allKnocks: [Knock]
+    @Query private var allAppointments: [Appointment]
 
     /// The region displayed on the map, initially centered on San Francisco.
     @State private var region = MKCoordinateRegion(
@@ -42,7 +44,7 @@ struct RootView: View {
     @State private var contactSearchDraft: String = ""
     @State private var contactSearchFilter: ContactSearchFilter?
     
-    @State private var followUpFilter: AppointmentFilter? = nil
+    @Binding var followUpFilter: AppointmentFilter?
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -84,21 +86,27 @@ struct RootView: View {
         }
         .task {
             StreakNotificationController.shared.refreshSchedule(for: allKnocks)
+            refreshAppointmentsWidget()
+
+            if followUpFilter != nil {
+                selectedTab = 2
+            }
         }
         .onChange(of: allKnocks.map(\.date)) { _, _ in
             StreakNotificationController.shared.refreshSchedule(for: allKnocks)
+        }
+        .onChange(of: allAppointments.map {
+            "\($0.id.uuidString)|\($0.date.timeIntervalSince1970)|\($0.isCompleted)"
+        }) { _, _ in
+            refreshAppointmentsWidget()
         }
         .onChange(of: contactSearchFilter) { _, newValue in
             guard newValue != nil else { return }
             contactSearchDraft = ""
         }
-        .onReceive(NotificationCenter.default.publisher(for: .openFollowUpAssistant)) { notification in
-            selectedTab = 2 // Pipeline tab
-
-            if let raw = notification.object as? String,
-               let filter = AppointmentFilter(rawValue: raw.capitalized) {
-                followUpFilter = filter
-            }
+        .onChange(of: followUpFilter) { _, newValue in
+            guard newValue != nil else { return }
+            selectedTab = 2
         }
         .onChange(of: selectedTab) { oldValue, newValue in
             
@@ -127,6 +135,15 @@ struct RootView: View {
         
     }
 
+    private func refreshAppointmentsWidget() {
+        let appointmentDates = allAppointments
+            .filter { !$0.isCompleted }
+            .map(\.date.timeIntervalSince1970)
+        UserDefaults(suiteName: "group.okic.d2dcrm")?
+            .set(appointmentDates, forKey: "appointmentDates")
+        WidgetCenter.shared.reloadTimelines(ofKind: "d2d_widget_service")
+    }
+
     private func navigateToMap(_ selection: MapContactSelection) {
         contactSearchDraft = ""
         contactSearchFilter = nil
@@ -144,8 +161,4 @@ struct RootView: View {
 
 extension Notification.Name {
     static let mapShouldRecenterAllMarkers = Notification.Name("MapShouldRecenterAllMarkers")
-}
-
-extension Notification.Name {
-    static let openFollowUpAssistant = Notification.Name("OpenFollowUpAssistant")
 }
