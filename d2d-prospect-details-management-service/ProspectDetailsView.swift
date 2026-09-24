@@ -358,6 +358,12 @@ struct ProspectDetailsView: View {
             tempFullName = prospect.fullName
             tempAddress = prospect.address
         }
+        .onChange(of: prospect.fullName) { oldValue, newValue in
+            // Knock outcomes can automatically update and save the contact's name.
+            // Keep an untouched draft in sync so that does not look like a manual edit.
+            guard tempFullName.trimmingCharacters(in: .whitespacesAndNewlines) == oldValue.trimmingCharacters(in: .whitespacesAndNewlines) else { return }
+            tempFullName = newValue
+        }
         .sheet(isPresented: $showAppointmentsSheet) {
             NavigationStack {
                 ProspectAppointmentsView(
