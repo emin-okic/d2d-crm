@@ -18,6 +18,7 @@ struct RootView: View {
 
     /// The model context environment for managing SwiftData operations.
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
 
     @Query private var allKnocks: [Knock]
 
@@ -84,9 +85,15 @@ struct RootView: View {
         }
         .task {
             StreakNotificationController.shared.refreshSchedule(for: allKnocks)
+            KnockNowSnapshotService.refresh(modelContext: modelContext)
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else { return }
+            KnockNowSnapshotService.refresh(modelContext: modelContext)
         }
         .onChange(of: allKnocks.map(\.date)) { _, _ in
             StreakNotificationController.shared.refreshSchedule(for: allKnocks)
+            KnockNowSnapshotService.refresh(modelContext: modelContext)
         }
         .onChange(of: contactSearchFilter) { _, newValue in
             guard newValue != nil else { return }
