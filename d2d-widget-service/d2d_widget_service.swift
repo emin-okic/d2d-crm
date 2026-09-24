@@ -15,7 +15,8 @@ struct Provider: TimelineProvider {
         SimpleEntry(
             date: Date(),
             appointmentsToday: 3,
-            nextAppointmentDate: Date().addingTimeInterval(60 * 60)
+            nextAppointmentDate: Date().addingTimeInterval(60 * 60),
+            overdueAppointments: 1
         )
     }
 
@@ -45,14 +46,17 @@ struct Provider: TimelineProvider {
 
     private func entry(at date: Date) -> SimpleEntry {
         let calendar = Calendar.current
-        let remainingAppointments = appointmentDates
-            .filter { $0 > date && calendar.isDate($0, inSameDayAs: date) }
+        let openAppointmentsToday = appointmentDates
+            .filter { calendar.isDate($0, inSameDayAs: date) }
             .sorted()
+        let upcomingAppointments = openAppointmentsToday.filter { $0 > date }
+        let overdueAppointments = openAppointmentsToday.filter { $0 <= date }
 
         return SimpleEntry(
             date: date,
-            appointmentsToday: remainingAppointments.count,
-            nextAppointmentDate: remainingAppointments.first
+            appointmentsToday: openAppointmentsToday.count,
+            nextAppointmentDate: upcomingAppointments.first,
+            overdueAppointments: overdueAppointments.count
         )
     }
 }
@@ -61,6 +65,7 @@ struct SimpleEntry: TimelineEntry {
     let date: Date
     let appointmentsToday: Int
     let nextAppointmentDate: Date?
+    let overdueAppointments: Int
 }
 
 struct d2d_widget_serviceEntryView: View {
@@ -121,16 +126,33 @@ struct d2d_widget_serviceEntryView: View {
 
     private var nextAppointment: some View {
         VStack(alignment: .trailing, spacing: 6) {
-            Text(entry.nextAppointmentDate == nil ? "SCHEDULE CLEAR" : "UP NEXT")
-                .font(.caption2.weight(.bold))
-                .tracking(0.6)
-                .foregroundStyle(entry.nextAppointmentDate == nil ? .green : .blue)
+            if entry.overdueAppointments > 0 {
+                Text("NEEDS FOLLOW-UP")
+                    .font(.caption2.weight(.bold))
+                    .tracking(0.6)
+                    .foregroundStyle(.orange)
 
-            if let nextAppointmentDate = entry.nextAppointmentDate {
+                Label(
+                    "\(entry.overdueAppointments) overdue",
+                    systemImage: "exclamationmark.circle.fill"
+                )
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.orange)
+            } else if let nextAppointmentDate = entry.nextAppointmentDate {
+                Text("UP NEXT")
+                    .font(.caption2.weight(.bold))
+                    .tracking(0.6)
+                    .foregroundStyle(.blue)
+
                 Text(nextAppointmentDate, format: .dateTime.hour().minute())
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(.primary)
             } else {
+                Text("SCHEDULE CLEAR")
+                    .font(.caption2.weight(.bold))
+                    .tracking(0.6)
+                    .foregroundStyle(.green)
+
                 Image(systemName: "checkmark.circle.fill")
                     .font(.title3)
                     .foregroundStyle(.green)

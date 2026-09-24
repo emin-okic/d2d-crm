@@ -95,7 +95,9 @@ struct RootView: View {
         .onChange(of: allKnocks.map(\.date)) { _, _ in
             StreakNotificationController.shared.refreshSchedule(for: allKnocks)
         }
-        .onChange(of: allAppointments.map(\.date)) { _, _ in
+        .onChange(of: allAppointments.map {
+            "\($0.id.uuidString)|\($0.date.timeIntervalSince1970)|\($0.isCompleted)"
+        }) { _, _ in
             refreshAppointmentsWidget()
         }
         .onChange(of: contactSearchFilter) { _, newValue in
@@ -134,7 +136,9 @@ struct RootView: View {
     }
 
     private func refreshAppointmentsWidget() {
-        let appointmentDates = allAppointments.map(\.date.timeIntervalSince1970)
+        let appointmentDates = allAppointments
+            .filter { !$0.isCompleted }
+            .map(\.date.timeIntervalSince1970)
         UserDefaults(suiteName: "group.okic.d2dcrm")?
             .set(appointmentDates, forKey: "appointmentDates")
         WidgetCenter.shared.reloadTimelines(ofKind: "d2d_widget_service")
