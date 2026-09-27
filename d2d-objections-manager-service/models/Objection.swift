@@ -14,6 +14,9 @@ final class Objection: Hashable {
     var extraResponses: [String] = []  // all generated + practiced responses
     var timesHeard: Int
 
+    @Relationship(deleteRule: .cascade, inverse: \Recording.objection)
+    var recordings: [Recording] = []
+
     init(
         text: String,
         response: String = "",

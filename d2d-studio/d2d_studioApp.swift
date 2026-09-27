@@ -73,6 +73,12 @@ let sharedModelContainer: ModelContainer = {
     let config = appModelConfiguration(schema: schema, url: url)
 
     do {
+        try repairDanglingRecordingObjectionsIfNeeded(at: url)
+    } catch {
+        print("Failed to repair dangling recording objections: \(error)")
+    }
+
+    do {
         return try ModelContainer(for: schema, configurations: [config])
     } catch {
         let originalError = error
@@ -107,6 +113,41 @@ private func appModelConfiguration(schema: Schema, url: URL) -> ModelConfigurati
         url: url,
         cloudKitDatabase: .none
     )
+}
+
+
+private func repairDanglingRecordingObjectionsIfNeeded(at storeURL: URL) throws {
+    guard FileManager.default.fileExists(atPath: storeURL.path) else { return }
+
+    let db = try Connection(storeURL.path)
+    guard try tableExists("ZRECORDING", in: db),
+          try tableExists("ZOBJECTION", in: db),
+          try columnExists("ZOBJECTION", in: "ZRECORDING", db: db) else {
+        return
+    }
+
+    let orphanCount = try db.scalar("""
+        SELECT COUNT(*)
+        FROM ZRECORDING AS recording
+        LEFT JOIN ZOBJECTION AS objection
+          ON objection.Z_PK = recording.ZOBJECTION
+        WHERE recording.ZOBJECTION IS NOT NULL
+          AND objection.Z_PK IS NULL
+        """) as? Int64 ?? 0
+
+    guard orphanCount > 0 else { return }
+
+    try backupStoreFilesIfNeeded(at: storeURL)
+    try db.run("""
+        UPDATE ZRECORDING
+        SET ZOBJECTION = NULL
+        WHERE ZOBJECTION IS NOT NULL
+          AND NOT EXISTS (
+              SELECT 1
+              FROM ZOBJECTION
+              WHERE ZOBJECTION.Z_PK = ZRECORDING.ZOBJECTION
+          )
+        """)
 }
 
 private func repairMissingDemographicColumnsIfNeeded(at storeURL: URL) throws {

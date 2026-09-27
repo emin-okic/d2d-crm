@@ -6,6 +6,8 @@
 //
 
 import XCTest
+import SwiftData
+import Testing
 @testable import d2d_studio
 
 final class RecordingTests: XCTestCase {
@@ -65,5 +67,86 @@ final class RecordingTests: XCTestCase {
         let rating = analyzer.score(user: "", expected: "Here is the expected objection response")
 
         XCTAssertEqual(rating, 1)
+    }
+}
+
+
+@Suite("Objection deletion integrity")
+@MainActor
+struct ObjectionDeletionTests {
+    @Test("Manager deletion removes linked recordings but preserves unrelated recordings")
+    func managerDeletionCleansUpOnlyLinkedRecordings() throws {
+        let context = try makeContext()
+        let deletedObjection = Objection(text: "Too expensive")
+        let retainedObjection = Objection(text: "Need to think about it")
+        let linkedRecording = Recording(
+            fileName: "linked-recording.m4a",
+            title: "Linked",
+            date: .now,
+            objection: deletedObjection
+        )
+        let unrelatedRecording = Recording(
+            fileName: "unrelated-recording.m4a",
+            title: "Unrelated",
+            date: .now,
+            objection: retainedObjection
+        )
+
+        context.insert(deletedObjection)
+        context.insert(retainedObjection)
+        context.insert(linkedRecording)
+        context.insert(unrelatedRecording)
+        try context.save()
+
+        ObjectionManager().delete(deletedObjection, from: context)
+
+        let objections = try context.fetch(FetchDescriptor<Objection>())
+        let recordings = try context.fetch(FetchDescriptor<Recording>())
+        #expect(objections.count == 1)
+        #expect(objections.first?.text == retainedObjection.text)
+        #expect(recordings.count == 1)
+        #expect(recordings.first?.title == unrelatedRecording.title)
+        #expect(recordings.first?.objection?.text == retainedObjection.text)
+    }
+
+    @Test("Relationship cascade protects direct objection deletion")
+    func directDeletionDoesNotLeaveDanglingRecording() throws {
+        let context = try makeContext()
+        let objection = Objection(text: "Not interested")
+        let recording = Recording(
+            fileName: "cascade-recording.m4a",
+            title: "Cascade",
+            date: .now,
+            objection: objection
+        )
+
+        context.insert(objection)
+        context.insert(recording)
+        try context.save()
+
+        context.delete(objection)
+        try context.save()
+
+        #expect(try context.fetchCount(FetchDescriptor<Objection>()) == 0)
+        #expect(try context.fetchCount(FetchDescriptor<Recording>()) == 0)
+    }
+
+    private func makeContext() throws -> ModelContext {
+        let schema = Schema([
+            Prospect.self,
+            Customer.self,
+            Knock.self,
+            Trip.self,
+            Objection.self,
+            Appointment.self,
+            Note.self,
+            Recording.self,
+            EmailTemplate.self,
+            Email.self,
+            PhoneCall.self
+        ])
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: [configuration])
+        return ModelContext(container)
     }
 }
