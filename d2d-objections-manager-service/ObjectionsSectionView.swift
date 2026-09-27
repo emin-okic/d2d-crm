@@ -112,9 +112,10 @@ struct ObjectionsSectionView: View {
     }
 
     private func deleteSelected() {
-        selectedObjections.forEach { modelContext.delete($0) }
-        try? modelContext.save()
+        let objectionsToDelete = Array(selectedObjections)
         selectedObjections.removeAll()
         isEditing = false
+
+        ObjectionManager().delete(objectionsToDelete, from: modelContext)
     }
 }

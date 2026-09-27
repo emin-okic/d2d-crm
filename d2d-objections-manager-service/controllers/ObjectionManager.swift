@@ -9,21 +9,24 @@ import SwiftData
 
 class ObjectionManager {
     func delete(_ objection: Objection, from context: ModelContext) {
-        let targetID: PersistentIdentifier? = objection.persistentModelID
+        delete([objection], from: context)
+    }
 
-        let descriptor = FetchDescriptor<Recording>(
-            predicate: #Predicate {
-                $0.objection?.persistentModelID == targetID
-            }
-        )
+    func delete(_ objections: [Objection], from context: ModelContext) {
+        guard !objections.isEmpty else { return }
 
-        let recordings = (try? context.fetch(descriptor)) ?? []
+        let objectionIDs = Set(objections.map(\.persistentModelID))
+        let recordings = (try? context.fetch(FetchDescriptor<Recording>())) ?? []
+        let recordingManager = RecordingManager()
 
-        for rec in recordings {
-            RecordingManager().delete(recording: rec, context: context)
+        for recording in recordings where recording.objection.map({ objectionIDs.contains($0.persistentModelID) }) == true {
+            recordingManager.delete(recording: recording, context: context)
         }
 
-        context.delete(objection)
+        for objection in objections {
+            context.delete(objection)
+        }
+
         try? context.save()
     }
 
