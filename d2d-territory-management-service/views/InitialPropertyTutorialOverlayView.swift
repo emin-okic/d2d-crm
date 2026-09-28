@@ -59,8 +59,8 @@ struct InitialPropertyTutorialOverlayView: View {
                         progressText: "Step 3 of 3"
                     )
                     .frame(maxWidth: 340)
-                    .position(x: geometry.size.width / 2, y: min(geometry.size.height * 0.30, 260))
-                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .position(deleteCardPosition(in: geometry))
+                    .transition(.move(edge: deleteCardTransitionEdge(in: geometry)).combined(with: .opacity))
                 }
 
                 if step == .completed {
@@ -110,6 +110,30 @@ struct InitialPropertyTutorialOverlayView: View {
         }
         .position(target)
         .allowsHitTesting(false)
+    }
+
+    private func deleteCardPosition(in geometry: GeometryProxy) -> CGPoint {
+        let target = deleteTargetPosition ?? CGPoint(
+            x: geometry.size.width / 2,
+            y: geometry.size.height * 0.52
+        )
+        let cardHalfHeight: CGFloat = 120
+        let verticalSeparation: CGFloat = 190
+        let minimumY = cardHalfHeight + 16
+        let maximumY = max(minimumY, geometry.size.height - cardHalfHeight - 16)
+        let proposedY = target.y < geometry.size.height / 2
+            ? target.y + verticalSeparation
+            : target.y - verticalSeparation
+
+        return CGPoint(
+            x: geometry.size.width / 2,
+            y: min(max(proposedY, minimumY), maximumY)
+        )
+    }
+
+    private func deleteCardTransitionEdge(in geometry: GeometryProxy) -> Edge {
+        let targetY = deleteTargetPosition?.y ?? geometry.size.height * 0.52
+        return targetY < geometry.size.height / 2 ? .bottom : .top
     }
 
     private func longPressTarget(in geometry: GeometryProxy) -> some View {
