@@ -7,6 +7,21 @@
 
 import SwiftUI
 
+enum ContactTutorialCoordinateSpace {
+    static let name = "contactTutorial"
+}
+
+struct ContactTutorialDeleteButtonFrameKey: PreferenceKey {
+    static let defaultValue = CGRect.zero
+
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        let nextFrame = nextValue()
+        if !nextFrame.isEmpty {
+            value = nextFrame
+        }
+    }
+}
+
 enum ContactScreenTutorialStep: Int, CaseIterable {
     case search
     case lists
@@ -65,6 +80,7 @@ enum ContactScreenTutorialStep: Int, CaseIterable {
 
 struct ContactScreenTutorialOverlayView: View {
     let step: ContactScreenTutorialStep
+    let deleteButtonFrame: CGRect
     let onPrevious: () -> Void
     let onNext: () -> Void
     let onSkip: () -> Void
@@ -79,8 +95,7 @@ struct ContactScreenTutorialOverlayView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                Color.black.opacity(0.48)
-                    .ignoresSafeArea()
+                spotlightScrim(in: geometry)
                     .allowsHitTesting(step != .contacts)
 
                 targetHighlight(in: geometry)
@@ -95,6 +110,25 @@ struct ContactScreenTutorialOverlayView: View {
                 startAnimations()
             }
         }
+    }
+
+    private func spotlightScrim(in geometry: GeometryProxy) -> some View {
+        let target = targetFrame(in: geometry)
+        let spotlightSize = CGSize(
+            width: target.size.width + 12,
+            height: target.size.height + 12
+        )
+
+        return ZStack {
+            Color.black.opacity(0.58)
+                .ignoresSafeArea()
+
+            RoundedRectangle(cornerRadius: target.cornerRadius + 6, style: .continuous)
+                .frame(width: spotlightSize.width, height: spotlightSize.height)
+                .position(target.center)
+                .blendMode(.destinationOut)
+        }
+        .compositingGroup()
     }
 
     private var tutorialCard: some View {
@@ -178,7 +212,7 @@ struct ContactScreenTutorialOverlayView: View {
 
     private func targetHighlight(in geometry: GeometryProxy) -> some View {
         let target = targetFrame(in: geometry)
-        let haloPadding: CGFloat = step == .add ? 12 : 28
+        let haloPadding: CGFloat = step == .delete ? 12 : (step == .add ? 12 : 28)
 
         return ZStack {
             RoundedRectangle(cornerRadius: target.cornerRadius, style: .continuous)
@@ -191,16 +225,22 @@ struct ContactScreenTutorialOverlayView: View {
                 .opacity(pulse ? 0.06 : 0.70)
 
             RoundedRectangle(cornerRadius: target.cornerRadius, style: .continuous)
-                .stroke(Color(red: 0.02, green: 0.60, blue: 1.0), lineWidth: 3)
+                .stroke(Color(red: 0.02, green: 0.60, blue: 1.0), lineWidth: step == .delete ? 4 : 3)
                 .frame(width: target.size.width, height: target.size.height)
                 .scaleEffect(pulse ? 1.03 : 0.98)
                 .opacity(pulse ? 0.58 : 1.0)
+                .shadow(
+                    color: Color(red: 0.02, green: 0.60, blue: 1.0).opacity(step == .delete ? 0.85 : 0),
+                    radius: step == .delete ? 12 : 0
+                )
 
-            Image(systemName: step == .add ? "plus" : step.systemImage)
-                .font(.system(size: 26, weight: .bold))
-                .foregroundStyle(.white)
-                .shadow(color: Color.black.opacity(0.34), radius: 8, x: 0, y: 4)
-                .offset(y: iconBounce ? -5 : 4)
+            if step != .delete {
+                Image(systemName: step == .add ? "plus" : step.systemImage)
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(.white)
+                    .shadow(color: Color.black.opacity(0.34), radius: 8, x: 0, y: 4)
+                    .offset(y: iconBounce ? -5 : 4)
+            }
         }
         .position(target.center)
         .allowsHitTesting(false)
@@ -233,6 +273,17 @@ struct ContactScreenTutorialOverlayView: View {
                 cornerRadius: 23
             )
         case .delete:
+            if !deleteButtonFrame.isEmpty {
+                return TutorialTargetFrame(
+                    center: CGPoint(x: deleteButtonFrame.midX, y: deleteButtonFrame.midY),
+                    size: CGSize(
+                        width: deleteButtonFrame.width + 8,
+                        height: deleteButtonFrame.height + 8
+                    ),
+                    cornerRadius: min(deleteButtonFrame.width, deleteButtonFrame.height) / 2 + 4
+                )
+            }
+
             return TutorialTargetFrame(
                 center: CGPoint(x: 57, y: geometry.size.height - 46),
                 size: CGSize(width: 72, height: 72),
