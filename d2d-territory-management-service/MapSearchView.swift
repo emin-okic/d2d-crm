@@ -48,6 +48,7 @@ struct MapSearchView: View {
     @AppStorage("hasCompletedInitialPropertyTutorial") private var hasCompletedInitialPropertyTutorial = false
     @State private var isInitialPropertyTutorialVisible = false
     @State private var initialPropertyTutorialStep: InitialPropertyTutorialStep = .tapMap
+    @State private var tutorialAddedPropertyCoordinate: CLLocationCoordinate2D?
     @State private var hasStartedStartupAd = false
 
     @State private var isSearchExpanded = false
@@ -145,6 +146,24 @@ struct MapSearchView: View {
 
     private var shouldStartInitialPropertyTutorial: Bool {
         !hasCompletedInitialPropertyTutorial && prospects.isEmpty && customers.isEmpty
+    }
+
+    private var tutorialDeleteTargetPosition: CGPoint? {
+        guard initialPropertyTutorialStep == .deleteContact,
+              let coordinate = tutorialAddedPropertyCoordinate,
+              let mapView = MapDisplayView.cachedMapView else { return nil }
+
+        if let annotation = mapView.annotations
+            .compactMap({ $0 as? IdentifiableAnnotation })
+            .first(where: {
+                abs($0.coordinate.latitude - coordinate.latitude) < 0.000001 &&
+                abs($0.coordinate.longitude - coordinate.longitude) < 0.000001
+            }),
+           let annotationView = mapView.view(for: annotation) {
+            return CGPoint(x: annotationView.frame.midX, y: annotationView.frame.midY)
+        }
+
+        return mapView.convert(coordinate, toPointTo: mapView)
     }
 
     private var hasNoSavedContacts: Bool {
@@ -256,6 +275,7 @@ struct MapSearchView: View {
                 if shouldShowInitialPropertyTutorialOverlay {
                     InitialPropertyTutorialOverlayView(
                         step: initialPropertyTutorialStep,
+                        deleteTargetPosition: tutorialDeleteTargetPosition,
                         onSkip: skipInitialPropertyTutorial
                     )
                         .transition(.opacity)
@@ -630,6 +650,7 @@ struct MapSearchView: View {
                         coordinate: item.coordinate
                     )
 
+                    tutorialAddedPropertyCoordinate = item.coordinate
                     completeInitialPropertyTutorial()
                     
                     
@@ -851,6 +872,8 @@ struct MapSearchView: View {
             }
             MapScreenHapticsController.shared.propertyDeleted()
             MapScreenSoundController.shared.playPropertyDeleted()
+            tutorialAddedPropertyCoordinate = nil
+            finishInitialPropertyTutorialAfterDeletion()
         } catch {
             print("Failed to delete map property: \(error)")
         }
@@ -996,6 +1019,7 @@ struct MapSearchView: View {
 
         MapScreenHapticsController.shared.lightTap()
         pendingAddProperty = nil
+        tutorialAddedPropertyCoordinate = nil
         showConfetti = false
         hasCompletedInitialPropertyTutorial = true
 
@@ -1016,6 +1040,15 @@ struct MapSearchView: View {
 
     private func completeInitialPropertyTutorial() {
         guard isInitialPropertyTutorialVisible else { return }
+
+        withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
+            initialPropertyTutorialStep = .deleteContact
+        }
+    }
+
+    private func finishInitialPropertyTutorialAfterDeletion() {
+        guard isInitialPropertyTutorialVisible,
+              initialPropertyTutorialStep == .deleteContact else { return }
 
         withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
             initialPropertyTutorialStep = .completed
