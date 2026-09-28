@@ -10,11 +10,13 @@ import SwiftUI
 enum InitialPropertyTutorialStep {
     case tapMap
     case confirmAdd
+    case deleteContact
     case completed
 }
 
 struct InitialPropertyTutorialOverlayView: View {
     let step: InitialPropertyTutorialStep
+    let deleteTargetPosition: CGPoint?
     let onSkip: () -> Void
 
     @State private var pulse = false
@@ -35,11 +37,30 @@ struct InitialPropertyTutorialOverlayView: View {
                         title: "Add your first property",
                         message: "Tap a home or lot on the map. D2D CRM will find the address and open the Add Property sheet.",
                         systemImage: "hand.tap.fill",
-                        progressText: "Step 1 of 2"
+                        progressText: "Step 1 of 3"
                     )
                     .frame(maxWidth: 340)
                     .position(x: geometry.size.width / 2, y: min(geometry.size.height * 0.30, 260))
                     .transition(.move(edge: .top).combined(with: .opacity))
+                }
+
+                if step == .deleteContact {
+                    Color.black.opacity(0.44)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                        .allowsHitTesting(false)
+
+                    longPressTarget(in: geometry)
+
+                    tutorialCard(
+                        title: "Remove a bad prospect",
+                        message: "Press and hold the marker you just added, then confirm Delete Property.",
+                        systemImage: "hand.point.up.left.fill",
+                        progressText: "Step 3 of 3"
+                    )
+                    .frame(maxWidth: 340)
+                    .position(deleteCardPosition(in: geometry))
+                    .transition(.move(edge: deleteCardTransitionEdge(in: geometry)).combined(with: .opacity))
                 }
 
                 if step == .completed {
@@ -91,7 +112,59 @@ struct InitialPropertyTutorialOverlayView: View {
         .allowsHitTesting(false)
     }
 
-    private func tutorialCard(title: String, message: String, systemImage: String, progressText: String) -> some View {
+    private func deleteCardPosition(in geometry: GeometryProxy) -> CGPoint {
+        let target = deleteTargetPosition ?? CGPoint(
+            x: geometry.size.width / 2,
+            y: geometry.size.height * 0.52
+        )
+        let cardHalfHeight: CGFloat = 120
+        let verticalSeparation: CGFloat = 190
+        let minimumY = cardHalfHeight + 16
+        let maximumY = max(minimumY, geometry.size.height - cardHalfHeight - 16)
+        let proposedY = target.y < geometry.size.height / 2
+            ? target.y + verticalSeparation
+            : target.y - verticalSeparation
+
+        return CGPoint(
+            x: geometry.size.width / 2,
+            y: min(max(proposedY, minimumY), maximumY)
+        )
+    }
+
+    private func deleteCardTransitionEdge(in geometry: GeometryProxy) -> Edge {
+        let targetY = deleteTargetPosition?.y ?? geometry.size.height * 0.52
+        return targetY < geometry.size.height / 2 ? .bottom : .top
+    }
+
+    private func longPressTarget(in geometry: GeometryProxy) -> some View {
+        let target = deleteTargetPosition ?? CGPoint(
+            x: geometry.size.width / 2,
+            y: geometry.size.height * 0.52
+        )
+
+        return ZStack {
+            Circle()
+                .stroke(Color.white.opacity(0.28), lineWidth: 1.5)
+                .frame(width: 116, height: 116)
+                .scaleEffect(pulse ? 1.24 : 0.82)
+                .opacity(pulse ? 0.05 : 0.68)
+
+            Circle()
+                .stroke(Color.red.opacity(0.90), lineWidth: 3)
+                .frame(width: 78, height: 78)
+                .scaleEffect(pulse ? 1.08 : 0.92)
+
+            Image(systemName: "hand.point.up.left.fill")
+                .font(.system(size: 34, weight: .bold))
+                .foregroundStyle(.white)
+                .shadow(color: Color.black.opacity(0.35), radius: 8, x: 0, y: 4)
+                .offset(y: tapBounce ? -5 : 5)
+        }
+        .position(target)
+        .allowsHitTesting(false)
+    }
+
+    private func tutorialCard(title: LocalizedStringKey, message: LocalizedStringKey, systemImage: String, progressText: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 12) {
                 Image(systemName: systemImage)
@@ -136,8 +209,12 @@ struct InitialPropertyTutorialOverlayView: View {
                         .frame(width: 34, height: 5)
 
                     Capsule()
-                        .fill(Color.white.opacity(0.22))
-                        .frame(width: 18, height: 5)
+                        .fill(step == .deleteContact ? Color(red: 0.02, green: 0.60, blue: 1.0) : Color.white.opacity(0.22))
+                        .frame(width: step == .deleteContact ? 34 : 18, height: 5)
+
+                    Capsule()
+                        .fill(step == .deleteContact ? Color(red: 0.02, green: 0.60, blue: 1.0) : Color.white.opacity(0.22))
+                        .frame(width: step == .deleteContact ? 34 : 18, height: 5)
                 }
             }
             .padding(.top, 2)
@@ -167,11 +244,11 @@ struct InitialPropertyTutorialOverlayView: View {
                     .foregroundStyle(Color.green)
             }
 
-            Text("First property added")
+            Text("You know the map basics")
                 .font(.title3.weight(.bold))
                 .foregroundStyle(.white)
 
-            Text("You can now tap that marker any time to log knocks, notes, follow-ups, and appointments.")
+            Text("You can add promising contacts and quickly remove the ones that are not a fit.")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.white.opacity(0.74))
                 .multilineTextAlignment(.center)
@@ -225,7 +302,7 @@ struct InitialPropertyAddSheetTutorialBanner: View {
                 }
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Step 2 of 2")
+                    Text("Step 2 of 3")
                         .font(.caption.weight(.bold))
                         .foregroundStyle(Color(red: 0.02, green: 0.60, blue: 1.0))
                         .textCase(.uppercase)
