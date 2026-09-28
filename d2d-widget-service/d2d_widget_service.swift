@@ -212,3 +212,180 @@ struct d2d_widget_service: Widget {
         .description("See your remaining appointments and next scheduled time at a glance.")
     }
 }
+
+private struct SalesScorecardEntry: TimelineEntry {
+    let date: Date
+    let weeklyKnocks: Int
+    let weeklySales: Int
+    let todayKnocks: Int
+
+    var conversionRate: Double {
+        guard weeklyKnocks > 0 else { return 0 }
+        return Double(weeklySales) / Double(weeklyKnocks)
+    }
+}
+
+private struct SalesScorecardProvider: TimelineProvider {
+    private let defaults = UserDefaults(suiteName: "group.okic.d2dcrm")
+
+    func placeholder(in context: Context) -> SalesScorecardEntry {
+        SalesScorecardEntry(date: Date(), weeklyKnocks: 84, weeklySales: 7, todayKnocks: 18)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (SalesScorecardEntry) -> Void) {
+        completion(context.isPreview ? placeholder(in: context) : entry(at: Date()))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<SalesScorecardEntry>) -> Void) {
+        let now = Date()
+        let calendar = Calendar.current
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now))
+        completion(Timeline(entries: [entry(at: now)], policy: tomorrow.map(TimelineReloadPolicy.after) ?? .atEnd))
+    }
+
+    private func entry(at date: Date) -> SalesScorecardEntry {
+        let calendar = Calendar.current
+        let week = calendar.dateInterval(of: .weekOfYear, for: date)
+        let knockDates = dates(forKey: "scorecardKnockDates")
+        let saleDates = dates(forKey: "scorecardSaleDates")
+
+        return SalesScorecardEntry(
+            date: date,
+            weeklyKnocks: knockDates.filter { week?.contains($0) == true }.count,
+            weeklySales: saleDates.filter { week?.contains($0) == true }.count,
+            todayKnocks: knockDates.filter { calendar.isDate($0, inSameDayAs: date) }.count
+        )
+    }
+
+    private func dates(forKey key: String) -> [Date] {
+        let timestamps = defaults?.array(forKey: key)?
+            .compactMap { ($0 as? NSNumber)?.doubleValue } ?? []
+        return timestamps.map(Date.init(timeIntervalSince1970:))
+    }
+}
+
+private struct SalesScorecardEntryView: View {
+    let entry: SalesScorecardEntry
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SalesScorecardHeader(date: entry.date)
+            HStack(spacing: 0) {
+                SalesScorecardMetric(
+                    title: "Knocks",
+                    value: entry.weeklyKnocks,
+                    systemImage: "door.left.hand.open",
+                    color: .blue
+                )
+                SalesScorecardMetric(
+                    title: "Sales",
+                    value: entry.weeklySales,
+                    systemImage: "checkmark.seal.fill",
+                    color: .green
+                )
+                SalesScorecardConversion(rate: entry.conversionRate)
+            }
+
+            Label("\(entry.todayKnocks) knocks today", systemImage: "bolt.fill")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+        }
+        .widgetURL(URL(string: "d2dcrm://scorecard"))
+    }
+}
+
+private struct SalesScorecardHeader: View {
+    let date: Date
+
+    var body: some View {
+        HStack(spacing: 7) {
+            Image(systemName: "chart.line.uptrend.xyaxis")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.indigo)
+                .frame(width: 26, height: 26)
+                .background(.indigo.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+
+            Text("WEEKLY SCORECARD")
+                .font(.caption2.weight(.bold))
+                .tracking(0.7)
+                .foregroundStyle(.secondary)
+
+            Spacer()
+
+            Text(date, format: .dateTime.month(.abbreviated).day())
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+private struct SalesScorecardMetric: View {
+    let title: LocalizedStringKey
+    let value: Int
+    let systemImage: String
+    let color: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Label(title, systemImage: systemImage)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(color)
+                .lineLimit(1)
+
+            Text(value, format: .number)
+                .font(.title.weight(.bold))
+                .monospacedDigit()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct SalesScorecardConversion: View {
+    let rate: Double
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Label("Conversion", systemImage: "percent")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.orange)
+                .lineLimit(1)
+
+            Text(rate, format: .percent.precision(.fractionLength(0)))
+                .font(.title.weight(.bold))
+                .monospacedDigit()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct SalesScorecardBackground: View {
+    var body: some View {
+        LinearGradient(
+            colors: [Color(.systemBackground), Color.indigo.opacity(0.09)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+}
+
+struct D2DSalesScorecardWidget: Widget {
+    let kind = "d2d_sales_scorecard"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: SalesScorecardProvider()) { entry in
+            if #available(iOS 17.0, *) {
+                SalesScorecardEntryView(entry: entry)
+                    .containerBackground(for: .widget) {
+                        SalesScorecardBackground()
+                    }
+            } else {
+                SalesScorecardEntryView(entry: entry)
+                    .padding()
+                    .background(SalesScorecardBackground())
+            }
+        }
+        .supportedFamilies([.systemMedium])
+        .configurationDisplayName("Weekly Sales Scorecard")
+        .description("Track this week's knocks, sales, and conversion at a glance.")
+    }
+}
