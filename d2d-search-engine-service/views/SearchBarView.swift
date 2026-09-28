@@ -100,28 +100,34 @@ struct SearchBarView: View {
     @ViewBuilder
     private var propertySuggestionChips: some View {
         if isFocused {
-            let chips = recentSearches.isEmpty ? ["Nearby homes"] : Array(recentSearches.prefix(3))
-
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
-                    ForEach(chips, id: \.self) { chip in
-                        Button {
-                            selectChip(chip)
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: recentSearches.contains(chip) ? "clock.arrow.circlepath" : "sparkle.magnifyingglass")
-                                    .font(.caption.weight(.semibold))
-
-                                Text(chip)
-                                    .font(.caption.weight(.semibold))
-                                    .lineLimit(1)
-                            }
-                            .foregroundStyle(.blue)
-                            .padding(.horizontal, 10)
+                    Button(action: showNearbyHomes) {
+                        Label("Nearby homes", systemImage: "house.fill")
+                            .font(.caption.weight(.semibold))
+                            .lineLimit(1)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 11)
                             .frame(height: 30)
-                            .background(Color.blue.opacity(0.1), in: Capsule())
+                            .background(Color.blue, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Shows homes near the current map area")
+
+                    ForEach(Array(recentSearches.prefix(3)), id: \.self) { recentSearch in
+                        Button {
+                            selectRecentSearch(recentSearch)
+                        } label: {
+                            Label(recentSearch, systemImage: "clock.arrow.circlepath")
+                                .font(.caption.weight(.semibold))
+                                .lineLimit(1)
+                                .foregroundStyle(.blue)
+                                .padding(.horizontal, 10)
+                                .frame(height: 30)
+                                .background(Color.blue.opacity(0.1), in: Capsule())
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("Recent search: \(recentSearch)")
                     }
                 }
                 .padding(.horizontal, 2)
@@ -144,16 +150,17 @@ struct SearchBarView: View {
         onSubmit()
     }
 
-    private func selectChip(_ chip: String) {
-        searchText = chip
+    private func showNearbyHomes() {
+        searchText = ""
         isFocused = true
+        viewModel.clear()
+        onNearbyHomes()
+    }
 
-        if chip == "Nearby homes" {
-            viewModel.clear()
-            onNearbyHomes()
-        } else {
-            viewModel.updateQuery(chip)
-        }
+    private func selectRecentSearch(_ recentSearch: String) {
+        searchText = recentSearch
+        isFocused = true
+        viewModel.updateQuery(recentSearch)
     }
 
     private func selectSuggestion(_ suggestion: PropertySearchSuggestion) {
