@@ -6,11 +6,28 @@
 //
 
 import Foundation
-import MapKit
+@preconcurrency import MapKit
 import CoreLocation
 import Contacts
 
 enum SearchBarController {
+    private struct NearbyPropertyCandidate {
+        let item: MKMapItem
+        let distance: CLLocationDistance
+        let hasStreetNumber: Bool
+        let isResidential: Bool
+        let isNearby: Bool
+
+        var rank: Int {
+            if isResidential && isNearby { return 0 }
+            if hasStreetNumber && isNearby { return 1 }
+            if isNearby { return 2 }
+            if isResidential { return 3 }
+            if hasStreetNumber { return 4 }
+            return 5
+        }
+    }
+
     /// Resolves a selected search completion to a general address string (e.g., map title).
     @MainActor
     static func resolveAddress(from completion: MKLocalSearchCompletion) async -> String? {
@@ -61,15 +78,88 @@ enum SearchBarController {
         near coordinate: CLLocationCoordinate2D,
         limit: Int = 5
     ) async -> [MKMapItem] {
+        let origin = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        let maximumDistance: CLLocationDistance = 650
+        var uniqueItems: [String: NearbyPropertyCandidate] = [:]
+
+        func addCandidate(_ item: MKMapItem, fallback: String) {
+            let distance = item.location.distance(from: origin)
+            guard distance >= 2 else { return }
+
+            let address = displayAddress(for: item, fallback: fallback)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !address.isEmpty else { return }
+
+            let startsWithStreetNumber = address.range(
+                of: #"^\d+[A-Za-z]?(?:-\d+)?\s+"#,
+                options: .regularExpression
+            ) != nil
+
+            let key = address
+                .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+                .replacingOccurrences(of: ",", with: "")
+            let candidate = NearbyPropertyCandidate(
+                item: item,
+                distance: distance,
+                hasStreetNumber: startsWithStreetNumber,
+                isResidential: startsWithStreetNumber && item.pointOfInterestCategory == nil,
+                isNearby: distance <= maximumDistance
+            )
+
+            if let existing = uniqueItems[key],
+               (existing.rank < candidate.rank
+                || (existing.rank == candidate.rank && existing.distance <= distance)) {
+                return
+            }
+            uniqueItems[key] = candidate
+        }
+
+        func hasEnoughNearbyHomes() -> Bool {
+            uniqueItems.values.filter { $0.rank == 0 }.count >= limit
+        }
+
+        // Local Search is optimized for places and businesses. Sample the nearby blocks
+        // directly so reverse geocoding can surface ordinary street addresses as well.
+        for probeRing in nearbyProbeRings(around: coordinate) {
+            let ringItems = await withTaskGroup(of: [MKMapItem].self) { group in
+                for probeCoordinate in probeRing {
+                    group.addTask {
+                        let location = CLLocation(
+                            latitude: probeCoordinate.latitude,
+                            longitude: probeCoordinate.longitude
+                        )
+                        guard let request = MKReverseGeocodingRequest(location: location) else {
+                            return []
+                        }
+                        return (try? await request.mapItems) ?? []
+                    }
+                }
+
+                var items: [MKMapItem] = []
+                for await result in group {
+                    items += result
+                }
+                return items
+            }
+
+            for item in ringItems {
+                addCandidate(item, fallback: "Nearby home")
+            }
+
+            // Finish each ring so every direction is represented before stopping.
+            if hasEnoughNearbyHomes() { break }
+        }
+
+        // Keep address search as a fallback, but don't allow MapKit's regional bias to
+        // admit distant results or named points of interest.
         let searchRegion = MKCoordinateRegion(
             center: coordinate,
-            latitudinalMeters: 450,
-            longitudinalMeters: 450
+            latitudinalMeters: maximumDistance * 2,
+            longitudinalMeters: maximumDistance * 2
         )
-        let queries = ["home", "house", "residential address", "address"]
-        var uniqueItems: [String: MKMapItem] = [:]
+        let queries = ["residential address", "house", "home", "address"]
 
-        for query in queries where uniqueItems.count < limit {
+        for query in queries where !hasEnoughNearbyHomes() {
             let request = MKLocalSearch.Request()
             request.naturalLanguageQuery = query
             request.resultTypes = .address
@@ -78,24 +168,41 @@ enum SearchBarController {
             do {
                 let response = try await MKLocalSearch(request: request).start()
                 for item in response.mapItems {
-                    let address = displayAddress(for: item, fallback: item.name ?? query)
-                    guard !address.isEmpty else { continue }
-                    uniqueItems[address.lowercased()] = item
+                    addCandidate(item, fallback: item.name ?? query)
                 }
             } catch {
                 print("❌ Nearby home search failed:", error.localizedDescription)
             }
         }
 
-        let origin = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
         return uniqueItems.values
             .sorted { lhs, rhs in
-                let lhsDistance = lhs.location.distance(from: origin)
-                let rhsDistance = rhs.location.distance(from: origin)
-                return lhsDistance < rhsDistance
+                if lhs.rank != rhs.rank { return lhs.rank < rhs.rank }
+                return lhs.distance < rhs.distance
             }
             .prefix(limit)
-            .map { $0 }
+            .map(\.item)
+    }
+
+    private static func nearbyProbeRings(
+        around coordinate: CLLocationCoordinate2D
+    ) -> [[CLLocationCoordinate2D]] {
+        let center = MKMapPoint(coordinate)
+        let metersPerMapPoint = MKMetersPerMapPointAtLatitude(coordinate.latitude)
+        let radii: [CLLocationDistance] = [35, 70, 120, 200, 320]
+        let bearings = stride(from: 0.0, to: 360.0, by: 45.0)
+
+        return radii.map { radius in
+            bearings.map { bearing in
+                let angle = bearing * .pi / 180
+                let mapPointRadius = radius / metersPerMapPoint
+                let point = MKMapPoint(
+                    x: center.x + cos(angle) * mapPointRadius,
+                    y: center.y + sin(angle) * mapPointRadius
+                )
+                return point.coordinate
+            }
+        }
     }
 
     static func displayAddress(for mapItem: MKMapItem, fallback: String) -> String {
