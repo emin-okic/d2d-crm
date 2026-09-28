@@ -87,6 +87,7 @@ struct ContactManagementView: View {
     @State private var contactTutorialStep: ContactScreenTutorialStep = .search
     @State private var showContactTutorialReward = false
     @State private var shouldResumeContactTutorialAfterDetails = false
+    @State private var tutorialDeleteButtonFrame = CGRect.zero
 
     private var shouldStartContactTutorial: Bool {
         hasCompletedInitialPropertyTutorial &&
@@ -121,6 +122,10 @@ struct ContactManagementView: View {
                     }
                 )
                 
+            }
+            .coordinateSpace(name: ContactTutorialCoordinateSpace.name)
+            .onPreferenceChange(ContactTutorialDeleteButtonFrameKey.self) { frame in
+                tutorialDeleteButtonFrame = frame
             }
             .navigationTitle("")
             .overlay(exportOverlay)
@@ -295,6 +300,7 @@ struct ContactManagementView: View {
         if isContactTutorialVisible {
             ContactScreenTutorialOverlayView(
                 step: contactTutorialStep,
+                deleteButtonFrame: tutorialDeleteButtonFrame,
                 onPrevious: previousContactTutorialStep,
                 onNext: nextContactTutorialStep,
                 onSkip: finishContactTutorial

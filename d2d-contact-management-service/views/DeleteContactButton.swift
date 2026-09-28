@@ -59,6 +59,14 @@ struct DeleteContactButton: View {
                 )
         }
         .buttonStyle(.plain)
+        .background {
+            GeometryReader { geometry in
+                Color.clear.preference(
+                    key: ContactTutorialDeleteButtonFrameKey.self,
+                    value: geometry.frame(in: .named(ContactTutorialCoordinateSpace.name))
+                )
+            }
+        }
         .accessibilityLabel(isDeleting ? "Confirm Delete Contacts" : "Delete Contacts")
     }
 }
