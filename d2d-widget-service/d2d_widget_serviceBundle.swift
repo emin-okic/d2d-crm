@@ -12,6 +12,7 @@ import SwiftUI
 struct d2d_widget_serviceBundle: WidgetBundle {
     var body: some Widget {
         d2d_widget_service()
+        D2DSalesScorecardWidget()
         d2d_widget_serviceControl()
     }
 }

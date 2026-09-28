@@ -87,13 +87,15 @@ struct RootView: View {
         .task {
             StreakNotificationController.shared.refreshSchedule(for: allKnocks)
             refreshAppointmentsWidget()
+            refreshSalesScorecardWidget()
 
             if followUpFilter != nil {
                 selectedTab = 2
             }
         }
-        .onChange(of: allKnocks.map(\.date)) { _, _ in
+        .onChange(of: allKnocks.map { "\($0.date.timeIntervalSince1970)|\($0.status)" }) { _, _ in
             StreakNotificationController.shared.refreshSchedule(for: allKnocks)
+            refreshSalesScorecardWidget()
         }
         .onChange(of: allAppointments.map {
             "\($0.id.uuidString)|\($0.date.timeIntervalSince1970)|\($0.isCompleted)"
@@ -142,6 +144,21 @@ struct RootView: View {
         UserDefaults(suiteName: "group.okic.d2dcrm")?
             .set(appointmentDates, forKey: "appointmentDates")
         WidgetCenter.shared.reloadTimelines(ofKind: "d2d_widget_service")
+    }
+
+    private func refreshSalesScorecardWidget() {
+        let defaults = UserDefaults(suiteName: "group.okic.d2dcrm")
+        defaults?.set(
+            allKnocks.map(\.date.timeIntervalSince1970),
+            forKey: "scorecardKnockDates"
+        )
+        defaults?.set(
+            allKnocks
+                .filter(MapAnalyticsCalculator.isSale)
+                .map(\.date.timeIntervalSince1970),
+            forKey: "scorecardSaleDates"
+        )
+        WidgetCenter.shared.reloadTimelines(ofKind: "d2d_sales_scorecard")
     }
 
     private func navigateToMap(_ selection: MapContactSelection) {
