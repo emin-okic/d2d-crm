@@ -178,11 +178,15 @@ struct ContactScreenTutorialOverlayView: View {
 
     private func targetHighlight(in geometry: GeometryProxy) -> some View {
         let target = targetFrame(in: geometry)
+        let haloPadding: CGFloat = step == .add ? 12 : 28
 
         return ZStack {
             RoundedRectangle(cornerRadius: target.cornerRadius, style: .continuous)
                 .stroke(Color.white.opacity(0.22), lineWidth: 1.5)
-                .frame(width: target.size.width + 28, height: target.size.height + 28)
+                .frame(
+                    width: target.size.width + haloPadding,
+                    height: target.size.height + haloPadding
+                )
                 .scaleEffect(pulse ? 1.10 : 0.94)
                 .opacity(pulse ? 0.06 : 0.70)
 
@@ -192,7 +196,7 @@ struct ContactScreenTutorialOverlayView: View {
                 .scaleEffect(pulse ? 1.03 : 0.98)
                 .opacity(pulse ? 0.58 : 1.0)
 
-            Image(systemName: step.systemImage)
+            Image(systemName: step == .add ? "plus" : step.systemImage)
                 .font(.system(size: 26, weight: .bold))
                 .foregroundStyle(.white)
                 .shadow(color: Color.black.opacity(0.34), radius: 8, x: 0, y: 4)
@@ -224,9 +228,9 @@ struct ContactScreenTutorialOverlayView: View {
             )
         case .add:
             return TutorialTargetFrame(
-                center: CGPoint(x: 57, y: geometry.size.height - 108),
-                size: CGSize(width: 72, height: 72),
-                cornerRadius: 36
+                center: CGPoint(x: 46, y: geometry.size.height - 93),
+                size: CGSize(width: 46, height: 46),
+                cornerRadius: 23
             )
         case .delete:
             return TutorialTargetFrame(
