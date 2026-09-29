@@ -105,6 +105,9 @@ struct CustomerManagementView: View {
         }
 
         activeSearchFilter = ContactSearchFilter(field: selectedSearchField, query: trimmed)
+        if !selectedSearchField.requiresQuery {
+            selectedSearchField = .all
+        }
         searchText = ""
         isSearchFocused = false
     }
