@@ -2200,6 +2200,9 @@ struct MapSearchView: View {
         }
 
         contactSearchFilter = ContactSearchFilter(field: selectedMapContactSearchField, query: trimmed)
+        if !selectedMapContactSearchField.requiresQuery {
+            selectedMapContactSearchField = .all
+        }
         contactSearchDraft = ""
         searchVM.clear()
         isSearchFocused = false
