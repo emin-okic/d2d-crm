@@ -11,6 +11,7 @@ struct ProspectContainerView: View {
     
     @Binding var selectedList: String
     @Binding var activeSearchFilter: ContactSearchFilter?
+    @Binding var statusFilter: ProspectStatusFilter
     
     @Binding var selectedProspect: Prospect?
     
@@ -33,6 +34,7 @@ struct ProspectContainerView: View {
                     selectedProspect: $selectedProspect,
                     containerHeight: targetHeight,
                     activeSearchFilter: $activeSearchFilter,
+                    statusFilter: $statusFilter,
                     isDeleting: $isDeleting,
                     selectedProspects: $selectedProspects,
                     onNavigateToMap: onNavigateToMap,

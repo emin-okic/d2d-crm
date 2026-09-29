@@ -26,6 +26,7 @@ struct ProspectsSectionView: View {
     let containerHeight: CGFloat
     
     @Binding var activeSearchFilter: ContactSearchFilter?
+    @Binding var statusFilter: ProspectStatusFilter
 
     private let rowHeight: CGFloat = 88
 
@@ -34,7 +35,7 @@ struct ProspectsSectionView: View {
     }
 
     private var shouldShowRankingToolbar: Bool {
-        selectedList == "Prospects" && rankingController.hasCustomerSignals
+        selectedList == "Prospects" && statusFilter == .all && rankingController.hasCustomerSignals
     }
 
     private var prospectIdentitySnapshot: Set<PersistentIdentifier> {
@@ -45,7 +46,7 @@ struct ProspectsSectionView: View {
 
     private var visibleProspects: [Prospect] {
         let base = allProspects
-            .filter { $0.list == selectedList }
+            .filter { $0.list == selectedList && statusFilter.matches($0) }
 
         guard let filter = activeSearchFilter, !filter.isEmpty else {
             return base
@@ -60,6 +61,14 @@ struct ProspectsSectionView: View {
         }
 
         return visibleProspects.sorted { $0.orderIndex < $1.orderIndex }
+    }
+
+    private var emptyStateTitle: String {
+        if statusFilter == .unqualified {
+            return activeSearchFilter == nil ? "No unqualified prospects" : "No unqualified matches"
+        }
+
+        return activeSearchFilter == nil ? "No \(selectedList)" : "No matches"
     }
     
     @State private var draggingProspectID: PersistentIdentifier?
@@ -158,9 +167,7 @@ struct ProspectsSectionView: View {
                 }
             } else {
                 // Empty state — “No matches” if searching, otherwise “No Prospects/Customers”
-                Text(activeSearchFilter == nil
-                     ? "No \(selectedList)"
-                     : "No matches")
+                Text(emptyStateTitle)
                     .font(.title3).fontWeight(.semibold)
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
