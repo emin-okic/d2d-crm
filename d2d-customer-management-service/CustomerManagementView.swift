@@ -99,7 +99,7 @@ struct CustomerManagementView: View {
 
     private func applySearchFilter() {
         let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
+        guard !selectedSearchField.requiresQuery || !trimmed.isEmpty else {
             onClearSearchFilter()
             return
         }

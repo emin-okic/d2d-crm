@@ -257,9 +257,6 @@ struct ProspectActionsToolbar: View {
 
         if status == "Unqualified" {
             prospect.isUnqualified = true
-            if !prospect.fullName.contains("Unqualified") {
-                prospect.fullName = "\(prospect.fullName) - Unqualified"
-            }
         }
 
         if let followUpDate = result.followUpDate {

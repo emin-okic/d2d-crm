@@ -19,7 +19,7 @@ struct SearchFilterPill: View {
             Menu {
                 ForEach(ContactSearchField.allCases) { field in
                     Button {
-                        selectedField = field
+                        select(field)
                     } label: {
                         Label(field.label, systemImage: field.systemImage)
                     }
@@ -41,15 +41,21 @@ struct SearchFilterPill: View {
             }
             .menuOrder(.fixed)
 
-            TextField("Filter by \(selectedField.label.lowercased())", text: $searchText)
-                .focused($isFocused)
-                .font(.subheadline)
-                .submitLabel(.search)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .onSubmit {
-                    onSubmit()
-                }
+            if selectedField.requiresQuery {
+                TextField("Filter by \(selectedField.label.lowercased())", text: $searchText)
+                    .focused($isFocused)
+                    .font(.subheadline)
+                    .submitLabel(.search)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .onSubmit {
+                        onSubmit()
+                    }
+            } else {
+                Text("Shows unqualified contacts")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
 
             if !searchText.isEmpty {
                 Button {
@@ -65,6 +71,17 @@ struct SearchFilterPill: View {
         .padding(.vertical, 8)
         .background(Color(.systemGray6))
         .clipShape(Capsule())
+    }
+
+    private func select(_ field: ContactSearchField) {
+        selectedField = field
+        guard !field.requiresQuery else {
+            isFocused = true
+            return
+        }
+
+        searchText = ""
+        onSubmit()
     }
 }
 

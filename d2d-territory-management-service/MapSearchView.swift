@@ -2199,7 +2199,7 @@ struct MapSearchView: View {
 
     private func submitContactFilter() {
         let trimmed = contactSearchDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
+        guard !selectedMapContactSearchField.requiresQuery || !trimmed.isEmpty else {
             clearContactFilter()
             return
         }

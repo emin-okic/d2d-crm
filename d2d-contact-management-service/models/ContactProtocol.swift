@@ -13,6 +13,7 @@ protocol ContactProtocol: AnyObject {
     var knockCount: Int { get set }
     var contactEmail: String { get set }
     var contactPhone: String { get set }
+    var isUnqualified: Bool { get set }
 
     var demographicAgeRange: String? { get set }
     var demographicGender: String? { get set }
