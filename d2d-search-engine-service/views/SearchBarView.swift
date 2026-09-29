@@ -192,7 +192,7 @@ struct MapContactFilterSearchView: View {
     var onCancel: () -> Void
 
     private var priorityFields: [ContactSearchField] {
-        [.all, .name, .address, .phone, .email]
+        [.all, .unqualified, .name, .address, .phone, .email]
     }
 
     var body: some View {
@@ -201,7 +201,7 @@ struct MapContactFilterSearchView: View {
                 Menu {
                     ForEach(ContactSearchField.allCases) { field in
                         Button {
-                            selectedField = field
+                            select(field)
                         } label: {
                             Label(field.label, systemImage: field.systemImage)
                         }
@@ -225,15 +225,21 @@ struct MapContactFilterSearchView: View {
                 }
                 .menuOrder(.fixed)
 
-                TextField("Filter referrals or contacts", text: $searchText, onCommit: {
-                    onSubmit()
-                })
-                .focused($isFocused)
-                .font(.subheadline.weight(.medium))
-                .foregroundColor(.primary)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .submitLabel(.search)
+                if selectedField.requiresQuery {
+                    TextField("Filter referrals or contacts", text: $searchText, onCommit: {
+                        onSubmit()
+                    })
+                    .focused($isFocused)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundColor(.primary)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .submitLabel(.search)
+                } else {
+                    Text("Shows unqualified contacts")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
 
                 Button(action: clearOrCancel) {
                     Image(systemName: searchText.isEmpty ? "xmark" : "xmark.circle.fill")
@@ -265,8 +271,7 @@ struct MapContactFilterSearchView: View {
             HStack(spacing: 8) {
                 ForEach(priorityFields) { field in
                     Button {
-                        selectedField = field
-                        isFocused = true
+                        select(field)
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: field.systemImage)
@@ -296,5 +301,16 @@ struct MapContactFilterSearchView: View {
             searchText = ""
             onClear()
         }
+    }
+
+    private func select(_ field: ContactSearchField) {
+        selectedField = field
+        guard !field.requiresQuery else {
+            isFocused = true
+            return
+        }
+
+        searchText = ""
+        onSubmit()
     }
 }

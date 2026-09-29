@@ -31,8 +31,8 @@ enum UnitContact: Identifiable {
         switch self {
         case .prospect(let p):
             return p.isUnqualified
-        case .customer:
-            return false
+        case .customer(let c):
+            return c.isUnqualified
         }
     }
 

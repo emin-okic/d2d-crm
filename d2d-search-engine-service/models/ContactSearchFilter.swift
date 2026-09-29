@@ -11,6 +11,7 @@ enum ContactSearchField: String, CaseIterable, Identifiable {
     case address
     case phone
     case email
+    case unqualified
     case ageRange
     case gender
     case raceEthnicity
@@ -30,6 +31,7 @@ enum ContactSearchField: String, CaseIterable, Identifiable {
         case .address: return "Address"
         case .phone: return "Phone"
         case .email: return "Email"
+        case .unqualified: return "Unqualified"
         case .ageRange: return "Age Range"
         case .gender: return "Gender"
         case .raceEthnicity: return "Race/Ethnicity"
@@ -49,6 +51,7 @@ enum ContactSearchField: String, CaseIterable, Identifiable {
         case .address: return "mappin.and.ellipse"
         case .phone: return "phone"
         case .email: return "envelope"
+        case .unqualified: return "xmark.octagon.fill"
         case .ageRange: return "calendar"
         case .gender: return "person.crop.circle"
         case .raceEthnicity: return "person.2"
@@ -59,6 +62,10 @@ enum ContactSearchField: String, CaseIterable, Identifiable {
         case .jobTitle: return "person.crop.rectangle.badge.plus"
         case .industry: return "briefcase"
         }
+    }
+
+    var requiresQuery: Bool {
+        self != .unqualified
     }
 }
 
@@ -71,16 +78,20 @@ struct ContactSearchFilter: Equatable {
     }
 
     var isEmpty: Bool {
-        trimmedQuery.isEmpty
+        field.requiresQuery && trimmedQuery.isEmpty
     }
 
     var displayText: String {
-        "\(field.label): \(trimmedQuery)"
+        field.requiresQuery ? "\(field.label): \(trimmedQuery)" : field.label
     }
 }
 
 extension ContactProtocol {
     func matches(_ filter: ContactSearchFilter) -> Bool {
+        if filter.field == .unqualified {
+            return isUnqualified
+        }
+
         let query = filter.trimmedQuery
         guard !query.isEmpty else { return true }
 
@@ -99,6 +110,8 @@ extension ContactProtocol {
             return contactPhone.localizedCaseInsensitiveContains(query)
         case .email:
             return contactEmail.localizedCaseInsensitiveContains(query)
+        case .unqualified:
+            return isUnqualified
         case .ageRange:
             return (demographicAgeRange ?? "").localizedCaseInsensitiveContains(query)
         case .gender:

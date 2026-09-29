@@ -51,6 +51,8 @@ final class Customer: ContactProtocol {
     /// Stored coordinates for marker annotation generation
     var latitude: Double?
     var longitude: Double?
+
+    var isUnqualified: Bool = false
     
     var orderIndex: Int
 
@@ -84,6 +86,7 @@ final class Customer: ContactProtocol {
         
         self.latitude = nil
         self.longitude = nil
+        self.isUnqualified = false
     }
 }
 
