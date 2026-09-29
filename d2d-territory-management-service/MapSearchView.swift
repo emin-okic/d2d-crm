@@ -1551,14 +1551,9 @@ struct MapSearchView: View {
                 addressesMatch($0.address, addr)
             }) {
 
-                // 1️⃣ Clear unqualified flag
-                prospect.isUnqualified = false
+                prospect.markRequalified()
 
-                // 2️⃣ Clean up name (remove suffix)
-                prospect.fullName = prospect.fullName
-                    .replacingOccurrences(of: " - Unqualified", with: "")
-
-                // 3️⃣ Log a knock for history
+                // Log a knock for history
                 prospectKnockingController?.saveKnockOnly(
                     address: addr,
                     status: "Requalified",

@@ -96,6 +96,18 @@ final class Prospect: ContactProtocol {
 }
 
 extension Prospect {
+    func markUnqualified() {
+        isUnqualified = true
+        if !fullName.hasSuffix(" - Unqualified") {
+            fullName += " - Unqualified"
+        }
+    }
+
+    func markRequalified() {
+        isUnqualified = false
+        fullName = fullName.replacingOccurrences(of: " - Unqualified", with: "")
+    }
+
     var coordinate: CLLocationCoordinate2D? {
         guard let lat = latitude, let lon = longitude else { return nil }
         return CLLocationCoordinate2D(latitude: lat, longitude: lon)

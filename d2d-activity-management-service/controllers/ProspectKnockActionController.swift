@@ -54,15 +54,6 @@ class ProspectKnockActionController {
             
             existing.knockHistory.append(Knock(date: now, status: status, latitude: lat, longitude: lon))
             
-            // ⭐️ STEP 3: mark unqualified + update name once
-            if status == "Unqualified" {
-                existing.isUnqualified = true
-
-                if !existing.fullName.contains("Unqualified") {
-                    existing.fullName = "\(existing.fullName) - Unqualified"
-                }
-            }
-            
             updated = existing
             
         } else {
@@ -74,6 +65,10 @@ class ProspectKnockActionController {
             if let newId = DatabaseController.shared.addProspect(name: new.fullName, addr: new.address) {
                 prospectId = newId
             }
+        }
+
+        if status == "Unqualified" {
+            updated.markUnqualified()
         }
 
         if let id = prospectId {

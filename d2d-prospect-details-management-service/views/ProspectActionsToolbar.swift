@@ -241,8 +241,7 @@ struct ProspectActionsToolbar: View {
         let status = result.outcome.title
 
         if status == "Requalified" {
-            prospect.isUnqualified = false
-            prospect.fullName = prospect.fullName.replacingOccurrences(of: " - Unqualified", with: "")
+            prospect.markRequalified()
         }
 
         prospect.knockCount += 1
@@ -256,7 +255,7 @@ struct ProspectActionsToolbar: View {
         )
 
         if status == "Unqualified" {
-            prospect.isUnqualified = true
+            prospect.markUnqualified()
         }
 
         if let followUpDate = result.followUpDate {
