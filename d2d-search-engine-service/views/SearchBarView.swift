@@ -30,7 +30,9 @@ struct SearchBarView: View {
         recentSearchesStorage
             .split(separator: "|")
             .map(String.init)
-            .filter { !$0.isEmpty }
+            .filter {
+                !$0.isEmpty && $0.localizedCaseInsensitiveCompare("Nearby homes") != .orderedSame
+            }
     }
 
     private var visibleSuggestions: [PropertySearchSuggestion] {
