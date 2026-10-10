@@ -26,7 +26,7 @@ struct ContactExportOptionsSheet: View {
                     .minimumScaleFactor(0.85)
             }
 
-            VStack(spacing: 10) {
+            VStack(spacing: 12) {
                 ContactExportOptionButton(
                     iconName: "person.crop.circle.badge.plus",
                     title: "Save to iPhone Contacts",
@@ -51,8 +51,7 @@ struct ContactExportOptionsSheet: View {
                     action: onSalesforce
                 )
             }
-
-            Spacer(minLength: 18)
+            .frame(maxHeight: .infinity)
 
             Button("Cancel", role: .cancel, action: onCancel)
                 .buttonStyle(.bordered)
@@ -128,7 +127,7 @@ private struct ContactExportOptionButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 14) {
+            HStack(alignment: .top, spacing: 14) {
                 Image(systemName: iconName)
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(.white)
@@ -139,24 +138,24 @@ private struct ContactExportOptionButton: View {
                     Text(title)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.primary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.85)
+                        .fixedSize(horizontal: false, vertical: true)
 
                     Text(subtitle)
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        .lineLimit(2)
                         .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-
-                Spacer(minLength: 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .layoutPriority(1)
 
                 Image(systemName: "chevron.right")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(.tertiary)
             }
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
         .buttonStyle(.plain)
